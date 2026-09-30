@@ -3,36 +3,50 @@
 A hobby framework for evolving and learning rate-coded brain models inside a 2D world built from
 One Hour One Life (OHOL) objects and recipes. Goal and motivation: `Intention.md`.
 
-**Start here, in this order:** `docs/DECISIONS.md` (the rules of the project), `docs/SETUP.md`,
-`docs/ROADMAP.md`, `docs/EXPERIMENT_LOG.md`, `docs/OHOL_FORMAT.md`. Then `life/__init__.py` for the module map.
+**Start here, in this order:**
+1. `docs/STATUS.md`: where the project is: every stage of the brain-evolution sequence, its status and findings,
+   future goals, known simplifications.
+2. `docs/BRAIN_EVOLUTION.md`: the plan: the sequence of brain architectures and experiments.
+3. `docs/STAGE_LOG.md`: the detailed lab notebook behind STATUS (runs, numbers, what went wrong and why).
+4. `docs/DECISIONS.md`: design decisions (ADRs). Guidance from the initial build; newer ADRs supersede older ones.
+5. `docs/SETUP.md`, `docs/OHOL_FORMAT.md`, then `life/__init__.py` for the module map.
 
 ## Quick start (Windows, CPU)
 
 ```
 .venv\Scripts\python.exe -m pytest -q
-.venv\Scripts\python.exe -m life.experiments.exp01_evolved_forager --quick
-.venv\Scripts\python.exe -m life.experiments.exp01_evolved_forager
-start runs\exp01_evolved_forager\<timestamp>\dashboard.html
-.venv\Scripts\python.exe -m life.experiments.exp02_hebbian_association --init-from latest
-.venv\Scripts\python.exe -m life.experiments.exp02_hebbian_association --init-from latest --no-plastic
+.venv\Scripts\python.exe -m life.experiments.stages list
+.venv\Scripts\python.exe -m life.experiments.stages 1.0 --generations 200          # root of the lineage
+.venv\Scripts\python.exe -m life.experiments.stages 1.1 [--control]                 # warm-starts from newest 1.0 run
+.venv\Scripts\python.exe -m life.experiments.stages chain 1.1 1.6 --mutation-prob 0.1   # main + control per stage
+start runs\s1_1_valence\<timestamp>\dashboard.html
 ```
 
-Every run directory contains `dashboard.html`: open it in any browser to scrub through the final generation,
-click agents, and inspect their retina, activations and weights. Regenerate it with
-`python -m life.dashboard <run dir>` after changing `life/dashboard.html`.
+Inspection tools (all take a run directory):
+
+```
+python -m life.compare s1_1_valence s1_1_valence_control        # first/last 25-generation averages of fitness.csv
+python -m life.experiments.stages lesion  <run>                  # silence each region (and plasticity), measure
+python -m life.experiments.stages respond <run>                  # region activity / action probabilities per object
+python -m life.dashboard <run>                                   # regenerate dashboard.html
+```
+
+Every run directory contains `dashboard.html`: the first panel shows the architecture (regions as blocks grouped
+into modules, projections as arrows, neuromodulators as diamonds); click a block or arrow for its activations and
+weights. Then the world, the focused agent's senses, activations over time, the full weight matrix and fitness.
 
 ## Poking at things by hand (Python or Jupyter)
 
 ```python
 from life.lab import Lab
-from life.experiments import exp01_evolved_forager as e
+from life.experiments import stages as S
 from life.run import load_population, latest_run
-exp = e.make_config(); rs = e.build_ruleset(exp.world)
-lab = Lab(exp, rs, population=load_population(latest_run("exp01_evolved_forager")))
+s = S.STAGES["1.1"]; exp = S.make_exp(s, s.brain, "lab", 1, 0)
+rs, rules_fn = s.build(exp)
+lab = Lab(exp, rs, population=load_population(latest_run("s1_1_valence"), exp), rules=rules_fn(0, None))
 lab.step(100)                      # advance
 lab.agent(3), lab.obs(3), lab.brain(3), lab.world_summary()
 lab.step(10, override={3: 4})      # force agent 3 to USE for 10 ticks
-lab.render(focus=3)                # matplotlib figure
 lab.export("runs/lab_session")     # dashboard.html of everything stepped so far
 ```
 
@@ -42,41 +56,46 @@ lab.export("runs/lab_session")     # dashboard.html of everything stepped so far
 Ruleset (OHOL slice)  ->  RuleArrays  --+
                                         |-> step_world(cfg, rules, state, actions) -> state, events
 WorldState (grid + agents)  ------------+        ^                                      |
-        |                                        |                        modulator (reward = food - pain)
+        |                                        |                         world signals (food, pain)
         v                                        |                                      v
-observe_all -> obs {vision, body, sound} -> brain.step (vmap over agents) -> actions   mod
+observe_all -> obs (named input features) -> brain.step (vmap over agents) -> actions  (optional)
                                                   ^
-                     Genome (w0, mask, b, eta, A, B, C, D) per agent + Layout (regions, projections, rules)
+             Genome (w0, mask, b, eta, A, B, C, D) per agent + Layout (regions, projections, modulators)
                                                   ^
                                    evolution.next_generation(fitness)
 ```
 
 One generation = `lax.scan` over T ticks of (observe, brain step, world step), jitted as a whole.
-Experiments only pick a ruleset slice, configs and a fitness function (ADR-010).
 
-## Defining a brain architecture (ADR-013)
+## Defining a brain (ADR-013, ADR-015, ADR-016)
 
 ```python
-from life.config import BrainConfig, RegionSpec, ProjectionSpec
+from life.config import BrainConfig, RegionSpec as R, ProjectionSpec as P, ModulatorSpec as Mod
 BrainConfig(
-    regions=(RegionSpec("cortex", 64, alpha=0.5), RegionSpec("striatum", 16, alpha=0.8, trace_tau=0.6)),
-    projections=(ProjectionSpec("in", "cortex", density=0.3, rule="oja", eta_init=0.01),
-                 ProjectionSpec("cortex", "cortex", density=0.2, rule="trace"),
-                 ProjectionSpec("cortex", "striatum", density=0.5, rule="hebb", modulated=True),
-                 ProjectionSpec("striatum", "out", density=1.0)),
-    modulator="reward")
+    regions=(R("valence_av", 3, sign="exc", group="valence"),
+             R("raphe", 2, sign="exc", alpha=0.03, group="affect"),
+             R("dwell", 2, sign="exc", receptors=(("5ht", "bias", 2.0),), group="affect")),
+    projections=(P("in", "valence_av", src_select=("pain",), density=1.0, w_init=3.0, evolve=False),  # hard-wired
+                 P("in", "valence_av", src_select=("vis*.app*",), rule="hebb", modulator="us",
+                   eta_init=0.05, elig_tau=0.8, abcd=(0, -1, 0, 0)),                                     # learned
+                 P("valence_av", "out", dst_range=(2, 4), density=1.0, w_init=3.0, evolve=False)),    # -> turns
+    modulators=(Mod("5ht", pos="raphe"), Mod("us", pos="us_taste", neg="us_pain")))
 ```
-Rules: `fixed`, `hebb`, `oja`, `trace`; `modulated=True` gates the update by the modulator (three-factor).
-Regions `in` and `out` exist automatically. Evolution decides per synapse whether plasticity is on
-(`EvolutionConfig.plastic=True`), starting from `eta_init`.
+
+Regions: size, leak `alpha`, Dale's-law `sign`, `kwta`, fixed `bias`, `receptors` for broadcast modulators, visual
+`group`. Projections: rule (`fixed`, `hebb`, `oja`, `trace`, `delta`), `modulator`, eligibility trace, `decay`
+toward w0, short-term `depression`, `kind` (`add`/`gain`), topology (`full`, `one_to_one`, `topographic`),
+`src_select` (input features by name), `dst_range`, hard-wiring (`w_init`, `evolve=False`).
+Modulators: named broadcast signals from region activity (`pos`, `neg`, weighted `terms`).
 
 ## Adding things (for a future maintainer)
 
-- **A new experiment:** copy `life/experiments/exp01_evolved_forager.py`, change the slice, config and fitness. Add a row to `docs/ROADMAP.md` and an entry to `docs/EXPERIMENT_LOG.md` when run.
-- **A bigger world:** use `ohol.slice_ruleset(data, ids, expand_hops=n)`; inspect ids with `scripts/ohol_inspect.py`.
-- **A new mechanic:** add a config field with a default that keeps old behaviour, implement in `world.py` or `sensors.py`, add a test in `tests/`.
-- **A new learning rule:** add a name to `brain.RULES` and a branch in `brain.plasticity`; add a test like `test_rules_change_weights_only_where_plastic`.
-- **A new brain module (e.g. basal ganglia with its own reward prediction error):** declare it as a region, compute its output inside `brain.step` after the matrix update behind a config flag, and feed it into `mod`.
+- **A new stage:** add it to `life/experiments/stages.py` (world, brain via `extend(parent_brain, ...)`, fitness,
+  metrics), run main and control, write findings in `docs/STAGE_LOG.md` and the summary row in `docs/STATUS.md`.
+- **A bigger world:** use `ohol.slice_ruleset(data, ids, expand_hops=n, clone_sets=...)`.
+- **A new mechanic:** add a config field with a default that keeps old behaviour, implement in `world.py` or
+  `sensors.py`, add a test in `tests/`.
+- **A new learning rule:** add a name to `brain.RULES` and a branch in `brain.plasticity_rule`; add a test.
 - **A new action:** append to `life/actions.py` and handle it in `step_world`. Never reorder.
-- **A dashboard panel:** edit `life/dashboard.html` (plain JS; data fields are documented in `life/dashboard.py: build_data`), then `python -m life.dashboard <run dir>`.
-- **Never** change a **Fixed** decision without a new ADR entry.
+- **A dashboard panel:** edit `life/dashboard.html` (plain JS; data fields in `life/dashboard.py: build_data`).
+- The old standalone experiments `life/experiments/exp01_*.py` and `exp02_*.py` are superseded by the stages.

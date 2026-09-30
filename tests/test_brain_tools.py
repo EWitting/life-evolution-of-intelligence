@@ -29,7 +29,7 @@ def test_layout_regions_and_rules():
     assert L.region("striatum") == slice(11, 15)
     assert float(L.allowed[:, :5].sum()) == 0                                 # nothing targets inputs
     assert int(L.rule[L.region("cortex"), L.region("striatum")][0, 0]) == brain.RULES["trace"]
-    assert float(L.modulated[L.region("cortex"), L.region("striatum")].mean()) == 1.0
+    assert float((L.mod_idx[L.region("cortex"), L.region("striatum")] == 0).mean()) == 1.0
     assert float(L.allowed[L.region("in"), L.region("out")].sum()) == 0     # no in->out projection here
     assert float(L.alpha[L.region("striatum")][0]) == pytest.approx(0.8)
 
@@ -38,16 +38,17 @@ def test_rules_change_weights_only_where_plastic():
     cfg = two_region_cfg()
     L = brain.build_layout(cfg, n_in=5, n_out=A.NUM_ACTIONS)
     g = brain.init_genome(jax.random.PRNGKey(0), L)
-    st = brain.init_state(g)
+    st = brain.init_state(g, L)
     obs = jnp.ones(5)
     for _ in range(3):
-        st, act = brain.step(cfg, L, g, st, obs, jnp.float32(1.0), jax.random.PRNGKey(1))
+        st, act = brain.step(cfg, L, g, st, obs, jnp.array([1.0, 0.0, 0.0]), jax.random.PRNGKey(1))
     dw = np.abs(np.asarray(st.w - g.w0 * g.mask))
     assert dw[L.region("in"), :].sum() == 0                                   # fixed projection unchanged
     assert dw[L.region("striatum"), L.region("out")].sum() > 0               # hebb with eta_init > 0
     assert dw[L.region("cortex"), L.region("striatum")].sum() > 0            # trace rule, modulated by 1.0
-    st0 = brain.init_state(g)
-    st0, _ = brain.step(cfg, L, g, st0, obs, jnp.float32(0.0), jax.random.PRNGKey(1))
+    st0 = brain.init_state(g, L)
+    for _ in range(2):
+        st0, _ = brain.step(cfg, L, g, st0, obs, jnp.zeros(3), jax.random.PRNGKey(1))
     assert np.abs(np.asarray(st0.w - g.w0 * g.mask))[L.region("cortex"), L.region("striatum")].sum() == 0  # mod 0
 
 

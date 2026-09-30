@@ -6,6 +6,9 @@ old one silently. Entries are written for a reader (human or model) with no othe
 
 Status legend: **Fixed** = do not change without a new ADR. **Default** = safe to change per experiment via config.
 
+**Note (user, 2026-09-30):** these ADRs guided the initial framework build and are not sacred. New additions may
+override them freely; when one does, add or amend an entry so the record stays current (see also `docs/BRAIN_EVOLUTION.md`).
+
 ---
 
 ## ADR-001 Stack: Python 3.12 + JAX, managed by uv
@@ -20,7 +23,7 @@ Status legend: **Fixed** = do not change without a new ADR. **Default** = safe t
 
 - **Fixed.** The world advances in integer ticks. One tick is the unit of everything: hunger drain, decay timers, ages.
 - The brain runs `brain_steps_per_tick` (**Default** 1) updates of a rate-coded network per world tick.
-- Neurons hold a continuous activation in [-1, 1] (tanh). There is no spike generation anywhere.
+- Neurons hold a continuous, non-negative firing rate in [0, 1): `max(0, tanh(h))` (amended 2026-09-30; was signed tanh). Signed quantities live in weights and modulators, not in rates. There is no spike generation anywhere.
 - Learning rules are functions of pre-activity, post-activity, per-synapse traces and a scalar modulator. STDP, if ever needed, is expressed as a trace rule on rates, not as spike timing.
 - OHOL decay times are given in seconds (negative numbers mean hours). They convert to ticks by `ticks_per_ohol_second` (**Default** 1.0) and are clipped to `max_decay_ticks` (**Default** 600).
 
@@ -56,7 +59,7 @@ Status legend: **Fixed** = do not change without a new ADR. **Default** = safe t
 
 ## ADR-007 Brain substrate: one masked recurrent rate network, extended by adding blocks
 
-- **Fixed.** A brain is a state vector `x[N]` and a weight matrix `W[N,N]` with a binary `mask[N,N]`. Neuron order: inputs (clamped to obs), hidden, outputs (action logits). One step: `x <- (1-a) x + a tanh(W^T x + b)` on non-input neurons.
+- **Fixed.** A brain is a state vector `x[N]` and a weight matrix `W[N,N]` with a binary `mask[N,N]`. Neuron order: inputs (clamped to obs), hidden, outputs (action logits). One step: `x <- (1-a) x + a max(0, tanh(W^T x + b))` on non-input neurons.
 - Plasticity is per synapse: `dW = eta * mod * (A pre post + B pre + C post + D)`, where `eta, A, B, C, D` are genome arrays of shape `[N,N]` (the ABCD Hebbian family) and `mod` is a scalar modulator. `mod = 1` gives pure Hebbian learning; a reward-prediction-error signal gives three-factor reinforcement learning. Weights are clipped to `[-w_max, w_max]`.
 - Genome = `W0, mask, b, eta, A, B, C, D` (all arrays). Evolution mutates them (`life/evolution.py`). Lifetime learning changes `W` only; `W` resets to `W0` at birth.
 - **How "building on top" works:** the next complexity level adds neurons (a block of rows/columns) and possibly a *module* that owns a sub-range of neurons and provides its own update or modulator (e.g. a basal-ganglia module that outputs `mod`). The previous level's neurons, weights and rules are kept untouched. Never replace the substrate; extend the vector.
@@ -99,6 +102,7 @@ Status legend: **Fixed** = do not change without a new ADR. **Default** = safe t
 - **Fixed.** A recording holds, per tick, the grid, every agent's position, facing, alive flag, held object, food, pain, action, modulator and full activation vector, plus weight snapshots of all agents every `record_weights_every` ticks and the genome's `w0`, `eta`, `mask`. Activations of input neurons *are* the observation, so the retina and body inputs can be reconstructed from the recording.
 - `life/dashboard.py` writes a self-contained `dashboard.html` (plain HTML + JS, data embedded as base64 typed arrays, OHOL sprites embedded as PNG) into the run directory. It shows the world with sprites, the focused agent's retina, body inputs, activations over time by region, and its weight matrix (w at snapshot, w - w0, w0, eta) with region boundaries and hover details, plus the fitness curve. No server, no build step; open the file in a browser.
 - `life/lab.py` (`Lab`) steps a world by hand from Python or Jupyter, overrides actions, exposes observations and brain state per agent, and exports the stepped history to the same dashboard.
+- The dashboard's first panel is an **architecture view**: one block per region (cells = the focused agent's activations at the current tick), one arrow per projection (colour = rule, dashed = modulated, width = summed |w| per target neuron at the current snapshot, loops = recurrent). Clicking a block shows that region's activations over time and its in/out projections with stats; clicking an arrow shows its weight block (w, w - w0, w0, eta). Blocks can be dragged; positions are remembered per experiment in browser localStorage. Runs without `brain.projections` in `config.json` get projections inferred from nonzero weight blocks.
 - OHOL sprites are composited approximately (`life/sprites.py`) for the viewer only; the brain never sees them (ADR-006).
 - The world background is the OHOL grassland ground texture (`data/ohol/ground/ground_0.tga`), tiled one texture per 4x4 cells as in the game. Single biome only for now; viewer only. Falls back to a flat colour when `ground/` is not checked out.
 - Agents are drawn as OHOL player bodies (the 22 spawnable `person>0` objects composited at age 25, agent i uses body i mod 22). OHOL bodies only face left/right, so the sprite is flipped for left, keeps its last horizontal facing while moving up/down, and a chevron at the cell edge (navy, red = focused) shows the true facing. Dead agents are faded. The held item is drawn at hand height in front of the body (approximating OHOL heldOffset), or as a legend-coloured square inside the triangle. Unchecking "sprites" restores the triangle view.
@@ -107,4 +111,25 @@ Status legend: **Fixed** = do not change without a new ADR. **Default** = safe t
 
 ## ADR-011 Documentation duties for every change
 
-- **Fixed.** Any change to a **Fixed** decision needs a new ADR here. Any new config field needs a docstring stating its default and unit (ticks, cells, fraction). `docs/ROADMAP.md` tracks experiment status.
+- **Fixed.** Any change to a **Fixed** decision needs a new ADR here. Any new config field needs a docstring stating its default and unit (ticks, cells, fraction). `docs/STATUS.md` tracks stage status (overview) and `docs/STAGE_LOG.md` the details.
+
+## ADR-015 Brain v2: rectified rates, Dale's law, per-projection options, named modulators (2026-09-30)
+
+- Supersedes the relevant parts of ADR-002, ADR-007 and ADR-013. Rates are `max(0, tanh(h))`. Regions may be
+  `exc`/`inh`/`mixed` (Dale's law; w stores magnitudes for signed regions). Projections choose rule (`fixed`,
+  `hebb`, `oja`, `trace`, `delta`), modulator (by name), eligibility trace, decay toward w0, short-term depression,
+  kind (`add`/`gain`), topology (`full`/`one_to_one`/`topographic`), input-feature selection (`src_select`),
+  target sub-range (`dst_range`), and hard-wiring (`w_init`, `evolve=False`).
+- Modulators are named and computed from region activity after each step (or from the world as a shortcut).
+- Plasticity genes (eta, A, B, C, D) are one value per projection, not per synapse.
+- Genomes carry across layouts by region and input-feature names (`brain.remap_genomes`); new evolvable synapses
+  start at 0. See `tests/test_brain_v2.py`, `docs/STAGE_LOG.md`.
+
+## ADR-016 New cell types get a fixed meaning; neuromodulation is broadcast through receptors (2026-09-30)
+
+- Decided with the user: a module added by a stage has hard-wired defining inputs and outputs (its meaning), so
+  later stages can build on it; evolution tunes the rest. Hard-wiring individual neurons is fine when the stage is
+  about that neuron.
+- Neuromodulators act on activity through `RegionSpec.receptors` (gain or bias, one sensitivity per region) and
+  on plasticity through `ProjectionSpec.modulator`. `gain` projections remain for point-to-point cases.
+- `RegionSpec.group` groups regions for visualisation only (nested with '/').

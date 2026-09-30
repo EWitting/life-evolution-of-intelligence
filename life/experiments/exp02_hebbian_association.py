@@ -14,7 +14,7 @@ Payoff design: good berry = +6 food, poison = -2 food and -1 fitness for pain, s
 Warm start: from a random population nobody forages well enough to ever taste poison, so start from the
 evolved foragers of exp01 (ADR-012). Always run the --no-plastic control alongside: on 2026-09-18 the
 control also avoided poison (23%) by reacting to the lingering pain input, i.e. the task did not yet
-require synaptic memory. See docs/ROADMAP.md for what to change; this is left to the user to tune.
+require synaptic memory. Superseded by stages 1.1-1.6 (life/experiments/stages.py, docs/STATUS.md).
 
 Run: .venv\\Scripts\\python.exe -m life.experiments.exp02_hebbian_association --init-from latest [--generations N]
      add --no-plastic for the control run (same start, no lifetime learning)
@@ -30,7 +30,7 @@ from life.run import run_evolution, load_population, latest_run
 
 BUSH, BERRY, EMPTY_BUSH = 30, 31, 279
 CLONE = {BUSH: 100030, BERRY: 100031, EMPTY_BUSH: 100279}
-REGROW_TICKS = 300   # rule patch: empty bushes regrow by themselves (OHOL needs watering)
+REGROW_TICKS = 500   # rule patch: empty bushes regrow by themselves (OHOL needs watering)
 POISON_FOOD = -1.0   # OHOL foodValue units (scaled by food_scale) lost when eating the poison berry
 POISON_PAIN = 1.0
 

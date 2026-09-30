@@ -94,6 +94,18 @@ def render_object(ohol_id: int, data_dir: Path = DEFAULT_DATA_DIR, thumb: int = 
     return canvas
 
 
+# tints for colour variants, in the order of experiments.stages.COLOURS (variant 1 = Red, ...)
+VARIANT_TINTS = [(255, 110, 110), (110, 150, 255), (255, 235, 90), (190, 110, 255), (255, 255, 255), (80, 80, 80),
+                 (255, 150, 200), (255, 170, 70)]
+
+
+def clone_base(oid: int) -> tuple[int, int]:
+    """Synthetic clone id -> (original OHOL id, variant). Clone ids are 100000 + 1000 * variant + original
+    (originals < 1000); exp02's single clone 100000 + original is variant 0."""
+    rest = oid - 100000
+    return rest % 1000, rest // 1000
+
+
 def sprite_data_urls(ohol_ids, data_dir: Path = DEFAULT_DATA_DIR) -> dict[int, str]:
     """{ohol_id: 'data:image/png;base64,...'} for every id that can be rendered."""
     if not sprites_available(data_dir):
@@ -101,13 +113,18 @@ def sprite_data_urls(ohol_ids, data_dir: Path = DEFAULT_DATA_DIR) -> dict[int, s
     out = {}
     for oid in ohol_ids:
         oid = int(oid)
-        base = oid - 100000 if oid >= 100000 else oid   # clones reuse the original's sprite
+        base, var = clone_base(oid) if oid >= 100000 else (oid, -1)   # clones reuse the original's sprite
         im = render_object(base, data_dir)
         if im is None:
             continue
-        if oid >= 100000:   # tint clones so they are distinguishable in the viewer
+        if oid >= 100000:   # tint clones with their colour so they are distinguishable in the viewer
             from PIL import ImageChops, Image
-            im = ImageChops.multiply(im, Image.new("RGBA", im.size, (150, 170, 255, 255)))
+            tint = VARIANT_TINTS[(var - 1) % len(VARIANT_TINTS)] if var >= 1 else (150, 170, 255)
+            if tint == (255, 255, 255):   # 'White': lighten instead of multiply
+                im = Image.blend(im, Image.new("RGBA", im.size, (255, 255, 255, 255)), 0.45).convert("RGBA")
+                im.putalpha(render_object(base, data_dir).getchannel("A"))
+            else:
+                im = ImageChops.multiply(im, Image.new("RGBA", im.size, tint + (255,)))
         buf = io.BytesIO()
         im.save(buf, format="PNG")
         out[oid] = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()

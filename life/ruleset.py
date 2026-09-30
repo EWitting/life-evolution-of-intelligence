@@ -28,6 +28,7 @@ class RuleArrays(NamedTuple):
     """Device arrays consumed by world/sensors. Indexed by local id. T = number of transitions (>= 1)."""
     food_value: jnp.ndarray      # [M] float; >0 feeds, <0 drains (poison)
     pain_value: jnp.ndarray      # [M] float; pain added to body signal when eaten
+    heat_value: jnp.ndarray      # [M] float; OHOL heatValue (warms nearby cells, WorldConfig.temperature)
     edible: jnp.ndarray          # [M] bool
     permanent: jnp.ndarray       # [M] bool
     holdable: jnp.ndarray        # [M] bool
@@ -62,6 +63,7 @@ class Ruleset:
     trans_new_target: np.ndarray
     decay_new: np.ndarray
     decay_ticks: np.ndarray
+    heat_value: np.ndarray | None = None
 
     @property
     def size(self) -> int:
@@ -77,16 +79,20 @@ class Ruleset:
         return self.names.index(name)
 
     def to_arrays(self, appearance_dim: int, spawn_weight: np.ndarray | None = None,
-                  food_value: np.ndarray | None = None, pain_value: np.ndarray | None = None) -> RuleArrays:
+                  food_value: np.ndarray | None = None, pain_value: np.ndarray | None = None,
+                  appearance: dict | None = None) -> RuleArrays:
         """Convert to device arrays. Optional overrides let experiments change edibility or spawning
         without touching the ruleset (used for the per-generation poison swap in exp02)."""
         fv = self.food_value if food_value is None else np.asarray(food_value, np.float32)
         pv = self.pain_value if pain_value is None else np.asarray(pain_value, np.float32)
         sw = self.map_chance if spawn_weight is None else np.asarray(spawn_weight, np.float32)
         app = np.stack([appearance_for(int(i), appearance_dim) for i in self.ohol_id])
+        for local, vec in (appearance or {}).items():   # designed appearances (e.g. feature conjunctions)
+            app[local] = np.asarray(vec, np.float32)
         return RuleArrays(
             food_value=jnp.asarray(fv, jnp.float32),
             pain_value=jnp.asarray(pv, jnp.float32),
+            heat_value=jnp.asarray(self.heat_value if self.heat_value is not None else np.zeros(self.size), jnp.float32),
             edible=jnp.asarray((fv != 0) | (pv != 0)),
             permanent=jnp.asarray(self.permanent),
             holdable=jnp.asarray(self.holdable),
@@ -112,6 +118,8 @@ class Ruleset:
                 flags.append(f"food={self.food_value[i]:g}")
             if self.pain_value[i]:
                 flags.append(f"pain={self.pain_value[i]:g}")
+            if self.heat_value is not None and self.heat_value[i]:
+                flags.append(f"heat={self.heat_value[i]:g}")
             if self.holdable[i]:
                 flags.append("holdable")
             if self.blocks[i]:
@@ -140,16 +148,17 @@ class RulesetBuilder:
 
     def __init__(self):
         self.objects: dict[int, dict] = {EMPTY: dict(name="empty", food_value=0.0, pain_value=0.0, permanent=False,
-                                                     holdable=False, blocks=False, num_uses=1, map_chance=0.0)}
+                                                     holdable=False, blocks=False, num_uses=1, map_chance=0.0,
+                                                     heat_value=0.0)}
         self.transitions: list[tuple[int, int, int, int, bool]] = []   # actor, target, new_actor, new_target, last_use
         self.decays: dict[int, tuple[int, int]] = {}                   # target -> (new_target, ticks)
 
     def add_object(self, ohol_id: int, name: str, food_value: float = 0.0, pain_value: float = 0.0,
                    permanent: bool = False, holdable: bool = True, blocks: bool = False, num_uses: int = 1,
-                   map_chance: float = 0.0):
+                   map_chance: float = 0.0, heat_value: float = 0.0):
         self.objects[ohol_id] = dict(name=name, food_value=food_value, pain_value=pain_value, permanent=permanent,
                                      holdable=holdable and not permanent, blocks=blocks, num_uses=max(1, num_uses),
-                                     map_chance=map_chance)
+                                     map_chance=map_chance, heat_value=heat_value)
         return self
 
     def add_transition(self, actor: int, target: int, new_actor: int, new_target: int, last_use: bool = False):
@@ -202,4 +211,5 @@ class RulesetBuilder:
             trans_new_target=np.array(new_target, np.int32),
             decay_new=decay_new,
             decay_ticks=decay_ticks,
+            heat_value=col("heat_value", np.float32),
         )

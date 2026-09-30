@@ -24,7 +24,7 @@ from . import actions as A
 from .config import ExperimentConfig
 from .ruleset import Ruleset, RuleArrays
 from .run import make_layout, make_tick, save_recording
-from .sensors import VISION_FIXED, BODY_FIXED
+from .sensors import VISION_FIXED, body_names
 from .world import init_world
 
 
@@ -40,8 +40,8 @@ class Lab:
         self.pop = population if population is not None else \
             jax.vmap(lambda k: brain.init_genome(k, self.layout))(jax.random.split(k1, N))
         self.world = init_world(exp.world, self.rules, k2)
-        self.bstate = jax.vmap(brain.init_state)(self.pop)
-        self.mod = jnp.ones(N, jnp.float32)
+        self.bstate = jax.vmap(lambda g: brain.init_state(g, self.layout))(self.pop)
+        self.sig = jnp.zeros((N, 3), jnp.float32)
         self._tick = jax.jit(make_tick(exp, self.layout))
         self.history: list[dict] = []
         self.w_snaps: list[np.ndarray] = []
@@ -62,15 +62,15 @@ class Lab:
         every = self.exp.evolution.record_weights_every
         for _ in range(n):
             self.key, k = jax.random.split(self.key)
-            self.world, self.bstate, self.mod, acts, obs = self._tick(
-                self.rules, self.pop, self.world, self.bstate, self.mod, k, ov)
+            self.world, self.bstate, self.sig, acts, obs, _ = self._tick(
+                self.rules, self.pop, self.world, self.bstate, self.sig, k, ov)
             self.last_obs, self.last_actions = obs, acts
             w = self.world
             self.history.append(dict(grid=np.asarray(w.grid_obj, np.int16), pos=np.asarray(w.pos, np.int16),
                                      dir=np.asarray(w.dir, np.int8), alive=np.asarray(w.alive),
                                      held=np.asarray(w.held, np.int16), food=np.asarray(w.food),
                                      pain=np.asarray(w.pain), action=np.asarray(acts, np.int8),
-                                     mod=np.asarray(self.mod), x=np.asarray(self.bstate.x, np.float16)))
+                                     mod=np.asarray(self.bstate.mod), x=np.asarray(self.bstate.x, np.float16)))
             if self.tick % every == 0:
                 self.w_snaps.append(np.asarray(self.bstate.w, np.float16))
         return self
@@ -82,7 +82,7 @@ class Lab:
         v = self.exp.vision
         o = np.asarray(self.last_obs[agent])
         nv = v.columns * (VISION_FIXED + v.appearance_dim)
-        nb = BODY_FIXED + v.appearance_dim
+        nb = len(body_names(v, self.exp.body))
         return {"vision": o[:nv].reshape(v.columns, -1), "body": o[nv:nv + nb], "sound": o[nv + nb:]}
 
     def brain(self, agent: int) -> dict:
@@ -133,5 +133,6 @@ class Lab:
         recs = {k: np.stack([h[k] for h in self.history]) for k in self.history[0]}
         snaps = self.w_snaps or [np.asarray(self.bstate.w, np.float16)]
         recs["w_snap"] = np.stack(snaps)
-        save_recording(out_dir, self.exp, self.ruleset, self.layout, self.pop, recs, best, dashboard=dashboard)
+        save_recording(out_dir, self.exp, self.ruleset, self.layout, self.pop, recs, best, dashboard=dashboard,
+                       appearance=self.rules.appearance)
         return out_dir

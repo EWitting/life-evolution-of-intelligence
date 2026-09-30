@@ -35,8 +35,11 @@ def build_data(run_dir: Path) -> dict:
         with open(run_dir / "fitness.csv") as f:
             fitness = [{k: float(v) for k, v in row.items()} for row in csv.DictReader(f)]
     k = cfg["vision"]["appearance_dim"]
-    colours = [[0.5 + 0.45 * float(c) for c in appearance_for(int(o), 3)] if o else [1, 1, 1] for o in rs["ohol_id"]]
-    appearance = [appearance_for(int(o), k).tolist() for o in rs["ohol_id"]]
+    if "appearance" in rec:   # the appearance the agents actually saw (e.g. designed look-alikes)
+        appearance = rec["appearance"].tolist()
+    else:
+        appearance = [appearance_for(int(o), k).tolist() for o in rs["ohol_id"]]
+    colours = [[0.5 + 0.45 * float(c) for c in a[:3]] if o else [1, 1, 1] for a, o in zip(appearance, rs["ohol_id"])]
     w_max = cfg["brain"]["w_max"]
     eta_max = cfg["evolution"]["eta_max"]
     try:
@@ -57,7 +60,8 @@ def build_data(run_dir: Path) -> dict:
                  "fitness": fitness, "config": cfg, "run": run_dir.name, "experiment": cfg["name"]},
         "grid": _b64(rec["grid"], np.int16), "pos": _b64(rec["pos"], np.int16), "dir": _b64(rec["dir"], np.int8),
         "alive": _b64(rec["alive"], np.uint8), "held": _b64(rec["held"], np.int16), "food": _b64(rec["food"], np.float32),
-        "pain": _b64(rec["pain"], np.float32), "action": _b64(rec["action"], np.int8), "mod": _b64(rec["mod"], np.float32),
+        "pain": _b64(rec["pain"], np.float32), "action": _b64(rec["action"], np.int8),
+        "mod": _b64(rec["mod"].reshape(rec["mod"].shape[0], rec["mod"].shape[1], -1), np.float32),
         "x": _b64(np.round(x * 127), np.int8),
         "w_snap": _b64(np.round(np.clip(rec["w_snap"].astype(np.float32) / w_max, -1, 1) * 127), np.int8),
         "w0": _b64(np.round(np.clip(rec["w0"].astype(np.float32) / w_max, -1, 1) * 127), np.int8),

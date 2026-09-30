@@ -5,6 +5,7 @@ Coordinates are (y, x). Facing directions: 0 = up (-y), 1 = right (+x), 2 = down
 from __future__ import annotations
 from typing import NamedTuple
 import jax
+import jax.scipy.signal
 import jax.numpy as jnp
 from jax import lax
 
@@ -32,6 +33,12 @@ class WorldState(NamedTuple):
     eaten: jnp.ndarray        # [N] float32 cumulative net food gained by eating
     alive_ticks: jnp.ndarray  # [N] int32
     pain_total: jnp.ndarray   # [N] float32 cumulative pain received
+    taste: jnp.ndarray        # [N] float32 sweetness of what was eaten last tick (food gained / food_scale, >= 0)
+    temp: jnp.ndarray         # [N] float32 body temperature, 0.5 = comfortable (WorldConfig.temperature)
+    temp_delta: jnp.ndarray   # [N] float32 change of body temperature in the last tick
+    last_action: jnp.ndarray  # [N] int32 action taken last tick (for the efference copy)
+    sick: jnp.ndarray         # [N, D] float32 pain scheduled for the coming ticks (WorldConfig.sickness_delay)
+    recent: jnp.ndarray       # [N, M] float32 fading count of what was eaten recently (WorldConfig.variety_bonus)
 
 
 def init_world(cfg: WorldConfig, rules: RuleArrays, key: jax.Array) -> WorldState:
@@ -40,7 +47,16 @@ def init_world(cfg: WorldConfig, rules: RuleArrays, key: jax.Array) -> WorldStat
     w = rules.spawn_weight.at[EMPTY].set(0.0)
     total = w.sum()
     p = jnp.where(total > 0, w / jnp.maximum(total, 1e-9), jnp.ones_like(w) / w.shape[0])
-    place = (jax.random.uniform(k1, (H, W)) < cfg.spawn_density) & (total > 0)
+    density = cfg.spawn_density
+    if cfg.patches > 0:   # objects only inside a few discs; density is raised so the total stays the same
+        kc = jax.random.split(k1)
+        k1 = kc[0]
+        cen = jax.random.randint(kc[1], (cfg.patches, 2), 0, jnp.array([H, W]))
+        yy, xx = jnp.meshgrid(jnp.arange(H), jnp.arange(W), indexing="ij")
+        d2 = ((yy[None] - cen[:, 0, None, None]) ** 2 + (xx[None] - cen[:, 1, None, None]) ** 2).min(axis=0)
+        inside = d2 <= cfg.patch_radius ** 2
+        density = jnp.where(inside, cfg.spawn_density * H * W / jnp.maximum(inside.sum(), 1), 0.0)
+    place = (jax.random.uniform(k1, (H, W)) < density) & (total > 0)
     obj = jax.random.choice(k2, w.shape[0], (H, W), p=p)
     grid = jnp.where(place, obj, EMPTY).astype(jnp.int32)
     pos = jnp.stack([jax.random.randint(k3, (N,), 0, H), jax.random.randint(k4, (N,), 0, W)], axis=1).astype(jnp.int32)
@@ -61,12 +77,28 @@ def init_world(cfg: WorldConfig, rules: RuleArrays, key: jax.Array) -> WorldStat
         eaten=jnp.zeros(N, jnp.float32),
         alive_ticks=jnp.zeros(N, jnp.int32),
         pain_total=jnp.zeros(N, jnp.float32),
+        taste=jnp.zeros(N, jnp.float32),
+        temp=jnp.full(N, 0.5, jnp.float32),
+        temp_delta=jnp.zeros(N, jnp.float32),
+        last_action=jnp.zeros(N, jnp.int32),
+        sick=jnp.zeros((N, max(1, cfg.sickness_delay)), jnp.float32),
+        recent=jnp.zeros((N, rules.food_value.shape[0]), jnp.float32),
     )
+
+
+def local_temperature(cfg: WorldConfig, rules: RuleArrays, grid: jnp.ndarray) -> jnp.ndarray:
+    """[H, W] temperature of every cell: ambient plus heat from nearby objects (linear fall-off), clipped to [0, 1]."""
+    r = cfg.heat_radius
+    d = jnp.abs(jnp.arange(-r, r + 1))
+    kern = jnp.clip(1.0 - jnp.maximum(d[:, None], d[None, :]) / (r + 1.0), 0.0, 1.0)
+    heat = rules.heat_value[grid] * cfg.heat_scale
+    field = jax.scipy.signal.convolve2d(heat, kern, mode="same")
+    return jnp.clip(cfg.ambient_temp + field, 0.0, 1.0)
 
 
 def step_world(cfg: WorldConfig, rules: RuleArrays, state: WorldState, actions: jnp.ndarray, key: jax.Array):
     """One tick. Returns (new_state, events) with events = {"gained": [N] food units gained by eating,
-    "pain": [N] pain received}."""
+    "pain": [N] pain received, "ate": [N] local id of the object eaten (0 = none)}."""
     H, W = cfg.height, cfg.width
     N = actions.shape[0]
     alive = state.alive
@@ -128,14 +160,34 @@ def step_world(cfg: WorldConfig, rules: RuleArrays, state: WorldState, actions: 
 
     # --- EAT ---
     eat = (actions == A.EAT) & rules.edible[held]
+    ate = jnp.where(eat, held, EMPTY)
     gained = jnp.where(eat, rules.food_value[held] * cfg.food_scale, 0.0)
-    pain_in = jnp.where(eat, rules.pain_value[held], 0.0)
+    recent = state.recent
+    if cfg.variety_bonus > 0:   # OHOL yum: fresh foods are worth more, repeated ones less (positive food only)
+        rep = jnp.minimum(recent[jnp.arange(N), held], 1.0)
+        mult = 1.0 + cfg.variety_bonus * (1.0 - 2.0 * rep)
+        gained = jnp.where(gained > 0, gained * mult, gained)
+        recent = recent * (1.0 - 1.0 / cfg.variety_tau) + jax.nn.one_hot(jnp.where(eat, held, 0), recent.shape[1]) * eat[:, None]
+    pain_eat = jnp.where(eat, rules.pain_value[held], 0.0)
     held = jnp.where(eat, EMPTY, held)
     food = jnp.clip(state.food + gained, 0.0, cfg.max_food)
+    # sickness: pain from what was eaten arrives sickness_delay ticks later (0 = at once)
+    if cfg.sickness_delay > 0:
+        pain_in = state.sick[:, 0]
+        sick = jnp.concatenate([state.sick[:, 1:], jnp.zeros((N, 1), jnp.float32)], axis=1)
+        sick = sick.at[:, cfg.sickness_delay - 1].add(pain_eat)
+    else:
+        pain_in, sick = pain_eat, state.sick
     pain = state.pain * cfg.pain_decay + pain_in
 
-    # --- metabolism and death ---
-    food = food - cfg.hunger_per_tick * alive
+    # --- temperature and metabolism ---
+    temp = state.temp
+    hunger = cfg.hunger_per_tick
+    if cfg.temperature:
+        local = local_temperature(cfg, rules, grid)[pos[:, 0], pos[:, 1]]
+        temp = temp + cfg.temp_rate * (local - temp)
+        hunger = hunger * (1.0 + cfg.temp_hunger * 2.0 * jnp.abs(temp - 0.5))
+    food = food - hunger * alive
     age = state.age + alive.astype(jnp.int32)
     alive_new = alive & (food > 0) & (age < cfg.max_age)
 
@@ -147,5 +199,11 @@ def step_world(cfg: WorldConfig, rules: RuleArrays, state: WorldState, actions: 
         eaten=state.eaten + gained,
         alive_ticks=state.alive_ticks + alive.astype(jnp.int32),
         pain_total=state.pain_total + pain_in,
+        taste=jnp.maximum(gained, 0.0) / cfg.food_scale,
+        last_action=actions.astype(jnp.int32),
+        sick=sick,
+        temp=temp,
+        temp_delta=temp - state.temp,
+        recent=recent,
     )
-    return new_state, {"gained": gained, "pain": pain_in}
+    return new_state, {"gained": gained, "pain": pain_in, "ate": ate}

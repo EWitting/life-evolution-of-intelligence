@@ -20,6 +20,7 @@ class OholObject:
     blocks: bool = False
     num_uses: int = 1
     map_chance: float = 0.0
+    heat_value: float = 0.0
     biomes: tuple[int, ...] = ()
     person: bool = False
 
@@ -80,6 +81,7 @@ def _parse_object(text: str) -> OholObject | None:
         blocks=kv.get("blocksWalking", 0) > 0,
         num_uses=max(1, int(kv.get("numUses", 1))),
         map_chance=kv.get("mapChance", 0.0),
+        heat_value=kv.get("heatValue", 0.0),
         biomes=biomes,
         person=kv.get("person", 0) > 0,
     )
@@ -130,7 +132,8 @@ def slice_ruleset(data: OholData, ohol_ids: list[int], expand_hops: int = 0,
                   ticks_per_second: float = 1.0, max_decay_ticks: int = 600,
                   clones: dict[int, int] | None = None, clone_name_prefix: str = "Variant ",
                   extra_decays: dict[int, tuple[int, int]] | None = None,
-                  extra_transitions: list[tuple[int, int, int, int]] | None = None) -> Ruleset:
+                  extra_transitions: list[tuple[int, int, int, int]] | None = None,
+                  clone_sets: list[tuple[dict[int, int], str]] | None = None) -> Ruleset:
     """Build a Ruleset from a set of OHOL object ids.
 
     - Transitions are kept when actor, target, new_actor and new_target are all in the set (0 and -1 count as in).
@@ -138,6 +141,7 @@ def slice_ruleset(data: OholData, ohol_ids: list[int], expand_hops: int = 0,
     - Category ids appearing as actor/target are expanded to their members that are in the set.
     - clones maps original id -> synthetic id (>= 100000): the object and every transition among the cloned
       group are duplicated with the new ids, giving a look-alike object with a different appearance (exp02).
+    - clone_sets [(clones, prefix), ...] makes several look-alike copies of the same objects.
     - extra_decays {target: (new_target, ticks)} and extra_transitions [(actor, target, new_actor, new_target)]
       are experiment-level rule patches applied last (they override OHOL). Use them sparingly and document
       them in the experiment docstring; they are also applied to clones.
@@ -160,7 +164,7 @@ def slice_ruleset(data: OholData, ohol_ids: list[int], expand_hops: int = 0,
     for oid in sorted(ids):
         o = data.objects[oid]
         b.add_object(oid, o.name, food_value=o.food_value, permanent=o.permanent, holdable=o.holdable,
-                     blocks=o.blocks, num_uses=o.num_uses, map_chance=o.map_chance)
+                     blocks=o.blocks, num_uses=o.num_uses, map_chance=o.map_chance, heat_value=o.heat_value)
 
     def expand(x: int) -> list[int]:
         if x in data.categories:
@@ -173,8 +177,11 @@ def slice_ruleset(data: OholData, ohol_ids: list[int], expand_hops: int = 0,
             continue
         for actor in expand(t.actor):
             for target in expand(t.target):
-                if all(_in(x, ids) for x in (actor, target, t.new_actor, t.new_target)):
-                    kept.append((actor, target, t.new_actor, t.new_target, t.last_use_target, t.decay_seconds,
+                # a category that survives the transition (tool keeps its category id) resolves to the member
+                na = actor if t.new_actor == t.actor and t.actor in data.categories else t.new_actor
+                nt = target if t.new_target == t.target and t.target in data.categories else t.new_target
+                if all(_in(x, ids) for x in (actor, target, na, nt)):
+                    kept.append((actor, target, na, nt, t.last_use_target, t.decay_seconds,
                                  t.actor == TIME_ACTOR))
 
     def norm(x: int) -> int:
@@ -193,11 +200,13 @@ def slice_ruleset(data: OholData, ohol_ids: list[int], expand_hops: int = 0,
     for row in kept:
         emit(*row)
 
-    if clones:
+    sets = ([(clones, clone_name_prefix)] if clones else []) + list(clone_sets or [])
+    for clones, clone_name_prefix in sets:
         for orig, new in clones.items():
             o = data.objects[orig]
             b.add_object(new, clone_name_prefix + o.name, food_value=o.food_value, permanent=o.permanent,
-                         holdable=o.holdable, blocks=o.blocks, num_uses=o.num_uses, map_chance=o.map_chance)
+                         holdable=o.holdable, blocks=o.blocks, num_uses=o.num_uses, map_chance=o.map_chance,
+                         heat_value=o.heat_value)
         cmap = {k: v for k, v in clones.items()}
         for actor, target, na, nt, last, secs, is_time in kept:
             if any(x in cmap for x in (actor, target, na, nt)):

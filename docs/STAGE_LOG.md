@@ -297,3 +297,32 @@ After this, the whole chapter-1 chain (1.1-1.6) is re-run in one go on the corre
 
   (1.5 stays lower for a naive population because a third of the berries are this life's unknown poison: that is
   the learning opportunity.) Chain 1.2 -> 1.6 re-running on these worlds with `--mutation-prob 0.1`.
+
+### v4: calibrated worlds, 10% weight mutation per child (seed 0)
+Chain `runs/logs/chain_v4.log`, 200 generations per run; `python -m life.experiments.stages summary <key>`.
+With the lower mutation rate both main and control now *improve* under selection (e.g. 1.2 control 50.8 -> 58.3),
+which confirms the mutational-load diagnosis.
+
+| last 25 of 200 generations | main fitness | control fitness | main / control poison | main / control lifetime |
+|---|---|---|---|---|
+| 1.2 drives | 51.9 | 58.3 | 0.165 / 0.092 | 373 / 420 |
+| 1.3 affect | 59.1 | 58.3 | 0.126 / 0.147 | 421 / 384 |
+| 1.4 habituation | 48.8 | 53.6 | 0.124 / 0.095 | 416 / 470 |
+
+- 1.2: the drive brain keeps agents warmer (0.433 vs 0.411) but eats more poison. Plausible cause: hunger raises
+  the gain of appetite for everything, poison look-alikes included. 1.3 ties; 1.4 control ahead.
+- Single seeds; the gaps are of the size that flipped sign between earlier versions. Second seeds are queued for
+  every chapter-1 comparison (`stages replicate <key> --seeds 1`).
+
+#### 1.5 v4 association (calibrated world)
+| last 25 of 200 generations | fitness | food eaten | pain | poison fraction | lifetime |
+|---|---|---|---|---|---|
+| main (US-gated conditioning) | 32.8 | 32.2 | 3.08 | 0.296 | 365 |
+| control (1.4 brain) | 32.3 | 32.2 | 3.43 | 0.310 | 348 |
+
+- Tie. Decisive lesion (8 worlds): the main population scores 30.4 intact and **33.8 with learning switched
+  off**. Bilaterian-style US-gated Hebbian conditioning does not pay on look-alikes even in a world with enough
+  learning opportunities (10 berries per life) and after evolution tuned its rates. Consistent with the
+  over-generalisation diagnosis.
+- Next: side experiment `x.td` (1.6 brain + the TD critic of 2.5, dopamine teaching instead of the raw US), same
+  world, against the 1.6 brain, to test whether error-driven learning fixes it before building chapter 2.

@@ -467,6 +467,24 @@ stage(Stage("2.5", "s2_5_dopamine_td", "2.4", B25, W22, VISION_23, BODY_12, xor_
             notes="TD critic (opponent value populations) and dopamine teaching instead of the raw US"))
 
 
+# x.td (side experiment, not part of the lineage): does error-driven TD learning fix the over-generalisation of
+# 1.5/1.6 conditioning? The 1.6 brain plus only the TD critic of 2.5 (value populations from identity features,
+# dopamine replacing the raw US as teacher), in the 1.6 world; control = the 1.6 brain.
+BXTD = extend(B16,
+              regions=(R("value_app", 3, **VALUE), R("value_av", 3, **VALUE),
+                       R("value_app_prev", 3, **VALUE), R("value_av_prev", 3, **VALUE)),
+              projections=(td_plastic("in", "value_app", CS_SEL), td_plastic("in", "value_av", CS_SEL),
+                           P("value_app", "value_app_prev", topology="one_to_one", w_init=1.0, evolve=False),
+                           P("value_av", "value_av_prev", topology="one_to_one", w_init=1.0, evolve=False),
+                           fixed("value_app", "valence_app", 1.5), fixed("value_av", "valence_av", 1.5)),
+              modulators=(Mod("da", terms=(("us_taste", 1.0), ("us_pain", -1.0), ("value_app", GAMMA),
+                                           ("value_av", -GAMMA), ("value_app_prev", -1.0), ("value_av_prev", 1.0))),))
+BXTD = replace(BXTD, projections=tuple(replace(p, modulator="da") if p.modulator == "us" else p for p in BXTD.projections))
+stage(Stage("x.td", "sx_td_test", "1.6", BXTD, W16, VISION_CH1, BODY_12, STAGES["1.6"].build,
+            fitness=fitness_pain, row_extra=poison_metrics, plastic=True, generations=200,
+            notes="side test: 1.6 + TD critic, dopamine teaches instead of the raw US"))
+
+
 # ------------------------------------------------------------------ running
 
 EVOLUTION_OVERRIDES: dict = {}   # set from the command line (--mutation-prob), applied to every stage
@@ -648,6 +666,53 @@ def main(argv=None):
             print(f"stage {k}: exit codes {codes}", flush=True)
             if any(codes):
                 return
+        return
+    if argv and argv[0] == "replicate":
+        # replicate <key> --seeds 1,2 [--generations N] [--mutation-prob p]: main + control per seed, in parallel,
+        # from the parent's newest lineage run; experiment names get the suffix _seed<S>
+        import subprocess
+        q = argparse.ArgumentParser(prog="stages replicate")
+        q.add_argument("key")
+        q.add_argument("--seeds", default="1")
+        q.add_argument("--generations", type=int, default=None)
+        q.add_argument("--mutation-prob", default="0.1")
+        b = q.parse_args(argv[1:])
+        s = STAGES[b.key]
+        parent = str(latest_run(STAGES[s.parent].name))
+        logs = RUNS_DIR / "logs"
+        logs.mkdir(parents=True, exist_ok=True)
+        for seed in b.seeds.split(","):
+            base = [sys.executable, "-m", "life.experiments.stages", b.key, "--init-from", parent, "--seed", seed,
+                    "--suffix", f"_seed{seed}", "--mutation-prob", b.mutation_prob]
+            if b.generations:
+                base += ["--generations", str(b.generations)]
+            jobs = [(f"{s.name}_seed{seed}", base), (f"{s.name}_control_seed{seed}", base + ["--control"])]
+            procs = [subprocess.Popen(cmd, stdout=open(logs / f"{n}.log", "w"), stderr=subprocess.STDOUT) for n, cmd in jobs]
+            print(f"stage {b.key} seed {seed}: exit codes {[p.wait() for p in procs]}", flush=True)
+        return
+    if argv and argv[0] == "summary":
+        # summary <key> [--window 25]: last-window means of main and control over every seed (run name variants)
+        from life.compare import load, window_means
+        q = argparse.ArgumentParser(prog="stages summary")
+        q.add_argument("key")
+        q.add_argument("--window", type=int, default=25)
+        b = q.parse_args(argv[1:])
+        s = STAGES[b.key]
+        for label, base in (("main", s.name), ("control", s.name + "_control")):
+            dirs = []
+            for d in sorted(RUNS_DIR.iterdir()):
+                rest = d.name[len(base):]
+                if d.name.startswith(base) and (rest == "" or rest.startswith("_seed")):
+                    runs = sorted(r for r in d.iterdir() if (r / "fitness.csv").exists())
+                    if runs:
+                        dirs.append(runs[-1])
+            if not dirs:
+                continue
+            lasts = [window_means(load(r), b.window)[1] for r in dirs]
+            keys = [k for k in ("fit_mean", "eaten", "pain", "alive_ticks", "temp_mean", "poison_frac") if k in lasts[0]]
+            vals = {k: [x[k] for x in lasts] for k in keys}
+            print(f"{label:8s} n={len(dirs)}  " + "  ".join(
+                f"{k} {np.mean(v):.3g} [{' '.join(f'{x:.3g}' for x in v)}]" for k, v in vals.items()))
         return
     if argv and argv[0] == "respond":
         q = argparse.ArgumentParser(prog="stages respond")

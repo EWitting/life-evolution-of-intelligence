@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Life dashboard</title>
+<style>
+  :root { --bg:#f6f6f4; --panel:#fff; --ink:#222; --muted:#777; --line:#ddd; --accent:#c8102e; }
+  body { margin:0; font:13px/1.4 system-ui, sans-serif; background:var(--bg); color:var(--ink); }
+  header { display:flex; flex-wrap:wrap; gap:12px; align-items:center; padding:8px 14px; background:var(--panel); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:2; }
+  header h1 { font-size:15px; margin:0 12px 0 0; }
+  header input[type=range] { width:320px; }
+  button, select { font:inherit; padding:2px 8px; }
+  main { display:grid; grid-template-columns: minmax(420px, 640px) 1fr; gap:12px; padding:12px; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:8px 10px; }
+  .panel h2 { font-size:13px; margin:0 0 6px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+  #world { image-rendering:pixelated; cursor:crosshair; display:block; max-width:100%; }
+  #tip { position:fixed; pointer-events:none; background:#222; color:#fff; padding:4px 8px; border-radius:4px; font-size:12px; display:none; z-index:5; white-space:pre; }
+  .right { display:flex; flex-direction:column; gap:12px; }
+  .row { display:flex; gap:16px; flex-wrap:wrap; align-items:flex-start; }
+  .kv { display:grid; grid-template-columns:auto auto; gap:2px 10px; }
+  .kv b { color:var(--muted); font-weight:500; }
+  .bar { height:8px; background:#eee; border-radius:4px; width:120px; display:inline-block; vertical-align:middle; }
+  .bar i { display:block; height:100%; border-radius:4px; background:#4a8; }
+  canvas.heat { display:block; max-width:100%; image-rendering:pixelated; }
+  canvas.zoomed { cursor:grab; } canvas.zoomed:active { cursor:grabbing; }
+  #legend { color:var(--muted); font-size:12px; }
+  details { font-size:12px; } pre { max-height:300px; overflow:auto; background:#fafafa; padding:6px; }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">Life</h1>
+  <button id="play">Play</button>
+  <button id="back">&lt;</button><button id="fwd">&gt;</button>
+  <input type="range" id="tick" min="0" value="0">
+  <span id="tickLabel"></span>
+  <label>speed <select id="speed"><option value="1">1x</option><option value="2">2x</option><option value="5">5x</option><option value="10">10x</option><option value="25" selected>25x</option><option value="50">50x</option><option value="100">100x</option><option value="250">250x</option></select></label>
+  <label>agent <select id="agent"></select></label>
+  <label><input type="checkbox" id="useSprites" checked> sprites</label>
+  <span id="legend"></span>
+</header>
+<main>
+  <div class="panel">
+    <h2>World <span id="worldInfo" style="text-transform:none;font-weight:400"></span></h2>
+    <canvas id="world"></canvas>
+    <div id="legendObjects" style="margin-top:6px"></div>
+  </div>
+  <div class="right">
+    <div class="panel">
+      <h2>Agent <span id="agentTitle" style="text-transform:none;font-weight:400"></span></h2>
+      <div class="row">
+        <div class="kv" id="agentKv"></div>
+        <div><div style="color:var(--muted)">retina (colour = appearance, height = closeness, A = agent, | = wall)</div>
+          <canvas id="retina" class="heat" width="360" height="70"></canvas>
+          <div style="color:var(--muted)">body inputs</div><div id="body"></div></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Activations over time (rows = neurons by region, blue -1 .. red +1) <span id="actRange" style="text-transform:none;font-weight:400"></span></h2>
+      <canvas id="act" class="heat"></canvas>
+      <div id="actLegend" style="color:var(--muted);font-size:12px"></div>
+    </div>
+    <div class="panel">
+      <h2>Weights <select id="wmode"><option value="w">w at nearest snapshot</option><option value="dw">w - w0 (lifetime change)</option><option value="w0">w0 (genome)</option><option value="eta">learning rate eta</option></select>
+        <span id="wInfo" style="text-transform:none;font-weight:400"></span></h2>
+      <div class="row"><canvas id="wmat" class="heat"></canvas><div id="wRegions" style="font-size:12px;color:var(--muted)"></div></div>
+    </div>
+    <div class="panel">
+      <h2>Fitness over generations (mean, max, net food eaten)</h2>
+      <canvas id="fit" class="heat" width="700" height="160"></canvas>
+    </div>
+    <div class="panel"><details><summary>Config</summary><pre id="config"></pre></details></div>
+  </div>
+</main>
+<div id="tip"></div>
+<script>
+const DATA = /*__DATA__*/null;
+const M = DATA.meta;
+const T = M.T, N = M.N, H = M.H, W = M.W, L = M.layout;
+const NN = L.n, NIN = L.n_in;
+function decode(d) {
+  const bin = atob(d.data); const buf = new ArrayBuffer(bin.length); const u8 = new Uint8Array(buf);
+  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  const C = {int8: Int8Array, uint8: Uint8Array, int16: Int16Array, float32: Float32Array}[d.dtype];
+  return {a: new C(buf), shape: d.shape};
+}
+const grid = decode(DATA.grid), pos = decode(DATA.pos), dir = decode(DATA.dir), alive = decode(DATA.alive);
+const held = decode(DATA.held), food = decode(DATA.food), pain = decode(DATA.pain), action = decode(DATA.action);
+const mod = decode(DATA.mod), X = decode(DATA.x), WS = decode(DATA.w_snap), W0 = decode(DATA.w0), ETA = decode(DATA.eta);
+const SNAPS = WS.shape[0];
+const sprites = {};
+for (const [oid, url] of Object.entries(DATA.sprites)) { const im = new Image(); im.src = url; sprites[oid] = im; }
+const ground = DATA.ground ? new Image() : null; let groundPat = null;   // OHOL grassland, tiled like the game: one texture per 4x4 cells
+if (ground) ground.src = DATA.ground;
+const people = (DATA.people || []).map(url => { const im = new Image(); im.src = url; return im; });   // OHOL bodies, facing right
+const objColour = M.colours.map(c => `rgb(${c.map(v => Math.round(v * 255)).join(',')})`);
+function appColour(v) { return `rgb(${[0,1,2].map(i => Math.round(255 * (0.5 + 0.45 * (v[i] || 0)))).join(',')})`; }
+
+let t = 0, focus = M.best, playing = false;
+const $ = id => document.getElementById(id);
+$('title').textContent = `${M.experiment} / ${M.run}`;
+$('tick').max = T - 1;
+for (let i = 0; i < N; i++) { const o = document.createElement('option'); o.value = i; o.textContent = i + (i === M.best ? ' (best)' : ''); $('agent').appendChild(o); }
+$('agent').value = focus;
+$('config').textContent = JSON.stringify(M.config, null, 1);
+$('legendObjects').innerHTML = M.names.map((n, i) => i ? `<span style="display:inline-block;margin:0 8px 2px 0"><i style="display:inline-block;width:10px;height:10px;background:${objColour[i]};border:1px solid #999;vertical-align:middle"></i> ${n}${M.food_value[i] ? ' (food ' + M.food_value[i] + ')' : ''}</span>` : '').join('');
+
+// ---------- zoom / pan: wheel zooms at the cursor, drag pans, double-click resets ----------
+// Content coords are canvas pixels at zoom 1 (the whole plot); canvas = (content - o) * s. The view never leaves the content.
+function zoomable(cv, axis, redraw, max = 16) {
+  const z = {sx: 1, sy: 1, ox: 0, oy: 0, dragged: false};
+  const clamp = () => {
+    z.sx = Math.max(1, Math.min(max, z.sx)); z.sy = Math.max(1, Math.min(max, z.sy));
+    z.ox = Math.max(0, Math.min(cv.width - cv.width / z.sx, z.ox)); z.oy = Math.max(0, Math.min(cv.height - cv.height / z.sy, z.oy));
+    cv.classList.toggle('zoomed', z.sx > 1 || z.sy > 1);
+  };
+  z.clamp = clamp;
+  // keep content point (x, y) out of the outer `m` fraction of the view by shifting the view as little as possible
+  z.follow = (x, y, m = 0.2) => {
+    const vw = cv.width / z.sx, vh = cv.height / z.sy;
+    z.ox = Math.min(Math.max(z.ox, x - vw * (1 - m)), x - vw * m); z.oy = Math.min(Math.max(z.oy, y - vh * (1 - m)), y - vh * m); clamp();
+  };
+  const toCanvas = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; };
+  z.toContent = e => { const [cx, cy] = toCanvas(e); return [z.ox + cx / z.sx, z.oy + cy / z.sy]; };
+  z.x = x => (x - z.ox) * z.sx; z.y = y => (y - z.oy) * z.sy;   // content -> canvas
+  z.apply = ctx => ctx.setTransform(z.sx, 0, 0, z.sy, -z.ox * z.sx, -z.oy * z.sy);
+  cv.addEventListener('wheel', e => {
+    e.preventDefault();
+    const [cx, cy] = toCanvas(e), [x, y] = z.toContent(e), f = Math.exp(-(e.deltaY || e.deltaX) * 0.0015), ax = axis(e);
+    if (ax.includes('x')) z.sx *= f; if (ax.includes('y')) z.sy *= f; clamp();
+    z.ox = x - cx / z.sx; z.oy = y - cy / z.sy; clamp(); redraw();
+  }, {passive: false});
+  let drag = null;
+  cv.addEventListener('mousedown', e => { drag = toCanvas(e); z.dragged = false; });
+  window.addEventListener('mousemove', e => {
+    if (!drag) return; const [cx, cy] = toCanvas(e);
+    if (Math.abs(cx - drag[0]) + Math.abs(cy - drag[1]) > 3) z.dragged = true;
+    if (!z.dragged) return;
+    z.ox -= (cx - drag[0]) / z.sx; z.oy -= (cy - drag[1]) / z.sy; drag = [cx, cy]; clamp(); redraw();
+  });
+  window.addEventListener('mouseup', () => { drag = null; });
+  cv.addEventListener('dblclick', () => { z.sx = z.sy = 1; z.ox = z.oy = 0; clamp(); redraw(); });
+  return z;
+}
+
+// ---------- world ----------
+const wc = $('world'), wctx = wc.getContext('2d');
+const CELL = Math.max(8, Math.floor(Math.min(620 / W, 620 / H)));
+wc.width = W * CELL; wc.height = H * CELL;
+const zw = zoomable(wc, () => 'xy', () => drawWorld());
+function drawWorld() {
+  const g = grid.a, base = t * H * W, useS = $('useSprites').checked;
+  zw.apply(wctx);
+  if (useS && ground && ground.complete && ground.naturalWidth && !groundPat) {
+    groundPat = wctx.createPattern(ground, 'repeat'); const k = 4 * CELL / ground.naturalWidth;
+    if (groundPat.setTransform) groundPat.setTransform(new DOMMatrix([k, 0, 0, k, 0, 0]));
+  }
+  wctx.fillStyle = useS && groundPat ? groundPat : '#e9e3d2'; wctx.fillRect(0, 0, wc.width, wc.height);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const o = g[base + y * W + x]; if (!o) continue;
+    const im = useS ? sprites[String(M.ohol_id[o])] : null;
+    if (im && im.complete && im.naturalWidth) {
+      const s = CELL * 0.95, r = Math.min(s / im.naturalWidth, s / im.naturalHeight);
+      const dw = im.naturalWidth * r, dh = im.naturalHeight * r;
+      wctx.fillStyle = 'rgba(0,0,0,0.18)'; wctx.beginPath(); wctx.ellipse(x * CELL + CELL / 2, y * CELL + CELL - 2, dw * 0.42, CELL * 0.1, 0, 0, 7); wctx.fill();
+      wctx.drawImage(im, x * CELL + (CELL - dw) / 2, y * CELL + CELL - dh - 1, dw, dh);
+    } else { wctx.fillStyle = objColour[o]; wctx.fillRect(x * CELL + 1, y * CELL + 1, CELL - 2, CELL - 2); }
+  }
+  const pb = t * N * 2;
+  for (let i = 0; i < N; i++) {
+    const y = pos.a[pb + 2 * i], x = pos.a[pb + 2 * i + 1], d = dir.a[t * N + i], al = alive.a[t * N + i];
+    const cx = x * CELL + CELL / 2, cy = y * CELL + CELL / 2, r = CELL * 0.38, col = al ? (i === focus ? '#c8102e' : '#1b3a6b') : '#bbb';
+    const body = useS && people.length ? people[i % people.length] : null;
+    wctx.save(); wctx.translate(cx, cy);
+    if (body && body.complete && body.naturalWidth) {
+      // OHOL bodies only face left/right: flip for left, keep the last horizontal facing while moving up/down
+      let left = d === 3; if (d % 2 === 0) for (let tt = t - 1; tt >= Math.max(0, t - 200); tt--) { const dd = dir.a[tt * N + i]; if (dd % 2) { left = dd === 3; break; } }
+      const s = CELL * 1.05 / body.naturalHeight, bw = body.naturalWidth * s, bh = body.naturalHeight * s;
+      wctx.globalAlpha = al ? 1 : 0.35;
+      wctx.fillStyle = 'rgba(0,0,0,0.18)'; wctx.beginPath(); wctx.ellipse(0, CELL / 2 - 2, bw * 0.5, CELL * 0.1, 0, 0, 7); wctx.fill();
+      if (left) wctx.scale(-1, 1);
+      wctx.drawImage(body, -bw / 2, CELL / 2 - bh - 1, bw, bh);
+      // held item in front of the hand, roughly where OHOL puts it (heldOffset: right of and below the body centre); mirrors with the body
+      const h = held.a[t * N + i];
+      if (h) {
+        const him = useS ? sprites[String(M.ohol_id[h])] : null, hs = CELL * 0.45, hx = bw * 0.3, hy = CELL / 2 - bh * 0.42;
+        if (him && him.complete && him.naturalWidth) {
+          const k = hs / Math.max(him.naturalWidth, him.naturalHeight), iw = him.naturalWidth * k, ih = him.naturalHeight * k;
+          wctx.drawImage(him, hx - iw / 2, hy - ih / 2, iw, ih);
+        } else { wctx.fillStyle = objColour[h]; wctx.fillRect(hx - hs / 4, hy - hs / 4, hs / 2, hs / 2); }
+      }
+      if (left) wctx.scale(-1, 1);
+      // facing chevron at the cell edge
+      const a = Math.max(3, CELL * 0.2);
+      wctx.rotate(d * Math.PI / 2); wctx.beginPath(); wctx.moveTo(0, -CELL / 2 - a * 0.4); wctx.lineTo(a, -CELL / 2 + a * 0.6); wctx.lineTo(-a, -CELL / 2 + a * 0.6); wctx.closePath();
+      wctx.fillStyle = col; wctx.fill(); wctx.strokeStyle = 'rgba(255,255,255,0.9)'; wctx.lineWidth = 1; wctx.stroke();
+    } else {
+      wctx.rotate(d * Math.PI / 2);
+      wctx.beginPath(); wctx.moveTo(0, -r); wctx.lineTo(r * 0.8, r); wctx.lineTo(-r * 0.8, r); wctx.closePath();
+      wctx.fillStyle = col; wctx.fill();
+      wctx.strokeStyle = 'rgba(255,255,255,0.8)'; wctx.lineWidth = 1; wctx.stroke();
+      const h = held.a[t * N + i];   // held item: a square in its legend colour inside the triangle
+      if (h) { wctx.fillStyle = objColour[h]; wctx.fillRect(-r * 0.3, r * 0.1, r * 0.6, r * 0.6); wctx.strokeRect(-r * 0.3, r * 0.1, r * 0.6, r * 0.6); }
+    }
+    wctx.restore();
+    if (i === focus) { wctx.strokeStyle = '#c8102e'; wctx.lineWidth = 2; wctx.beginPath(); wctx.arc(cx, cy, CELL * 0.6, 0, 7); wctx.stroke(); }
+  }
+  wctx.setTransform(1, 0, 0, 1, 0, 0);
+  let na = 0; for (let i = 0; i < N; i++) na += alive.a[t * N + i];
+  $('worldInfo').textContent = `tick ${t}, alive ${na}/${N}`;
+}
+function worldCell(e) { const [cx, cy] = zw.toContent(e); return [Math.floor(cx / CELL), Math.floor(cy / CELL)]; }
+wc.addEventListener('click', e => {
+  if (zw.dragged) return;
+  const [x, y] = worldCell(e);
+  const pb = t * N * 2;
+  for (let i = 0; i < N; i++) if (pos.a[pb + 2 * i] === y && pos.a[pb + 2 * i + 1] === x) { setFocus(i); return; }
+});
+wc.addEventListener('mousemove', e => {
+  const [x, y] = worldCell(e);
+  if (x < 0 || y < 0 || x >= W || y >= H) return hideTip();
+  const o = grid.a[t * H * W + y * W + x]; const ags = [];
+  const pb = t * N * 2; for (let i = 0; i < N; i++) if (pos.a[pb + 2 * i] === y && pos.a[pb + 2 * i + 1] === x) ags.push(i);
+  showTip(e, `(${y},${x}) ${o ? M.names[o] : 'empty'}${ags.length ? '\nagents: ' + ags.join(', ') : ''}`);
+});
+wc.addEventListener('mouseleave', hideTip);
+function showTip(e, s) { const tp = $('tip'); tp.style.display = 'block'; tp.textContent = s; tp.style.left = (e.clientX + 12) + 'px'; tp.style.top = (e.clientY + 12) + 'px'; }
+function hideTip() { $('tip').style.display = 'none'; }
+
+// ---------- agent panel ----------
+const V = M.vision, FV = 4 + V.appearance_dim, NV = V.columns * FV, NB = 4 + V.appearance_dim;
+function xval(tt, i, j) { return X.a[(tt * N + i) * NN + j] / 127; }
+function drawAgent() {
+  const i = focus, f = food.a[t * N + i], p = pain.a[t * N + i], h = held.a[t * N + i];
+  $('agentTitle').textContent = `#${i} ${alive.a[t * N + i] ? 'alive' : 'dead'}`;
+  const kv = [['food', `<span class="bar"><i style="width:${Math.max(0, 100 * f / M.world.max_food)}%"></i></span> ${f.toFixed(1)}`],
+    ['pain', p.toFixed(2)], ['held', h ? M.names[h] : '-'], ['action', M.actions[action.a[t * N + i]]],
+    ['modulator', mod.a[t * N + i].toFixed(2)], ['pos', `(${pos.a[(t * N + i) * 2]}, ${pos.a[(t * N + i) * 2 + 1]}) facing ${['up', 'right', 'down', 'left'][dir.a[t * N + i]]}`]];
+  $('agentKv').innerHTML = kv.map(([k, v]) => `<b>${k}</b><span>${v}</span>`).join('');
+  const rc = $('retina'), ctx = rc.getContext('2d'); ctx.clearRect(0, 0, rc.width, rc.height);
+  const cw = rc.width / V.columns;
+  for (let c = 0; c < V.columns; c++) {
+    const b = c * FV, hit = xval(t, i, b), close = xval(t, i, b + 1), isA = xval(t, i, b + 2), isW = xval(t, i, b + 3);
+    const app = [0, 1, 2].map(k => xval(t, i, b + 4 + k));
+    ctx.fillStyle = '#eee'; ctx.fillRect(c * cw + 1, 0, cw - 2, rc.height - 14);
+    if (hit > 0.5) { const hh = Math.max(3, close * (rc.height - 14)); ctx.fillStyle = isW > 0.5 ? '#555' : appColour(app); ctx.fillRect(c * cw + 1, rc.height - 14 - hh, cw - 2, hh); }
+    ctx.fillStyle = '#333'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(isA > 0.5 ? 'A' : isW > 0.5 ? '|' : '', c * cw + cw / 2, rc.height - 3);
+  }
+  const bn = ['food', 'age', 'pain', 'held?'].concat(Array.from({length: V.appearance_dim}, (_, k) => 'held app ' + k));
+  $('body').innerHTML = bn.map((n, k) => `<span style="display:inline-block;margin-right:10px"><b style="color:#777;font-weight:500">${n}</b> ${xval(t, i, NV + k).toFixed(2)}</span>`).join('') + `<span><b style="color:#777;font-weight:500">sound</b> ${xval(t, i, NV + NB).toFixed(2)}</span>`;
+}
+
+// ---------- activations ----------
+const ac = $('act'), actx = ac.getContext('2d');
+const RH = NN > 200 ? 1 : 2, TW = Math.max(1, Math.floor(700 / T));
+ac.width = T * TW; ac.height = NN * RH;
+const actOff = document.createElement('canvas'); actOff.width = T; actOff.height = NN;   // one pixel per (tick, neuron)
+const zact = zoomable(ac, e => e.shiftKey ? 'y' : 'x', () => drawAct(), 64);
+let actFocus = -1;
+function heat(v) { v = Math.max(-1, Math.min(1, v)); return v < 0 ? [255 * (1 + v), 255 * (1 + v), 255] : [255, 255 * (1 - v), 255 * (1 - v)]; }
+function buildAct() {
+  const octx = actOff.getContext('2d'), img = octx.createImageData(T, NN), d = img.data;
+  for (let tt = 0; tt < T; tt++) for (let j = 0; j < NN; j++) {
+    const [r, g, b] = heat(xval(tt, focus, j)), k = 4 * (j * T + tt); d[k] = r; d[k + 1] = g; d[k + 2] = b; d[k + 3] = 255;
+  }
+  octx.putImageData(img, 0, 0); actFocus = focus;
+  $('actLegend').textContent = L.names.map((n, k) => `${n}: rows ${L.offsets[k]}-${L.offsets[k] + L.sizes[k] - 1}`).join('   |   ');
+}
+function drawAct() {
+  if (actFocus !== focus) buildAct();
+  actx.setTransform(1, 0, 0, 1, 0, 0); actx.imageSmoothingEnabled = false;
+  zact.apply(actx); actx.drawImage(actOff, 0, 0, ac.width, ac.height); actx.setTransform(1, 0, 0, 1, 0, 0);
+  // lines at least one screen pixel wide: the canvas is wider than its on-screen size and pixelated downscaling drops 1px lines
+  const lw = Math.max(1, Math.ceil(ac.width / (ac.getBoundingClientRect().width || ac.width)));
+  actx.fillStyle = '#000';
+  for (let k = 1; k < L.names.length; k++) actx.fillRect(0, Math.round(zact.y(L.offsets[k] * RH)), ac.width, lw);
+  actx.fillStyle = 'rgba(0,170,0,0.8)'; actx.fillRect(Math.round(zact.x(t * TW)), 0, Math.max(lw, TW * zact.sx), ac.height);
+  const t0 = Math.floor(zact.ox / TW), t1 = Math.min(T, Math.ceil((zact.ox + ac.width / zact.sx) / TW)) - 1;
+  $('actRange').textContent = zact.sx > 1 || zact.sy > 1 ? `ticks ${t0}-${t1}` : '';
+}
+function actCell(e) { const [cx, cy] = zact.toContent(e); return [Math.floor(cx / TW), Math.floor(cy / RH)]; }
+ac.addEventListener('click', e => { if (!zact.dragged) setTick(actCell(e)[0]); });
+ac.addEventListener('mousemove', e => { const [tt, j] = actCell(e); if (j >= 0 && j < NN && tt >= 0 && tt < T) showTip(e, `tick ${tt} ${neuronName(j)} = ${xval(tt, focus, j).toFixed(2)}`); });
+ac.addEventListener('mouseleave', hideTip);
+function neuronName(j) { for (let k = L.names.length - 1; k >= 0; k--) if (j >= L.offsets[k]) return `${L.names[k]}[${j - L.offsets[k]}]` + (L.names[k] === 'out' ? ' ' + M.actions[j - L.offsets[k]] : ''); }
+
+// ---------- weights ----------
+const wm = $('wmat'), wctx2 = wm.getContext('2d');
+const PX = NN > 200 ? 1 : NN > 100 ? 3 : 4; wm.width = NN * PX; wm.height = NN * PX;
+function wget(mode, s, i, pre, post) {
+  const k = (i * NN + pre) * NN + post;
+  if (mode === 'eta') return ETA.a[k] / 255;
+  if (mode === 'w0') return W0.a[k] / 127;
+  const wv = s < 0 ? W0.a[k] / 127 : WS.a[(s * N + i) * NN * NN + pre * NN + post] / 127;
+  return mode === 'dw' ? (wv - W0.a[k] / 127) : wv;
+}
+const wOff = document.createElement('canvas'); wOff.width = NN; wOff.height = NN;   // one pixel per (pre, post)
+const zwm = zoomable(wm, () => 'xy', () => drawW(), 32);
+let wKey = '';
+function drawW() {
+  const mode = $('wmode').value, s = Math.floor((t + 1) / M.snap_every) - 1, key = `${mode} ${s} ${focus}`;
+  if (key !== wKey) {
+    const octx = wOff.getContext('2d'), img = octx.createImageData(NN, NN), d = img.data;
+    for (let pre = 0; pre < NN; pre++) for (let post = 0; post < NN; post++) {
+      const v = wget(mode, s, focus, pre, post);
+      const [r, g, b] = mode === 'eta' ? [255 * (1 - v), 255 * (1 - 0.5 * v), 255] : heat(mode === 'dw' ? v * 4 : v);
+      const k = 4 * (pre * NN + post); d[k] = r; d[k + 1] = g; d[k + 2] = b; d[k + 3] = 255;
+    }
+    octx.putImageData(img, 0, 0); wKey = key;
+  }
+  wctx2.setTransform(1, 0, 0, 1, 0, 0); wctx2.imageSmoothingEnabled = false;
+  zwm.apply(wctx2); wctx2.drawImage(wOff, 0, 0, wm.width, wm.height); wctx2.setTransform(1, 0, 0, 1, 0, 0);
+  wctx2.strokeStyle = '#000'; wctx2.lineWidth = 1;
+  for (let k = 1; k < L.names.length; k++) {
+    const px = Math.round(zwm.x(L.offsets[k] * PX)) + 0.5, py = Math.round(zwm.y(L.offsets[k] * PX)) + 0.5;
+    wctx2.beginPath(); wctx2.moveTo(0, py); wctx2.lineTo(wm.width, py); wctx2.moveTo(px, 0); wctx2.lineTo(px, wm.height); wctx2.stroke();
+  }
+  $('wInfo').textContent = mode === 'w' || mode === 'dw' ? (s < 0 ? '(before first snapshot: showing w0)' : `snapshot at tick ${(s + 1) * M.snap_every}`) : '';
+  $('wRegions').innerHTML = 'rows = pre, columns = post<br>' + L.names.map((n, k) => `${n}: ${L.offsets[k]}-${L.offsets[k] + L.sizes[k] - 1}`).join('<br>') + `<br>scale: w in [-${M.w_max}, ${M.w_max}], dw x4, eta in [0, ${M.eta_max}]`;
+}
+wm.addEventListener('mousemove', e => { const [cx, cy] = zwm.toContent(e), pre = Math.floor(cy / PX), post = Math.floor(cx / PX); if (pre >= 0 && pre < NN && post >= 0 && post < NN) { const mode = $('wmode').value, s = Math.floor((t + 1) / M.snap_every) - 1; const v = wget(mode, s, focus, pre, post); showTip(e, `${neuronName(pre)} -> ${neuronName(post)}\n${mode} = ${(mode === 'eta' ? v * M.eta_max : v * M.w_max).toFixed(3)}`); } });
+wm.addEventListener('mouseleave', hideTip);
+$('wmode').addEventListener('change', drawW);
+
+// ---------- fitness ----------
+function drawFit() {
+  const fc = $('fit'), ctx = fc.getContext('2d'); ctx.clearRect(0, 0, fc.width, fc.height);
+  const F = M.fitness; if (!F.length) { ctx.fillText('no fitness.csv (lab session)', 10, 20); return; }
+  const series = [['fit_mean', '#1b3a6b'], ['fit_max', '#c8102e'], ['eaten', '#4a8']];
+  const all = series.flatMap(([k]) => F.map(r => r[k])), lo = Math.min(0, ...all), hi = Math.max(...all) || 1;
+  const px = g => 30 + g * (fc.width - 40) / Math.max(1, F.length - 1), py = v => fc.height - 18 - (v - lo) * (fc.height - 28) / (hi - lo);
+  ctx.strokeStyle = '#ccc'; ctx.beginPath(); ctx.moveTo(30, py(0)); ctx.lineTo(fc.width - 10, py(0)); ctx.stroke();
+  ctx.font = '11px sans-serif'; ctx.fillStyle = '#777'; ctx.fillText(hi.toFixed(1), 2, 12); ctx.fillText(lo.toFixed(1), 2, fc.height - 18);
+  series.forEach(([k, c], si) => { ctx.strokeStyle = c; ctx.beginPath(); F.forEach((r, g) => g ? ctx.lineTo(px(g), py(r[k])) : ctx.moveTo(px(g), py(r[k]))); ctx.stroke(); ctx.fillStyle = c; ctx.fillText(k, 40 + si * 80, fc.height - 4); });
+}
+
+// ---------- control ----------
+// follow = keep the focused agent (world) and the current tick (activations) inside zoomed views; used by playback and stepping
+function setTick(v, follow = false) {
+  t = Math.max(0, Math.min(T - 1, v));
+  if (follow) { zw.follow((pos.a[(t * N + focus) * 2 + 1] + 0.5) * CELL, (pos.a[(t * N + focus) * 2] + 0.5) * CELL); zact.follow((t + 0.5) * TW, zact.oy + ac.height / zact.sy / 2); } $('tick').value = t; $('tickLabel').textContent = `${t} / ${T - 1} (${fmtTime(t / TPS)})`; drawWorld(); drawAgent(); drawAct(); drawW();
+}
+function fmtTime(sec) { const m = Math.floor(sec / 60), s = Math.floor(sec % 60); return `${m}:${String(s).padStart(2, '0')}`; }
+function setFocus(i) { focus = i; $('agent').value = i; setTick(t, true); }
+$('tick').addEventListener('input', e => setTick(+e.target.value));
+$('agent').addEventListener('change', e => setFocus(+e.target.value));
+$('useSprites').addEventListener('change', drawWorld);
+$('back').addEventListener('click', () => setTick(t - 1, true));
+$('fwd').addEventListener('click', () => setTick(t + 1, true));
+// playback runs on wall-clock time: speed Nx = N game seconds per real second, one game second = ticks_per_ohol_second ticks
+const TPS = M.world.ticks_per_ohol_second || 1;
+$('speed').title = `1x = real time (${TPS} tick${TPS === 1 ? '' : 's'} per second)`;
+let lastFrame = 0, tickAcc = 0;
+$('play').addEventListener('click', () => { playing = !playing; $('play').textContent = playing ? 'Pause' : 'Play'; if (playing) { if (t >= T - 1) setTick(0); lastFrame = 0; tickAcc = 0; requestAnimationFrame(loop); } });
+function loop(now) {
+  if (!playing) return;
+  if (lastFrame) tickAcc += Math.min(0.25, (now - lastFrame) / 1000) * (+$('speed').value) * TPS;   // cap the step after a hidden tab
+  lastFrame = now;
+  const n = Math.floor(tickAcc); if (n) { tickAcc -= n; setTick(t + n, true); }
+  if (t >= T - 1) { playing = false; $('play').textContent = 'Play'; return; }
+  requestAnimationFrame(loop);
+}
+document.addEventListener('keydown', e => { if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return; if (e.key === ' ') { e.preventDefault(); $('play').click(); } else if (e.key === 'ArrowLeft') setTick(t - (e.shiftKey ? 10 : 1), true); else if (e.key === 'ArrowRight') setTick(t + (e.shiftKey ? 10 : 1), true); });
+$('legend').textContent = `${N} agents, ${T} ticks, ${NN} neurons, weight snapshots every ${M.snap_every} ticks. Keys: space, arrows (shift = 10). Click an agent to focus; zoomed views follow it during playback. Speed is relative to real time. Zoom: mouse wheel (activations: time, shift+wheel = neurons), drag to pan, double-click to reset.`;
+drawFit(); setTick(0);
+const imgs = Object.values(sprites).concat(ground ? [ground] : [], people);
+let pending = imgs.length; imgs.forEach(im => { im.onload = () => { if (--pending <= 0) drawWorld(); }; });
+</script>
+</body>
+</html>

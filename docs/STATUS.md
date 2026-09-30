@@ -23,7 +23,7 @@ Status: **done** (run and analysed), **running**, **defined** (in `life/experime
 | 1.3 affect | serotonin (`raphe` -> dwell) and PDF (-> roam), slow, broadcast through receptors | done (v4, 1 seed) | v4: tie (59.1 vs 58.3), longer lives (421 vs 384). v3 lesions: serotonin/dwell used. Revealed mutational load; now 10% of weights mutate per child. |
 | 1.4 habituation | short-term depression on identity -> appetitive synapses; OHOL "yum" variety bonus | done (v4, 1 seed) | v4: control ahead (53.6 vs 48.8). |
 | 1.5 association | US neurons, `us` modulator, identity -> valence plasticity with eligibility traces; poison identity per life, delayed sickness | done (v4, 1 seed) | Tie with control; **learning switched off scores better** (33.8 vs 30.4). Plain US-gated conditioning over-generalises across look-alikes (see STAGE_LOG for the full debugging trail). Testing TD as the fix (x.td). |
-| 1.6 reversal | learned weights relax toward inherited values; poison swaps mid-life | running (v4) | |
+| 1.6 reversal | learned weights relax toward inherited values; poison swaps mid-life | done (v4, 1 seed) | Tie (30.8 vs 30.4); main eats more poison (0.33 vs 0.27): same conditioning problem as 1.5. |
 | 2.1 tectum | retinotopic map (topographic projection) + inhibitory pool; 9-column eyes | defined | |
 | 2.2 pallium expansion | 48 sparse k-WTA neurons with fixed random input; US-gated learning from pallium; XOR poison world | defined | |
 | 2.3 pallium clustering | Oja input + recurrent Hebb; noisy appearance | defined | |

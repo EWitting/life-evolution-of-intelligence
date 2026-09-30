@@ -326,3 +326,37 @@ which confirms the mutational-load diagnosis.
   over-generalisation diagnosis.
 - Next: side experiment `x.td` (1.6 brain + the TD critic of 2.5, dopamine teaching instead of the raw US), same
   world, against the 1.6 brain, to test whether error-driven learning fixes it before building chapter 2.
+
+#### 1.6 v4 reversal
+| last 25 of 200 generations | fitness | food eaten | pain | poison fraction | lifetime |
+|---|---|---|---|---|---|
+| main (conditioning + forgetting) | 30.8 | 31.1 | 3.75 | 0.334 | 345 |
+| control (1.5 brain) | 30.4 | 29.4 | 2.49 | 0.271 | 344 |
+
+- Tie in fitness; the main brain eats *more* poison. Same picture as 1.5: in this world the bilaterian-style
+  conditioning does not help. Chapter 1 summary: the fixed-meaning valence circuit (1.1) is the one clear win;
+  drives, affect and habituation give ties or small losses with one seed; conditioning fails on look-alikes.
+
+#### x.td side test: TD critic + dopamine teaching (1.6 world)
+| last 25 of 200 generations | fitness | food eaten | pain | poison fraction |
+|---|---|---|---|---|
+| main (1.6 + TD critic, dopamine teaches) | 30.0 | 29.6 | 2.96 | 0.302 |
+| control (1.6 brain) | 30.7 | 30.4 | 3.18 | 0.310 |
+
+- Tie. Lesion: learning on 33.4 vs off 32.9 (TD made learning neutral instead of harmful, not useful).
+
+#### Why conditioning does not pay here (probe on the 1.5 population, learning on vs off, 12 worlds)
+| per-life poison looks | learning | fitness | pain | poison early -> late |
+|---|---|---|---|---|
+| like the other berries (0.8) | on | 28.5 | 3.10 | 0.32 -> 0.04 |
+| like the other berries (0.8) | off | 28.3 | 3.45 | 0.35 -> 0.09 |
+| unrelated (0.0) | on | 25.2 | 0.55 | 0.12 -> 0.06 |
+| unrelated (0.0) | off | 25.0 | 0.58 | 0.12 -> 0.03 |
+
+- With look-alikes, learning works a little (pain -10%, late poison halved) but gains only ~0.2 fitness. With
+  distinct stimuli it is useless because the population never eats unfamiliar-looking food anyway (inherited
+  preferences act like neophobia). The early -> late drop also happens *without* learning (poison bushes are
+  emptied early and regrow slowly), so the within-life poison metric is confounded.
+- Conclusion: the rules work; the **task** does not reward within-life learning enough: inherited preferences
+  and the reactive pain response already capture most of the value, and a single-life lesson about one of six
+  berry types is worth a point or two against fitness noise of tens.

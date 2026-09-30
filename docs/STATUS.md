@@ -1,7 +1,7 @@
 # Status
 
 One screen on where the project is. Plan: `docs/BRAIN_EVOLUTION.md`. Details, numbers and run directories:
-`docs/STAGE_LOG.md`. Newest decisions: `docs/DECISIONS.md` (ADR-015, ADR-016). Last updated 2026-09-30.
+`docs/STAGE_LOG.md`. Newest decisions: `docs/DECISIONS.md` (ADR-015, ADR-016). Last updated 2026-09-30, end of session.
 
 ## How a stage is judged
 
@@ -28,11 +28,31 @@ Status: **done** (run and analysed), **running**, **defined** (in `life/experime
 | 2.2 pallium expansion | 48 sparse k-WTA neurons with fixed random input; US-gated learning from pallium; XOR poison world | defined | |
 | 2.3 pallium clustering | Oja input + recurrent Hebb; noisy appearance | defined | |
 | 2.4 basal ganglia | striatum -| tonic GPi -| motor (disinhibition), fixed | defined | |
-| x.td (side test) | 1.6 brain + TD critic only, dopamine replaces the raw US as teacher | running | Tests whether error-driven learning fixes the 1.5 over-generalisation. |
-| 2.5 dopamine TD | opponent value populations, TD-error `da` from weighted region terms; dopamine replaces the raw US as teacher | defined | Expected to fix the over-generalisation of 1.5. |
+| x.td (side test) | 1.6 brain + TD critic only, dopamine replaces the raw US as teacher | done (1 seed) | Tie (30.0 vs 30.7); learning becomes neutral instead of harmful. Probe: the rules work, the *task* does not reward within-life learning (see Open question). |
+| 2.5 dopamine TD | opponent value populations, TD-error `da` from weighted region terms; dopamine replaces the raw US as teacher | defined | x.td suggests it will not pay in the current world either, until the task is redesigned. |
 | 2.6-2.10 | actor (D1/D2), curiosity, hippocampal map (+ STDP sequences), cerebellum, NE/ACh | planned | 2.6 candidate world: OHOL stone -> sharp stone -> dig wild carrot / burdock chain (verified in the data). |
 | 3.x simulating | neocortex as predictive model, offline mode (simulation, replay), PFC, episodic memory | planned | Needs core mechanism M8 (offline mode). |
 | 4.x mentalizing, 5.x speaking | self-model, theory of mind, imitation, future needs; signals to language | planned | Needs the continuous life cycle (below). |
+
+## Open question for the next session (where we stopped, 2026-09-30)
+
+Within-life conditioning (1.5, 1.6 and the TD test x.td) works mechanically but barely pays. Inherited preferences
+plus the reactive pain response already capture most of the value, and a lesson about one of six berry types is
+worth a point or two against fitness noise of tens (STAGE_LOG: "Why conditioning does not pay here"). Options:
+
+1. **Redesign the learning task** so per-life information is valuable. For example: which of four look-alike bush
+   types is really nutritious changes per life (the rest are poor), lives are longer (2000 ticks), and poison is
+   costlier. Then re-test 1.5, 1.6 and TD. This is the classic condition under which learning evolves: the
+   environment changes unpredictably between lives. (Recommended.)
+2. Move on to chapter 2 (tectum, pallium, basal ganglia: defined, not run) and revisit learning with TD later.
+3. Second seeds for every chapter-1 comparison first (`stages replicate <key> --seeds 1`, about 1.5 h of CPU).
+
+Also pending: the within-life poison metric is confounded (poison bushes are emptied early and regrow slowly);
+a better metric is poison eaten *after the first poisoning*, compared with a no-learning twin of the same agent.
+
+Practical notes: plastic stages run at about 9 s per generation with two processes on the CPU (200 generations
+about 30 min); laptop sleep only pauses runs. The lineage run of a stage is the newest run in its un-suffixed
+directory; `_seedN`, `_mp01` and `_scratch` directories are variants.
 
 ## Core and tools (done)
 

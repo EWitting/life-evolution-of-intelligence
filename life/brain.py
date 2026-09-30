@@ -126,7 +126,7 @@ def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, ob
     h = None
     for _ in range(cfg.steps_per_tick):
         h = x @ w + genome.b
-        x_new = (1.0 - layout.alpha) * x + layout.alpha * jnp.tanh(h)
+        x_new = (1.0 - layout.alpha) * x + layout.alpha * 0.5*(jnp.tanh(h)+1)
         x_new = x_new.at[:n_in].set(obs)
         w = jnp.clip(w + plasticity(layout, genome, w, x, x_new, tr, mod), -cfg.w_max, cfg.w_max)
         tr = layout.trace_tau * tr + (1.0 - layout.trace_tau) * x_new

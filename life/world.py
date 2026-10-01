@@ -36,6 +36,8 @@ class WorldState(NamedTuple):
     taste: jnp.ndarray        # [N] float32 sweetness of what was eaten last tick (food gained / food_scale, >= 0)
     temp: jnp.ndarray         # [N] float32 body temperature, 0.5 = comfortable (WorldConfig.temperature)
     temp_delta: jnp.ndarray   # [N] float32 change of body temperature in the last tick
+    skin: jnp.ndarray         # [N] float32 temperature of the cell the agent stands on
+    skin_delta: jnp.ndarray   # [N] float32 its change in the last tick (the gradient along the agent's path)
     last_action: jnp.ndarray  # [N] int32 action taken last tick (for the efference copy)
     sick: jnp.ndarray         # [N, D] float32 pain scheduled for the coming ticks (WorldConfig.sickness_delay)
     recent: jnp.ndarray       # [N, M] float32 fading count of what was eaten recently (WorldConfig.variety_bonus)
@@ -80,6 +82,8 @@ def init_world(cfg: WorldConfig, rules: RuleArrays, key: jax.Array) -> WorldStat
         taste=jnp.zeros(N, jnp.float32),
         temp=jnp.full(N, 0.5, jnp.float32),
         temp_delta=jnp.zeros(N, jnp.float32),
+        skin=jnp.full(N, cfg.ambient_temp, jnp.float32),
+        skin_delta=jnp.zeros(N, jnp.float32),
         last_action=jnp.zeros(N, jnp.int32),
         sick=jnp.zeros((N, max(1, cfg.sickness_delay)), jnp.float32),
         recent=jnp.zeros((N, rules.food_value.shape[0]), jnp.float32),
@@ -184,10 +188,12 @@ def step_world(cfg: WorldConfig, rules: RuleArrays, state: WorldState, actions: 
 
     # --- temperature and metabolism ---
     temp = state.temp
+    skin = state.skin
     hunger = cfg.hunger_per_tick
     if cfg.temperature:
         local = local_temperature(cfg, rules, grid)[pos[:, 0], pos[:, 1]]
         temp = temp + cfg.temp_rate * (local - temp)
+        skin = local
         hunger = hunger * (1.0 + cfg.temp_hunger * 2.0 * jnp.abs(temp - 0.5))
     if cfg.move_cost > 0 or cfg.turn_cost > 0:   # locomotion costs energy
         turning = (actions == A.TURN_LEFT) | (actions == A.TURN_RIGHT)
@@ -211,6 +217,8 @@ def step_world(cfg: WorldConfig, rules: RuleArrays, state: WorldState, actions: 
         sick=sick,
         temp=temp,
         temp_delta=temp - state.temp,
+        skin=skin,
+        skin_delta=skin - state.skin,
         recent=recent,
     )
     return new_state, {"gained": gained, "pain": pain_in, "ate": ate}

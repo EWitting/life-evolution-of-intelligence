@@ -191,3 +191,11 @@ override them freely; when one does, add or amend an entry so the record stays c
   - Only plastic weights are clipped to `w_max`; inherited and hard-wired weights are used as written.
   - Stage comparisons use three seeds, the last 50 generations and a re-evaluation of the final populations in
     shared worlds (`stages summary`).
+- **Amended 2026-10-01, evening** (STAGE_LOG v7-v9):
+  - **A stage succeeds when its circuit is used**: lesions of the new regions clearly lower fitness over three
+    seeds, and main is not clearly worse than control. Main >> control is no longer required (user).
+  - Stage 0.9 is gone: with the first-meal fitness stage 1.0 evolves from random brains with the movement cost on.
+  - **No-cliff calibration uses the metabolic rate**: `hunger_per_tick` is lowered per stage so that the parent
+    population keeps its lifetime in the new world (density does not help: time per meal is the limit).
+  - Thermotaxis reads `skin_change` (change of the temperature at the agent's cell), the body temperature is slow,
+    and neuromodulators can persist (`ModulatorSpec.decay`; serotonin 0.97).

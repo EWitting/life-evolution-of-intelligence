@@ -5,54 +5,62 @@ One screen on where the project is. Plan: `docs/BRAIN_EVOLUTION.md`. Details, nu
 
 ## How a stage is judged
 
-Main = the stage's new brain; control = the parent's brain in the same new world, both warm-started from the
-parent's final population, 200 generations, one life per genome, **three seeds** (`stages replicate <key>`).
-`stages summary <key>` gives the mean of the last 50 generations and the final populations re-evaluated in 8
-shared worlds, with the standard error over seeds. Then a **lesion study** (`stages lesion <run>`: silence each
-new region, and switch plasticity off). **Fitness = well-fed lifetime from the first meal** (ADR-018).
+A stage succeeds when its circuit is **used**, so that later stages can build on it: silencing the new regions
+clearly lowers fitness, and main is not clearly worse than control (user, 2026-10-01; main >> control is not
+required). Main = the stage's new brain; control = the parent's brain in the same new world; both warm-started
+from the parent's final population, 200 generations, one life per genome, **three seeds**.
 
-## Stages (v6, 2026-10-01)
+    stages replicate <key>      two more seeds of main and control
+    stages summary <key>        main vs control: last 50 generations, and re-evaluated in 8 shared worlds, +- s.e.
+    stages lesions <key>        fitness with each region silenced, % of intact, per seed
+
+**Fitness = well-fed lifetime from the first meal** (ADR-018).
+
+## Stages (v9, 2026-10-01)
 
 Status: **done** (run and analysed), **defined** (in `life/experiments/stages.py`, not yet run), **planned**.
-Numbers are the v6 run, which still used the well-fed lifetime counted from birth and the `cold` bug (below).
+"Lesion" = fitness with the region silenced, % of intact, mean of three seeds.
 
-| stage | what it adds | status | short finding (v6, 3 seeds, main vs control) |
-|---|---|---|---|
-| 0.9 bootstrap | the 1.0 brain from random weights, free movement | done | Foraging evolves: fitness 587, 28 meals per life. |
-| 1.0 steering | ganglion (exc + inh, lagging normalisation, alpha 1); movement now costs energy | done | 522, 32 meals per life. From scratch with movement cost, evolution stood still (fitness artefact, now fixed but not re-tested). |
-| 1.1 valence | appetitive / aversive cell types with *fixed meaning* | done | Tie: 440 vs 452 (re-evaluated +9 +-4). Less poison and pain, no fitness gain. |
-| 1.2 drives | `hunger` (broadcast), `cold` gating innate thermotaxis | done, to redo | 309 vs 325. Ran with the `cold` bug. |
-| 1.3 affect | serotonin (dwell) and PDF (roam), mutually inhibiting | done, to redo | 276 vs 285. |
-| 1.4 habituation | short-term depression on identity -> appetitive synapses; "yum" bonus | done, to redo | 282 vs 273. |
-| 1.5 association | US neurons, `us` modulator, identity -> valence plasticity with eligibility traces | defined, not run | New world (ADR-017): two novel foods per life, costlier poison, 2000 ticks. |
-| 1.6 reversal | learned weights relax toward inherited values; poison swaps mid-life | defined, not run | |
-| 2.1 tectum | retinotopic map + inhibitory pool; 9-column eyes | defined | |
-| 2.2 pallium expansion | 48 sparse k-WTA neurons; US-gated learning from pallium; XOR poison world | defined (v4 design) | To do first: input weights drawn per life (ADR-017), per-life looks. |
-| 2.3 pallium clustering | Oja input + recurrent Hebb; noisy appearance | defined | |
-| 2.4 basal ganglia | striatum -| tonic GPi -| motor (disinhibition), fixed | defined | |
-| x.td (side test) | 1.6 brain + TD critic only | defined, not re-run | |
-| 2.5 dopamine TD | opponent value populations, TD-error `da` | defined | |
-| 2.6-2.10 | actor (D1/D2), curiosity, hippocampal map, cerebellum, NE/ACh | planned | |
-| 3.x simulating | neocortex as predictive model, offline mode, PFC, episodic memory | planned | Needs core mechanism M8 (offline mode). |
-| 4.x mentalizing, 5.x speaking | self-model, theory of mind, imitation; signals to language | planned | Needs the continuous life cycle (below). |
+| stage | what it adds | status | main vs control | is the circuit used? |
+|---|---|---|---|---|
+| 1.0 steering | ganglion (exc + inh, lagging normalisation, alpha 1), evolved reflexes; movement costs energy | done | n/a | Foraging evolves from random brains: lifetime about 690 of 1000, 33 meals per life. |
+| 1.1 valence | appetitive / aversive cell types with *fixed meaning* | done | 539 vs 537 | **Yes.** valence_av 73, no_feed 78, valence_app 87. |
+| 1.2 drives | `hunger` (broadcast), `cold` gating innate thermotaxis | done | 609 vs 634 | **No.** hunger, cold, warm_run, warm_turn all 100-102. |
+| 1.3 affect | serotonin (dwell) and PDF (roam), mutually inhibiting | done | 539 vs 567 | **Partly.** pdf 85, roam 85; raphe 87, dwell 91. |
+| 1.4 habituation | short-term depression on identity -> appetitive synapses; "yum" bonus | done | 557 vs 567 | **No.** Depression off = 100. |
+| 1.5 association | US neurons, `us` modulator, identity -> valence plasticity with eligibility traces | done (1 seed) | 735 vs 883 | **No.** Plasticity off = 97.5; main below control. An agent eats only about 19 berries per life. |
+| 1.6 reversal | learned weights relax toward inherited values; poison swaps mid-life | defined, not run | | |
+| 2.1 tectum | retinotopic map + inhibitory pool; 9-column eyes | defined | | |
+| 2.2 pallium expansion | 48 sparse k-WTA neurons; US-gated learning from pallium; XOR poison world | defined (v4 design) | | To do first: input weights drawn per life (ADR-017), per-life looks. |
+| 2.3 pallium clustering | Oja input + recurrent Hebb; noisy appearance | defined | | |
+| 2.4 basal ganglia | striatum -| tonic GPi -| motor (disinhibition), fixed | defined | | |
+| x.td (side test) | 1.6 brain + TD critic only | defined, not re-run | | |
+| 2.5 dopamine TD | opponent value populations, TD-error `da` | defined | | |
+| 2.6-2.10 | actor (D1/D2), curiosity, hippocampal map, cerebellum, NE/ACh | planned | | |
+| 3.x simulating | neocortex as predictive model, offline mode, PFC, episodic memory | planned | | Needs core mechanism M8 (offline mode). |
+| 4.x mentalizing, 5.x speaking | self-model, theory of mind, imitation; signals to language | planned | | Needs the continuous life cycle (below). |
 
-## Next steps (where we stopped, 2026-10-01)
+## Open questions (where we stopped, 2026-10-01)
 
-1. **Probe the first-meal fitness from scratch with movement cost** (`stages 1.0 --init-from none`, two seeds; a
-   few minutes). It was started and then stopped when the machine ran low on memory. If foraging evolves, drop
-   stage 0.9.
-2. **Re-run 0.9/1.0-1.4 with three seeds** under the first-meal fitness and the fixed `cold` neuron (about an hour).
-3. **Calibrate and run 1.5** (one seed plus the plasticity-off lesion, about 15 minutes at the new speed), then
-   1.6 and x.td.
-4. **Open design questions.** No chapter-1 module beats its control. Candidates: poison is cheap (2/3 food unit per
-   berry in 1.1-1.4); the 1.2 world is a cliff (fitness 440 -> 320); the innate valence wiring drives FORWARD,
-   USE and EAT from the same cells although the actions exclude each other; serotonin/dwell was unused in v5.
-5. Metabolic cost of neural activity is implemented but off (`WorldConfig.brain_cost`).
+1. **The drives (1.2) are not used.** The thermotaxis reflex works when it fires but fires on 4% of ticks and does
+   not change body temperature; hunger only scales appetite. Ideas, none tested: make the reflex persist for a few
+   ticks or let `cold` suppress feeding (a real competition between drives); put food near the springs so that
+   warmth is a cue to good habitat (why worms do thermotaxis); give satiety a point (eating costs something when
+   full). The calibrated worlds are also easy (lifetime 900 of 1000), which weakens every pressure.
+2. **Habituation (1.4) is not used.** The variety bonus (+-30%) may be too small, or the depression too slow.
+3. **Lesions vary a lot between seeds** (valence_av 50-84% of intact in 1.2). The lineage follows seed 0; picking
+   the seed in which the circuits are most used as the lineage would be a deliberate choice.
+4. **Calibration level.** Parent lifetime is held at about 850-900 of 1000. A harder setting (say 600) would raise
+   every selection pressure but shortens the lives that learning needs.
+5. Camping is up to 18-36% of 100-tick windows in 1.2-1.4.
+6. Not started: 1.6, x.td, ADR-017's per-life pallium weights for chapter 2. Metabolic cost of neural activity is
+   implemented but off.
 
-Practical notes: one process runs non-plastic stages at about 0.9 s and learning stages (2000 ticks) at about
-2.3 s per generation; at most two JAX processes at a time. The lineage run of a stage is the newest run in its
-un-suffixed directory; `_seedN`, `_control`, `probe*` directories are variants. The dashboard clips displayed
-weights at `w_max`.
+Practical notes: one process runs non-plastic stages at about 0.9 s and learning stages (2000 ticks) at 2-3 s
+per generation; at most two JAX processes at a time. A sleeping laptop pauses runs, and background commands are
+stopped after two hours of wall-clock time, so run long batches in pieces. The lineage run of a stage is the
+newest run in its un-suffixed directory; `_seedN`, `_control`, `probe*` directories are variants. The dashboard
+clips displayed weights at `w_max`.
 
 ## Core and tools (done)
 

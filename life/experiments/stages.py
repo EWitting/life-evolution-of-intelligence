@@ -8,6 +8,9 @@ stage, remapped onto the new layout (new parts start silent, brain.remap_genomes
     python -m life.experiments.stages list
     python -m life.experiments.stages 1.0 --generations 150
     python -m life.experiments.stages 1.1 --generations 100 [--control] [--init-from <run dir> | --init-from none]
+    python -m life.experiments.stages replicate 1.1                     # two more seeds of main and control
+    python -m life.experiments.stages summary 1.1                       # main vs control over the seeds
+    python -m life.experiments.stages lesions 1.1                       # is the circuit used? lesions over the seeds
     python -m life.experiments.stages lesion runs/s1_1_valence/<ts>     # silence each region, measure behaviour
     python -m life.experiments.stages respond runs/s1_1_valence/<ts>    # region activity/actions per object seen or held
 
@@ -234,16 +237,13 @@ B10 = BrainConfig(
 # Food economy (v6): many small meals. A berry is 2 food units (10% of a stomach), a bush 12; bushes regrow after
 # REGROW_TICKS = 500, during which a waiting agent burns 25 units, so camping at one bush does not pay. The world
 # is 64 x 64 at a lower bush density than before, and holds roughly 1.5 x what 64 agents need for 1000 ticks.
-W09 = WorldConfig(height=64, width=64, num_agents=64, spawn_density=0.07, max_decay_ticks=1000, food_scale=2 / 3)
-# Walking costs +50% hunger for the tick, turning +25%. From scratch any movement cost makes evolution settle on
-# standing still (probes 2026-10-01), so foraging first evolves with free movement (0.9) and the cost comes on
-# for a population that already forages (1.0).
-W10 = replace(W09, move_cost=0.5, turn_cost=0.25)
+# Walking costs +50% hunger for the tick, turning +25%. (With a fitness that pays out the birth reserve, evolution
+# from random brains then stands still; the first-meal fitness, ADR-018, removes that.)
+W10 = WorldConfig(height=64, width=64, num_agents=64, spawn_density=0.07, max_decay_ticks=1000, food_scale=2 / 3,
+                  move_cost=0.5, turn_cost=0.25)
 
-stage(Stage("0.9", "s0_9_bootstrap", None, B10, W09, VISION_CH1, BodyConfig(), lambda exp: berry_world(exp, 4),
-            generations=250, notes="bootstrap from random brains: the 1.0 brain and world with free movement"))
-stage(Stage("1.0", "s1_0_steering", "0.9", B10, W10, VISION_CH1, BodyConfig(), lambda exp: berry_world(exp, 4),
-            generations=200, notes="evolved reflexive steering to 4 kinds of berry bushes and onions; movement costs energy"))
+stage(Stage("1.0", "s1_0_steering", None, B10, W10, VISION_CH1, BodyConfig(), lambda exp: berry_world(exp, 4),
+            generations=400, notes="evolved reflexive steering to 4 kinds of berry bushes and onions; movement costs energy"))
 
 
 def extend(base: BrainConfig, regions=(), projections=(), modulators=(), **kw) -> BrainConfig:
@@ -290,7 +290,10 @@ B11 = extend(B10,
 BODY_TASTE = BodyConfig(taste=True)
 
 # same number of good bushes as 1.0 plus 2 poisonous types on top (density 0.07 * 6/4)
-W11 = replace(W10, spawn_density=0.105)
+# Each new hardship is offset by a lower metabolic rate, chosen so that the parent population keeps its lifetime
+# when it enters the new world (ADR-012: an increment, not a cliff). More bushes do not help: time per meal, not
+# food, is the limit.
+W11 = replace(W10, spawn_density=0.105, hunger_per_tick=0.035)
 stage(Stage("1.1", "s1_1_valence", "1.0", B11, W11, VISION_CH1, BODY_TASTE,
             lambda exp: berry_world(exp, 6, poison=(4, 5)), row_extra=poison_metrics,
             generations=150, notes="innate good/bad cell types with fixed motor meaning; 2 of 6 berry types poison"))
@@ -303,10 +306,13 @@ stage(Stage("1.1", "s1_1_valence", "1.0", B11, W11, VISION_CH1, BODY_TASTE,
 # acts through synapses only (it is not broadcast).
 #   hunger    = max(0, tanh(2 - 3 * food))                     fires below ~2/3 full
 #   cold      = max(0, tanh(3.3 - 7 * temperature))            fires below ~0.47
-#   warm_run  = max(0, tanh(-2 + 2.5 cold + 3 temp_change))    -> FORWARD
-#   warm_turn = max(0, tanh(-2 + 2.5 cold - 3 temp_change))    -> TURN_LEFT/RIGHT
+#   warm_run  = max(0, tanh(-2.5 + 2.5 cold + 3 skin_change))  -> FORWARD      (cold and moving up the gradient)
+#   warm_turn = max(0, tanh(-2.5 + 2.5 cold - 3 skin_change))  -> TURN_LEFT/RIGHT  (cold and moving down it)
+# skin_change is the change of the temperature at the agent's cell (one cell up a hot spring's gradient = +0.9).
+# The body warms and cools slowly (temp_rate 0.03), so warmth can be banked for a foraging trip, and the cold
+# costs up to +75% hunger: warming up competes with feeding, which is what a drive is for.
 # World: a cold world (OHOL-style temperature) with hot springs; being cold multiplies hunger.
-THERMO = dict(sign="exc", alpha=1.0, bias=-2.0, evolve_bias=False, group="thermotaxis")
+THERMO = dict(sign="exc", alpha=1.0, bias=-2.5, evolve_bias=False, group="thermotaxis")
 B12 = extend(B11,
              regions=(R("hunger", 1, sign="exc", alpha=0.5, bias=2.0, evolve_bias=False, group="hypothalamus"),
                       R("cold", 1, sign="exc", alpha=0.5, bias=3.3, evolve_bias=False, group="hypothalamus"),
@@ -314,24 +320,24 @@ B12 = extend(B11,
              projections=(fixed("in", "hunger", -3.0, src_select=("food",)),
                           fixed("in", "cold", -7.0, src_select=("temperature",)),
                           fixed("cold", "warm_run", 2.5), fixed("cold", "warm_turn", 2.5),
-                          fixed("in", "warm_run", 3.0, src_select=("temp_change",)),
-                          fixed("in", "warm_turn", -3.0, src_select=("temp_change",)),
+                          fixed("in", "warm_run", 3.0, src_select=("skin_change",)),
+                          fixed("in", "warm_turn", -3.0, src_select=("skin_change",)),
                           fixed("warm_run", "out", 3.0, dst_range=FWD), fixed("warm_turn", "out", 3.0, dst_range=TURNS),
                           P("hunger", "ganglion_e"), P("cold", "ganglion_e")),
              modulators=(Mod("hunger", pos="hunger"),))
 B12 = replace(B12, regions=tuple(replace(r, receptors=r.receptors + (("hunger", "gain", 1.0),)) if r.name == "valence_app"
                                  else r for r in B12.regions))
-BODY_12 = BodyConfig(taste=True, temperature=True, temp_change=True)
-# a few more bushes and a milder cold (up to +25% hunger instead of +50%) keep the step from 1.1 an increment, not
-# a cliff (ADR-012)
-W12 = replace(W11, temperature=True, ambient_temp=0.25, heat_scale=0.15, heat_radius=4, temp_rate=0.1, temp_hunger=0.5,
-              spawn_density=0.12)
+BODY_12 = BodyConfig(taste=True, temperature=True, skin_change=True)
+# a few more bushes; the metabolic rate is set so that the 1.1 population keeps its lifetime (ADR-012)
+W12 = replace(W11, temperature=True, ambient_temp=0.25, heat_scale=0.15, heat_radius=4, temp_rate=0.03, temp_hunger=1.5,
+              spawn_density=0.12, hunger_per_tick=0.019)
 stage(Stage("1.2", "s1_2_drives", "1.1", B12, W12, VISION_CH1, BODY_12,
             lambda exp: berry_world(exp, 6, poison=(4, 5), springs=0.6), row_extra=poison_metrics,
             generations=150, notes="hunger (broadcast, receptors on appetite) and cold-gated thermotaxis; cold world with hot springs"))
 
 # 1.3 affect: two slow, antagonistic neuromodulatory states, as in C. elegans (Flavell et al. 2013):
-#   raphe (serotonin, '5ht'): driven by taste (food found), slow (alpha 0.03); 5ht receptors on 'dwell', which
+#   raphe (serotonin, '5ht'): fires on taste (food found); the released serotonin is cleared slowly (decay 0.97
+#   per tick, about 30 ticks), so the state outlasts the meal; 5ht receptors on 'dwell', which
 #   drives turning -> local search after food (dwelling).
 #   pdf (roaming neuropeptide): driven by hunger, slow; pdf receptors on 'roam', which drives FORWARD -> long
 #   straight runs when food has not been found for a while (roaming).
@@ -340,14 +346,14 @@ stage(Stage("1.2", "s1_2_drives", "1.1", B12, W12, VISION_CH1, BODY_12,
 # patches.
 AFFECT_INHIB = 2.0   # input removed from one nucleus per unit mean activity of the other
 B13 = extend(B12,
-             regions=(R("raphe", 2, sign="exc", alpha=0.03, receptors=(("pdf", "bias", -AFFECT_INHIB),), group="affect"),
+             regions=(R("raphe", 2, sign="exc", alpha=1.0, receptors=(("pdf", "bias", -AFFECT_INHIB),), group="affect"),
                       R("pdf", 2, sign="exc", alpha=0.03, receptors=(("5ht", "bias", -AFFECT_INHIB),), group="affect"),
                       R("dwell", 2, sign="exc", bias=0.0, evolve_bias=False, receptors=(("5ht", "bias", 2.0),), group="affect"),
                       R("roam", 2, sign="exc", bias=0.0, evolve_bias=False, receptors=(("pdf", "bias", 2.0),), group="affect")),
              projections=(fixed("in", "raphe", 2.0, src_select=("taste",)), fixed("hunger", "pdf", 2.0),
                           P("valence_app", "raphe"), P("valence_av", "pdf"),
                           fixed("dwell", "out", 1.5, dst_range=TURNS), fixed("roam", "out", 1.5, dst_range=FWD)),
-             modulators=(Mod("5ht", pos="raphe"), Mod("pdf", pos="pdf")))
+             modulators=(Mod("5ht", pos="raphe", decay=0.97), Mod("pdf", pos="pdf")))
 W13 = replace(W12, patches=20, patch_radius=6)   # the same number of objects, on at most half of the map
 stage(Stage("1.3", "s1_3_affect", "1.2", B13, W13, VISION_CH1, BODY_12,
             lambda exp: berry_world(exp, 6, poison=(4, 5), springs=0.6), row_extra=poison_metrics,
@@ -395,7 +401,7 @@ def _split_cs(projections):
 
 
 B15 = replace(B15, projections=_split_cs(B15.projections))
-W15 = replace(W14, sickness_delay=2, pain_decay=0.3, spawn_density=0.14)   # extra bushes for the extra poison type
+W15 = replace(W14, sickness_delay=2, pain_decay=0.3, spawn_density=0.14, hunger_per_tick=0.012)
 LIFE_LEARN = 2000     # ticks per life in the learning stages
 NOVEL_SIM = 0.6       # novel types look less like the gooseberry than the ancestral look-alikes (0.8) do
 POISON_FOOD = -3.0    # OHOL food points lost per poison berry in the learning stages (a berry gives +3)
@@ -608,18 +614,21 @@ def lesion(run_dir: str, regions: list[str] | None = None, worlds: int = 8, seed
     rs, rules_fn = s.build(exp)
     extra = s.row_extra(rs) if s.row_extra else (lambda st, f: {})
     sim = jax.jit(make_simulate(exp, record=False))
+    nodep = replace(exp, brain=replace(exp.brain, projections=tuple(replace(p, depression=()) for p in exp.brain.projections)))
+    sim_nodep = jax.jit(make_simulate(nodep, record=False)) if layout.has_dep else None
     fit_fn = s.fitness or default_fitness
     regions = regions or [n for n in layout.names if n not in ("in", "out")]
     keys = jax.random.split(jax.random.PRNGKey(seed), worlds)
     out = {}
-    labels = ["intact"] + (["no_plasticity"] if float(pop.eta.max()) > 0 else []) + regions
+    labels = ["intact"] + (["no_plasticity"] if float(pop.eta.max()) > 0 else []) \
+        + (["no_depression"] if layout.has_dep else []) + regions
     if only:
         labels = [l for l in labels if l in only]
     for label in labels:
         g = pop
         if label == "no_plasticity":
             g = pop._replace(eta=jnp.zeros_like(pop.eta))
-        elif label != "intact":
+        elif label not in ("intact", "no_depression"):
             rows = layout.region(label)
             # silence the region: no outgoing synapses and no activity (so broadcast modulators read 0 too)
             g = pop._replace(w0=pop.w0.at[:, rows, :].set(0.0), mask=pop.mask.at[:, rows, :].set(0.0),
@@ -630,13 +639,41 @@ def lesion(run_dir: str, regions: list[str] | None = None, worlds: int = 8, seed
             rules = rules_fn(0, kr)
             if rules.food_value.ndim > 1 + (exp.world.switch_tick > 0):
                 rules = jax.tree_util.tree_map(lambda a: a[0], rules)
-            st, _ = sim(rules, g, ks)
+            st, _ = (sim_nodep if label == "no_depression" else sim)(rules, g, ks)
             fit = fit_fn(st)
             row = dict(fitness=float(fit.mean()), eaten=float(st["eaten"].mean()), pain=float(st["pain"].mean()),
                        alive=float(st["alive_ticks"].mean()), temp=float(st["temp_mean"].mean()))
             row.update({k2: float(v) for k2, v in extra(st, fit).items()})
             acc.append(row)
         out[label] = {k2: float(np.mean([r[k2] for r in acc])) for k2 in acc[0]}
+    return out
+
+
+def seed_runs(s: Stage, control: bool = False) -> list:
+    """Newest finished run of the stage's lineage directory and of every `_seedN` variant."""
+    base = s.name + ("_control" if control else "")
+    dirs = []
+    for d in sorted(RUNS_DIR.iterdir()):
+        rest = d.name[len(base):]
+        if d.name.startswith(base) and (rest == "" or rest.startswith("_seed")):
+            runs = sorted(r for r in d.iterdir() if (r / "population.npz").exists())
+            if runs:
+                dirs.append(runs[-1])
+    return dirs
+
+
+def lesions(key: str, worlds: int = 8) -> dict:
+    """Lesion study over every seed of a stage: fitness with each region silenced, in % of the intact population.
+    This is the test of whether a circuit is *used* (the stage criterion); one seed can mislead."""
+    res = [lesion(str(r), worlds=worlds) for r in seed_runs(STAGES[key])]
+    out = {}
+    for label in res[0]:
+        if label != "intact":
+            out[label] = [100.0 * r[label]["fitness"] / r["intact"]["fitness"] for r in res]
+    print(f"{key}: intact fitness per seed " + " ".join(f"{r['intact']['fitness']:.0f}" for r in res))
+    print("lesion".ljust(18) + "% of intact per seed".rjust(26) + "mean".rjust(7))
+    for label, rel in out.items():
+        print(label.ljust(18) + " ".join(f"{v:7.0f}" for v in rel).rjust(26) + f"{np.mean(rel):7.0f}")
     return out
 
 
@@ -805,6 +842,12 @@ def main(argv=None):
         for r in rows:
             print(r["object"][:33].ljust(34) + r["view"].ljust(7) + "".join(f"{r[c]:12.3f}" for c in cols))
         return rows
+    if argv and argv[0] == "lesions":
+        q = argparse.ArgumentParser(prog="stages lesions")
+        q.add_argument("key")
+        q.add_argument("--worlds", type=int, default=8)
+        b = q.parse_args(argv[1:])
+        return lesions(b.key, b.worlds)
     if argv and argv[0] == "lesion":
         q = argparse.ArgumentParser(prog="stages lesion")
         q.add_argument("run_dir")

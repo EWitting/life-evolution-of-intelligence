@@ -501,3 +501,110 @@ The fitness now counts the well-fed lifetime **from the first meal** (`fed_meal`
 standing still can no longer outrank walking. The probe that should show whether stage 1.0 then evolves from
 scratch *with* movement cost (which would make stage 0.9 unnecessary) was stopped when the machine ran low on
 memory; no result yet. Command: `stages 1.0 --init-from none` (two seeds).
+
+
+---
+
+## v7-v9 (2026-10-01, evening): first-meal fitness, no-cliff worlds, drive and serotonin fixes
+
+**Stage criterion from now on (user, 2026-10-01):** a stage succeeds when its circuit is *used* (lesions of the new
+regions clearly lower fitness) and main is not clearly worse than control. Main >> control is not required.
+Tools: `stages summary <key>` (main vs control over seeds) and `stages lesions <key>` (lesions over seeds).
+
+### First-meal fitness removes the standing-still trap
+Stage 1.0 from random brains *with* movement cost, 300 generations, fitness = well-fed lifetime from the first
+meal: seeds 0 / 1 reach well-fed lifetime (from birth) 436 / 410, lifetime 671 / 658, 23 / 19 meals per life.
+Under the from-birth fitness the same setup stood still (fitness 201). Stage 0.9 (bootstrap) is removed again.
+
+### v7: the worlds were cliffs
+Chain with the v6 worlds (1.1: density 0.105; 1.2: cold; 1.3: patches), three seeds, fitness from the first meal:
+main / control 1.1: 352 / 332, 1.2: 249 / 273, 1.3: 177 / 177, 1.4: 216 / 198; lifetimes 610, 501, 421, 462 of
+1000. Each world is harsher than the last and the lineage ends up barely surviving. More bushes do not help
+(1.0 population in the 1.1 world: fitness 258 at density 0.105, 243 at 0.12; 1.1 population in the 1.2 world: 257,
+279, 280 at 0.12, 0.15, 0.18): the limit is time per meal, not food.
+
+### v8: worlds calibrated with the metabolic rate
+`hunger_per_tick` is lowered per stage so that the parent population keeps its lifetime when it enters the new
+world: 1.0: 0.05, 1.1: 0.035, 1.2-1.4: 0.025 (v9: 0.019), 1.5: 0.012.
+
+| v8, 3 seeds | main | control | main - control (re-evaluated) | lifetime (main) |
+|---|---|---|---|---|
+| 1.1 valence | 539 | 537 | +15 +-11 | 838 |
+| 1.2 drives | 586 | 593 | +14 +-26 | 899 |
+| 1.3 affect | 519 | 531 | +6 +-37 | 864 |
+| 1.4 habituation | 517 | 511 | +25 +-35 | 881 |
+
+Lesions, fitness in % of intact, mean of three seeds (per seed in `runs/logs/lesion_v8.log`):
+1.1: valence_app 87, valence_av 73, no_feed 78. 1.2: hunger 100, cold 99, warm_run 97, warm_turn 101.
+1.3: raphe 99, dwell 99, pdf 62, roam 68. Lesions differ a lot between seeds (e.g. valence_av 83 / 49 / 88), so one
+seed can mislead.
+
+### v9: two design faults fixed
+- **Thermotaxis sensed the wrong thing.** `temp_change` was the change of *body* temperature, which mostly says
+  "this place is warmer than I am", not "I am moving up the gradient"; near a spring the reflex walked the agent
+  away. New sense `skin_change`: the change of the temperature at the agent's cell (x 10; one cell up a spring's
+  gradient = +0.9). The body now warms and cools slowly (`temp_rate` 0.03) and the cold costs up to +75% hunger.
+- **Serotonin was never released in quantity.** `raphe` integrated one-tick taste pulses with alpha 0.03 and stayed
+  near 0.04. Now `raphe` fires on taste (alpha 1) and the modulator persists: `ModulatorSpec.decay` 0.97 (released
+  at once, cleared over about 30 ticks).
+- `stages lesion` got a `no_depression` row (short-term depression switched off).
+
+| v9, 3 seeds | main | control | main - control (re-evaluated) |
+|---|---|---|---|
+| 1.2 drives | 609 | 634 | -36 +-53 |
+| 1.3 affect | 539 | 567 | -39 +-34 |
+| 1.4 habituation | 557 | 567 | -12 +-40 |
+
+Lesions (% of intact; per seed, then mean):
+
+| region | 1.2 | 1.3 | 1.4 |
+|---|---|---|---|
+| valence_app | 68 93 94 (85) | 69 89 101 (86) | 58 99 84 (81) |
+| valence_av | 84 50 77 (70) | 60 49 96 (68) | 82 67 85 (78) |
+| no_feed | 83 66 90 (80) | 79 64 102 (82) | 96 89 92 (92) |
+| hunger | 100 101 103 (102) | 99 102 107 (103) | 98 104 101 (101) |
+| cold | 100 102 103 (102) | 97 100 102 (100) | 101 100 99 (100) |
+| warm_run | 98 100 103 (101) | 99 103 107 (103) | 102 102 100 (101) |
+| warm_turn | 102 100 101 (101) | 96 100 97 (98) | 98 96 94 (96) |
+| raphe | | 93 73 95 (87) | 93 92 94 (93) |
+| dwell | | 93 80 101 (91) | 98 96 98 (97) |
+| pdf | | 71 100 83 (85) | 43 69 51 (54) |
+| roam | | 71 101 83 (85) | 48 76 55 (60) |
+| no_depression | | | 104 98 97 (100) |
+
+- **Used:** valence (both), no_feed, PDF/roam, and now serotonin/dwell weakly.
+- **Not used: hunger, cold, thermotaxis.** The 1.2 recording shows the thermotaxis reflex itself works (P(FORWARD |
+  warm_run on) = 0.88 against 0.30 overall), but it fires on 4% of ticks: agents are in a gradient and moving on
+  only 9% of ticks. Body temperature is the same in main and control (0.406), 81% of the time below the comfort
+  threshold. Likely reasons: (1) a one-tick run-or-tumble reflex cannot hold an agent near a spring against the
+  foraging drives; (2) the calibrated worlds are easy (lifetime 915 of 1000), so a 30-40% saving in hunger buys
+  little; (3) hunger only scales appetite, and with small meals the animal should eat whenever it can.
+- **Not used: habituation** (depression off = 100%).
+- Camping (agent stays within 3 cells for 100 ticks): 18-36% of windows in 1.2-1.4 (v9), up from 9-21% in v8.
+
+### Stage 1.5 (learning) in the new world
+World (`stages.learning_world`): two ancestral good types, two ancestral poison types, two novel types whose look
+is drawn per life (similarity 0.6 to the gooseberry) and one of which is poison per life; a poison berry costs as
+much as a good one gives; sickness arrives 2 ticks after eating; 2000-tick lives; `hunger_per_tick` 0.012 (the
+1.4 population entering this world: lifetime 694 / 842 / 938 of 2000 at 0.019 / 0.015 / 0.012, net food eaten
+about 11 units per life, against 39 per 1000 ticks in its own world).
+
+One seed, 200 generations, last 50:
+
+| | fitness | lifetime (of 2000) | net food | poison share, whole life / first half / second half |
+|---|---|---|---|---|
+| main (plastic identity -> valence) | 735 | 1313 | 18.5 | 0.19 / 0.25 / 0.06 |
+| control (the 1.4 brain) | 883 | 1505 | 24.2 | 0.14 / 0.18 / 0.04 |
+
+Lesions of the main population (8 worlds): intact 692; `no_plasticity` 675 (97.5%); `no_depression` 651 (94%);
+valence_app 526 (76%); valence_av 367 (53%); us_taste 643 (93%); us_pain 685 (99%).
+
+- **Learning is still not used.** Switching plasticity off costs 2.5% (inside the noise) and the main brain is
+  below its control in this seed. The poison share falls from the first to the second half of life just as much
+  without plasticity (confounded, as in v4: poison bushes are emptied early, and the second half contains only
+  the survivors).
+- An agent eats about 19 berries in a life, so it meets each novel food only a handful of times. Lowering the
+  metabolic rate to remove the cliff also lowered how often an agent needs to eat: the calibration knob works
+  against the "many small meals" the learning stage needs.
+- Not tested yet: whether the rule discriminates the two novel foods at all at similarity 0.6 (in v4 it
+  over-generalised across look-alikes); a cleaner metric (poison eaten after the first poisoning).

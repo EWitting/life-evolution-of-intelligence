@@ -56,8 +56,10 @@ class BodyConfig:
     taste: bool = False              # sweetness of what was eaten last tick: max(food gained, 0) / food_scale
     efference: bool = False          # one-hot copy of the agent's own previous action (NUM_ACTIONS features)
     temperature: bool = False        # body temperature in [0, 1], 0.5 = comfortable (needs WorldConfig.temperature)
-    temp_change: bool = False        # change of body temperature over the last tick x 50 (thermosensory neurons
-                                     # such as C. elegans AFD respond to temperature *changes*)
+    temp_change: bool = False        # change of body temperature over the last tick x 50
+    skin_change: bool = False        # change over the last tick of the temperature *at the agent's cell* x 10: the
+                                     # spatial gradient along its path (thermosensory neurons such as C. elegans
+                                     # AFD respond to changes of the ambient temperature)
 
 
 @dataclass(frozen=True)
@@ -133,6 +135,8 @@ class ModulatorSpec:
     neg: str = ""
     baseline: float = 0.0
     scale: float = 1.0
+    decay: float = 0.0               # > 0: the modulator is max(new value, decay * previous value): released at
+                                     # once, cleared slowly (a persistent state that outlasts its trigger)
     terms: tuple = ()                # ((region, weight), ...): adds sum(weight * mean(region)) to pos - neg; e.g.
                                      # a TD error r + gamma V(t) - V(t-1) from reward, value and value-copy regions
 

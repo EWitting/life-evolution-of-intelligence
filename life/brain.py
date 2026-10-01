@@ -54,7 +54,7 @@ class Layout(NamedTuple):
     in_names: tuple         # name of every input feature (sensors.input_names)
     proj_names: tuple       # "src->dst" per projection, index = proj_id
     mod_names: tuple        # modulator names, index = modulator id
-    mod_specs: tuple        # static: (kind, pos_slice, neg_slice, baseline, scale) per modulator
+    mod_specs: tuple        # static: (kind, terms, unused, baseline, scale, decay) per modulator
     kwta: tuple             # static: (offset, size, k) per region with k-WTA
     norm: tuple             # static: (offset, size, strength, lag) per region with divisive normalisation
     pl_rows: tuple          # static: pre neurons with any plastic, decaying or depressing synapse
@@ -203,11 +203,11 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
             for r, _ in terms:
                 assert r in sl, f"modulator {m.name}: unknown region {r!r}"
             mod_specs.append(("region", tuple((sl[r].start, sl[r].stop, float(wt)) for r, wt in terms), (0, 0),
-                              m.baseline, m.scale))
+                              m.baseline, m.scale, m.decay))
         else:
             kind = m.source.split(":", 1)[1]
             assert m.source.startswith("world:") and kind in WORLD_SIGNALS, f"modulator {m.name}: bad source {m.source}"
-            mod_specs.append((kind, (0, 0), (0, 0), m.baseline, m.scale))
+            mod_specs.append((kind, (0, 0), (0, 0), m.baseline, m.scale, m.decay))
     kwta = tuple((sl[r.name].start, r.size, r.kwta) for r in regions if r.kwta > 0 and r.name != "in")
     changing = (rule > 0) | (dep_U > 0) | (decay > 0)
     pl_rows = tuple(int(i) for i in np.where(changing.any(axis=1))[0])
@@ -285,14 +285,15 @@ def plasticity_rule(rule, A, B, C, D, w, x_pre, x_post, tr_pre, tr_post, target)
     return out
 
 
-def compute_modulators(layout: Layout, x: jnp.ndarray, world_sig: jnp.ndarray) -> jnp.ndarray:
+def compute_modulators(layout: Layout, x: jnp.ndarray, world_sig: jnp.ndarray, prev: jnp.ndarray) -> jnp.ndarray:
     out = []
-    for kind, terms, _, base, scale in layout.mod_specs:
+    for i, (kind, terms, _, base, scale, decay) in enumerate(layout.mod_specs):
         if kind == "region":
             v = sum(wt * x[a:b].mean() for a, b, wt in terms)
         else:
             v = world_sig[WORLD_SIGNALS.index(kind)]
-        out.append(scale * (v - base))
+        v = scale * (v - base)
+        out.append(jnp.maximum(v, decay * prev[i]) if decay > 0 else v)
     return jnp.stack(out) if out else jnp.zeros(1, jnp.float32)
 
 
@@ -367,7 +368,7 @@ def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, ob
                 u = u.at[ix].set(jnp.clip(ub + b_deprec * (1.0 - ub) - b_depU * ub * jnp.maximum(x[R], 0.0)[:, None], 0.0, 1.0))
         tr = layout.trace_tau * tr + (1.0 - layout.trace_tau) * x_new
         x = x_new
-    mod = compute_modulators(layout, x, world_sig)
+    mod = compute_modulators(layout, x, world_sig, mod)
     logits = h[-n_out:] * cfg.logit_gain
     if cfg.action_temperature > 0:
         action = jax.random.categorical(key, logits / cfg.action_temperature)

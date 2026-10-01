@@ -236,8 +236,8 @@ existing ganglion and the new module stays unused (stage 1.1 v1/v2 in `docs/STAG
   persistent state along valence and arousal that biases every reflex at once. (Escape and stress modes are
   left for later.)
 - **Adds.** `raphe` (serotonin, slow, driven by taste) broadcasting `5ht` onto receptors of `dwell` (-> turns);
-  `pdf` (slow, driven by hunger) broadcasting `pdf` onto receptors of `roam` (-> forward). Evolved links between
-  the two nuclei and from valence.
+  `pdf` (slow, driven by hunger) broadcasting `pdf` onto receptors of `roam` (-> forward). The two nuclei
+  inhibit each other through hard-wired inhibitory receptors (v5); evolved input from valence.
 - **World.** Food in 10 dense patches (calibrated so foraging still pays).
 - **Confidence.** High for the phenomenon across bilaterians (area-restricted search is found in worms,
   flies, fish, birds and mammals). Medium for the exact neuromodulator mapping in the ancestor.
@@ -263,7 +263,8 @@ existing ganglion and the new module stays unused (stage 1.1 v1/v2 in `docs/STAG
   (`us_taste - us_pain`); the identity -> valence synapses become plastic, gated by `us`, with an eligibility trace
   bridging the delay between eating and sickness (CS-trace rule `dW = eta * us * B * trace(pre)`, B = +1 onto
   appetitive, -1 onto aversive). Learning rate and coefficients evolve per projection.
-- **World.** Which of two look-alike berries is poison is drawn per life (on top of the two that always are);
+- **World (v5, ADR-017).** Two novel berry types get a new look every life and one of them is poison (on top
+  of two ancestral good and two ancestral poison types); poison costs a whole berry; lives last 2000 ticks;
   sickness arrives 2 ticks after eating and fades quickly, so no reactive policy can use it.
 - **Metric.** Poison fraction in the second vs first half of life; the decisive test is the lesion
   "no_plasticity" (same population, learning off).

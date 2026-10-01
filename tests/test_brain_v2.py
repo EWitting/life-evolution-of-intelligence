@@ -1,5 +1,5 @@
 """Brain v2 features: Dale's law, hard-wiring, gain, eligibility, depression, delta, k-WTA, region modulators,
-remapping genomes across layouts, delayed sickness, named inputs. Run: .venv\\Scripts\\python.exe -m pytest -q"""
+remapping genomes across layouts, delayed sickness, named inputs, divisive normalisation, metabolic cost, per-life looks. Run: .venv\\Scripts\\python.exe -m pytest -q"""
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -158,3 +158,54 @@ def test_receptors_broadcast_gain_and_bias():
     assert np.allclose(np.asarray(st.x[L.region("a")]), np.tanh(0.3 * np.exp(m)), atol=1e-4)
     assert np.allclose(np.asarray(st.x[L.region("c")]), np.tanh(0.5 * m), atol=1e-4)
     assert L.groups == ("", "", "", "", "")
+
+
+def test_divisive_normalisation_instant_and_lagged():
+    # 4 neurons driven with h = 4 each: the pool (mean of max(h, 0)) is 4, so with norm 2 the input becomes 4 / 9
+    mk = lambda lag: BrainConfig(regions=(R("a", 4, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, norm=2.0, norm_lag=lag),),
+                                 projections=(P("in", "a", topology="one_to_one", w_init=4.0, evolve=False),))
+    L, g, st = run(mk(False), [1, 1, 1, 1], n=1, n_in=4)
+    assert np.allclose(np.asarray(st.x[L.region("a")]), np.tanh(4 / 9), atol=1e-5)
+    L, g, st1 = run(mk(True), [1, 1, 1, 1], n=1, n_in=4)       # lagging inhibition: the onset passes at full strength
+    assert np.allclose(np.asarray(st1.x[L.region("a")]), np.tanh(4.0), atol=1e-5)
+    L, g, st2 = run(mk(True), [1, 1, 1, 1], n=2, n_in=4)
+    assert np.allclose(np.asarray(st2.x[L.region("a")]), np.tanh(4 / 9), atol=1e-5)
+    L, g, st = run(mk(False), [1, 0, 0, 0], n=1, n_in=4)        # a lone active neuron is barely divided (pool = 1)
+    assert np.allclose(float(st.x[L.region("a")][0]), np.tanh(4 / 3), atol=1e-5)
+
+
+def test_brain_cost_raises_hunger():
+    from life.world import init_world, step_world
+    from test_core import toy_ruleset
+    rules = toy_ruleset().to_arrays(4)
+    cfg = WorldConfig(height=6, width=6, num_agents=2, spawn_density=0.0, brain_cost=1.0)
+    st = init_world(cfg, rules, jax.random.PRNGKey(0))
+    st, _ = step_world(cfg, rules, st, jnp.array([A.NOOP, A.NOOP]), jax.random.PRNGKey(0), jnp.array([0.0, 0.5]))
+    lost = cfg.max_food - np.asarray(st.food)
+    assert np.allclose(lost, [cfg.hunger_per_tick, 1.5 * cfg.hunger_per_tick], atol=1e-6)
+
+
+def test_novel_looks_are_drawn_per_life_and_fed_stat():
+    from life.experiments import stages as S
+    from life.run import make_simulate
+    s = S.STAGES["1.6"]
+    exp = S.make_exp(s, s.brain, "t", 1, 0)
+    rs, fn = S.learning_world(exp, reverse=True)
+    a, b = fn(0, jax.random.PRNGKey(1)), fn(0, jax.random.PRNGKey(2))
+    app_a, app_b = np.asarray(a.appearance), np.asarray(b.appearance)     # [E, 2 phases, M, K]
+    berry = lambda v: rs.local(S.variant(v)[S.BERRY])
+    assert np.allclose(app_a[0, 0], app_a[0, 1])                          # the look does not change mid-life
+    assert not np.allclose(app_a[0, 0, berry(2)], app_b[0, 0, berry(2)])  # but it does between lives
+    assert np.allclose(app_a[0, 0, berry(1)], app_b[0, 0, berry(1)])      # ancestral types keep their look
+    assert np.allclose(app_a[0, 0, berry(2)] @ app_a[0, 0, berry(0)], S.NOVEL_SIM, atol=1e-5)
+    fv = np.asarray(a.food_value)[0]
+    assert sorted([fv[0, berry(2)], fv[0, berry(3)]]) == [S.POISON_FOOD, 3.0] and fv[0, berry(2)] == fv[1, berry(3)]
+    # fed = sum over ticks alive of food / max_food: an agent that never eats and starves after 400 ticks gets ~200
+    exp2 = ExperimentConfig(world=WorldConfig(height=8, width=8, num_agents=2, spawn_density=0.0),
+                            evolution=EvolutionConfig(ticks_per_generation=500, record_weights_every=100))
+    from life.run import make_layout
+    L = make_layout(exp2)
+    pop = jax.vmap(lambda k: brain.init_genome(k, L))(jax.random.split(jax.random.PRNGKey(0), 2))
+    from test_core import toy_ruleset
+    stats, _ = make_simulate(exp2, record=False)(toy_ruleset().to_arrays(exp2.vision.appearance_dim), pop, jax.random.PRNGKey(0))
+    assert np.allclose(np.asarray(stats["fed"]), 200.0, atol=2.0) and (np.abs(np.asarray(stats["alive_ticks"]) - 400) <= 1).all()

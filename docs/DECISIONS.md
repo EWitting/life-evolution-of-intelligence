@@ -133,3 +133,48 @@ override them freely; when one does, add or amend an entry so the record stays c
 - Neuromodulators act on activity through `RegionSpec.receptors` (gain or bias, one sensitivity per region) and
   on plasticity through `ProjectionSpec.modulator`. `gain` projections remain for point-to-point cases.
 - `RegionSpec.group` groups regions for visualisation only (nested with '/').
+
+## ADR-017 Innate and learned compartments; the genomic bottleneck (2026-10-01)
+
+- Decided with the user. Genes cannot specify the weights of a large brain (human genome ~750 MB, ~10^14
+  synapses; Zador 2019); they specify cell types, wiring rules, learning rules and innate teaching signals. Small
+  stereotyped nervous systems (*C. elegans*: 302 neurons, ~7000 synapses, the same in every animal) are the
+  exception: there the genome does fix the wiring.
+- **Innate compartment** (ganglion, valence, drives, affect, thermotaxis; later tectum, brainstem programs, the
+  basal-ganglia output wiring): one inherited `w0` per synapse, as now. This is realistic for a chapter-1 animal.
+- **Learned compartment** (from chapter 2: pallium, hippocampus, cortex, inputs to the striatum, cerebellum): the
+  genome holds only the statistics of a projection (density, mean, spread) and its rule genes; the weights are
+  drawn **fresh at each birth** and are not inherited. Evolution can then improve only the learner, its innate
+  teachers and its priors. To be implemented with stage 2.2 (the pallium's "fixed random" input becomes random
+  per life).
+- Innate fears are modelled as **preparedness**, not as inherited knowledge: crude evolved feature detectors in
+  the innate compartment plus an evolvable learning rate per input class (Cook & Mineka 1989: monkeys learn snake
+  fear in one trial, flower fear not at all).
+- Learning stages need a world that evolution cannot memorise: stimuli whose appearance and meaning are **drawn
+  per life** (ADR-012), lives long enough that the learning period is a small part of them, and errors that cost.
+  With a small constant world, hard-wiring is the correct evolutionary outcome (the v4 result of 1.5/1.6).
+
+## ADR-018 Fitness is the well-fed lifetime; activity is kept in range by lagging divisive normalisation (2026-10-01)
+
+- Decided with the user after measuring the v4 runs (`docs/STAGE_LOG.md`, v5).
+- **Fitness** = `fed`: the sum over ticks alive of food level / `max_food` (`stages.default_fitness`, every
+  stage). Reproduction needs survival and reserves. The v4 fitness (gross food eaten - pain + 0.01 x ticks) paid
+  for eating on a full stomach (66-84% of the food term was never absorbed), weighted survival at under 10%, and
+  told evolution directly that pain is bad. Now poison and pain count only through the food and life they cost.
+  `stages.fitness_v4` is kept for comparisons.
+- **Divisive normalisation** (`RegionSpec.norm`, `norm_lag`): a region's input is divided by
+  `1 + norm * mean(max(h, 0))` over the region, the effect of a pool of fast feedback interneurons (shunting
+  inhibition; Carandini & Heeger 2012). It acts on the input, before the rate function, so the differences
+  between neurons survive. With `norm_lag` the pool of the previous step divides, so the onset of a stimulus
+  passes at full strength. Real feedback inhibition lags excitation by 1-2 ms (Pouille & Scanziani 2001), far
+  below one tick, so the instantaneous form is the literal reading; the lagged form gives phasic-then-tonic
+  responses like sensory adaptation, and evolved at least as well in the 1.0 probes. Used with norm 2, lagged, on
+  `ganglion_e` and `ganglion_i`. Fixed-meaning cell types are not normalised (their hard-wired weights assume
+  rates near 1).
+- **Metabolic cost of activity** (`WorldConfig.brain_cost`): hunger x (1 + cost x mean rate of the non-input
+  neurons). Implemented, **off by default**. It is a mean, so it prices dense firing and not brain size. Probes:
+  cost 1.0 from scratch makes evolution silence the brain (nothing is eaten); cost 0.3 keeps foraging and cuts
+  saturation by about two thirds, but adds nothing on top of normalisation. To revisit when brains are large
+  enough that sparse coding matters (pallium).
+- Mutual inhibition between the serotonin and PDF nuclei is hard-wired through inhibitory receptors (1.3); the
+  unused `cold` modulator is removed (cold acts through synapses).

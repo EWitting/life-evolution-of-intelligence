@@ -66,8 +66,15 @@ def stage(s: Stage) -> Stage:
 
 
 def default_fitness(stats):
-    """Energy intake is the proxy for reproductive success; a small bonus for staying alive."""
-    return stats["eaten"] + 0.01 * stats["alive_ticks"]
+    """Well-fed lifetime (ADR-018): the sum over ticks alive of the food level as a fraction of a full stomach.
+    Reproduction needs survival and reserves; eating beyond full adds nothing, and poison or pain count only
+    through the food and life they cost. (Until v4: food eaten - pain + 0.01 * ticks alive.)"""
+    return stats["fed"]
+
+
+def fitness_v4(stats):
+    """The v4 fitness, kept for comparisons: gross food eaten (also on a full stomach) - pain + survival bonus."""
+    return stats["eaten"] - stats["pain"] + 0.01 * stats["alive_ticks"]
 
 
 # ------------------------------------------------------------------ worlds
@@ -85,7 +92,8 @@ def variant(v: int) -> dict:
 def berry_world(exp: ExperimentConfig, n_types: int = 4, poison: tuple = (), per_life_pool: tuple = (),
                 per_life_k: int = 1, onions: bool = True, springs: float = 0.0, poison_food: float = -1.0,
                 poison_pain: float = 1.0, reverse: bool = False, per_life_sets: tuple = (),
-                appearance_mode: str = "lookalike"):
+                appearance_mode: str = "lookalike", novel_looks: tuple = (), novel_sim: float | None = None,
+                weights: dict | None = None):
     """Several berry-bush types (the OHOL gooseberry and colour look-alikes; all behave like the gooseberry:
     6 berries, then empty, regrowing after REGROW_TICKS), optional wild onions and hot springs.
     poison: types whose berries always drain food and hurt (an inheritable fact). per_life_pool/per_life_k:
@@ -93,7 +101,11 @@ def berry_world(exp: ExperimentConfig, n_types: int = 4, poison: tuple = (), per
     reverse: with a pool of two and k=1, the poison swaps to the other type at WorldConfig.switch_tick.
     per_life_sets: explicit alternatives instead of pool/k, e.g. ((1, 4), (2, 3)) for the XOR world.
     appearance_mode 'xor': types 1-4 look like the original plus (+-d1 +-d2)/sqrt2 (two binary features), types
-    5 and 6 plus +-d3 (see lookalike_appearance)."""
+    5 and 6 plus +-d3 (see lookalike_appearance).
+    novel_looks: types whose colour is drawn anew for every life (a random direction, shared by the type's bush,
+    berry and empty bush; similarity novel_sim to the original, default LOOKALIKE_SIMILARITY), so no inherited
+    weight can know them (ADR-017). Combine with per_life_pool so that their meaning is drawn per life as well.
+    weights: {type: spawn weight} overriding the default of 1 per bush type."""
     data = ohol.load()
     ids = [BUSH, BERRY, EMPTY_BUSH] + ([ONION_PLANT, ONION] if onions else []) + ([HOT_SPRING] if springs else [])
     sets = [(variant(v), COLOURS[v - 1] + " ") for v in range(1, n_types)]
@@ -102,7 +114,7 @@ def berry_world(exp: ExperimentConfig, n_types: int = 4, poison: tuple = (), per
                             extra_decays={EMPTY_BUSH: (BUSH, REGROW_TICKS)})
     spawn = np.zeros(rs.size, np.float32)
     for v in range(n_types):
-        spawn[rs.local(variant(v)[BUSH])] = 1.0
+        spawn[rs.local(variant(v)[BUSH])] = (weights or {}).get(v, 1.0)
     if onions:
         spawn[rs.local(ONION_PLANT)] = 0.5
     if springs:
@@ -118,40 +130,64 @@ def berry_world(exp: ExperimentConfig, n_types: int = 4, poison: tuple = (), per
         return rs.to_arrays(exp.vision.appearance_dim, spawn_weight=spawn, food_value=fv, pain_value=pv,
                             appearance=app)
 
-    if not per_life_pool and not per_life_sets:
+    if not per_life_pool and not per_life_sets and not novel_looks:
         rules = arrays(tuple(poison))
         return rs, (lambda gen, key: rules)
     import itertools
-    alts = per_life_sets or tuple(itertools.combinations(per_life_pool, per_life_k))
+    alts = per_life_sets or (tuple(itertools.combinations(per_life_pool, per_life_k)) if per_life_pool else ((),))
     combos = [tuple(poison) + tuple(c) for c in alts]
     variants = [arrays(c) for c in combos]
     stacked = jax.tree_util.tree_map(lambda *a: jnp.stack(a), *variants)
     E = exp.evolution.episodes
 
+    K = exp.vision.appearance_dim
+    objs = (BUSH, BERRY, EMPTY_BUSH)
+    basis = [colour_basis(o, K) for o in objs]
+    bases, comps = jnp.asarray(np.stack([b for b, _ in basis])), jnp.asarray(np.stack([c for _, c in basis]))
+    novel_ids = np.array([[rs.local(variant(v)[o]) for o in objs] for v in novel_looks], np.int32).reshape(-1, 3)
+    nsim = LOOKALIKE_SIMILARITY if novel_sim is None else novel_sim
+
+    def novel_appearance(key):   # [E, types, 3 objects, K]
+        u = jax.random.normal(key, (E, len(novel_looks), K - 1))
+        u = u / jnp.linalg.norm(u, axis=-1, keepdims=True)
+        return nsim * bases[None, None] + np.sqrt(1 - nsim ** 2) * jnp.einsum("enc,ock->enok", u, comps)
+
     def rules_fn(gen, key):
-        pick = jax.random.randint(key, (E,), 0, len(variants))
+        kp, ka = jax.random.split(key)
+        pick = jax.random.randint(kp, (E,), 0, len(variants))
         if reverse:   # [E, 2 phases, ...]
             assert len(variants) == 2
             idx = jnp.stack([pick, 1 - pick], axis=1)
-            return jax.tree_util.tree_map(lambda a: a[idx], stacked)
-        return jax.tree_util.tree_map(lambda a: a[pick], stacked)
+            rules = jax.tree_util.tree_map(lambda a: a[idx], stacked)
+        else:
+            rules = jax.tree_util.tree_map(lambda a: a[pick], stacked)
+        if novel_looks:
+            new = novel_appearance(ka)
+            app = rules.appearance
+            app = app.at[:, :, novel_ids].set(new[:, None]) if reverse else app.at[:, novel_ids].set(new)
+            rules = rules._replace(appearance=app)
+        return rules
     return rs, rules_fn
 
 
 LOOKALIKE_SIMILARITY = 0.8   # cosine similarity of a colour variant's appearance to the original object
 
 
+def colour_basis(orig: int, k: int):
+    """(appearance of the original object, orthonormal basis [k-1, k] of its complement = the colour space)."""
+    from life.ruleset import appearance_for
+    base = appearance_for(orig, k)
+    q, _ = np.linalg.qr(np.column_stack([base, np.eye(k)]))
+    return base, q[:, 1:k].T
+
+
 def lookalike_appearance(rs, n_types: int, k: int, sim: float = LOOKALIKE_SIMILARITY, mode: str = "lookalike") -> dict:
     """Colour variants look *like* the original: appearance = sim * original + sqrt(1 - sim^2) * colour, where the
     colour vector (one per variant, orthogonal to the original) is shared by the variant's bush, berry and empty
     bush. Hash-based appearances (ADR-006) would make every variant an unrelated object."""
-    from life.ruleset import appearance_for
     out = {}
     for orig in (BUSH, BERRY, EMPTY_BUSH):
-        base = appearance_for(orig, k)
-        # orthonormal basis of the complement of base; colours = +-basis directions (maximally spread)
-        q, _ = np.linalg.qr(np.column_stack([base, np.eye(k)]))
-        comp = q[:, 1:k].T
+        base, comp = colour_basis(orig, k)   # colours = +-basis directions (maximally spread)
         dirs = [sgn * c for sgn in (1, -1) for c in comp]
         if mode == "xor":
             r = 1 / np.sqrt(2)
@@ -181,16 +217,14 @@ def poison_metrics(rs):
     return extra
 
 
-def fitness_pain(stats):
-    return stats["eaten"] - stats["pain"] + 0.01 * stats["alive_ticks"]
-
-
 # ------------------------------------------------------------------ brains (each stage adds to the previous)
 
 # 1.0 steering: a ganglion of excitatory and inhibitory interneurons between sensors and motor neurons,
-# plus direct sensor->motor reflex arcs. All weights evolved, no plasticity.
+# plus direct sensor->motor reflex arcs. All weights evolved, no plasticity. Both populations have divisive
+# normalisation lagging one step (ADR-018): without it most interneurons sit at their ceiling.
+GANGLION = dict(norm=2.0, norm_lag=True, group="ganglion")
 B10 = BrainConfig(
-    regions=(R("ganglion_e", 16, sign="exc", group="ganglion"), R("ganglion_i", 8, sign="inh", group="ganglion")),
+    regions=(R("ganglion_e", 16, sign="exc", **GANGLION), R("ganglion_i", 8, sign="inh", **GANGLION)),
     projections=(P("in", "ganglion_e"), P("in", "ganglion_i"),
                  P("ganglion_e", "ganglion_e"), P("ganglion_e", "ganglion_i"), P("ganglion_i", "ganglion_e"),
                  P("ganglion_e", "out"), P("ganglion_i", "out"), P("in", "out")))
@@ -246,14 +280,15 @@ BODY_TASTE = BodyConfig(taste=True)
 # same number of good bushes as 1.0 plus 2 poisonous types on top (density 0.08 * 6/4)
 W11 = replace(W10, spawn_density=0.12)
 stage(Stage("1.1", "s1_1_valence", "1.0", B11, W11, VISION_CH1, BODY_TASTE,
-            lambda exp: berry_world(exp, 6, poison=(4, 5)), fitness=fitness_pain, row_extra=poison_metrics,
+            lambda exp: berry_world(exp, 6, poison=(4, 5)), row_extra=poison_metrics,
             generations=150, notes="innate good/bad cell types with fixed motor meaning; 2 of 6 berry types poison"))
 
 
 # 1.2 drives (hypothalamus): named drive neurons read the body. 'hunger' is broadcast as a neuropeptide-like
 # modulator: receptors on valence_app raise appetite with need. 'cold' gates an innate thermotaxis circuit
 # (run-and-tumble on temperature changes, as C. elegans AFD -> AIY/AIZ): when cold and getting warmer, keep going
-# forward; when cold and getting colder, turn. No knowledge of what a heat source looks like is needed.
+# forward; when cold and getting colder, turn. No knowledge of what a heat source looks like is needed. 'cold'
+# acts through synapses only (it is not broadcast).
 #   hunger    = max(0, tanh(2 - 3 * food))                     fires below ~2/3 full
 #   cold      = max(0, tanh(3.3 - 7 * temperature))            fires below ~0.47
 #   warm_run  = max(0, tanh(-2 + 2.5 cold + 3 temp_change))    -> FORWARD
@@ -271,7 +306,7 @@ B12 = extend(B11,
                           fixed("in", "warm_turn", -3.0, src_select=("temp_change",)),
                           fixed("warm_run", "out", 3.0, dst_range=FWD), fixed("warm_turn", "out", 3.0, dst_range=TURNS),
                           P("hunger", "ganglion_e"), P("cold", "ganglion_e")),
-             modulators=(Mod("hunger", pos="hunger"), Mod("cold", pos="cold")))
+             modulators=(Mod("hunger", pos="hunger"),))
 B12 = replace(B12, regions=tuple(replace(r, receptors=r.receptors + (("hunger", "gain", 1.0),)) if r.name == "valence_app"
                                  else r for r in B12.regions))
 BODY_12 = BodyConfig(taste=True, temperature=True, temp_change=True)
@@ -280,7 +315,7 @@ BODY_12 = BodyConfig(taste=True, temperature=True, temp_change=True)
 W12 = replace(W11, temperature=True, ambient_temp=0.25, heat_scale=0.15, heat_radius=4, temp_rate=0.1, temp_hunger=1.0,
               spawn_density=0.16)
 stage(Stage("1.2", "s1_2_drives", "1.1", B12, W12, VISION_CH1, BODY_12,
-            lambda exp: berry_world(exp, 6, poison=(4, 5), springs=0.6), fitness=fitness_pain, row_extra=poison_metrics,
+            lambda exp: berry_world(exp, 6, poison=(4, 5), springs=0.6), row_extra=poison_metrics,
             generations=150, notes="hunger (broadcast, receptors on appetite) and cold-gated thermotaxis; cold world with hot springs"))
 
 # 1.3 affect: two slow, antagonistic neuromodulatory states, as in C. elegans (Flavell et al. 2013):
@@ -288,19 +323,22 @@ stage(Stage("1.2", "s1_2_drives", "1.1", B12, W12, VISION_CH1, BODY_12,
 #   drives turning -> local search after food (dwelling).
 #   pdf (roaming neuropeptide): driven by hunger, slow; pdf receptors on 'roam', which drives FORWARD -> long
 #   straight runs when food has not been found for a while (roaming).
-# The two nuclei may inhibit each other only through evolved connections. World: food in a few dense patches.
+# The two nuclei inhibit each other (Flavell et al.: mutual inhibition makes dwelling and roaming two stable
+# states): inhibitory 5ht receptors on pdf and pdf receptors on raphe, hard-wired. World: food in a few dense
+# patches.
+AFFECT_INHIB = 2.0   # input removed from one nucleus per unit mean activity of the other
 B13 = extend(B12,
-             regions=(R("raphe", 2, sign="exc", alpha=0.03, group="affect"),
-                      R("pdf", 2, sign="exc", alpha=0.03, group="affect"),
+             regions=(R("raphe", 2, sign="exc", alpha=0.03, receptors=(("pdf", "bias", -AFFECT_INHIB),), group="affect"),
+                      R("pdf", 2, sign="exc", alpha=0.03, receptors=(("5ht", "bias", -AFFECT_INHIB),), group="affect"),
                       R("dwell", 2, sign="exc", bias=0.0, evolve_bias=False, receptors=(("5ht", "bias", 2.0),), group="affect"),
                       R("roam", 2, sign="exc", bias=0.0, evolve_bias=False, receptors=(("pdf", "bias", 2.0),), group="affect")),
              projections=(fixed("in", "raphe", 2.0, src_select=("taste",)), fixed("hunger", "pdf", 2.0),
-                          P("valence_app", "raphe"), P("valence_av", "pdf"), P("raphe", "pdf"), P("pdf", "raphe"),
+                          P("valence_app", "raphe"), P("valence_av", "pdf"),
                           fixed("dwell", "out", 1.5, dst_range=TURNS), fixed("roam", "out", 1.5, dst_range=FWD)),
              modulators=(Mod("5ht", pos="raphe"), Mod("pdf", pos="pdf")))
 W13 = replace(W12, patches=10, patch_radius=5, spawn_density=0.18)   # calibrated: lifetime ~424, food ~54
 stage(Stage("1.3", "s1_3_affect", "1.2", B13, W13, VISION_CH1, BODY_12,
-            lambda exp: berry_world(exp, 6, poison=(4, 5), springs=0.6), fitness=fitness_pain, row_extra=poison_metrics,
+            lambda exp: berry_world(exp, 6, poison=(4, 5), springs=0.6), row_extra=poison_metrics,
             generations=150, notes="serotonin (dwell) and PDF (roam) broadcast states; patchy food"))
 
 # 1.4 habituation: short-term depression on the sensory -> appetitive synapses, so a food eaten repeatedly
@@ -311,11 +349,14 @@ B14 = replace(B13, projections=tuple(
     else p for p in B13.projections))
 W14 = replace(W13, variety_bonus=0.3, variety_tau=150.0)
 stage(Stage("1.4", "s1_4_habituation", "1.3", B14, W14, VISION_CH1, BODY_12,
-            lambda exp: berry_world(exp, 6, poison=(4, 5), springs=0.6), fitness=fitness_pain, row_extra=poison_metrics,
+            lambda exp: berry_world(exp, 6, poison=(4, 5), springs=0.6), row_extra=poison_metrics,
             generations=150, notes="habituating appetitive synapses; OHOL variety bonus"))
 
-# 1.5 associative learning: which of two berry types is poison is decided per life (on top of the two that
-# are always poison). Dedicated US neurons (hard-wired from taste and pain) write the 'us' modulator; the
+# 1.5 associative learning. The world must be one that evolution cannot memorise (ADR-017): besides two ancestral
+# good types and two ancestral poison types (fixed looks, so innate preferences still pay), two *novel* types get
+# a new look every life and one of them is poison. Poison now costs as much as a berry gives, lives are twice as
+# long, and one lesson is worth a lot: the other five berries of the bush and every later bush of that look.
+# Dedicated US neurons (hard-wired from taste and pain) write the 'us' modulator; the
 # sensory -> valence synapses become plastic, gated by 'us', with an eligibility trace that bridges the delay
 # between eating and sickness (Aplysia-style CS-trace rule: dW = eta * us * trace(pre)).
 B15 = extend(B14,
@@ -343,20 +384,28 @@ def _split_cs(projections):
 
 B15 = replace(B15, projections=_split_cs(B15.projections))
 W15 = replace(W14, sickness_delay=2, pain_decay=0.3, spawn_density=0.22)   # extra bushes for the extra poison type
-stage(Stage("1.5", "s1_5_association", "1.4", B15, W15, VISION_CH1, BODY_12,
-            lambda exp: berry_world(exp, 6, poison=(4, 5), per_life_pool=(2, 3), per_life_k=1, springs=0.6),
-            fitness=fitness_pain, row_extra=poison_metrics, plastic=True, generations=200,
-            notes="classical conditioning: US-gated plasticity with eligibility traces; poison identity per life"))
+LIFE_LEARN = 2000     # ticks per life in the learning stages
+NOVEL_SIM = 0.6       # novel types look less like the gooseberry than the ancestral look-alikes (0.8) do
+POISON_FOOD = -3.0    # OHOL food points lost per poison berry in the learning stages (a berry gives +3)
+
+
+def learning_world(exp, reverse: bool = False):
+    return berry_world(exp, 6, poison=(4, 5), per_life_pool=(2, 3), per_life_k=1, springs=0.6, reverse=reverse,
+                       novel_looks=(2, 3), novel_sim=NOVEL_SIM, poison_food=POISON_FOOD)
+
+
+stage(Stage("1.5", "s1_5_association", "1.4", B15, W15, VISION_CH1, BODY_12, learning_world,
+            row_extra=poison_metrics, plastic=True, generations=200, ticks=LIFE_LEARN,
+            notes="classical conditioning: US-gated plasticity with eligibility traces; novel foods per life"))
 
 
 # 1.6 extinction and reversal: the learned (US-gated) weights now relax back toward their inherited values
 # (a fast, forgetting component), so an association that stops being renewed fades and a new one can take
 # over. World: the per-life poison swaps to the other look-alike halfway through life.
 B16 = replace(B15, projections=tuple(replace(p, decay=0.003) if p.modulator == "us" else p for p in B15.projections))
-W16 = replace(W15, switch_tick=500)
-stage(Stage("1.6", "s1_6_reversal", "1.5", B16, W16, VISION_CH1, BODY_12,
-            lambda exp: berry_world(exp, 6, poison=(4, 5), per_life_pool=(2, 3), per_life_k=1, springs=0.6, reverse=True),
-            fitness=fitness_pain, row_extra=poison_metrics, plastic=True, generations=200,
+W16 = replace(W15, switch_tick=LIFE_LEARN // 2)
+stage(Stage("1.6", "s1_6_reversal", "1.5", B16, W16, VISION_CH1, BODY_12, lambda exp: learning_world(exp, reverse=True),
+            row_extra=poison_metrics, plastic=True, generations=200, ticks=LIFE_LEARN,
             notes="reversal learning: learned weights decay toward w0; poison identity swaps mid-life"))
 
 
@@ -373,9 +422,8 @@ B21 = extend(B16,
              projections=(P("in", "tectum", src_select=("vis*",), topology="topographic", groups=9, density=1.0),
                           P("tectum", "tectum_i", density=1.0), P("tectum_i", "tectum", density=1.0),
                           P("tectum", "out", density=1.0), P("tectum", "ganglion_e")))
-stage(Stage("2.1", "s2_1_tectum", "1.6", B21, W16, VISION_CH2, BODY_12,
-            lambda exp: berry_world(exp, 6, poison=(4, 5), per_life_pool=(2, 3), per_life_k=1, springs=0.6, reverse=True),
-            fitness=fitness_pain, row_extra=poison_metrics, plastic=True, generations=200,
+stage(Stage("2.1", "s2_1_tectum", "1.6", B21, W16, VISION_CH2, BODY_12, lambda exp: learning_world(exp, reverse=True),
+            row_extra=poison_metrics, plastic=True, generations=200, ticks=LIFE_LEARN,
             notes="retinotopic target selection with lateral inhibition; camera eyes (9 columns)"))
 
 
@@ -391,6 +439,7 @@ def cs_plastic(src, dst, sel=None, **kw):
 # item and k-winners-take-all inhibition (piriform cortex / mushroom-body style pattern separation). The
 # US-gated learning of 1.5 now also runs from the pallium onto the valence neurons. World: the XOR world, where
 # which pair of look-alikes is poison ({++, --} or {+-, -+} of two appearance features) is decided per life.
+# (Still the v4 design: before running, move it to per-life looks and ADR-017's random-per-life pallium input.)
 B22 = extend(B21,
              regions=(R("pallium", 48, sign="exc", kwta=6, group="forebrain/pallium"),),
              projections=(P("in", "pallium", src_select=("vis*", "held*"), density=0.15, evolve=False),
@@ -404,7 +453,7 @@ def xor_world(exp):
 
 
 stage(Stage("2.2", "s2_2_pallium_expansion", "2.1", B22, W22, VISION_CH2, BODY_12, xor_world,
-            fitness=fitness_pain, row_extra=poison_metrics, plastic=True, generations=200,
+            row_extra=poison_metrics, plastic=True, generations=200, ticks=LIFE_LEARN,
             notes="sparse random expansion (k-WTA) before US-gated learning; XOR poison rule per life"))
 
 # 2.3 pallium pattern completion and clustering: the input to the pallium becomes plastic (Oja, unsupervised,
@@ -416,7 +465,7 @@ B23 = replace(B22, projections=tuple(
                                    abcd=(1.0, 0.0, 0.0, 0.0)),))
 VISION_23 = replace(VISION_CH2, appearance_noise=0.3)
 stage(Stage("2.3", "s2_3_pallium_clustering", "2.2", B23, W22, VISION_23, BODY_12, xor_world,
-            fitness=fitness_pain, row_extra=poison_metrics, plastic=True, generations=200,
+            row_extra=poison_metrics, plastic=True, generations=200, ticks=LIFE_LEARN,
             notes="unsupervised Oja input + recurrent Hebb in pallium; noisy appearance"))
 
 # 2.4 basal ganglia, fixed: inhibitory striatal channels (one per action) inhibit a tonically active GPi, which
@@ -429,7 +478,7 @@ B24 = extend(B23,
                           P("striatum", "gpi", topology="one_to_one", w_init=2.0, evolve=False),
                           P("gpi", "out", topology="one_to_one", w_init=2.0, evolve=False)))
 stage(Stage("2.4", "s2_4_basal_ganglia", "2.3", B24, W22, VISION_23, BODY_12, xor_world,
-            fitness=fitness_pain, row_extra=poison_metrics, plastic=True, generations=200,
+            row_extra=poison_metrics, plastic=True, generations=200, ticks=LIFE_LEARN,
             notes="action selection by disinhibition (striatum -| GPi -| motor), fixed"))
 
 
@@ -463,7 +512,7 @@ B25 = extend(B24,
                                           ("value_av", -GAMMA), ("value_app_prev", -1.0), ("value_av_prev", 1.0))),))
 B25 = replace(B25, projections=tuple(replace(p, modulator="da") if p.modulator == "us" else p for p in B25.projections))
 stage(Stage("2.5", "s2_5_dopamine_td", "2.4", B25, W22, VISION_23, BODY_12, xor_world,
-            fitness=fitness_pain, row_extra=poison_metrics, plastic=True, generations=200,
+            row_extra=poison_metrics, plastic=True, generations=200, ticks=LIFE_LEARN,
             notes="TD critic (opponent value populations) and dopamine teaching instead of the raw US"))
 
 
@@ -481,7 +530,7 @@ BXTD = extend(B16,
                                            ("value_av", -GAMMA), ("value_app_prev", -1.0), ("value_av_prev", 1.0))),))
 BXTD = replace(BXTD, projections=tuple(replace(p, modulator="da") if p.modulator == "us" else p for p in BXTD.projections))
 stage(Stage("x.td", "sx_td_test", "1.6", BXTD, W16, VISION_CH1, BODY_12, STAGES["1.6"].build,
-            fitness=fitness_pain, row_extra=poison_metrics, plastic=True, generations=200,
+            row_extra=poison_metrics, plastic=True, generations=200, ticks=LIFE_LEARN,
             notes="side test: 1.6 + TD critic, dopamine teaches instead of the raw US"))
 
 

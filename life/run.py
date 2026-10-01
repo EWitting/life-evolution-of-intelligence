@@ -49,7 +49,8 @@ def make_tick(exp: ExperimentConfig, layout: brain.Layout):
         bstate, acts = jax.vmap(brain.step, in_axes=(None, None, 0, 0, 0, 0, 0))(
             bcfg, layout, pop, bstate, obs, sig, keys)
         acts = jnp.where(override >= 0, override, acts)
-        world, ev = step_world(wcfg, rules, world, acts, key)
+        effort = bstate.x[:, layout.n_in:].mean(axis=1)
+        world, ev = step_world(wcfg, rules, world, acts, key, effort)
         food = ev["gained"] / wcfg.food_scale
         sig = jnp.stack([food - ev["pain"], ev["pain"], food], axis=1)
         return world, bstate, sig, acts, obs, ev
@@ -77,8 +78,9 @@ def make_simulate(exp: ExperimentConfig, record: bool):
         half = exp.world.switch_tick if phased else T // 2
 
         def one_tick(carry, k):
-            world, bstate, sig, eats, tsum = carry
+            world, bstate, sig, eats, tsum, fed = carry
             tsum = tsum + world.temp * world.alive
+            fed = fed + world.food / exp.world.max_food * world.alive
             late = world.tick >= half
             r = rules_at(world.tick)
             world, bstate, sig, acts, obs, ev = tick(r, pop, world, bstate, sig, k, no_override)
@@ -91,7 +93,7 @@ def make_simulate(exp: ExperimentConfig, record: bool):
                            dir=world.dir.astype(jnp.int8), alive=world.alive, held=world.held.astype(jnp.int16),
                            food=world.food, pain=world.pain, action=acts.astype(jnp.int8), mod=bstate.mod,
                            x=bstate.x.astype(jnp.float16))
-            return (world, bstate, sig, eats, tsum), rec
+            return (world, bstate, sig, eats, tsum, fed), rec
 
         def chunk(carry, keys):
             carry, recs = jax.lax.scan(one_tick, carry, keys)
@@ -104,12 +106,15 @@ def make_simulate(exp: ExperimentConfig, record: bool):
         sig = jnp.zeros((N, 3), jnp.float32)
         eats = jnp.zeros((N, 2, M), jnp.float32)
         tsum = jnp.zeros(N, jnp.float32)
+        fed = jnp.zeros(N, jnp.float32)
         keys = jax.random.split(ks, T).reshape(T // every, every, -1)
-        (world, bstate, sig, eats, tsum), (recs, snaps) = jax.lax.scan(chunk, (world, bstate, sig, eats, tsum), keys)
+        (world, bstate, sig, eats, tsum, fed), (recs, snaps) = jax.lax.scan(
+            chunk, (world, bstate, sig, eats, tsum, fed), keys)
         # eats[N, 2, M]: objects eaten per local id in the first and second half of life (learning curves);
-        # column 0 (empty) instead counts eating anything painful (poison), whatever its id in this world
+        # column 0 (empty) instead counts eating anything painful (poison), whatever its id in this world.
+        # fed: sum over ticks alive of the food level as a fraction of max_food ('well-fed lifetime')
         stats = dict(alive_ticks=world.alive_ticks, eaten=world.eaten, pain=world.pain_total, alive=world.alive,
-                     food=world.food, eats=eats, temp_mean=tsum / jnp.maximum(world.alive_ticks, 1))
+                     food=world.food, eats=eats, fed=fed, temp_mean=tsum / jnp.maximum(world.alive_ticks, 1))
         if record:
             recs = jax.tree_util.tree_map(lambda a: a.reshape((T,) + a.shape[2:]), recs)
             recs["w_snap"] = snaps
@@ -215,7 +220,7 @@ def run_evolution(exp: ExperimentConfig, ruleset: Ruleset, fitness_fn: Callable[
         fit = fitness_fn(stats)
         row = dict(gen=gen, fit_mean=float(fit.mean()), fit_max=float(fit.max()), fit_median=float(jnp.median(fit)),
                    alive_ticks=float(stats["alive_ticks"].mean()), eaten=float(stats["eaten"].mean()),
-                   pain=float(stats["pain"].mean()), survivors=float(stats["alive"].sum()),
+                   pain=float(stats["pain"].mean()), fed=float(stats["fed"].mean()), survivors=float(stats["alive"].sum()),
                    seconds=round(time.time() - t0, 1))
         rows.append(row)
         if exp.world.temperature:

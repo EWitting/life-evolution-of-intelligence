@@ -360,3 +360,79 @@ which confirms the mutational-load diagnosis.
 - Conclusion: the rules work; the **task** does not reward within-life learning enough: inherited preferences
   and the reactive pain response already capture most of the value, and a single-life lesson about one of six
   berry types is worth a point or two against fitness noise of tens.
+
+---
+
+## v5 (2026-10-01): honest fitness, normalised ganglion, chapter 1 re-run
+
+Decisions: ADR-017 (innate vs learned compartments) and ADR-018 (fitness, normalisation).
+
+### What the v4 recordings showed (final generations of 1.0, 1.3, 1.6)
+| | 1.0 | 1.3 | 1.6 |
+|---|---|---|---|
+| `ganglion_i` above 0.95 (share of time) | 84% | 75% | 90% |
+| `ganglion_e` above 0.95 | 47% | 51% | 67% |
+| `ganglion_e` neurons stuck on all life | 15% | 31% | 45% |
+| `no_feed` above 0.95 | n/a | 98% | 78% |
+| action entropy (nats; uniform 1.95) | 0.06 | 0.05 | 0.08 |
+| food "eaten" (v4 fitness term) / actually absorbed | 76 / 18 | 51 / 8 | 29 / 10 |
+| survival term 0.01 x ticks | 6.9 | 3.8 | 3.3 |
+
+- Actions are sampled from the motor *pre-activations* x 8 (`logit_gain / action_temperature`), so they are
+  nearly deterministic, not random; the saturated `out` block in the dashboard is display only.
+- One berry is 6 food units, a bush 36, the stomach 20: agents strip a bush and v4 credited all of it.
+- `raphe` and `pdf` were both excitatory with evolved cross-connections, so they could only excite each other
+  (activity correlation +0.73 in 1.6); the `cold` modulator had no receptor.
+
+### Saturation probes: stage 1.0 from scratch, well-fed fitness, 250 generations (last 25)
+| variant | fitness (fed) | lifetime | `ganglion_e` > 0.95 | `ganglion_i` > 0.95 |
+|---|---|---|---|---|
+| none, seeds 0 / 1 | 464 / 436 | 716 / 688 | 0.51 / 0.23 | 0.61 / 0.48 |
+| normalisation 2, instantaneous, seeds 0 / 1 | 261 / 466 | 485 / 725 | 0.00 / 0.01 | 0.00 / 0.01 |
+| normalisation 2, lagging one step, seeds 0 / 1 | 409 / 550 | 648 / 799 | 0.00 / 0.00 | 0.00 / 0.00 |
+| metabolic cost 0.3 | 416 | 649 | 0.18 | 0.36 |
+| metabolic cost 1.0 | 187 | 372 | 0.01 | 0.05 |
+| lagging normalisation + cost 0.3 | 372 | 616 | 0.03 | 0.00 |
+
+- Cost 1.0: evolution silences the brain and nothing is eaten (0.1 food). Cost fitness values are not directly
+  comparable (the cost itself shortens life).
+- Seed spread is about +-60, so only the saturation columns separate the variants. Adopted: lagging
+  normalisation on the ganglion; metabolic cost implemented but off.
+
+### v5 chain (seed 0; 1.0: 400 generations from scratch, 1.1-1.4: 200 generations, 10% weight mutation)
+Fitness = well-fed lifetime. Log `runs/logs/chain_v5.log`.
+
+| last 25 generations | main | control | main / control lifetime | main / control poison |
+|---|---|---|---|---|
+| 1.0 steering | 408 | | 649 | |
+| 1.1 valence, seeds 0 / 1 / 2 | 334 / 376 / 446 (mean 386) | 465 / 324 / 370 (mean 387) | 619 / 604 | 0.19 / 0.20 |
+| 1.2 drives | 232 | 281 | 405 / 468 | 0.17 / 0.14 |
+| 1.3 affect | 284 | 288 | 481 / 476 | 0.10 / 0.09 |
+| 1.4 habituation | 320 | 307 | 528 / 508 | 0.11 / 0.08 |
+
+- Saturation is gone along the lineage (ganglion above 0.95: 0-3% of the time; `no_feed` 1% in 1.3).
+- **1.1 valence is a tie over three seeds.** The v4 "clear win" (53 vs 40) came from the fitness: the pain term
+  paid the pain pathway directly, and gross eating paid the taste -> feed reflex for gorging. Lesions still show
+  the valence cells carry the behaviour (intact 335; `valence_av` 205, `no_feed` 209, `valence_app` 252).
+  Halving the hard-wired valence -> motor weights (3 -> 1) changes nothing (336).
+- 1.2-1.4 are single seeds and within the +-60 seed spread: no conclusion without replicates.
+- 1.3 lesions (8 worlds): intact 280; `pdf` 175 and `roam` 186 (essential), `raphe` 274 and `dwell` 274 (unused;
+  `raphe` mean activity 0.04). With the hard-wired mutual inhibition the nuclei are now anticorrelated (-0.48).
+
+### Learning world (1.5/1.6 as now defined) is not run yet
+New world (`stages.learning_world`): two ancestral good types, two ancestral poison types, two novel types whose
+look is drawn per life (similarity 0.6 to the gooseberry) and one of which is poison per life; poison costs a
+whole berry (-3 food points); lives of 2000 ticks. The v5 1.4 population dropped into it (4 worlds):
+
+| world | learning | fitness | lifetime | berries eaten per life | poison share |
+|---|---|---|---|---|---|
+| density 0.22, novel similarity 0.6, poison -3 | on / off | 211 / 214 | 367 / 372 | 4.8 / 5.2 | 0.17 / 0.17 |
+| density 0.22, similarity 0.8, poison -3 | on / off | 208 / 211 | 357 / 356 | 4.7 / 5.1 | 0.18 / 0.19 |
+| density 0.30, similarity 0.6, poison -3 | on / off | 203 / 210 | 348 / 362 | 5.5 / 5.5 | 0.16 / 0.17 |
+| density 0.22, similarity 0.6, poison -1 | on / off | 239 / 236 | 417 / 414 | 6.1 / 6.2 | 0.20 / 0.20 |
+
+- The blocker is the **food economy**, not the learning rule: an agent eats 5-7 berries in its whole life and
+  dies near the never-eating baseline, so it meets a novel food once or twice. No rule can pay on that. Initial
+  food in the 1.0 world (about 73 bushes x 36 units = 2600) is below what 64 agents need to live 1000 ticks (3200
+  units), and a berry is 30% of a stomach. Learning needs many small meals: smaller berries, a richer world,
+  or fewer agents per world.

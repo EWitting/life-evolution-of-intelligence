@@ -34,6 +34,8 @@ class WorldConfig:
     heat_radius: int = 3             # cells
     temp_rate: float = 0.05          # fraction per tick by which body temperature approaches the local one
     temp_hunger: float = 2.0
+    brain_cost: float = 0.0          # metabolic cost of neural activity: hunger * (1 + brain_cost * mean rate of
+                                     # all non-input neurons). A mean, so it prices dense firing, not brain size.
 
 
 @dataclass(frozen=True)
@@ -66,6 +68,10 @@ class RegionSpec:
     trace_tau: float = 0.8           # decay per step of the activity trace used by the 'trace' (STDP-like) rule
     sign: str = "mixed"              # Dale's law: 'exc' (all outgoing weights >= 0), 'inh' (all <= 0) or 'mixed'
     kwta: int = 0                    # > 0: only the k most active neurons of the region stay active each step
+    norm: float = 0.0                # > 0: divisive normalisation (shunting inhibition by an implicit pool of fast
+                                     # interneurons): input h / (1 + norm * mean over the region of max(h, 0))
+    norm_lag: bool = False           # True: the pool of the previous step divides (inhibition lags one step, so
+                                     # the onset of a stimulus passes at full strength)
     bias: float | None = None        # initial bias of every neuron; None = small random. > 0 = tonically active
     evolve_bias: bool = True         # False: bias is hard-wired (never mutated)
     receptors: tuple = ()            # broadcast neuromodulation of activity: (modulator, effect, sensitivity) with

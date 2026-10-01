@@ -40,6 +40,7 @@ class BrainState(NamedTuple):
     e: jnp.ndarray     # [N, N] eligibility traces (projections with elig_tau > 0)
     u: jnp.ndarray     # [N, N] short-term depression resource in [0, 1] (1 = fully recovered)
     mod: jnp.ndarray   # [M] modulator values computed at the end of the previous step
+    g: jnp.ndarray     # [N] normalisation pool drive of the previous step (regions with norm_lag)
 
 
 class Layout(NamedTuple):
@@ -55,6 +56,7 @@ class Layout(NamedTuple):
     mod_names: tuple        # modulator names, index = modulator id
     mod_specs: tuple        # static: (kind, pos_slice, neg_slice, baseline, scale) per modulator
     kwta: tuple             # static: (offset, size, k) per region with k-WTA
+    norm: tuple             # static: (offset, size, strength, lag) per region with divisive normalisation
     groups: tuple           # visual group path per region (same order as names), '' = none
     rec_gain: jnp.ndarray   # [M, N] receptor sensitivity: gain effect of modulator m on neuron j
     rec_bias: jnp.ndarray   # [M, N] receptor sensitivity: additive effect
@@ -205,6 +207,8 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
             assert m.source.startswith("world:") and kind in WORLD_SIGNALS, f"modulator {m.name}: bad source {m.source}"
             mod_specs.append((kind, (0, 0), (0, 0), m.baseline, m.scale))
     kwta = tuple((sl[r.name].start, r.size, r.kwta) for r in regions if r.kwta > 0 and r.name != "in")
+    norm = tuple((sl[r.name].start, r.size, float(r.norm), bool(r.norm_lag)) for r in regions
+                 if r.norm > 0 and r.name != "in")
     rec_gain = np.zeros((max(1, len(mod_names)), n), np.float32)
     rec_bias = np.zeros_like(rec_gain)
     for r in regions:
@@ -214,7 +218,7 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
             (rec_gain if effect == "gain" else rec_bias)[mod_names.index(mname), sl[r.name]] += sens
     j = jnp.asarray
     return Layout(n=n, n_in=n_in, n_out=n_out, names=names, offsets=offsets, sizes=sizes, in_names=tuple(in_names),
-                  proj_names=tuple(proj_names), mod_names=mod_names, mod_specs=tuple(mod_specs), kwta=kwta,
+                  proj_names=tuple(proj_names), mod_names=mod_names, mod_specs=tuple(mod_specs), kwta=kwta, norm=norm,
                   alpha=j(alpha), trace_tau=j(tau), sign=j(sign), bias_init=j(bias_init), evolve_b=j(evolve_b),
                   allowed=j(allowed), density=j(density), one_to_one=j(o2o), proj_id=j(proj_id), rule=j(rule),
                   mod_idx=j(mod_idx), elig=j(elig), gain=j(gain), evolve_w=j(evolve_w), w_init=j(w_init),
@@ -254,7 +258,7 @@ def init_state(genome: Genome, layout: Layout | None = None, w_max: float = 4.0)
     m = len(layout.mod_names) if layout is not None else 0
     return BrainState(x=jnp.zeros(n, jnp.float32), w=genome.w0 * genome.mask, tr=jnp.zeros(n, jnp.float32),
                       e=jnp.zeros((n, n), jnp.float32), u=jnp.ones((n, n), jnp.float32),
-                      mod=jnp.zeros(max(m, 1), jnp.float32))
+                      mod=jnp.zeros(max(m, 1), jnp.float32), g=jnp.zeros(n, jnp.float32))
 
 
 def plasticity_rule(layout: Layout, genome: Genome, w, x_pre, x_post, tr_pre):
@@ -288,13 +292,24 @@ def _kwta(layout: Layout, f: jnp.ndarray) -> jnp.ndarray:
     return f
 
 
+def _normalise(layout: Layout, h: jnp.ndarray, g: jnp.ndarray):
+    """Divisive normalisation per region. Returns (h, g) with g the pool drive of this step."""
+    for off, size, k, lag in layout.norm:
+        seg = h[off:off + size]
+        pool = jnp.maximum(seg, 0.0).mean()
+        div = g[off] if lag else pool
+        h = h.at[off:off + size].set(seg / (1.0 + k * div))
+        g = g.at[off:off + size].set(pool)
+    return h, g
+
+
 def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, obs: jnp.ndarray,
          world_sig: jnp.ndarray, key: jax.Array):
     """One world tick of brain activity. `obs` is the flattened observation [n_in]; `world_sig` the vector of
     world signals (WORLD_SIGNALS) of the last tick, used only by 'world:*' modulators. Returns (state, action)."""
     n_in, n_out = layout.n_in, layout.n_out
     x = state.x.at[:n_in].set(obs)
-    w, tr, e, u, mod = state.w, state.tr, state.e, state.u, state.mod
+    w, tr, e, u, mod, g = state.w, state.tr, state.e, state.u, state.mod, state.g
     gate = jnp.where(layout.mod_idx >= 0, mod[jnp.maximum(layout.mod_idx, 0)], 1.0)
     h = None
     for _ in range(cfg.steps_per_tick):
@@ -308,6 +323,8 @@ def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, ob
             log_gain = log_gain + mod @ layout.rec_gain
         if layout.has_gain or layout.has_receptors:
             h = h * jnp.exp(jnp.clip(log_gain, -GAIN_CLIP, GAIN_CLIP))
+        if layout.norm:
+            h, g = _normalise(layout, h, g)
         f = _kwta(layout, jnp.maximum(jnp.tanh(h), 0.0))
         x_new = ((1.0 - layout.alpha) * x + layout.alpha * f).at[:n_in].set(obs)
         base = plasticity_rule(layout, genome, w, x, x_new, tr)
@@ -328,7 +345,7 @@ def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, ob
         action = jax.random.categorical(key, logits / cfg.action_temperature)
     else:
         action = jnp.argmax(logits)
-    return BrainState(x=x, w=w, tr=tr, e=e, u=u, mod=mod), action.astype(jnp.int32)
+    return BrainState(x=x, w=w, tr=tr, e=e, u=u, mod=mod, g=g), action.astype(jnp.int32)
 
 
 # ---------------------------------------------------------------- warm starts across layouts

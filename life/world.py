@@ -96,9 +96,11 @@ def local_temperature(cfg: WorldConfig, rules: RuleArrays, grid: jnp.ndarray) ->
     return jnp.clip(cfg.ambient_temp + field, 0.0, 1.0)
 
 
-def step_world(cfg: WorldConfig, rules: RuleArrays, state: WorldState, actions: jnp.ndarray, key: jax.Array):
+def step_world(cfg: WorldConfig, rules: RuleArrays, state: WorldState, actions: jnp.ndarray, key: jax.Array,
+               effort: jnp.ndarray | None = None):
     """One tick. Returns (new_state, events) with events = {"gained": [N] food units gained by eating,
-    "pain": [N] pain received, "ate": [N] local id of the object eaten (0 = none)}."""
+    "pain": [N] pain received, "ate": [N] local id of the object eaten (0 = none)}.
+    `effort` [N]: mean firing rate of each agent's brain this tick (WorldConfig.brain_cost)."""
     H, W = cfg.height, cfg.width
     N = actions.shape[0]
     alive = state.alive
@@ -187,6 +189,8 @@ def step_world(cfg: WorldConfig, rules: RuleArrays, state: WorldState, actions: 
         local = local_temperature(cfg, rules, grid)[pos[:, 0], pos[:, 1]]
         temp = temp + cfg.temp_rate * (local - temp)
         hunger = hunger * (1.0 + cfg.temp_hunger * 2.0 * jnp.abs(temp - 0.5))
+    if cfg.brain_cost > 0 and effort is not None:
+        hunger = hunger * (1.0 + cfg.brain_cost * effort)
     food = food - hunger * alive
     age = state.age + alive.astype(jnp.int32)
     alive_new = alive & (food > 0) & (age < cfg.max_age)

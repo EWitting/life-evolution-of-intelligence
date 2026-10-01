@@ -66,10 +66,11 @@ def stage(s: Stage) -> Stage:
 
 
 def default_fitness(stats):
-    """Well-fed lifetime (ADR-018): the sum over ticks alive of the food level as a fraction of a full stomach.
-    Reproduction needs survival and reserves; eating beyond full adds nothing, and poison or pain count only
-    through the food and life they cost. (Until v4: food eaten - pain + 0.01 * ticks alive.)"""
-    return stats["fed"]
+    """Well-fed lifetime from the first meal on (ADR-018): the sum, over the ticks alive after the agent first ate,
+    of the food level as a fraction of a full stomach. Reproduction needs survival and reserves; an animal that
+    never eats leaves no offspring however slowly it burns its birth reserve; eating beyond full adds nothing, and
+    poison or pain count only through the food and life they cost. (Until v4: food eaten - pain + 0.01 * ticks.)"""
+    return stats["fed_meal"]
 
 
 def fitness_v4(stats):
@@ -222,17 +223,27 @@ def poison_metrics(rs):
 # 1.0 steering: a ganglion of excitatory and inhibitory interneurons between sensors and motor neurons,
 # plus direct sensor->motor reflex arcs. All weights evolved, no plasticity. Both populations have divisive
 # normalisation lagging one step (ADR-018): without it most interneurons sit at their ceiling.
-GANGLION = dict(norm=2.0, norm_lag=True, group="ganglion")
+# alpha 1: no blending with the previous step, so a path through an interneuron lags one tick, not several.
+GANGLION = dict(alpha=1.0, norm=2.0, norm_lag=True, group="ganglion")
 B10 = BrainConfig(
     regions=(R("ganglion_e", 16, sign="exc", **GANGLION), R("ganglion_i", 8, sign="inh", **GANGLION)),
     projections=(P("in", "ganglion_e"), P("in", "ganglion_i"),
                  P("ganglion_e", "ganglion_e"), P("ganglion_e", "ganglion_i"), P("ganglion_i", "ganglion_e"),
                  P("ganglion_e", "out"), P("ganglion_i", "out"), P("in", "out")))
 
-W10 = WorldConfig(height=32, width=32, num_agents=64, spawn_density=0.08, max_decay_ticks=1000)
+# Food economy (v6): many small meals. A berry is 2 food units (10% of a stomach), a bush 12; bushes regrow after
+# REGROW_TICKS = 500, during which a waiting agent burns 25 units, so camping at one bush does not pay. The world
+# is 64 x 64 at a lower bush density than before, and holds roughly 1.5 x what 64 agents need for 1000 ticks.
+W09 = WorldConfig(height=64, width=64, num_agents=64, spawn_density=0.07, max_decay_ticks=1000, food_scale=2 / 3)
+# Walking costs +50% hunger for the tick, turning +25%. From scratch any movement cost makes evolution settle on
+# standing still (probes 2026-10-01), so foraging first evolves with free movement (0.9) and the cost comes on
+# for a population that already forages (1.0).
+W10 = replace(W09, move_cost=0.5, turn_cost=0.25)
 
-stage(Stage("1.0", "s1_0_steering", None, B10, W10, VISION_CH1, BodyConfig(), lambda exp: berry_world(exp, 4),
-            generations=200, notes="baseline: evolved reflexive steering to 4 kinds of berry bushes and onions"))
+stage(Stage("0.9", "s0_9_bootstrap", None, B10, W09, VISION_CH1, BodyConfig(), lambda exp: berry_world(exp, 4),
+            generations=250, notes="bootstrap from random brains: the 1.0 brain and world with free movement"))
+stage(Stage("1.0", "s1_0_steering", "0.9", B10, W10, VISION_CH1, BodyConfig(), lambda exp: berry_world(exp, 4),
+            generations=200, notes="evolved reflexive steering to 4 kinds of berry bushes and onions; movement costs energy"))
 
 
 def extend(base: BrainConfig, regions=(), projections=(), modulators=(), **kw) -> BrainConfig:
@@ -263,8 +274,9 @@ CS_SEL = ("vis*.app*", "held_app*")
 GENERIC_SEL = ("vis*.hit", "vis*.near", "vis*.agent", "vis*.wall", "held")
 VALENCE_MOTOR_W = 3.0
 B11 = extend(B10,
-             regions=(R("valence_app", 3, sign="exc", group="valence"), R("valence_av", 3, sign="exc", group="valence"),
-                      R("no_feed", 2, sign="inh", bias=0.0, evolve_bias=False, group="valence")),
+             regions=(R("valence_app", 3, sign="exc", alpha=1.0, group="valence"),
+                      R("valence_av", 3, sign="exc", alpha=1.0, group="valence"),
+                      R("no_feed", 2, sign="inh", alpha=1.0, bias=0.0, evolve_bias=False, group="valence")),
              projections=(fixed("in", "valence_app", 3.0, src_select=("taste",)),
                           fixed("in", "valence_av", 3.0, src_select=("pain",)),
                           *(P("in", v, src_select=CS_SEL) for v in VAL),
@@ -277,8 +289,8 @@ B11 = extend(B10,
                           *(P(v, t) for v in VAL for t in ("ganglion_e", "ganglion_i"))))
 BODY_TASTE = BodyConfig(taste=True)
 
-# same number of good bushes as 1.0 plus 2 poisonous types on top (density 0.08 * 6/4)
-W11 = replace(W10, spawn_density=0.12)
+# same number of good bushes as 1.0 plus 2 poisonous types on top (density 0.07 * 6/4)
+W11 = replace(W10, spawn_density=0.105)
 stage(Stage("1.1", "s1_1_valence", "1.0", B11, W11, VISION_CH1, BODY_TASTE,
             lambda exp: berry_world(exp, 6, poison=(4, 5)), row_extra=poison_metrics,
             generations=150, notes="innate good/bad cell types with fixed motor meaning; 2 of 6 berry types poison"))
@@ -310,10 +322,10 @@ B12 = extend(B11,
 B12 = replace(B12, regions=tuple(replace(r, receptors=r.receptors + (("hunger", "gain", 1.0),)) if r.name == "valence_app"
                                  else r for r in B12.regions))
 BODY_12 = BodyConfig(taste=True, temperature=True, temp_change=True)
-# calibrated 2026-09-30 so the inherited 1.1 behaviour keeps its food economy (lifetime ~440, food ~49): more
-# bushes compensate the cost of the cold (an increment, not a cliff, ADR-012)
-W12 = replace(W11, temperature=True, ambient_temp=0.25, heat_scale=0.15, heat_radius=4, temp_rate=0.1, temp_hunger=1.0,
-              spawn_density=0.16)
+# a few more bushes and a milder cold (up to +25% hunger instead of +50%) keep the step from 1.1 an increment, not
+# a cliff (ADR-012)
+W12 = replace(W11, temperature=True, ambient_temp=0.25, heat_scale=0.15, heat_radius=4, temp_rate=0.1, temp_hunger=0.5,
+              spawn_density=0.12)
 stage(Stage("1.2", "s1_2_drives", "1.1", B12, W12, VISION_CH1, BODY_12,
             lambda exp: berry_world(exp, 6, poison=(4, 5), springs=0.6), row_extra=poison_metrics,
             generations=150, notes="hunger (broadcast, receptors on appetite) and cold-gated thermotaxis; cold world with hot springs"))
@@ -336,7 +348,7 @@ B13 = extend(B12,
                           P("valence_app", "raphe"), P("valence_av", "pdf"),
                           fixed("dwell", "out", 1.5, dst_range=TURNS), fixed("roam", "out", 1.5, dst_range=FWD)),
              modulators=(Mod("5ht", pos="raphe"), Mod("pdf", pos="pdf")))
-W13 = replace(W12, patches=10, patch_radius=5, spawn_density=0.18)   # calibrated: lifetime ~424, food ~54
+W13 = replace(W12, patches=20, patch_radius=6)   # the same number of objects, on at most half of the map
 stage(Stage("1.3", "s1_3_affect", "1.2", B13, W13, VISION_CH1, BODY_12,
             lambda exp: berry_world(exp, 6, poison=(4, 5), springs=0.6), row_extra=poison_metrics,
             generations=150, notes="serotonin (dwell) and PDF (roam) broadcast states; patchy food"))
@@ -383,7 +395,7 @@ def _split_cs(projections):
 
 
 B15 = replace(B15, projections=_split_cs(B15.projections))
-W15 = replace(W14, sickness_delay=2, pain_decay=0.3, spawn_density=0.22)   # extra bushes for the extra poison type
+W15 = replace(W14, sickness_delay=2, pain_decay=0.3, spawn_density=0.14)   # extra bushes for the extra poison type
 LIFE_LEARN = 2000     # ticks per life in the learning stages
 NOVEL_SIM = 0.6       # novel types look less like the gooseberry than the ancestral look-alikes (0.8) do
 POISON_FOOD = -3.0    # OHOL food points lost per poison berry in the learning stages (a berry gives +3)
@@ -579,9 +591,12 @@ def stage_of_run(run_dir) -> Stage:
     raise KeyError(f"no stage for experiment {name}")
 
 
-def lesion(run_dir: str, regions: list[str] | None = None, worlds: int = 8, seed: int = 123) -> dict:
+def lesion(run_dir: str, regions: list[str] | None = None, worlds: int = 8, seed: int = 123,
+           only: tuple | None = None) -> dict:
     """Lesion study: the run's final population in its own world, intact and with each region silenced (all
-    outgoing synapses removed). Averages over `worlds` independent worlds. Returns {label: stats means}."""
+    outgoing synapses removed). Averages over `worlds` independent worlds. Returns {label: stats means}.
+    The worlds depend only on `seed`, so two runs of the same stage are measured in the same worlds.
+    `only`: restrict to these labels (e.g. ("intact",) to re-evaluate a population)."""
     from pathlib import Path
     from life.config import ExperimentConfig
     from life.run import make_layout, make_simulate
@@ -598,6 +613,8 @@ def lesion(run_dir: str, regions: list[str] | None = None, worlds: int = 8, seed
     keys = jax.random.split(jax.random.PRNGKey(seed), worlds)
     out = {}
     labels = ["intact"] + (["no_plasticity"] if float(pop.eta.max()) > 0 else []) + regions
+    if only:
+        labels = [l for l in labels if l in only]
     for label in labels:
         g = pop
         if label == "no_plasticity":
@@ -722,7 +739,7 @@ def main(argv=None):
         import subprocess
         q = argparse.ArgumentParser(prog="stages replicate")
         q.add_argument("key")
-        q.add_argument("--seeds", default="1")
+        q.add_argument("--seeds", default="1,2")
         q.add_argument("--generations", type=int, default=None)
         q.add_argument("--mutation-prob", default="0.1")
         b = q.parse_args(argv[1:])
@@ -740,29 +757,43 @@ def main(argv=None):
             print(f"stage {b.key} seed {seed}: exit codes {[p.wait() for p in procs]}", flush=True)
         return
     if argv and argv[0] == "summary":
-        # summary <key> [--window 25]: last-window means of main and control over every seed (run name variants)
+        # summary <key> [--window 50] [--worlds 8]: main and control over every seed (run name variants).
+        # Two cheap ways to cut measurement noise: the mean over the last `window` generations, and the final
+        # population re-evaluated in `worlds` fresh worlds that are the same for every run (0 = skip).
+        # What remains, the spread between seeds, is how far lineages drift apart; only more seeds average that.
         from life.compare import load, window_means
         q = argparse.ArgumentParser(prog="stages summary")
         q.add_argument("key")
-        q.add_argument("--window", type=int, default=25)
+        q.add_argument("--window", type=int, default=50)
+        q.add_argument("--worlds", type=int, default=8)
         b = q.parse_args(argv[1:])
         s = STAGES[b.key]
+        se = lambda v: float(np.std(v, ddof=1) / np.sqrt(len(v))) if len(v) > 1 else float("nan")
+        res = {}
         for label, base in (("main", s.name), ("control", s.name + "_control")):
             dirs = []
             for d in sorted(RUNS_DIR.iterdir()):
                 rest = d.name[len(base):]
                 if d.name.startswith(base) and (rest == "" or rest.startswith("_seed")):
-                    runs = sorted(r for r in d.iterdir() if (r / "fitness.csv").exists())
+                    runs = sorted(r for r in d.iterdir() if (r / "population.npz").exists())
                     if runs:
                         dirs.append(runs[-1])
             if not dirs:
                 continue
             lasts = [window_means(load(r), b.window)[1] for r in dirs]
-            keys = [k for k in ("fit_mean", "eaten", "pain", "alive_ticks", "temp_mean", "poison_frac") if k in lasts[0]]
+            keys = [k for k in ("fit_mean", "alive_ticks", "eaten", "pain", "temp_mean", "poison_frac") if k in lasts[0]]
             vals = {k: [x[k] for x in lasts] for k in keys}
+            if b.worlds > 0:
+                vals["re-evaluated"] = [lesion(str(r), worlds=b.worlds, only=("intact",))["intact"]["fitness"] for r in dirs]
+            res[label] = vals
             print(f"{label:8s} n={len(dirs)}  " + "  ".join(
-                f"{k} {np.mean(v):.3g} [{' '.join(f'{x:.3g}' for x in v)}]" for k, v in vals.items()))
-        return
+                f"{k} {np.mean(v):.3g} +-{se(v):.2g} [{' '.join(f'{x:.3g}' for x in v)}]" for k, v in vals.items()))
+        if len(res) == 2:
+            for k in ("fit_mean", "re-evaluated"):
+                if k in res["main"] and len(res["main"][k]) == len(res["control"][k]):
+                    diff = np.array(res["main"][k]) - np.array(res["control"][k])
+                    print(f"main - control, {k}: {diff.mean():+.3g} +-{se(diff):.2g} (standard error over {len(diff)} seeds)")
+        return res
     if argv and argv[0] == "respond":
         q = argparse.ArgumentParser(prog="stages respond")
         q.add_argument("run_dir")

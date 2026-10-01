@@ -57,6 +57,8 @@ class Layout(NamedTuple):
     mod_specs: tuple        # static: (kind, pos_slice, neg_slice, baseline, scale) per modulator
     kwta: tuple             # static: (offset, size, k) per region with k-WTA
     norm: tuple             # static: (offset, size, strength, lag) per region with divisive normalisation
+    pl_rows: tuple          # static: pre neurons with any plastic, decaying or depressing synapse
+    pl_cols: tuple          # static: their post neurons; plasticity is computed on the block [pl_rows, pl_cols] only
     groups: tuple           # visual group path per region (same order as names), '' = none
     rec_gain: jnp.ndarray   # [M, N] receptor sensitivity: gain effect of modulator m on neuron j
     rec_bias: jnp.ndarray   # [M, N] receptor sensitivity: additive effect
@@ -207,6 +209,9 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
             assert m.source.startswith("world:") and kind in WORLD_SIGNALS, f"modulator {m.name}: bad source {m.source}"
             mod_specs.append((kind, (0, 0), (0, 0), m.baseline, m.scale))
     kwta = tuple((sl[r.name].start, r.size, r.kwta) for r in regions if r.kwta > 0 and r.name != "in")
+    changing = (rule > 0) | (dep_U > 0) | (decay > 0)
+    pl_rows = tuple(int(i) for i in np.where(changing.any(axis=1))[0])
+    pl_cols = tuple(int(i) for i in np.where(changing.any(axis=0))[0])
     norm = tuple((sl[r.name].start, r.size, float(r.norm), bool(r.norm_lag)) for r in regions
                  if r.norm > 0 and r.name != "in")
     rec_gain = np.zeros((max(1, len(mod_names)), n), np.float32)
@@ -219,6 +224,7 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
     j = jnp.asarray
     return Layout(n=n, n_in=n_in, n_out=n_out, names=names, offsets=offsets, sizes=sizes, in_names=tuple(in_names),
                   proj_names=tuple(proj_names), mod_names=mod_names, mod_specs=tuple(mod_specs), kwta=kwta, norm=norm,
+                  pl_rows=pl_rows, pl_cols=pl_cols,
                   alpha=j(alpha), trace_tau=j(tau), sign=j(sign), bias_init=j(bias_init), evolve_b=j(evolve_b),
                   allowed=j(allowed), density=j(density), one_to_one=j(o2o), proj_id=j(proj_id), rule=j(rule),
                   mod_idx=j(mod_idx), elig=j(elig), gain=j(gain), evolve_w=j(evolve_w), w_init=j(w_init),
@@ -261,16 +267,22 @@ def init_state(genome: Genome, layout: Layout | None = None, w_max: float = 4.0)
                       mod=jnp.zeros(max(m, 1), jnp.float32), g=jnp.zeros(n, jnp.float32))
 
 
-def plasticity_rule(layout: Layout, genome: Genome, w, x_pre, x_post, tr_pre):
-    """Per-synapse rule value (before learning rate and modulator), all rules at once, selected by layout.rule."""
+def plasticity_rule(rule, A, B, C, D, w, x_pre, x_post, tr_pre, tr_post, target):
+    """Rule value per synapse of a block [pre, post] (before learning rate and modulator), selected by `rule`
+    (a constant array). Only the rules that occur in the block are computed. `target`: teacher activity per
+    post neuron (rule 'delta')."""
     pre, post = x_pre[:, None], x_post[None, :]
-    hebb = genome.A * pre * post + genome.B * pre + genome.C * post + genome.D
-    oja = genome.A * post * (pre - post * w)
-    trace = genome.A * tr_pre[:, None] * post - genome.C * pre * tr_pre[None, :]
-    target = jnp.where(layout.teacher >= 0, x_post[jnp.maximum(layout.teacher, 0)], x_post)
-    delta = genome.A * pre * (target - x_post)[None, :]
-    r = layout.rule
-    return jnp.where(r == 1, hebb, jnp.where(r == 2, oja, jnp.where(r == 3, trace, jnp.where(r == 4, delta, 0.0))))
+    present = set(np.unique(rule).tolist())
+    out = jnp.zeros_like(w)
+    if 1 in present:
+        out = jnp.where(rule == 1, A * pre * post + B * pre + C * post + D, out)
+    if 2 in present:
+        out = jnp.where(rule == 2, A * post * (pre - post * w), out)
+    if 3 in present:
+        out = jnp.where(rule == 3, A * tr_pre[:, None] * post - C * pre * tr_post[None, :], out)
+    if 4 in present:
+        out = jnp.where(rule == 4, A * pre * (target - x_post)[None, :], out)
+    return out
 
 
 def compute_modulators(layout: Layout, x: jnp.ndarray, world_sig: jnp.ndarray) -> jnp.ndarray:
@@ -310,7 +322,17 @@ def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, ob
     n_in, n_out = layout.n_in, layout.n_out
     x = state.x.at[:n_in].set(obs)
     w, tr, e, u, mod, g = state.w, state.tr, state.e, state.u, state.mod, state.g
-    gate = jnp.where(layout.mod_idx >= 0, mod[jnp.maximum(layout.mod_idx, 0)], 1.0)
+    plastic = bool(layout.pl_rows)
+    if plastic:   # everything that changes within a life sits in the block [R, C] (usually a small part of w)
+        R, C = np.asarray(layout.pl_rows), np.asarray(layout.pl_cols)
+        ix = np.ix_(R, C)
+        b_rule, b_elig, b_decay, b_mod = (np.asarray(a)[ix] for a in (layout.rule, layout.elig, layout.decay, layout.mod_idx))
+        b_depU, b_deprec = np.asarray(layout.dep_U)[ix], np.asarray(layout.dep_rec)[ix]
+        b_gate = jnp.where(b_mod >= 0, mod[np.maximum(b_mod, 0)], 1.0)
+        b_teacher = np.asarray(layout.teacher)[C]
+        b_signed = (np.asarray(layout.sign)[R] != 0)[:, None]
+        b_eta, b_mask, b_w0 = genome.eta[ix], genome.mask[ix], genome.w0[ix]
+        b_A, b_B, b_C, b_D = genome.A[ix], genome.B[ix], genome.C[ix], genome.D[ix]
     h = None
     for _ in range(cfg.steps_per_tick):
         w_eff = effective(layout, w) * (u if layout.has_dep else 1.0)
@@ -327,16 +349,22 @@ def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, ob
             h, g = _normalise(layout, h, g)
         f = _kwta(layout, jnp.maximum(jnp.tanh(h), 0.0))
         x_new = ((1.0 - layout.alpha) * x + layout.alpha * f).at[:n_in].set(obs)
-        base = plasticity_rule(layout, genome, w, x, x_new, tr)
-        if layout.has_elig:
-            e = jnp.where(layout.elig > 0, layout.elig * e + base, 0.0)
-            base = jnp.where(layout.elig > 0, e, base)
-        w = w + genome.eta * gate * base * genome.mask
-        if layout.has_decay:
-            w = w + layout.decay * (genome.w0 * genome.mask - w)
-        w = constrain(layout, w, cfg.w_max)
-        if layout.has_dep:
-            u = jnp.clip(u + layout.dep_rec * (1.0 - u) - layout.dep_U * u * jnp.maximum(x, 0.0)[:, None], 0.0, 1.0)
+        if plastic:
+            wb = w[ix]
+            target = jnp.where(b_teacher >= 0, x_new[np.maximum(b_teacher, 0)], x_new[C])
+            base = plasticity_rule(b_rule, b_A, b_B, b_C, b_D, wb, x[R], x_new[C], tr[R], tr[C], target)
+            if layout.has_elig:
+                eb = jnp.where(b_elig > 0, b_elig * e[ix] + base, 0.0)
+                e = e.at[ix].set(eb)
+                base = jnp.where(b_elig > 0, eb, base)
+            wb = wb + b_eta * b_gate * base * b_mask
+            if layout.has_decay:
+                wb = wb + b_decay * (b_w0 * b_mask - wb)
+            wb = jnp.where(b_signed, jnp.clip(wb, 0.0, cfg.w_max), jnp.clip(wb, -cfg.w_max, cfg.w_max))
+            w = w.at[ix].set(wb)
+            if layout.has_dep:
+                ub = u[ix]
+                u = u.at[ix].set(jnp.clip(ub + b_deprec * (1.0 - ub) - b_depU * ub * jnp.maximum(x[R], 0.0)[:, None], 0.0, 1.0))
         tr = layout.trace_tau * tr + (1.0 - layout.trace_tau) * x_new
         x = x_new
     mod = compute_modulators(layout, x, world_sig)

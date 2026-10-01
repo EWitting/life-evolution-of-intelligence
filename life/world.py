@@ -189,6 +189,9 @@ def step_world(cfg: WorldConfig, rules: RuleArrays, state: WorldState, actions: 
         local = local_temperature(cfg, rules, grid)[pos[:, 0], pos[:, 1]]
         temp = temp + cfg.temp_rate * (local - temp)
         hunger = hunger * (1.0 + cfg.temp_hunger * 2.0 * jnp.abs(temp - 0.5))
+    if cfg.move_cost > 0 or cfg.turn_cost > 0:   # locomotion costs energy
+        turning = (actions == A.TURN_LEFT) | (actions == A.TURN_RIGHT)
+        hunger = hunger * (1.0 + cfg.move_cost * (actions == A.FORWARD) + cfg.turn_cost * turning)
     if cfg.brain_cost > 0 and effort is not None:
         hunger = hunger * (1.0 + cfg.brain_cost * effort)
     food = food - hunger * alive

@@ -78,12 +78,15 @@ def make_simulate(exp: ExperimentConfig, record: bool):
         half = exp.world.switch_tick if phased else T // 2
 
         def one_tick(carry, k):
-            world, bstate, sig, eats, tsum, fed = carry
+            world, bstate, sig, eats, tsum, fed, meal, fed_meal = carry
             tsum = tsum + world.temp * world.alive
-            fed = fed + world.food / exp.world.max_food * world.alive
+            level = world.food / exp.world.max_food * world.alive
+            fed = fed + level
+            fed_meal = fed_meal + level * meal
             late = world.tick >= half
             r = rules_at(world.tick)
             world, bstate, sig, acts, obs, ev = tick(r, pop, world, bstate, sig, k, no_override)
+            meal = jnp.maximum(meal, (ev["gained"] > 0).astype(jnp.float32))
             oh = jax.nn.one_hot(ev["ate"], M, dtype=jnp.float32).at[:, 0].set(0.0)
             oh = oh.at[:, 0].set(((ev["ate"] > 0) & (r.pain_value[ev["ate"]] > 0)).astype(jnp.float32))
             eats = eats + jnp.stack([oh * (1.0 - late), oh * late], axis=1)
@@ -93,7 +96,7 @@ def make_simulate(exp: ExperimentConfig, record: bool):
                            dir=world.dir.astype(jnp.int8), alive=world.alive, held=world.held.astype(jnp.int16),
                            food=world.food, pain=world.pain, action=acts.astype(jnp.int8), mod=bstate.mod,
                            x=bstate.x.astype(jnp.float16))
-            return (world, bstate, sig, eats, tsum, fed), rec
+            return (world, bstate, sig, eats, tsum, fed, meal, fed_meal), rec
 
         def chunk(carry, keys):
             carry, recs = jax.lax.scan(one_tick, carry, keys)
@@ -106,15 +109,16 @@ def make_simulate(exp: ExperimentConfig, record: bool):
         sig = jnp.zeros((N, 3), jnp.float32)
         eats = jnp.zeros((N, 2, M), jnp.float32)
         tsum = jnp.zeros(N, jnp.float32)
-        fed = jnp.zeros(N, jnp.float32)
+        fed, meal, fed_meal = jnp.zeros(N, jnp.float32), jnp.zeros(N, jnp.float32), jnp.zeros(N, jnp.float32)
         keys = jax.random.split(ks, T).reshape(T // every, every, -1)
-        (world, bstate, sig, eats, tsum, fed), (recs, snaps) = jax.lax.scan(
-            chunk, (world, bstate, sig, eats, tsum, fed), keys)
+        (world, bstate, sig, eats, tsum, fed, meal, fed_meal), (recs, snaps) = jax.lax.scan(
+            chunk, (world, bstate, sig, eats, tsum, fed, meal, fed_meal), keys)
         # eats[N, 2, M]: objects eaten per local id in the first and second half of life (learning curves);
         # column 0 (empty) instead counts eating anything painful (poison), whatever its id in this world.
-        # fed: sum over ticks alive of the food level as a fraction of max_food ('well-fed lifetime')
+        # fed: sum over ticks alive of the food level as a fraction of max_food ('well-fed lifetime');
+        # fed_meal: the same, counted only from the tick after the agent's first (positive) meal
         stats = dict(alive_ticks=world.alive_ticks, eaten=world.eaten, pain=world.pain_total, alive=world.alive,
-                     food=world.food, eats=eats, fed=fed, temp_mean=tsum / jnp.maximum(world.alive_ticks, 1))
+                     food=world.food, eats=eats, fed=fed, fed_meal=fed_meal, temp_mean=tsum / jnp.maximum(world.alive_ticks, 1))
         if record:
             recs = jax.tree_util.tree_map(lambda a: a.reshape((T,) + a.shape[2:]), recs)
             recs["w_snap"] = snaps
@@ -220,7 +224,7 @@ def run_evolution(exp: ExperimentConfig, ruleset: Ruleset, fitness_fn: Callable[
         fit = fitness_fn(stats)
         row = dict(gen=gen, fit_mean=float(fit.mean()), fit_max=float(fit.max()), fit_median=float(jnp.median(fit)),
                    alive_ticks=float(stats["alive_ticks"].mean()), eaten=float(stats["eaten"].mean()),
-                   pain=float(stats["pain"].mean()), fed=float(stats["fed"].mean()), survivors=float(stats["alive"].sum()),
+                   pain=float(stats["pain"].mean()), fed=float(stats["fed"].mean()), fed_meal=float(stats["fed_meal"].mean()), survivors=float(stats["alive"].sum()),
                    seconds=round(time.time() - t0, 1))
         rows.append(row)
         if exp.world.temperature:

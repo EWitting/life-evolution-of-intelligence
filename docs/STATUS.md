@@ -6,54 +6,53 @@ One screen on where the project is. Plan: `docs/BRAIN_EVOLUTION.md`. Details, nu
 ## How a stage is judged
 
 Main = the stage's new brain; control = the parent's brain in the same new world, both warm-started from the
-parent's final population, 200 generations, one life per genome. Compared on the last 25 generations. Then a
-**lesion study** (`stages lesion <run>`: silence each new region, and switch plasticity off) checks that the gain
-really comes from the new module. **Fitness = well-fed lifetime** (sum over ticks alive of food level / full
-stomach; ADR-018). Seed spread is about +-60 fitness, so a single-seed gap below ~100 means nothing: use
-`stages replicate <key> --seeds 1,2`.
+parent's final population, 200 generations, one life per genome, **three seeds** (`stages replicate <key>`).
+`stages summary <key>` gives the mean of the last 50 generations and the final populations re-evaluated in 8
+shared worlds, with the standard error over seeds. Then a **lesion study** (`stages lesion <run>`: silence each
+new region, and switch plasticity off). **Fitness = well-fed lifetime from the first meal** (ADR-018).
 
-## Stages (v5, 2026-10-01)
+## Stages (v6, 2026-10-01)
 
 Status: **done** (run and analysed), **defined** (in `life/experiments/stages.py`, not yet run), **planned**.
-v4 results (old fitness: gross food - pain + 0.01 x ticks) are in STAGE_LOG; they are not comparable.
+Numbers are the v6 run, which still used the well-fed lifetime counted from birth and the `cold` bug (below).
 
-| stage | what it adds | status | short finding (v5) |
+| stage | what it adds | status | short finding (v6, 3 seeds, main vs control) |
 |---|---|---|---|
-| 1.0 steering | ganglion (exc + inh interneurons, lagging divisive normalisation), evolved reflexes | done (1 seed + probes) | Fitness 408, lifetime 649 of 1000. No saturated neurons any more (was 47-84% of the time). |
-| 1.1 valence | appetitive / aversive cell types with *fixed meaning* | done (3 seeds) | **Tie**: main 386 vs control 387. Lesions: valence cells carry the behaviour. The v4 win came from the old fitness (pain term, gorging). |
-| 1.2 drives | `hunger` (broadcast, receptors on appetite), `cold` gating innate thermotaxis | done (1 seed) | Main 232 vs control 281: within seed noise. |
-| 1.3 affect | serotonin (`raphe` -> dwell) and PDF (-> roam), now mutually inhibiting | done (1 seed) | Tie (284 vs 288). PDF/roam essential (lesion 280 -> 175); serotonin/dwell unused. |
-| 1.4 habituation | short-term depression on identity -> appetitive synapses; OHOL "yum" bonus | done (1 seed) | 320 vs 307: within noise. |
-| 1.5 association | US neurons, `us` modulator, identity -> valence plasticity with eligibility traces | defined (new world), not run | World redefined (ADR-017): two novel foods per life, costlier poison, 2000 ticks. Blocked by the food economy (below). |
-| 1.6 reversal | learned weights relax toward inherited values; poison swaps mid-life | defined (new world), not run | |
+| 0.9 bootstrap | the 1.0 brain from random weights, free movement | done | Foraging evolves: fitness 587, 28 meals per life. |
+| 1.0 steering | ganglion (exc + inh, lagging normalisation, alpha 1); movement now costs energy | done | 522, 32 meals per life. From scratch with movement cost, evolution stood still (fitness artefact, now fixed but not re-tested). |
+| 1.1 valence | appetitive / aversive cell types with *fixed meaning* | done | Tie: 440 vs 452 (re-evaluated +9 +-4). Less poison and pain, no fitness gain. |
+| 1.2 drives | `hunger` (broadcast), `cold` gating innate thermotaxis | done, to redo | 309 vs 325. Ran with the `cold` bug. |
+| 1.3 affect | serotonin (dwell) and PDF (roam), mutually inhibiting | done, to redo | 276 vs 285. |
+| 1.4 habituation | short-term depression on identity -> appetitive synapses; "yum" bonus | done, to redo | 282 vs 273. |
+| 1.5 association | US neurons, `us` modulator, identity -> valence plasticity with eligibility traces | defined, not run | New world (ADR-017): two novel foods per life, costlier poison, 2000 ticks. |
+| 1.6 reversal | learned weights relax toward inherited values; poison swaps mid-life | defined, not run | |
 | 2.1 tectum | retinotopic map + inhibitory pool; 9-column eyes | defined | |
 | 2.2 pallium expansion | 48 sparse k-WTA neurons; US-gated learning from pallium; XOR poison world | defined (v4 design) | To do first: input weights drawn per life (ADR-017), per-life looks. |
 | 2.3 pallium clustering | Oja input + recurrent Hebb; noisy appearance | defined | |
 | 2.4 basal ganglia | striatum -| tonic GPi -| motor (disinhibition), fixed | defined | |
-| x.td (side test) | 1.6 brain + TD critic only | defined, not re-run in v5 | v4: learning neutral instead of harmful. |
+| x.td (side test) | 1.6 brain + TD critic only | defined, not re-run | |
 | 2.5 dopamine TD | opponent value populations, TD-error `da` | defined | |
 | 2.6-2.10 | actor (D1/D2), curiosity, hippocampal map, cerebellum, NE/ACh | planned | |
 | 3.x simulating | neocortex as predictive model, offline mode, PFC, episodic memory | planned | Needs core mechanism M8 (offline mode). |
 | 4.x mentalizing, 5.x speaking | self-model, theory of mind, imitation; signals to language | planned | Needs the continuous life cycle (below). |
 
-## Open questions for the next session (where we stopped, 2026-10-01)
+## Next steps (where we stopped, 2026-10-01)
 
-1. **Food economy (blocks the learning stages).** Agents eat 5-7 berries in a whole life and most die near the
-   never-eating baseline; the 1.0 world holds less food (about 2600 units) than 64 agents need for 1000 ticks
-   (3200), and one berry is 30% of a stomach. Within-life learning needs many small meals. Options: smaller
-   berries with more bushes, faster regrowth, fewer agents per world. Then re-run 1.0-1.4 and run 1.5/1.6.
-2. **Do the chapter-1 modules pay at all?** Under the honest fitness, valence ties over three seeds and the rest
-   are single seeds inside the noise. The modules are used (lesions) but give no measurable advantage in their
-   current worlds. Replicate 1.2-1.4 (three seeds) after the economy is fixed.
-3. **Not yet tested:** movement costs no energy (hunger is flat per tick; walking = standing still); `alpha` 0.5
-   delays every path through an interneuron by a tick at half strength (candidates: alpha 1 on the ganglion, two
-   brain steps per tick, alpha as an evolved gene); the innate valence wiring drives FORWARD, USE and EAT from
-   the same cells although the three actions exclude each other.
-4. Metabolic cost of neural activity is implemented but off (`WorldConfig.brain_cost`; ADR-018).
+1. **Probe the first-meal fitness from scratch with movement cost** (`stages 1.0 --init-from none`, two seeds; a
+   few minutes). It was started and then stopped when the machine ran low on memory. If foraging evolves, drop
+   stage 0.9.
+2. **Re-run 0.9/1.0-1.4 with three seeds** under the first-meal fitness and the fixed `cold` neuron (about an hour).
+3. **Calibrate and run 1.5** (one seed plus the plasticity-off lesion, about 15 minutes at the new speed), then
+   1.6 and x.td.
+4. **Open design questions.** No chapter-1 module beats its control. Candidates: poison is cheap (2/3 food unit per
+   berry in 1.1-1.4); the 1.2 world is a cliff (fitness 440 -> 320); the innate valence wiring drives FORWARD,
+   USE and EAT from the same cells although the actions exclude each other; serotonin/dwell was unused in v5.
+5. Metabolic cost of neural activity is implemented but off (`WorldConfig.brain_cost`).
 
-Practical notes: non-plastic stages run at about 1-2 s per generation, plastic ones at about 9 s (1000 ticks)
-with two processes on the CPU; at most two JAX processes at a time. The lineage run of a stage is the newest run
-in its un-suffixed directory; `_seedN`, `_control`, `probe*` directories are variants.
+Practical notes: one process runs non-plastic stages at about 0.9 s and learning stages (2000 ticks) at about
+2.3 s per generation; at most two JAX processes at a time. The lineage run of a stage is the newest run in its
+un-suffixed directory; `_seedN`, `_control`, `probe*` directories are variants. The dashboard clips displayed
+weights at `w_max`.
 
 ## Core and tools (done)
 

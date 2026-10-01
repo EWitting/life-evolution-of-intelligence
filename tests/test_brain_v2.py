@@ -183,6 +183,11 @@ def test_brain_cost_raises_hunger():
     st, _ = step_world(cfg, rules, st, jnp.array([A.NOOP, A.NOOP]), jax.random.PRNGKey(0), jnp.array([0.0, 0.5]))
     lost = cfg.max_food - np.asarray(st.food)
     assert np.allclose(lost, [cfg.hunger_per_tick, 1.5 * cfg.hunger_per_tick], atol=1e-6)
+    cfg = WorldConfig(height=6, width=6, num_agents=3, spawn_density=0.0, move_cost=0.5, turn_cost=0.25)
+    st = init_world(cfg, rules, jax.random.PRNGKey(0))
+    st, _ = step_world(cfg, rules, st, jnp.array([A.NOOP, A.FORWARD, A.TURN_LEFT]), jax.random.PRNGKey(0))
+    lost = (cfg.max_food - np.asarray(st.food)) / cfg.hunger_per_tick
+    assert np.allclose(lost, [1.0, 1.5, 1.25], atol=1e-5)                 # walking and turning cost energy
 
 
 def test_novel_looks_are_drawn_per_life_and_fed_stat():

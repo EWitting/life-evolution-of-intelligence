@@ -436,3 +436,68 @@ whole berry (-3 food points); lives of 2000 ticks. The v5 1.4 population dropped
   food in the 1.0 world (about 73 bushes x 36 units = 2600) is below what 64 agents need to live 1000 ticks (3200
   units), and a berry is 30% of a stomach. Learning needs many small meals: smaller berries, a richer world,
   or fewer agents per world.
+
+
+---
+
+## v6 (2026-10-01, later): many small meals, movement cost, alpha 1, three seeds
+
+### Food economy and movement cost: stage 1.0 probes from scratch (250 generations, fitness = well-fed lifetime)
+| world | movement cost (step / turn) | fitness | lifetime | meals per life | forward share of actions |
+|---|---|---|---|---|---|
+| 32 x 32, density 0.08, berry 6 units (v5) | none | 408 | 649 | 10 | 0.31 |
+| 64 x 64, density 0.07, berry 2 units | none, seeds 0 / 1 / 2 | 539 / 465 / 506 | 812 / 734 / 770 | 21 / 15 / 21 | 0.40 |
+| 64 x 64, density 0.07, berry 2 units | +50% / +25% | 201 | 402 | 1 | 0.00 |
+| 64 x 64, density 0.07, berry 2 units | +20% / +10% | 202 | 403 | 1 | 0.00 |
+| 48 x 48, density 0.12, berry 2 units | +50% / +25% | 205 | 408 | 1 | 0.00 |
+| 64 x 64, warm start from the no-cost run, 150 generations | none | 595 | 851 | 33 | 0.64 |
+| 64 x 64, warm start from the no-cost run, 150 generations | +50% / +25% | 454 | 688 | 20 | 0.41 |
+
+- With any movement cost, evolution from random brains settles on standing still for the whole life. Cause: the
+  fitness paid out the birth reserve (a full stomach = 400 ticks), so a sitter that never eats (about 200) ranks
+  above a walker that never eats (about 150), and a random brain almost never completes approach + USE + EAT.
+  Selection is by rank, so the size of the gap does not matter.
+- Staging works: evolve foraging with free movement (stage 0.9), then switch the cost on (1.0).
+- Camping (share of 100-tick windows in which an agent stays within 3 cells): 2% without cost, 19% with it;
+  14-25% in the old world. Regrowth stays at 500 ticks: waiting costs 25 food for a 12-food bush.
+
+### Time constants: 64 x 64 no-cost world from scratch, 250 generations
+| ganglion | fitness (seeds) | meals per life | s per generation |
+|---|---|---|---|
+| alpha 0.5 (v5) | 539 / 465 / 506 | 21 / 15 / 21 | 0.93 |
+| alpha 1.0 | 524 / 574 | 30 / 32 | 0.85 |
+| alpha 0.5, two brain steps per tick | 480 / 543 | 19 / 26 | 1.14 |
+
+Adopted alpha 1 for the ganglion and the valence cells (the valence part untested on its own).
+
+### v6 chain, three seeds (0.9: 250 generations from scratch; 1.0-1.4: 200 generations, 10% weight mutation)
+Fitness = well-fed lifetime (counted from birth). `stages summary <key>`: mean of the last 50 generations, and the
+final populations re-evaluated in 8 shared worlds; +- = standard error over seeds.
+
+| stage | main | control | main - control, last 50 gens | main - control, re-evaluated | meals per life (main) |
+|---|---|---|---|---|---|
+| 0.9 bootstrap | 587 | | | | 28 |
+| 1.0 steering (cost on) | 522 | | | | 32 |
+| 1.1 valence | 440 +-22 | 452 +-15 | -12 +-7 | +9 +-4 | 22 |
+| 1.2 drives | 309 +-6 | 325 +-4 | -16 +-5 | -8 +-12 | 16 |
+| 1.3 affect | 276 +-9 | 285 +-5 | -10 +-4 | -9 +-19 | 18 |
+| 1.4 habituation | 282 +-5 | 273 +-8 | +9 +-13 | +8 +-13 | 16 |
+
+- Seed spread is far smaller than in v5 (the larger world and the many meals average out luck).
+- No module beats its control. Valence eats less poison (0.14 vs 0.19 of berries) and feels less pain (3.5 vs
+  6.1) but that is worth nothing in fitness at the current poison cost (2/3 food unit per berry).
+- The step from the 1.1 world to the 1.2 world costs a quarter of the fitness (440 -> ~320): still a cliff.
+- **Bug found afterwards: `cold` fired almost always.** Every weight was clipped to +-`w_max` (4) during life,
+  so the hard-wired temperature -> `cold` weight of -7 acted as -4 and the neuron fired below body temperature
+  0.82 instead of 0.47. 1.2-1.4 above (and all of v4, v5) ran with it. Fixed: only plastic weights are clipped.
+
+### Speed
+Plasticity, eligibility, decay and depression are now computed only on the block of synapses that can change
+(`Layout.pl_rows/pl_cols`), with identical results (max difference 2e-7 over 60 steps on the 1.4, 1.6, 2.3 and
+2.5 brains). One process: learning stage 1.6 at 2000 ticks 9.2 -> 2.3 s per generation; 1.3: 1.4 -> 0.9 s.
+
+### Not finished
+The fitness now counts the well-fed lifetime **from the first meal** (`fed_meal`), so non-eaters tie at zero and
+standing still can no longer outrank walking. The probe that should show whether stage 1.0 then evolves from
+scratch *with* movement cost (which would make stage 0.9 unnecessary) was stopped when the machine ran low on
+memory; no result yet. Command: `stages 1.0 --init-from none` (two seeds).

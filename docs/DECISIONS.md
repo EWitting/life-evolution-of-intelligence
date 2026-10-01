@@ -178,3 +178,16 @@ override them freely; when one does, add or amend an entry so the record stays c
   enough that sparse coding matters (pallium).
 - Mutual inhibition between the serotonin and PDF nuclei is hard-wired through inhibitory receptors (1.3); the
   unused `cold` modulator is removed (cold acts through synapses).
+- **Amended later on 2026-10-01** (STAGE_LOG v6):
+  - The well-fed lifetime is counted **from the first meal** (`fed_meal`). Counted from birth it paid out the
+    birth reserve, so a non-eating sitter outranked a non-eating walker and evolution from random brains chose
+    standing still as soon as movement cost anything. Side effect: eating early pays.
+  - **Movement costs energy** (`WorldConfig.move_cost` 0.5, `turn_cost` 0.25 from stage 1.0). Foraging is first
+    evolved with free movement (stage 0.9) and the cost switched on afterwards; whether the first-meal fitness
+    makes that staging unnecessary is still to be tested.
+  - **Food economy:** berries of 2 food units (`food_scale` 2/3), a 64 x 64 world at bush density 0.07-0.14,
+    regrowth unchanged at 500 ticks so that waiting at a bush does not pay.
+  - `alpha` 1 on the ganglion and valence cells (no blending with the previous step).
+  - Only plastic weights are clipped to `w_max`; inherited and hard-wired weights are used as written.
+  - Stage comparisons use three seeds, the last 50 generations and a re-evaluation of the final populations in
+    shared worlds (`stages summary`).

@@ -34,6 +34,8 @@ class WorldConfig:
     heat_radius: int = 3             # cells
     temp_rate: float = 0.05          # fraction per tick by which body temperature approaches the local one
     temp_hunger: float = 2.0
+    move_cost: float = 0.0           # extra hunger for a tick spent on FORWARD, as a fraction of hunger_per_tick
+    turn_cost: float = 0.0           # same for TURN_LEFT / TURN_RIGHT (0 = moving is as cheap as standing still)
     brain_cost: float = 0.0          # metabolic cost of neural activity: hunger * (1 + brain_cost * mean rate of
                                      # all non-input neurons). A mean, so it prices dense firing, not brain size.
 
@@ -145,7 +147,8 @@ class BrainConfig:
     regions: tuple = DEFAULT_REGIONS          # tuple[RegionSpec, ...] excluding the reserved 'in' and 'out'
     projections: tuple = DEFAULT_PROJECTIONS  # tuple[ProjectionSpec, ...]
     out_alpha: float = 0.5           # leak of the output region
-    w_max: float = 4.0               # weight clip after plasticity
+    w_max: float = 4.0               # plastic weights are clipped to [-w_max, w_max] (inherited, non-plastic
+                                     # weights are used as they are)
     steps_per_tick: int = 1          # brain updates per world tick
     logit_gain: float = 4.0          # multiplier on output pre-activations before sampling
     action_temperature: float = 0.5  # softmax temperature; 0 means argmax

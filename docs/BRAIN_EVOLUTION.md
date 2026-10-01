@@ -265,7 +265,7 @@ existing ganglion and the new module stays unused (stage 1.1 v1/v2 in `docs/STAG
   appetitive, -1 onto aversive). Learning rate and coefficients evolve per projection.
 - **World (v5, ADR-017).** Two novel berry types get a new look every life and one of them is poison (on top
   of two ancestral good and two ancestral poison types); poison costs a whole berry; lives last 2000 ticks;
-  sickness arrives 2 ticks after eating and fades quickly, so no reactive policy can use it.
+  sickness arrives 12 ticks after eating and fades quickly, so no reactive policy can use it.
 - **Metric.** Poison fraction in the second vs first half of life; the decisive test is the lesion
   "no_plasticity" (same population, learning off).
 - **Finding so far.** Learning acts (pain drops) but over-generalises across look-alikes, because non-error-driven

@@ -608,3 +608,22 @@ valence_app 526 (76%); valence_av 367 (53%); us_taste 643 (93%); us_pain 685 (99
   against the "many small meals" the learning stage needs.
 - Not tested yet: whether the rule discriminates the two novel foods at all at similarity 0.6 (in v4 it
   over-generalised across look-alikes); a cleaner metric (poison eaten after the first poisoning).
+
+#### Why learning is not used: what the agents actually eat (12 worlds, the 1.5 main population, learning on vs off)
+| sickness delay | learning | novel poison / novel good berries eaten per agent, first half | second half | ancestral good, first / second half | fitness |
+|---|---|---|---|---|---|
+| 2 ticks | on | 1.09 / 2.22 | 0.08 / 1.01 | 7.7 / 3.8 | 725 |
+| 2 ticks | off | 1.05 / 2.04 | 0.07 / 0.99 | 8.0 / 4.0 | 761 |
+| 12 ticks (re-evolved, elig decay 0.92) | on | 1.25 / 2.04 | 0.13 / 1.05 | 9.3 / 4.7 | 837 |
+| 12 ticks | off | 1.37 / 2.15 | 0.11 / 1.03 | 9.5 / 4.5 | 817 |
+
+- An agent eats about **one** novel-poison berry in its whole life, with or without plasticity. There is nothing
+  for learning to save. Novel foods are a small part of the diet (about 3 of 11 berries in the first half).
+- Hypothesis tested and rejected: that the innate pain reflex limits the damage because sickness (2 ticks) arrives
+  while the agent is still at the bush. With sickness after 12 ticks (`SICK_DELAY`, kept) and a longer eligibility
+  trace (`CS_ELIG` 0.92) the numbers are the same: main 788 vs control 805, `no_plasticity` 696 vs intact 700.
+- The cause is the meal rate. At `hunger_per_tick` 0.012 one 2-unit berry lasts 167 ticks, so an agent needs about
+  12 berries in 2000 ticks and takes one or two berries per bush. Calibrating the cliff away with the metabolic
+  rate removed the many small meals that the v6 economy was built for. A calibration that keeps the meal rate
+  (scale berry size and poison cost together with the metabolic rate, or make novel foods most of the supply) is
+  the next thing to try.

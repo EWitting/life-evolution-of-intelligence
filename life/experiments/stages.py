@@ -386,6 +386,7 @@ B15 = extend(B14,
 
 
 CS_ETA = 0.05  # CS learning rate (probe 2026-09-30: 0.02 too slow; >= 0.1 over-generalises aversion); evolvable
+CS_ELIG = 0.92  # eligibility decay per tick: a third of the trace is left when the sickness arrives
 
 
 def _split_cs(projections):
@@ -393,7 +394,7 @@ def _split_cs(projections):
     out = []
     for p in projections:
         if p.src == "in" and p.src_select == CS_SEL and p.dst in VAL:
-            out.append(replace(p, rule="hebb", modulator="us", eta_init=CS_ETA, elig_tau=0.8,
+            out.append(replace(p, rule="hebb", modulator="us", eta_init=CS_ETA, elig_tau=CS_ELIG,
                                abcd=(0.0, 1.0 if p.dst == "valence_app" else -1.0, 0.0, 0.0)))
         else:
             out.append(p)
@@ -401,7 +402,10 @@ def _split_cs(projections):
 
 
 B15 = replace(B15, projections=_split_cs(B15.projections))
-W15 = replace(W14, sickness_delay=2, pain_decay=0.3, spawn_density=0.14, hunger_per_tick=0.012)
+# Sickness comes SICK_DELAY ticks after eating: by then the bush is eaten empty, so the innate pain reflex (turn
+# away, stop feeding) is too late and only a learned aversion helps (2 ticks left the reflex one berry of damage).
+SICK_DELAY = 12
+W15 = replace(W14, sickness_delay=SICK_DELAY, pain_decay=0.3, spawn_density=0.14, hunger_per_tick=0.012)
 LIFE_LEARN = 2000     # ticks per life in the learning stages
 NOVEL_SIM = 0.6       # novel types look less like the gooseberry than the ancestral look-alikes (0.8) do
 POISON_FOOD = -3.0    # OHOL food points lost per poison berry in the learning stages (a berry gives +3)
@@ -449,7 +453,7 @@ def cs_plastic(src, dst, sel=None, **kw):
     """A US-gated CS-trace projection onto a valence population (the 1.5 rule), sign by target."""
     b = 1.0 if dst == "valence_app" else -1.0
     extra = {"src_select": sel} if sel else {}
-    return P(src, dst, rule="hebb", modulator="us", eta_init=CS_ETA, elig_tau=0.8, decay=0.003,
+    return P(src, dst, rule="hebb", modulator="us", eta_init=CS_ETA, elig_tau=CS_ELIG, decay=0.003,
              abcd=(0.0, b, 0.0, 0.0), **extra, **kw)
 
 

@@ -28,7 +28,7 @@ Status: **done** (run and analysed), **defined** (in `life/experiments/stages.py
 | 1.2 drives | `hunger` (broadcast), `cold` gating innate thermotaxis | done | 609 vs 634 | **No.** hunger, cold, warm_run, warm_turn all 100-102. |
 | 1.3 affect | serotonin (dwell) and PDF (roam), mutually inhibiting | done | 539 vs 567 | **Partly.** pdf 85, roam 85; raphe 87, dwell 91. |
 | 1.4 habituation | short-term depression on identity -> appetitive synapses; "yum" bonus | done | 557 vs 567 | **No.** Depression off = 100. |
-| 1.5 association | US neurons, `us` modulator, identity -> valence plasticity with eligibility traces | done (1 seed) | 735 vs 883 | **No.** Plasticity off = 97.5; main below control. An agent eats only about 19 berries per life. |
+| 1.5 association | US neurons, `us` modulator, identity -> valence plasticity with eligibility traces | done (1 seed, twice) | 788 vs 805 | **No.** Plasticity off = 99. An agent eats about one novel-poison berry per life, with or without learning. |
 | 1.6 reversal | learned weights relax toward inherited values; poison swaps mid-life | defined, not run | | |
 | 2.1 tectum | retinotopic map + inhibitory pool; 9-column eyes | defined | | |
 | 2.2 pallium expansion | 48 sparse k-WTA neurons; US-gated learning from pallium; XOR poison world | defined (v4 design) | | To do first: input weights drawn per life (ADR-017), per-life looks. |
@@ -53,7 +53,11 @@ Status: **done** (run and analysed), **defined** (in `life/experiments/stages.py
 4. **Calibration level.** Parent lifetime is held at about 850-900 of 1000. A harder setting (say 600) would raise
    every selection pressure but shortens the lives that learning needs.
 5. Camping is up to 18-36% of 100-tick windows in 1.2-1.4.
-6. Not started: 1.6, x.td, ADR-017's per-life pallium weights for chapter 2. Metabolic cost of neural activity is
+6. **Learning (1.5) has nothing to learn from.** Agents need only about 12 berries in a 2000-tick life at the
+   calibrated metabolic rate and eat one novel-poison berry per life. Delaying sickness to 12 ticks changed nothing.
+   Next: a calibration that keeps the meal rate (berry size, poison cost and metabolic rate scaled together), or a
+   world where novel foods are most of the supply; and the metric "poison eaten after the first poisoning".
+7. Not started: 1.6, x.td, ADR-017's per-life pallium weights for chapter 2. Metabolic cost of neural activity is
    implemented but off.
 
 Practical notes: one process runs non-plastic stages at about 0.9 s and learning stages (2000 ticks) at 2-3 s

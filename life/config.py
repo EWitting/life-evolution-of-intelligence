@@ -169,6 +169,10 @@ class EvolutionConfig:
     ticks_per_generation: int = 400  # ticks each generation lives
     episodes: int = 1                # independent worlds per generation. 1 = one life per genome (default,
                                      # chosen for biological plausibility, see ADR-012). >1 averages stats.
+    siblings: int = 1                # individuals per genome in the world (num_agents = genomes x siblings). Each
+                                     # lives one life, scattered independently; the genome's fitness is their
+                                     # mean. One life is mostly luck (repeatability ~0.1), so a parent is judged
+                                     # by several offspring, as in a real lineage.
     elite_frac: float = 0.125        # fraction copied unchanged
     tournament: int = 3              # tournament size for parent selection
     mutation_std: float = 0.1        # Gaussian std on weights and biases

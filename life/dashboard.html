@@ -353,8 +353,11 @@ function drawFit() {
 // ---------- architecture: regions as blocks, projections as arrows (region level, not per synapse) ----------
 // Block cells = activations of the focused agent at the current tick. Arrow colour = rule, dashed = modulated,
 // width = summed |w| per target neuron at the current weight snapshot. Click a block or arrow for details.
-const RULE_COL = {fixed: '#8a8a8a', hebb: '#d08000', oja: '#1a9a6a', trace: '#7a3cc8', '?': '#8a8a8a'};
+const RULE_COL = {hard: '#2e2e2e', fixed: '#9a9a9a', hebb: '#d08000', oja: '#1a9a6a', trace: '#7a3cc8', '?': '#9a9a9a'};
+const RULE_LABEL = {hard: 'hard-wired', fixed: 'evolved, no learning'};
 const ruleKey = r => RULE_COL[r] && r !== '?' ? r : 'u';
+// hard-wired projections (evolve: false, no learning rule) are drawn darker than evolved ones
+const styleKey = p => (p.evolve === false && (!p.rule || p.rule === 'fixed')) ? 'hard' : ruleKey(p.rule);
 const REG = L.names.map((n, k) => ({name: n, off: L.offsets[k], size: L.sizes[k], sign: L.sign ? L.sign[k] : 0,
   spec: n === 'out' ? {alpha: M.brain.out_alpha} : ((M.brain.regions || []).find(r => r.name === n) || {})}));
 REG.forEach(r => { r.group = r.spec.group || ''; r.receptors = r.spec.receptors || []; });
@@ -461,10 +464,10 @@ function renderArch() {
   const maxDrive = Math.max(1e-6, ...AR.stats.map(s => s.drive));
   let h = '<defs>' + Object.entries(RULE_COL).map(([r, c]) => `<marker id="ah-${ruleKey(r)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="${c}"/></marker>`).join('') + '</defs>';
   PROJ.forEach((p, i) => {
-    const g = edgeGeom(p), w = 1 + 5 * AR.stats[i].drive / maxDrive, rk = ruleKey(p.rule), c = RULE_COL[rk === 'u' ? '?' : rk];
+    const g = edgeGeom(p), w = 1 + 5 * AR.stats[i].drive / maxDrive, rk = styleKey(p), c = RULE_COL[rk === 'u' ? '?' : rk];
     const sel = AR.sel && AR.sel.type === 'proj' && AR.sel.i === i;
     const mname = p.modulator || (p.modulated ? MODN[0] : ''), isGain = p.kind === 'gain';
-    const lab = (isGain ? 'gain ' : '') + (rk !== 'fixed' && rk !== 'u' ? p.rule : '') + (mname ? ' ×' + mname : '');
+    const lab = (isGain ? 'gain ' : '') + (rk !== 'fixed' && rk !== 'hard' && rk !== 'u' ? p.rule : '') + (mname ? ' ×' + mname : '');
     h += `<g class="edge" data-p="${i}">` + (sel ? `<path d="${g.d}" fill="none" stroke="#c8102e" stroke-opacity=".35" stroke-width="${(w + 6).toFixed(1)}"/>` : '')
       + `<path d="${g.d}" fill="none" stroke="${c}" stroke-width="${w.toFixed(1)}"${isGain ? ' stroke-dasharray="1 4" stroke-linecap="round"' : mname ? ' stroke-dasharray="6 3"' : ''} marker-end="url(#ah-${rk})"/>`
       + `<path d="${g.d}" fill="none" stroke="transparent" stroke-width="12"/>`
@@ -635,7 +638,7 @@ $('archDetail').addEventListener('mousemove', e => {
 });
 $('archDetail').addEventListener('mouseleave', hideTip);
 $('archInfo').textContent = `${REG.length} regions, ${PROJ.length} projections, ${NN} neurons, modulators: ${MODN.join(', ')}${M.brain.projections ? '' : ' (projections inferred from weights)'}`;
-$('archLegend').innerHTML = Object.entries(RULE_COL).filter(([r]) => r !== '?').map(([r, c]) => `<span style="margin-right:10px"><i style="display:inline-block;width:18px;height:3px;background:${c};vertical-align:middle"></i> ${r}</span>`).join('')
+$('archLegend').innerHTML = Object.entries(RULE_COL).filter(([r]) => r !== '?').map(([r, c]) => `<span style="margin-right:10px"><i style="display:inline-block;width:18px;height:3px;background:${c};vertical-align:middle"></i> ${RULE_LABEL[r] || r}</span>`).join('')
   + ` dashed = plasticity gated by a modulator (×name), dotted = gain (multiplicative) projection. Green blocks = excitatory, red = inhibitory (Dale's law). Modulators: ${(M.brain.modulators || []).map(m => `<b>${m.name}</b> = ${m.source === 'region' ? `${m.scale}·(${m.pos}${m.neg ? ' − ' + m.neg : ''} − ${m.baseline})` : m.source}`).join(', ') || (M.brain.modulator || 'none')}. Line width = summed |w| per target neuron at the current snapshot. Cells = the focused agent's activations at this tick. Drag blocks to arrange (remembered in this browser), <a href="#" id="archReset">reset layout</a>.`;
 $('archReset').addEventListener('click', e => { e.preventDefault(); try { localStorage.removeItem(LSKEY); } catch (err) {} autoLayout(); renderArch(); });
 autoLayout(); loadPos(); updateStats(); renderArch(); renderArchDetail();

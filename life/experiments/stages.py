@@ -439,8 +439,8 @@ B15 = replace(B15, projections=_split_cs(B15.projections))
 # Sickness comes SICK_DELAY ticks after eating: by then half the bush is eaten, so the innate pain reflex (turn
 # away, stop feeding) comes late and a learned aversion helps.
 SICK_DELAY = 6
-# The metabolic rate stays high enough that an agent needs some 35 berries in a 2000-tick life (many meals).
-W15 = replace(W14, sickness_delay=SICK_DELAY, pain_decay=0.3, spawn_density=0.14, hunger_per_tick=0.035)
+# The metabolic rate stays high enough that an agent needs some 25 berries in a 2000-tick life (many meals).
+W15 = replace(W14, sickness_delay=SICK_DELAY, pain_decay=0.3, spawn_density=0.14, hunger_per_tick=0.025)
 LIFE_LEARN = 2000     # ticks per life in the learning stages
 NOVEL_SIM = 0.45      # novel types look less like the gooseberry than the ancestral look-alikes (0.8) do
 POISON_FOOD = -2.0    # OHOL food points lost per poison berry in the learning stages (a berry gives +3)
@@ -608,12 +608,13 @@ stage(Stage("x.td", "sx_td_test", "1.6", BXTD, W16, VISION_CH1, BODY_12, STAGES[
 # ------------------------------------------------------------------ running
 
 EVOLUTION_OVERRIDES: dict = {}   # set from the command line (--mutation-prob), applied to every stage
+SIBLINGS = 4                     # 256 agents = 64 genomes x 4 siblings (EvolutionConfig.siblings)
 
 
 def make_exp(s: Stage, brain: BrainConfig, name: str, generations: int, seed: int) -> ExperimentConfig:
     return ExperimentConfig(name=name, world=s.world, vision=s.vision, body=s.body, brain=brain,
                             evolution=EvolutionConfig(generations=generations, ticks_per_generation=s.ticks,
-                                                      eta_max=s.eta_max, **EVOLUTION_OVERRIDES,
+                                                      eta_max=s.eta_max, **{"siblings": SIBLINGS, **EVOLUTION_OVERRIDES},
                                                       plastic=s.plastic, seed=seed))
 
 
@@ -753,8 +754,9 @@ def versus(key: str, worlds: int = 8, seed: int = 321) -> list:
                                  b=ctrl.b.at[:, rows].set(-10.0))
         if float(own.eta.max()) == 0:
             ctrl = ctrl._replace(eta=jnp.zeros_like(ctrl.eta))
-        n = exp.world.num_agents
+        n = main.b.shape[0]               # genomes; each lives as exp.evolution.siblings individuals
         half = n // 2
+        k = exp.world.num_agents // n
         mixed = jax.tree_util.tree_map(lambda a, b: jnp.concatenate([a[:half], b[:n - half]]), main, ctrl)
         rs, rules_fn = s.build(exp)
         sim = jax.jit(make_simulate(exp, record=False))
@@ -766,7 +768,7 @@ def versus(key: str, worlds: int = 8, seed: int = 321) -> list:
             if rules.food_value.ndim > 1 + (exp.world.switch_tick > 0):
                 rules = jax.tree_util.tree_map(lambda a: a[0], rules)
             fit = fit_fn(sim(rules, mixed, ks)[0])
-            d.append((float(fit[:half].mean()), float(fit[half:].mean())))
+            d.append((float(fit[:half * k].mean()), float(fit[half * k:].mean())))
         m, c = np.mean(d, axis=0)
         diffs.append(m - c)
         print(f"{main_run.parent.name}: main half {m:.0f}, control half {c:.0f}, difference {m - c:+.0f}", flush=True)

@@ -71,6 +71,11 @@ def make_simulate(exp: ExperimentConfig, record: bool):
 
     @jax.jit
     def simulate(rules: RuleArrays, pop: brain.Genome, key: jax.Array):
+        # fewer genomes than agents: every genome lives as N / P siblings (agents i*k .. i*k+k-1 share genome i)
+        P = pop.b.shape[0]
+        assert N % P == 0, f"{N} agents cannot be split evenly over {P} genomes"
+        if P != N:
+            pop = jax.tree_util.tree_map(lambda x: jnp.repeat(x, N // P, axis=0), pop)
         # rules with a leading axis of 2 = two phases of one life: phase 1 from tick WorldConfig.switch_tick on
         phased = rules.food_value.ndim == 2
         rules_at = (lambda tk: jax.tree_util.tree_map(lambda a: a[(tk >= exp.world.switch_tick).astype(jnp.int32)], rules))             if phased else (lambda tk: rules)
@@ -145,7 +150,7 @@ def load_population(run_dir: Path | str, exp: ExperimentConfig | None = None, se
         return pop
     old_exp = ExperimentConfig.from_json((run_dir / "config.json").read_text())
     old, new = make_layout(old_exp), make_layout(exp)
-    P, want = pop.b.shape[0], exp.world.num_agents
+    P, want = pop.b.shape[0], exp.world.num_agents // max(1, exp.evolution.siblings)
     if P != want:
         idx = jnp.arange(want) % P
         pop = jax.tree_util.tree_map(lambda a: a[idx], pop)
@@ -180,12 +185,15 @@ def run_evolution(exp: ExperimentConfig, ruleset: Ruleset, fitness_fn: Callable[
     layout = make_layout(exp)
     key = jax.random.PRNGKey(ecfg.seed)
     key, kinit = jax.random.split(key)
+    sib = max(1, ecfg.siblings)
+    assert exp.world.num_agents % sib == 0, "num_agents must be a multiple of evolution.siblings"
+    n_genomes = exp.world.num_agents // sib
     if init_population is None:
-        pop = jax.vmap(lambda k: brain.init_genome(k, layout))(jax.random.split(kinit, exp.world.num_agents))
+        pop = jax.vmap(lambda k: brain.init_genome(k, layout))(jax.random.split(kinit, n_genomes))
     else:
         pop = init_population
-        assert pop.b.shape == (exp.world.num_agents, layout.n), \
-            f"init population has shape {pop.b.shape}, experiment needs {(exp.world.num_agents, layout.n)}"
+        assert pop.b.shape == (n_genomes, layout.n), \
+            f"init population has shape {pop.b.shape}, experiment needs {(n_genomes, layout.n)}"
     base_rules = ruleset.to_arrays(exp.vision.appearance_dim)
     rules_fn = rules_for_generation or (lambda gen, k: base_rules)
     E = ecfg.episodes
@@ -193,6 +201,7 @@ def run_evolution(exp: ExperimentConfig, ruleset: Ruleset, fitness_fn: Callable[
     ra = ecfg.record_agents
     exp_rec = exp
     if 0 < ra < exp.world.num_agents:   # the dashboard shows a sample of the population in a smaller world
+        ra = min(ra, n_genomes)
         f = ra / exp.world.num_agents
         from dataclasses import replace as _replace
         exp_rec = _replace(exp, world=_replace(exp.world, num_agents=ra, height=max(8, round(exp.world.height * f ** 0.5)),
@@ -229,7 +238,7 @@ def run_evolution(exp: ExperimentConfig, ruleset: Ruleset, fitness_fn: Callable[
         ep_keys = jax.random.split(ks, E)
         stats, _ = sim(rules, pop, ep_keys)
         stats = jax.tree_util.tree_map(lambda x: x.astype(jnp.float32).mean(axis=0), stats)
-        fit = fitness_fn(stats)
+        fit = fitness_fn(stats).reshape(n_genomes, sib).mean(axis=1)   # a genome's fitness: the mean of its siblings
         row = dict(gen=gen, fit_mean=float(fit.mean()), fit_max=float(fit.max()), fit_median=float(jnp.median(fit)),
                    alive_ticks=float(stats["alive_ticks"].mean()), eaten=float(stats["eaten"].mean()),
                    pain=float(stats["pain"].mean()), fed=float(stats["fed"].mean()), fed_meal=float(stats["fed_meal"].mean()), survivors=float(stats["alive"].sum()),
@@ -246,7 +255,7 @@ def run_evolution(exp: ExperimentConfig, ruleset: Ruleset, fitness_fn: Callable[
             rules0 = jax.tree_util.tree_map(lambda x: x[0], rules)
             pop_rec, best_rec = pop, best
             if exp_rec is not exp:   # every (N / ra)-th agent of the fitness ranking, best first
-                pick = jnp.argsort(-fit)[:: exp.world.num_agents // ra][:ra]
+                pick = jnp.argsort(-fit)[:: max(1, n_genomes // ra)][:ra]   # one individual per genome shown
                 pop_rec, best_rec = jax.tree_util.tree_map(lambda x: x[pick], pop), 0
             _, recs = sim_rec(rules0, pop_rec, ep_keys[0])   # episode 0 again with recording on
             np.savez(out_dir / "best_genome.npz", **{k: np.asarray(v[best]) for k, v in pop._asdict().items()})

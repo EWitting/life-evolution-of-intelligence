@@ -7,7 +7,7 @@ const calls = {};
 const ctxProxy = new Proxy({}, { get: (_, k) => { if (k === 'createImageData') return (w, h) => ({ data: new Uint8ClampedArray(w * h * 4), width: w, height: h }); return (...a) => { calls[k] = (calls[k] || 0) + 1; }; }, set: () => true });
 const elems = {};
 function el(id) { if (!elems[id]) elems[id] = { id, style: {}, value: '0', textContent: '', innerHTML: '', checked: true, width: 100, height: 100, max: 0,
-  getContext: () => ctxProxy, addEventListener: () => {}, classList: { toggle: () => {} }, appendChild: () => {}, getBoundingClientRect: () => ({ left: 0, top: 0, width: 100, height: 100 }), click: () => {} }; return elems[id]; }
+  getContext: () => ctxProxy, addEventListener: () => {}, setAttribute: () => {}, querySelectorAll: () => [], querySelector: () => null, classList: { toggle: () => {} }, appendChild: () => {}, getBoundingClientRect: () => ({ left: 0, top: 0, width: 100, height: 100 }), click: () => {} }; return elems[id]; }
 let nEl = 0;
 global.document = { getElementById: el, createElement: () => el('_new' + nEl++), addEventListener: () => {} };
 global.Image = class { constructor() { this.complete = false; } set src(v) { this._src = v; } };

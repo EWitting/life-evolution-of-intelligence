@@ -109,6 +109,9 @@ class ProjectionSpec:
     topology: str = "full"           # 'full' (random with density) or 'one_to_one' (src i -> dst i), or 'topographic' (see groups)
     w_init: float | None = None      # None: random N(0,1)/sqrt(fan_in). A value: every synapse starts there
     evolve: bool = True              # False: hard-wired: w0 and presence are never mutated
+    tune: bool = False               # hard-wired (evolve=False) projections only: evolution may scale the whole
+                                     # projection by one factor (EvolutionConfig.tune_*); the wiring and the sign
+                                     # stay as designed, the strength is tuned
     teacher: str = ""                # rule 'delta': region providing the target activity for dst
     abcd: tuple = (1.0, 0.0, 0.0, 0.0)   # initial rule coefficients A, B, C, D
     groups: int = 0                  # topology 'topographic': src and dst split into this many aligned groups
@@ -176,6 +179,12 @@ class EvolutionConfig:
     eta_mutation_prob: float = 0.1   # per plastic projection and child: chance that its rule genes (eta, A..D)
                                      # mutate. eta moves by eta_max * N(0, 0.3), clipped to [0, eta_max].
     record_weights_every: int = 100  # ticks between weight snapshots in the recording (must divide ticks)
+    record_agents: int = 64          # the recording (dashboard) of the last generation shows this many agents,
+                                     # sampled evenly over the fitness ranking (best first), in a world scaled
+                                     # down to the same density; 0 or >= num_agents: the whole population
+    tune_prob: float = 0.1           # per tunable projection and child: chance that its strength mutates
+    tune_std: float = 0.2            # std of the log of the factor it is multiplied by
+    tune_range: float = 10.0         # the strength stays within [1/range, range] x the designed value
     seed: int = 0
 
 

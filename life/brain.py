@@ -76,6 +76,7 @@ class Layout(NamedTuple):
     elig: jnp.ndarray       # [N, N] eligibility decay (0 = none)
     gain: jnp.ndarray       # [N, N] 1 for gain (multiplicative) synapses
     evolve_w: jnp.ndarray   # [N, N] 1 where w0 and presence may mutate
+    tune: jnp.ndarray       # [N, N] 1 on hard-wired synapses whose projection strength may be scaled by evolution
     w_init: jnp.ndarray     # [N, N] fixed initial weight, nan = random
     dep_U: jnp.ndarray      # [N, N] depression use fraction (0 = no depression)
     dep_rec: jnp.ndarray    # [N, N] recovery rate 1/tau_rec
@@ -125,7 +126,7 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
     mods = modulator_specs(cfg)
     mod_names = tuple(m.name for m in mods)
     z = lambda dt=np.float32, v=0: np.full((n, n), v, dt)
-    allowed, density, o2o, gain, evolve_w = z(), z(), z(), z(), z()
+    allowed, density, o2o, gain, evolve_w, tune = z(), z(), z(), z(), z(), z()
     proj_id, rule, mod_idx = z(np.int32, -1), z(np.int32), z(np.int32, -1)
     elig, dep_U, dep_rec, eta_init, decay = z(), z(), z(), z(), z()
     w_init = z(v=np.nan)
@@ -181,6 +182,8 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
         elig[s, d] = p.elig_tau
         gain[s, d] = float(p.kind == "gain")
         evolve_w[s, d] = float(p.evolve)
+        assert not (p.tune and (p.evolve or p.w_init is None)), f"projection {key}: tune needs evolve=False and w_init"
+        tune[s, d] = float(p.tune)
         if p.w_init is not None:
             w_init[s, d] = p.w_init
         if p.depression:
@@ -227,7 +230,7 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
                   pl_rows=pl_rows, pl_cols=pl_cols,
                   alpha=j(alpha), trace_tau=j(tau), sign=j(sign), bias_init=j(bias_init), evolve_b=j(evolve_b),
                   allowed=j(allowed), density=j(density), one_to_one=j(o2o), proj_id=j(proj_id), rule=j(rule),
-                  mod_idx=j(mod_idx), elig=j(elig), gain=j(gain), evolve_w=j(evolve_w), w_init=j(w_init),
+                  mod_idx=j(mod_idx), elig=j(elig), gain=j(gain), evolve_w=j(evolve_w), tune=j(tune * allowed), w_init=j(w_init),
                   dep_U=j(dep_U), dep_rec=j(dep_rec), decay=j(decay), teacher=j(teacher), eta_init=j(eta_init), abcd_init=j(abcd),
                   has_gain=bool(gain.any()), has_elig=bool((elig > 0).any()), has_dep=bool((dep_U > 0).any()),
                   has_decay=bool((decay > 0).any()), groups=tuple(r.group for r in regions),
@@ -421,6 +424,9 @@ def remap_genomes(pop: Genome, old: Layout, new: Layout, key: jax.Array) -> Geno
     mask = mat(fresh.mask, pop.mask, carry_w)
     silent = (new_allowed > 0) & ~carried & ~hard
     w0 = np.where(silent[None], 0.0, w0)
+    tuned = np.zeros((new.n, new.n), bool)   # hard-wired strengths tuned by evolution carry over
+    tuned[np.ix_(inn, inn)] = (np.asarray(old.tune)[np.ix_(io, io)] > 0) & (np.asarray(new.tune)[np.ix_(inn, inn)] > 0)
+    w0 = mat(w0, pop.w0, tuned & carried)
     w0 = np.asarray(constrain(new, jnp.asarray(w0), 1e9))
     genes = {k: mat(getattr(fresh, k), getattr(pop, k), same_rule & carried) for k in ("eta", "A", "B", "C", "D")}
     b = np.array(fresh.b)

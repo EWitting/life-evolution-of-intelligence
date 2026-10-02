@@ -190,7 +190,15 @@ def run_evolution(exp: ExperimentConfig, ruleset: Ruleset, fitness_fn: Callable[
     rules_fn = rules_for_generation or (lambda gen, k: base_rules)
     E = ecfg.episodes
     sim = jax.jit(jax.vmap(make_simulate(exp, record=False), in_axes=(0, None, 0)))
-    sim_rec = make_simulate(exp, record=True)
+    ra = ecfg.record_agents
+    exp_rec = exp
+    if 0 < ra < exp.world.num_agents:   # the dashboard shows a sample of the population in a smaller world
+        f = ra / exp.world.num_agents
+        from dataclasses import replace as _replace
+        exp_rec = _replace(exp, world=_replace(exp.world, num_agents=ra, height=max(8, round(exp.world.height * f ** 0.5)),
+                                               width=max(8, round(exp.world.width * f ** 0.5)),
+                                               patches=round(exp.world.patches * f) if exp.world.patches else 0))
+    sim_rec = make_simulate(exp_rec, record=True)
 
     def per_episode(rules: RuleArrays) -> RuleArrays:
         if rules.food_value.ndim == 1 + (exp.world.switch_tick > 0):
@@ -236,7 +244,11 @@ def run_evolution(exp: ExperimentConfig, ruleset: Ruleset, fitness_fn: Callable[
         if last:
             best = int(jnp.argmax(fit))
             rules0 = jax.tree_util.tree_map(lambda x: x[0], rules)
-            _, recs = sim_rec(rules0, pop, ep_keys[0])   # replay episode 0 with recording on
+            pop_rec, best_rec = pop, best
+            if exp_rec is not exp:   # every (N / ra)-th agent of the fitness ranking, best first
+                pick = jnp.argsort(-fit)[:: exp.world.num_agents // ra][:ra]
+                pop_rec, best_rec = jax.tree_util.tree_map(lambda x: x[pick], pop), 0
+            _, recs = sim_rec(rules0, pop_rec, ep_keys[0])   # episode 0 again with recording on
             np.savez(out_dir / "best_genome.npz", **{k: np.asarray(v[best]) for k, v in pop._asdict().items()})
             np.savez_compressed(out_dir / "population.npz", **{k: np.asarray(v) for k, v in pop._asdict().items()})
         else:
@@ -247,7 +259,7 @@ def run_evolution(exp: ExperimentConfig, ruleset: Ruleset, fitness_fn: Callable[
         w.writerows(rows)
     rules_last = jax.tree_util.tree_map(lambda x: x[0], rules)
     app = rules_last.appearance if rules_last.appearance.ndim == 2 else rules_last.appearance[0]
-    save_recording(out_dir, exp, ruleset, layout, pop, recs, best, rows, dashboard=dashboard, appearance=app)
+    save_recording(out_dir, exp, ruleset, layout, pop_rec, recs, best_rec, rows, dashboard=dashboard, appearance=app)
     if verbose:
         print(f"wrote {out_dir}" + ("  (open dashboard.html in a browser)" if dashboard else ""))
     return dict(out_dir=out_dir, rows=rows, pop=pop, stats=stats)

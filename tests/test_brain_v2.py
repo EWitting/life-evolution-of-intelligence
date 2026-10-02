@@ -201,10 +201,13 @@ def test_novel_looks_are_drawn_per_life_and_fed_stat():
     berry = lambda v: rs.local(S.variant(v)[S.BERRY])
     assert np.allclose(app_a[0, 0], app_a[0, 1])                          # the look does not change mid-life
     assert not np.allclose(app_a[0, 0, berry(2)], app_b[0, 0, berry(2)])  # but it does between lives
-    assert np.allclose(app_a[0, 0, berry(1)], app_b[0, 0, berry(1)])      # ancestral types keep their look
+    assert np.allclose(app_a[0, 0, berry(4)], app_b[0, 0, berry(4)])      # ancestral types keep their look
     assert np.allclose(app_a[0, 0, berry(2)] @ app_a[0, 0, berry(0)], S.NOVEL_SIM, atol=1e-5)
     fv = np.asarray(a.food_value)[0]
-    assert sorted([fv[0, berry(2)], fv[0, berry(3)]]) == [S.POISON_FOOD, 3.0] and fv[0, berry(2)] == fv[1, berry(3)]
+    novel = np.array([fv[:, berry(v)] for v in S.NOVEL])                  # [4 types, 2 phases]
+    assert sorted(novel[:, 0]) == [S.POISON_FOOD, S.POISON_FOOD, 3.0, 3.0]  # two of the four are poison
+    assert (novel[:, 0] != novel[:, 1]).all()                             # and good and poison swap mid-life
+    assert fv[0, berry(0)] == 3.0 and fv[0, berry(4)] == S.POISON_FOOD   # the ancestral types keep their meaning
     # fed = sum over ticks alive of food / max_food: an agent that never eats and starves after 400 ticks gets ~200
     exp2 = ExperimentConfig(world=WorldConfig(height=8, width=8, num_agents=2, spawn_density=0.0),
                             evolution=EvolutionConfig(ticks_per_generation=500, record_weights_every=100))

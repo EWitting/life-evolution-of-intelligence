@@ -21,13 +21,20 @@ def mutate(key: jax.Array, g: Genome, cfg: EvolutionConfig, layout: Layout) -> G
     w0 = jnp.where((layout.evolve_w > 0) & hitw, g.w0 + cfg.mutation_std * jax.random.normal(k1a, (n, n)), g.w0)
     w0 = jnp.where(born, 0.5 * jax.random.normal(k[2], (n, n)), w0)
     w0 = constrain(layout, w0, 1e9) * mask
+    # hard-wired projections flagged 'tune': the whole projection is multiplied by one factor (sign never flips)
+    P = max(1, len(layout.proj_names))
+    pid = jnp.where(layout.proj_id >= 0, layout.proj_id, 0)
+    kt1, kt2 = jax.random.split(k[7])
+    hit_t = jax.random.uniform(kt1, (P,)) < cfg.tune_prob
+    factor = jnp.exp(hit_t * cfg.tune_std * jax.random.normal(kt2, (P,)))[pid]
+    design = jnp.nan_to_num(layout.w_init)
+    mag = jnp.clip(jnp.abs(g.w0) * factor, jnp.abs(design) / cfg.tune_range, jnp.abs(design) * cfg.tune_range)
+    w0 = jnp.where(layout.tune > 0, jnp.sign(design) * mag * mask, w0)
     k3a, k3b = jax.random.split(k[3])
     hitb = jax.random.uniform(k3b, (n,)) < cfg.weight_mutation_prob
     b = jnp.where((layout.evolve_b > 0) & hitb, g.b + cfg.mutation_std * jax.random.normal(k3a, (n,)), g.b)
     if not cfg.plastic:
         return g._replace(w0=w0, mask=mask, b=b)
-    P = max(1, len(layout.proj_names))
-    pid = jnp.where(layout.proj_id >= 0, layout.proj_id, 0)
     plastic = (layout.rule > 0) & (layout.proj_id >= 0)
     hit = jax.random.uniform(k[4], (P,)) < cfg.eta_mutation_prob
     per = lambda kk, std: jnp.where(plastic, (hit * std * jax.random.normal(kk, (P,)))[pid], 0.0)

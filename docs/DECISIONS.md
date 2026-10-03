@@ -281,3 +281,27 @@ override them freely; when one does, add or amend an entry so the record stays c
   and full-hand gate (hands), the safety cell (1.5).
 - **A generation-0 test is a diagnostic, not a gate** (user): old and new parts may need evolution to tune to each
   other, so main below control at generation 0 is a reason to look closer, not to stop.
+
+## ADR-024 Survival is the fitness; drives act on behavioural modes; chapter 1 learns from pain only (2026-10-03)
+
+- Decided with the user; amends ADR-023 (fitness, critical path, learning rule).
+- **Fitness = well-fed lifetime from the first meal** (`stages.default_fitness`), again. Energy acquired pays for a
+  bite on a full stomach and hardly for staying alive, so no need state could be selected under it: cold cost 7% of
+  it against 32% of the well-fed lifetime. With recombination the two repair a damaged population equally well
+  (STAGE_LOG v23). "Energy absorbed" was rejected: it equals what a life burns, so it rewards burning more.
+  Known costs: a ceiling at the life cap, and frugality (staying put) pays; see STAGE_LOG v23.
+- **Reversal (1.6) is not part of the chain.** Relaxing learned weights toward the inherited ones lost head to head
+  in every seed (-6.5 +-1.6) and learning was unused in that world. Chapter 1 learning ends at 1.5.
+- **Chapter 1 learns from pain only.** The taste teacher left fitness at or above intact when silenced in all six
+  seeds of 1.5 and 1.6. Appetitive learning returns with the reward prediction error of chapter 2 (the chapter 2
+  definitions add the taste teacher back at their base). Learning at this strength is accepted if significant
+  over seeds (user): this kind of rule is numerically delicate.
+- **The parked stages (drives, affect, habituation) rejoin the chain**, appended to verified stages instead of
+  restoring the old order. Where drives go (after 1.5 or directly after 1.1) is open: STAGE_LOG v23.
+- **A drive selects a behavioural mode, not an action** (user). An inhibitory `hungry` cell shuts the warmth mode,
+  so a hungry animal forages and a fed one looks after its temperature.
+- **Warmth is found by kinesis** (user's suggestion, as in small animals): move while cold, stay where it is warm;
+  no gradient climbing and no knowledge of what a heat source looks like. It needs the temperature of the place
+  (`BodyConfig.skin`); the slow body temperature is what the cold costs.
+- **Freezing rule** (user): a module that lesions show unused stays out of the frozen brain unless later stages
+  need the brain to have developed with it (the need state, the modulator systems).

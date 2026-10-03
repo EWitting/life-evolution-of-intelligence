@@ -910,3 +910,81 @@ temp_rate 0.005 and springs 0.05 give the same picture (35.0 / 34.0 / 33.8 and 3
 - Gradient thermotaxis does not change body temperature: a spring's gradient reaches four cells.
 - Nothing in the brain lets a drive switch foraging: steering is direct sensor -> motor reflexes, the ganglion is idle.
 - Open (user to decide): cold as sluggishness (failed actions when cold), or drives and affect move to chapter 2.
+
+## v23 (2026-10-03, night): fitness back to the well-fed lifetime; a drives design that works at generation 0
+
+Decided with the user: eating harder when hungry and looking after warmth are too elementary to postpone, and
+energy acquired cannot select for either (it pays for every bite and hardly for staying alive). Changes:
+fitness = well-fed lifetime from the first meal again (`default_fitness`; `fitness_energy` kept); the taste teacher
+is removed from 1.5 (pain teacher only); a skin-temperature sense (`BodyConfig.skin`); chapter 1 is being rerun.
+
+### Was the well-fed lifetime too weak a signal? (`scripts/probes/recovery.py`, damaged 1.0 population, 40 generations)
+
+Both with recombination; intact population 174 energy, 783 ticks; damaged start 155 energy.
+
+| selected on | energy reached [seeds] | lifetime reached [seeds] |
+|---|---|---|
+| well-fed lifetime from first meal | 176.1 [175.4 178.0 174.8] | 826 [840 800 837] |
+| energy acquired | 178.0 [175.8 179.8 178.4] | 790 [803 794 773] |
+
+A tie. The earlier weakness of the lifetime fitness was mostly the lack of recombination and the poor world (v18
+numbers: genome share 0.18 vs 0.22; asexual recovery 163.7 vs 160.9).
+
+### What the cold costs under each fitness (1.5 population, generation 0, springs 0.1)
+
+| | energy acquired | well-fed lifetime |
+|---|---|---|
+| world not cold | 37.8 | 400 |
+| cold world, cold not sensed | 35.2 | 274 |
+| cost | -7% | -32% |
+
+### Kinesis (`scripts/probes/drives.py`, 1.5 population, generation 0, 4 worlds, springs 0.1, temp_rate 0.03)
+
+User's suggestion: no gradient climbing and no sight of the spring; move while cold, stay when warm (orthokinesis).
+
+| brain | well-fed lifetime | lifetime | energy | body temperature |
+|---|---|---|---|---|
+| cold not sensed, world not cold | 385 +-30 | 730 | 38.0 | 0.50 |
+| cold not sensed (control) | 266 +-19 | 509 | 35.2 | 0.37 |
+| old rule: climb the gradient, turn when cooling | 270 +-12 | 520 | 35.0 | 0.40 |
+| run when the body is cold | 177 +-5 | 440 | 19.1 | 0.36 |
+| run + rest, reading the body, hunger gate 0.67 | 355 +-33 | 694 | 35.8 | 0.37 |
+| run + rest (weight 3), reading the skin | 182 +-5 | 485 | 17.2 | 0.38 |
+| run + rest (weight 9), reading the skin | 125 +-5 | 515 | 8.0 | 0.50 |
+| the same + turn when cooling + hunger gate 0.67 | **438 +-51** | 866 | 35.3 | 0.44 |
+| the same with temp_rate 0.1 | 421 +-39 | 835 | 34.9 | 0.43 |
+| hunger gate at 0.5 / 0.33 (weight 3, skin / body) | 320 / 264 | 715 / 601 | 32.0 / 29.7 | 0.38 / 0.35 |
+
+- Run-when-cold with rest-when-warm finds and holds warmth (0.50), but only if it reads the temperature of the
+  place (skin): the body's own lags by about 30 ticks, so an animal crossing a warm zone never notices. And the
+  rest signal must nearly block FORWARD (weight 9); at 3 the foraging reflexes carry the animal out again.
+- Without hunger the warmth seeker starves. With an inhibitory `hungry` cell shutting the warmth mode below 2/3
+  stomach it does both: +65% over the cold-blind brain, above that brain in a world without cold.
+- The hunger gate helps by itself (+33-41% with warmth never reached): a fed animal moves on instead of biting on
+  a full stomach and emptying its own bushes.
+- Turning when the skin cools made no measurable difference (371 vs 376 at weight 3); it starts out of the circuit.
+
+### Rerun of the chain under the well-fed lifetime: first seed of 1.0 and 1.1
+
+| run (last generation / last 25) | well-fed lifetime | lifetime | energy | alive at the cap | FORWARD | USE | camping |
+|---|---|---|---|---|---|---|---|
+| 1.0 | 644 | 839 | 162 | 162 of 256 | 0.53 | 0.25 | 4% |
+| 1.1 main | 512 | 826 | 63 | 81 | 0.50 | 0.27 | 8% |
+| 1.1 control (pain-blind) | 572 | 909 | 35 | 133 | 0.21 | 0.54 | 44% |
+
+Life cap (`scripts/probes/ceiling.py`, the same populations with longer lives):
+
+| population | cap 1000: fitness, alive at cap | cap 2000 | cap 3000 |
+|---|---|---|---|
+| 1.0 | 619, 62% | 1065, 50% | 1438, 42% |
+| 1.1 main | 527, 30% | 652, 14% | 696, 4% |
+| 1.1 control | 572, 55% | 722, 14% | 743, 1% |
+
+- **The ceiling is real in 1.0**: most agents reach the cap, and 42% are still alive at 3000 ticks (they can sustain
+  themselves indefinitely), so a longer life does not remove it.
+- **In 1.1 the pain-blind control is ahead on this seed** (572 vs 512; also at longer caps). It stays put and keeps
+  using the bush in front of it (USE costs nothing), so it burns little: a birth reserve of 20 lasts 800 ticks at
+  rest. The main brain eats 63-82 energy and absorbs about 12 of it: its grasp programme bites whenever something
+  valued is adjacent, full or not, empties its surroundings and pays for the walking.
+- One seed; seeds 1 and 2 and stage 1.5 are running. If it holds, the valence brain needs the hunger signal (bite and
+  search when hungry) to do well under a survival fitness, which argues for drives directly after 1.1.

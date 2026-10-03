@@ -1,7 +1,7 @@
 # Status
 
 One screen on where the project is. Plan: `docs/BRAIN_EVOLUTION.md`. Details, numbers and run directories:
-`docs/STAGE_LOG.md`. Newest decisions: `docs/DECISIONS.md` (ADR-017 to ADR-023). Last updated 2026-10-03, evening.
+`docs/STAGE_LOG.md`. Newest decisions: `docs/DECISIONS.md` (ADR-017 to ADR-024). Last updated 2026-10-03, night.
 
 ## How a stage is judged
 
@@ -19,46 +19,44 @@ than control (user, 2026-10-01). One life is mostly luck, so a design is checked
        stages versus <key>         main and control agents in the same worlds
        stages lesions <key>        fitness with each region silenced, % of intact, per seed
 
-**Fitness = energy acquired** (ADR-023). Cells that lesions show unused in every seed are removed.
+**Fitness = well-fed lifetime from the first meal** (ADR-024; v19-v22 used energy acquired). Cells that lesions
+show unused in every seed are removed.
 
-## Stages (v21, 2026-10-03)
+## Stages (v23, 2026-10-03)
 
-Critical path: 1.0 -> 1.1 -> 1.5 -> chapter 2. Three seeds unless stated; lesion = fitness with the region
-silenced, % of intact, mean over seeds.
+Chain: 1.0 -> 1.1 -> 1.5, then drives -> affect -> habituation -> chapter 2. **The chain is being rerun under the
+well-fed lifetime.** Findings marked v21/v22 are from the energy-acquired fitness. Three seeds unless stated;
+lesion = fitness with the region silenced, % of intact, mean over seeds.
 
 | stage | what it adds | status | finding |
 |---|---|---|---|
-| 1.0 steering | ganglion (exc + inh, lagging normalisation), evolved sensor -> motor reflexes; sees the outside world only; movement costs energy; the animal eats what it grasps | done (1 seed) | 172 energy per life, lifetime 801 of 1000, 88 meals. |
-| 1.1 valence | appetitive and aversive value cells (taste and pain enter the brain only here) acting on a contact-gated grasp programme; aversion turns away and blocks the bite | done | Main 60.1 vs control 29.5, head to head +81 +-3. Lesions: appetitive 46, aversive 52, no_feed 55, grasp 46, gate 59. The ganglion is idle in this stage (99-102). |
-| 1.5 association | taste teaches the identity -> appetitive synapses, pain the identity -> aversive ones (short traces); novel foods per life | done | Main 43.6 vs control 40.9 (+2.7 +-0.8), head to head +9.7 +-2.8. The pain teacher is used (92 when silenced, every seed); the taste teacher is not (104); plasticity as a whole 97. | |
-| 1.6 reversal | learned weights relax toward inherited values; the novel types swap meaning mid-life | done, **left out** | Main 42.8 vs control 41.5, head to head -6.5 +-1.6. Plasticity 101, taste teacher 105, pain teacher 97. Not part of the chain (user). |
-| x.hands (side) | pick, hold, then eat: held-item value cells and an ingest programme on the 1.1 brain | done (2 runs) | Adapts in ~10 generations with the extension (energy 65-67, as with eat on grasp); the plain brain adapted in one of two runs. Lesions: ingest 0, gate 55. | |
-| 1.2 drives, 1.3 affect, 1.4 habituation | hunger and cold; serotonin and PDF; depression with dud bushes | parked side branch on 1.1 | Not used in their last runs (v9, v13; STAGE_LOG). |
-| 2.1-2.5, x.td | tectum, pallium, basal ganglia, dopamine TD | defined on the new path, older design | To revisit: per-life pallium weights (ADR-017), holding before 2.6, delayed sickness with the prediction error. |
+| 1.0 steering | ganglion (exc + inh, lagging normalisation), evolved sensor -> motor reflexes; sees the outside world only; movement costs energy; the animal eats what it grasps | rerun (1 seed) | Well-fed lifetime 644, lifetime 839 of 1000, 162 energy; 162 of 256 alive at the cap (ceiling). |
+| 1.1 valence | appetitive and aversive value cells (taste and pain enter the brain only here) acting on a contact-gated grasp programme; aversion turns away and blocks the bite | rerun, seed 0 done, seeds running | Seed 0: main 512 vs control 572: the pain-blind control stays put and burns less; main bites on a full stomach (absorbs ~12 of 63 energy). v21: main 60.1 vs control 29.5 energy, head to head +81 +-3; lesions appetitive 46, aversive 52, no_feed 55, grasp 46, gate 59; ganglion idle. |
+| 1.5 association | pain teaches the identity -> aversive synapses about what was just bitten (short trace); novel foods per life | rerunning (pain teacher only) | v21, two teachers: main 43.6 vs control 40.9, head to head +9.7 +-2.8; pain teacher 92 when silenced, taste teacher 104 (removed), plasticity 97. |
+| drives (old 1.2) | `cold` and `hungry` need cells; warmth by kinesis: `warm_seek` (run while the skin is cold), `rest` (stay where it is warm); `hungry` shuts the warmth mode: forage when hungry, look after warmth when fed. Senses: body and skin temperature. World: cold, few hot springs | designed, generation-0 probe done | Generation 0: well-fed lifetime 438 vs 266 for the cold-blind brain (+65%), body temperature 0.44 vs 0.37 (STAGE_LOG v23). To do: stage definition, three seeds, lesions. |
+| affect (old 1.3) | serotonin (dwell) and PDF (roam) states | to redesign on drives | Unused in its last run (v13, old architecture). Kept if at all possible: later stages need the modulator systems. |
+| habituation (old 1.4) | depression on the identity -> appetitive synapses; dud bushes | one design pass | Unused in its last run (v13). |
+| 1.6 reversal | learned weights relax toward inherited values; the novel types swap meaning mid-life | done, **left out** | v22: main 42.8 vs control 41.5, head to head -6.5 +-1.6. Plasticity 101, taste teacher 105, pain teacher 97. |
+| x.hands (side) | pick, hold, then eat: held-item value cells and an ingest programme on the 1.1 brain | done (2 runs) | v21: adapts in ~10 generations with the extension (energy 65-67, as with eat on grasp); the plain brain adapted in one of two runs. Lesions: ingest 0, gate 55. |
+| 2.1-2.5, x.td | tectum, pallium, basal ganglia, dopamine TD | defined, older design | To revisit: per-life pallium weights (ADR-017), holding before 2.6, delayed sickness and appetitive learning with the prediction error. |
 | 2.6-2.10, 3.x-5.x | actor, curiosity, hippocampus, cerebellum; simulating, mentalizing, speaking | planned | |
 
 ## Next steps: finalizing chapter 1 (plan agreed 2026-10-03)
 
-Per stage, three seeds: **used** (silencing the new cells costs energy in every seed), **not worse** (main at or
+Per stage, three seeds: **used** (silencing the new cells costs fitness in every seed), **not worse** (main at or
 above control within one standard error, summary and head to head), **no regression** (the population does as well
 in the previous stage's world as the previous population).
 
-1. Done: reversal (1.6) is left out; chapter 1 learning ends at 1.5. The taste teacher is at or above 100 when
-   silenced in all six seeds of 1.5 and 1.6 and is to be removed in the clean rerun.
-2. Unpark drives, affect and habituation, **appended after the learning stages**, each rebuilt on today's
-   architecture with one design pass (generation-0 measurement of what the mechanic costs, then three seeds). A
-   module that stays unused is left out of the frozen brain, unless later stages need the brain to have developed
-   with it (the need state for reward valuation, the modulator systems); such a module is kept and worked on.
-   **Open:** the generation-0 measurement (STAGE_LOG v22) shows a warmth drive can win at most 3 of 38 energy
-   and a hunger gate on appetite cannot pay under energy-acquired fitness. Either cold becomes sluggishness (new
-   mechanic), or drives and affect move to chapter 2 (reward valued by need). Waiting for the user's choice.
-3. Final trim: the idle ganglion (decide after drives), designed strengths moved to where evolution put them.
-4. One clean rerun of the whole chain at the frozen settings, three seeds, plus a chapter exam (every stage's
-   population in every earlier world).
-5. Freeze: a configuration snapshot test per stage, stored final populations, a git tag, one reference table, a list
-   of known side paths. Then the review of chapter 2.
-
-Learning at its present strength is accepted as final if it is significant over seeds (user, 2026-10-03).
+1. Finish the rerun of 1.1 (seeds 1, 2) and 1.5 under the well-fed lifetime; read 1.1 main vs control over three
+   seeds before concluding anything from seed 0.
+2. Decide with the user what follows from it: whether the hunger signal comes directly after 1.1 (the valence
+   brain bites when full), and whether the birth reserve and the life cap need a change (ceiling).
+3. Drives: stage definition from the probe circuit, three seeds, lesions of `cold`, `hungry`, `warm_seek`, `rest`.
+4. Affect, redesigned on the drives stage; then one design pass for habituation. An unused module stays out of the
+   frozen brain unless later stages need the brain to have developed with it.
+5. Final trim: the idle ganglion, designed strengths moved to where evolution put them.
+6. Chapter exam (every stage's population in every earlier world), then freeze: a configuration snapshot test per
+   stage, stored final populations, a git tag, one reference table, a list of known side paths. Then chapter 2.
 
 ## Known issues and open points
 
@@ -66,6 +64,10 @@ Learning at its present strength is accepted as final if it is significant over 
 - The pain-blind control of 1.1 does not evolve avoidance by look within 150 generations, though it could.
 - Learned appetite for the staple spreads to the innately avoided poison type, which looks 80% like it (assay).
 - Fitness is supply-limited once a population forages well (60% of bushes empty); accepted.
+- Most meals are taken on a nearly full stomach (59-84%, STAGE_LOG v22); nothing before the drives stage can
+  sense hunger.
+- The well-fed lifetime has a ceiling at the life cap; in 1.0 most agents reach it at any cap (STAGE_LOG v23).
+- The birth reserve lasts 800 ticks at rest, so staying put is a good strategy under a survival fitness.
 - USE and EAT cost no energy. Chapter 2 definitions are stale. The dashboard clips displayed weights at `w_max`.
 
 Practical notes: one process runs a non-plastic stage at about 4-5 s per generation and a learning stage (2000

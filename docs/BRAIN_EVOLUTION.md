@@ -127,11 +127,11 @@ STDP plays four distinct roles in the plan:
 | 0.1 | ~650–600 Mya, cnidarians | diffuse nerve net: sensor→motor reflex | none (evolved weights) | baseline only |
 | 1.0 | ~560 Mya, first bilaterians | centralised sensorimotor path (ganglion, exc + inh) | none | several food types |
 | 1.1 | early bilaterians | **valence cell types** with innate motor meaning | none | inheritable poison look-alikes |
-| 1.2 | early bilaterians | **hypothalamic drives** (hunger, cold) + innate thermotaxis | broadcast modulator + receptors | cold world with hot springs |
+| 1.2 | early bilaterians | **hypothalamic drives** (hunger, cold) selecting a mode: forage or keep warm (kinesis) | need cells gating motor programmes | cold world with few hot springs |
 | 1.3 | early bilaterians | **affective states**: serotonin dwell / PDF roam | slow nuclei + receptors | patchy food: area-restricted search |
 | 1.4 | cnidarians onward | habituation (sensory-specific satiety) | short-term depression (M4) | OHOL yum variety bonus |
-| 1.5 | early bilaterians | plastic sensory→valence synapses (proto-amygdala / mushroom-body output) | **US-gated Hebb + eligibility trace** (M1, M2 `us`) | exp02 redesigned: poison identity per life |
-| 1.6 | bilaterians | extinction and reversal | decay of learned weights toward inherited ones | poison identity flips mid-life |
+| 1.5 | early bilaterians | plastic identity→aversive synapses (proto-amygdala / mushroom-body output) | **US-gated Hebb + eligibility trace** (M1, M2 `us`), pain as teacher | novel foods with a new look every life |
+| 1.6 | bilaterians | extinction and reversal (tried, left out) | decay of learned weights toward inherited ones | poison identity flips mid-life |
 | 2.1 | ~520 Mya, early vertebrates | **optic tectum**: topographic map, target competition | lateral inhibition (M5) | several targets in view |
 | 2.2 | early vertebrates | **pallium as expansion layer** (sparse random coding) | fixed sparse projection + k-WTA | nonlinear (XOR-like) poison rule |
 | 2.3 | early vertebrates | **pallium pattern completion and clustering** | competitive Hebb / Oja + recurrent Hebb | noisy, occluded appearance, few samples |
@@ -191,6 +191,10 @@ Implementation note (2026-09-30): every new module below is a set of **cell type
 existing ganglion and the new module stays unused (stage 1.1 v1/v2 in `docs/STAGE_LOG.md`). Exact wiring:
 `life/experiments/stages.py`; results: `docs/STATUS.md`.
 
+Order as built (2026-10-03, ADR-024): 1.0 -> 1.1 -> 1.5, with drives (1.2), affect (1.3) and habituation (1.4)
+rejoining after them. The sections below keep the numbering of the plan. Reversal (1.6) was tried and left
+out. Fitness is the well-fed lifetime from the first meal: survival, weighted by how full the stomach is.
+
 #### 1.0 Centralised sensorimotor steering
 - **Adds.** `ganglion_e` (16 excitatory) and `ganglion_i` (8 inhibitory) interneurons between the senses and the
   motor neurons, plus direct sensor->motor reflex arcs. All evolved.
@@ -220,12 +224,20 @@ existing ganglion and the new module stays unused (stage 1.1 v1/v2 in `docs/STAG
   pars intercerebralis probably share this ancestor (Tessmar-Raible, Arendt et al.). Drives change the
   *valence* of stimuli: food is attractive only when hungry. Thermotaxis in *C. elegans* works on temperature
   *changes* sensed by AFD, with run-and-tumble steering.
-- **Adds.** `hunger` (fires when the food meter is low; broadcast as a modulator, receptors on `valence_app`
-  raise appetite with need), `cold` (fires below a comfortable temperature) gating two innate thermotaxis
-  interneurons: cold AND warming -> keep going forward, cold AND cooling -> turn. New senses: body temperature and
-  its change.
+- **Adds (v23, ADR-024; generation-0 probe done, stage to be run).** Two need cells and one behavioural mode.
+  `cold` fires when the skin is below a comfortable temperature and drives `warm_seek` (-> FORWARD): keep moving
+  while it is cold. `rest` (inhibitory) fires where the skin is warm and nearly blocks FORWARD: stay. Together this
+  is kinesis, as in small animals: no gradient is climbed and nothing is known about what a heat source looks like.
+  `hungry` (inhibitory) fires below about 2/3 stomach and shuts both: a hungry animal forages, a fed one looks
+  after its temperature. A drive selects a mode; it does not gate one action. New senses: body temperature (what
+  the cold costs) and skin temperature (the place; the body lags by about 30 ticks).
+- **Tried and dropped.** Hunger as a gain on the appetitive cell (v5-v13: unused). Gradient thermotaxis alone (cold
+  AND warming -> forward, cold AND cooling -> turn): a spring's gradient reaches four cells, so most of the map
+  has none.
 - **World.** OHOL-style temperature: body temperature drifts toward the ambient temperature plus heat from hot
-  springs (OHOL heatValue); cold multiplies hunger (as in OHOL). More bushes compensate so it is not a cliff.
+  springs (OHOL heatValue); cold multiplies hunger (as in OHOL). Few springs: three quarters of the map is cold.
+- **Result so far.** At generation 0, before any evolution: well-fed lifetime +65% over the cold-blind brain;
+  warmth seeking without the hunger gate starves (STAGE_LOG v23).
 - **Replaced.** The two-nutrient forager of the first plan (OHOL has no second nutrient; temperature is the
   OHOL-faithful second drive).
 - **Confidence.** High that homeostatic neuropeptide control is ancient. Medium that it looked like a
@@ -261,18 +273,19 @@ existing ganglion and the new module stays unused (stage 1.1 v1/v2 in `docs/STAG
   is activity-dependent, modulator-gated plasticity: the synapse from the CS neuron is strengthened when
   it was recently active *and* the US modulator arrives. In insects this happens at the mushroom body
   output synapses, with dopamine neurons carrying the US (Aso, Rubin et al.).
-- **Adds (ADR-021, ADR-023).** US neurons `us_taste` and `us_pain` (hard-wired from the senses), each its own
-  teacher: taste (`us_app`) teaches the identity -> appetitive synapses, pain (`us_av`) the identity -> aversive
-  ones, about what was sensed just before (short eligibility traces): `dW = eta * teacher * trace(pre)`. Pain is
-  immediate. Learning rates evolve per projection. Built directly on 1.1 (1.2-1.4 are parked).
-- **World (v5, ADR-017).** Two novel berry types get a new look every life and one of them is poison (on top
-  of two ancestral good and two ancestral poison types); poison costs a whole berry; lives last 2000 ticks;
-  sickness arrives 12 ticks after eating and fades quickly, so no reactive policy can use it.
-- **Metric.** Poison fraction in the second vs first half of life; the decisive test is the lesion
-  "no_plasticity" (same population, learning off).
-- **Finding so far.** Learning acts (pain drops) but over-generalises across look-alikes, because non-error-driven
-  Hebbian conditioning accumulates the features the look-alikes share. Error-driven learning (TD, 2.5) should fix
-  this; see STATUS/STAGE_LOG.
+- **Adds (ADR-021, ADR-024).** A US neuron `us_pain` (hard-wired from the sense) as the teacher (`us_av`) of the
+  identity -> aversive synapses, about what was sensed just before (short eligibility trace):
+  `dW = eta * teacher * trace(pre)`. Pain is immediate. The learning rate evolves. Built directly on 1.1.
+- **Tried and dropped.** A single signed teacher with a long trace (aversion spread to everything); a second
+  teacher, taste on the identity -> appetitive synapses (v19-v22: silencing it left fitness at or above intact in
+  six seeds; learned appetite spread to look-alike poison); a safety cell. Appetitive learning returns with the
+  reward prediction error (2.5).
+- **World.** One ancestral good and one ancestral poison type, and four novel types that get a new look every life,
+  two of them poison; novel food is half of all bushes; lives last 2000 ticks.
+- **Metric.** The lesions "no_plasticity" and "us_pain" (same population, learning off), main vs control head to
+  head.
+- **Finding (v21, two teachers, energy fitness; rerun under way).** Main ahead of control in every seed (+2.7 +-0.8,
+  head to head +9.7 +-2.8); the pain teacher is worth 6-10% in every seed. Weak but consistent.
 - **Confidence.** High that modulated associative learning exists across bilaterians. Medium on whether the
   *common ancestor* had it or whether it evolved several times.
 
@@ -281,7 +294,10 @@ existing ganglion and the new module stays unused (stage 1.1 v1/v2 in `docs/STAG
   returns spontaneously later (Pavlov). Neurally this is new inhibitory learning layered over the old
   association, plus fast and slow memory components.
 - **Adds.** The learned weights relax back toward their inherited values (`decay`), a fast forgetting component.
-- **World.** As 1.5, but the poison swaps to the other look-alike halfway through life.
+- **World.** As 1.5, but the novel types swap their meaning halfway through life.
+- **Result (v22): left out of the chain.** Three seeds: learning unused in this world (plasticity off 101% of
+  intact) and the relaxing weights lose head to head in every seed (-6.5 +-1.6). A mechanism that undoes what was
+  learned works against 1.5; reversal is better left to error-driven learning (2.5).
 - **Confidence.** High for the phenomena in vertebrates and many invertebrates; the fast-component
   implementation is a modelling choice.
 

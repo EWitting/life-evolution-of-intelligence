@@ -81,10 +81,15 @@ def stage(s: Stage) -> Stage:
 
 
 def default_fitness(stats):
-    """Well-fed lifetime from the first meal on (ADR-018): the sum, over the ticks alive after the agent first ate,
-    of the food level as a fraction of a full stomach. Reproduction needs survival and reserves; an animal that
-    never eats leaves no offspring however slowly it burns its birth reserve; eating beyond full adds nothing, and
-    poison or pain count only through the food and life they cost. (Until v4: food eaten - pain + 0.01 * ticks.)"""
+    """Energy acquired (ADR-018, amended 2026-10-03): all the food an individual ate in its life, not capped by its
+    stomach: what it cannot store becomes offspring. Poison counts negative, and an animal that never eats scores
+    zero however slowly it burns its birth reserve. (v6-v18 used the well-fed lifetime, `fitness_fed_meal`: it
+    stopped rewarding an agent whose stomach was full and separated genomes 15-30% less well.)"""
+    return stats["eaten"]
+
+
+def fitness_fed_meal(stats):
+    """Well-fed lifetime from the first meal (the fitness of v6-v18), kept for comparisons."""
     return stats["fed_meal"]
 
 
@@ -275,8 +280,10 @@ B10 = BrainConfig(
 # advantages that drift hides at 64.
 # Walking costs +50% hunger for the tick, turning +25%. (With a fitness that pays out the birth reserve, evolution
 # from random brains then stands still; the first-meal fitness, ADR-018, removes that.)
+# Chapter-1 animals have a mouth, not hands: they eat what they grasp (eat_on_pick). Picking something up, holding
+# it and then eating it is OHOL's formulation; carrying arrives later as its own stage (with_hands, x.hands).
 W10 = WorldConfig(height=128, width=128, num_agents=256, spawn_density=0.07, max_decay_ticks=2000, food_scale=2 / 3,
-                  move_cost=0.5, turn_cost=0.25)
+                  move_cost=0.5, turn_cost=0.25, eat_on_pick=True)
 
 stage(Stage("1.0", "s1_0_steering", None, B10, W10, VISION_CH1, BodyConfig(), lambda exp: berry_world(exp, 4),
             generations=400, notes="evolved reflexive steering to 4 kinds of berry bushes and onions; movement costs energy"))
@@ -297,85 +304,119 @@ def fixed(src, dst, w, **kw):
 # Action indices on the motor region 'out' (actions.py): NOOP 0, FORWARD 1, TURN_LEFT 2, TURN_RIGHT 3, USE 4, EAT 5
 FWD, TURNS, FEED, USE_, EAT_ = (1, 2), (2, 4), (4, 6), (4, 5), (5, 6)
 
-# 1.1 valence: cell types with a fixed meaning. Appetitive and aversive neurons receive innate (hard-wired) input
-# from the unconditioned senses (taste -> appetitive, pain -> aversive) and evolved input from vision and the held
-# item. Their motor meaning is innate as in C. elegans (aversive interneurons drive turns/reversals and suppress
-# feeding, appetitive ones drive forward movement and feeding): valence_av -> TURN_LEFT/RIGHT and, through an
-# inhibitory 'no_feed' pair, -| EAT; one valence_app cell each -> FORWARD, USE, EAT. Because their meaning is fixed, later
-# stages (learning in 1.5, drives in 1.2) can target them.
+# 1.1 valence: cell types with a fixed meaning (ADR-020). Value cells: appetitive and aversive neurons with innate
+# (hard-wired) input from the unconditioned senses (taste -> appetitive, pain -> aversive; these senses enter the
+# brain only here) and evolved input from what is seen. Value does not drive the motor neurons itself. As in small
+# animals it acts on motor programmes, each with its own trigger:
+#   approach (-> FORWARD): driven by the value of what is seen, from a distance; shut off on contact.
+#   grasp    (-> USE):     a contact reflex: fires only when something is directly ahead, in proportion to its value.
+# The 'only when' is disinhibition: an inhibitory gate cell that is active in the wrong context holds the programme
+# shut (no_touch: nothing adjacent ahead; touch: something adjacent ahead). So a learned value becomes the right
+# action for the situation; a value added straight onto the motor neurons came out as FORWARD whatever the context
+# (assay 2026-10-03). Aversion turns the animal away and, through the inhibitory 'no_feed' pair, blocks grasping.
+# The animal eats what it grasps (W10: eat_on_pick). Carrying things arrives later with `with_hands` below.
 VAL = ("valence_app", "valence_av")
-# Identity features (the object's appearance, seen or held: the analogue of an odour) are kept apart from generic
-# features ('something is there', how near, agent, wall), because only identity can become a conditioned
-# stimulus later (1.5); conditioning 'something is there' would make every object aversive.
+# Identity features (the object's appearance: the analogue of an odour) are kept apart from generic features
+# ('something is there', how near, agent, wall), because only identity can become a conditioned stimulus later
+# (1.5); conditioning 'something is there' would make every object aversive.
 CS_SEL = ("vis*.app*", "held_app*")
+CS_VIS, CS_HELD = ("vis*.app*",), ("held_app*",)
 GENERIC_SEL = ("vis*.hit", "vis*.near", "vis*.agent", "vis*.wall", "held")
 VALENCE_MOTOR_W = 3.0
-# Valence cells do not drive the motor neurons themselves (2026-10-03). As in small animals, value acts on motor
-# programmes, and each programme has its own trigger:
-#   approach (-> FORWARD): driven by the value of what is seen, from a distance; shut off on contact.
-#   grasp    (-> USE):     a contact reflex: fires only when something is directly ahead and the hand is empty, in
-#                          proportion to its value.
-#   ingest   (-> EAT):     fires only with something in hand, in proportion to the value of the thing in hand.
-#   reject   (-> USE):     fires only with something in hand, in proportion to its badness: USE puts it down.
-# The 'only when' is disinhibition: an inhibitory cell that is active in the wrong context holds the programme shut
-# (no_touch: nothing adjacent ahead; no_hold: empty hand; hold: full hand; touch: something adjacent ahead). So a learned value
-# becomes the right action for the situation, which a value added straight onto the motor neurons did not: it came
-# out as FORWARD whatever the context (assay 2026-10-03).
-# The value cells are split by what they are about: cells 0-1 the thing(s) seen, cell 2 the thing in hand (smell
-# and taste, roughly). Aversion still turns the animal away and blocks eating.
-SEEN, HELD = (0, 2), (2, 3)
-CS_VIS, CS_HELD = ("vis*.app*",), ("held_app*",)
 GATE = dict(sign="inh", alpha=1.0, evolve_bias=False, group="valence/gates")
 PROG = dict(sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, phase=2, group="valence/programmes")
 GATE_W = 6.0          # an active gate cell closes its programme completely
 B11 = extend(B10,
-             regions=(R("valence_app", 3, sign="exc", alpha=1.0, group="valence"),
-                      R("valence_av", 3, sign="exc", alpha=1.0, group="valence"),
+             regions=(R("valence_app", 2, sign="exc", alpha=1.0, group="valence"),
+                      R("valence_av", 2, sign="exc", alpha=1.0, group="valence"),
                       R("no_feed", 2, sign="inh", alpha=1.0, bias=0.0, evolve_bias=False, phase=1, group="valence"),
                       R("touch", 1, bias=-10.5, **GATE),       # max(0, tanh(15 near - 10.5)): object adjacent ahead
                       R("no_touch", 1, bias=10.5, **GATE),     # max(0, tanh(10.5 - 15 near)): nothing adjacent ahead
-                      R("no_hold", 1, bias=3.0, **GATE),       # max(0, tanh(3 - 6 held)): empty hand
-                      R("hold", 1, bias=-3.0, **GATE),         # max(0, tanh(6 held - 3)): something in hand
-                      R("approach", 1, **PROG), R("grasp", 1, **PROG), R("ingest", 1, **PROG), R("reject", 1, **PROG)),
-             projections=(fixed("in", "valence_app", 3.0, src_select=("taste",), dst_range=SEEN),
+                      R("approach", 1, **PROG), R("grasp", 1, **PROG)),
+             projections=(fixed("in", "valence_app", 3.0, src_select=("taste",)),
                           fixed("in", "valence_av", 3.0, src_select=("pain",)),
-                          *(P("in", v, src_select=CS_VIS, dst_range=SEEN) for v in VAL),
-                          *(P("in", v, src_select=CS_HELD, dst_range=HELD) for v in VAL),
+                          *(P("in", v, src_select=CS_VIS) for v in VAL),
                           *(P("in", v, src_select=GENERIC_SEL) for v in VAL),
                           # context
                           P("in", "touch", src_select=("vis+0.near",), density=1.0, w_init=15.0, evolve=False),
                           P("in", "no_touch", src_select=("vis+0.near",), density=1.0, w_init=-15.0, evolve=False),
-                          P("in", "no_hold", src_select=("held",), density=1.0, w_init=-6.0, evolve=False),
-                          P("in", "hold", src_select=("held",), density=1.0, w_init=6.0, evolve=False),
                           # value -> programmes, gated
-                          fixed("valence_app", "approach", 1.5, src_range=SEEN), fixed("touch", "approach", GATE_W),
-                          fixed("valence_app", "grasp", 1.5, src_range=SEEN), fixed("no_touch", "grasp", GATE_W),
-                          fixed("hold", "grasp", GATE_W),          # a full hand cannot grasp
-                          fixed("valence_app", "ingest", 3.0, src_range=HELD), fixed("no_hold", "ingest", GATE_W),
-                          fixed("valence_av", "reject", 3.0, src_range=HELD), fixed("no_hold", "reject", GATE_W),
-                          fixed("no_feed", "grasp", VALENCE_MOTOR_W), fixed("no_feed", "ingest", VALENCE_MOTOR_W),
+                          fixed("valence_app", "approach", 1.5), fixed("touch", "approach", GATE_W),
+                          fixed("valence_app", "grasp", 1.5), fixed("no_touch", "grasp", GATE_W),
+                          fixed("no_feed", "grasp", VALENCE_MOTOR_W),
                           # programmes -> motor neurons
                           fixed("approach", "out", VALENCE_MOTOR_W, dst_range=FWD),
                           fixed("grasp", "out", VALENCE_MOTOR_W, dst_range=USE_),
-                          fixed("ingest", "out", VALENCE_MOTOR_W, dst_range=EAT_),
-                          fixed("reject", "out", VALENCE_MOTOR_W, dst_range=USE_),
-                          # aversion: turn away, do not eat
+                          # aversion: turn away, do not bite
                           fixed("valence_av", "out", VALENCE_MOTOR_W, dst_range=TURNS),
                           fixed("valence_av", "no_feed", VALENCE_MOTOR_W),
-                          fixed("no_feed", "out", VALENCE_MOTOR_W, dst_range=EAT_),
+                          fixed("no_feed", "out", VALENCE_MOTOR_W, dst_range=USE_),
                           *(P(v, t) for v in VAL for t in ("ganglion_e", "ganglion_i"))))
+
+SEEN, HELD = (0, 2), (2, 3)   # with hands: value cells 0-1 are about what is seen, cell 2 about what is in hand
+
+
+def with_hands(brain: BrainConfig) -> BrainConfig:
+    """The valence stage for an animal that carries things (pick, hold, then eat: WorldConfig.eat_on_pick off). One
+    more value cell per sign for the thing in hand, two more programmes and the gates that go with a hand:
+      ingest (-> EAT): fires only with something in hand, in proportion to the value of the thing in hand;
+      reject (-> USE): fires only with something in hand, in proportion to its badness (USE puts it down);
+      grasp is also held shut by a full hand, and aversion blocks eating instead of USE.
+    USE both picks and puts down in OHOL, which is why grasp and reject are separate programmes. Works on any brain
+    that contains the 1.1 valence stage; identity synapses from the held item get the same rule as those from what
+    is seen (so they are plastic where those are)."""
+    regions = tuple(replace(r, size=3) if r.name in VAL else r for r in brain.regions)
+    proj, held = [], []
+    for p in brain.projections:
+        if p.src == "in" and p.dst in VAL and p.src_select == CS_VIS:
+            held.append(replace(p, src_select=CS_HELD, dst_range=HELD))
+            p = replace(p, dst_range=SEEN)
+        elif p.src == "in" and p.dst == "valence_app" and p.src_select == ("taste",):
+            p = replace(p, dst_range=SEEN)
+        elif p.src == "valence_app" and p.dst in ("approach", "grasp"):
+            p = replace(p, src_range=SEEN)
+        elif p.src == "no_feed" and p.dst == "out":
+            p = replace(p, dst_range=EAT_)
+        proj.append(p)
+    brain = replace(brain, regions=regions, projections=tuple(proj))
+    return extend(brain,
+                  regions=(R("no_hold", 1, bias=3.0, **GATE),       # max(0, tanh(3 - 6 held)): empty hand
+                           R("hold", 1, bias=-3.0, **GATE),         # max(0, tanh(6 held - 3)): something in hand
+                           R("ingest", 1, **PROG), R("reject", 1, **PROG)),
+                  projections=(*held,
+                               P("in", "no_hold", src_select=("held",), density=1.0, w_init=-6.0, evolve=False),
+                               P("in", "hold", src_select=("held",), density=1.0, w_init=6.0, evolve=False),
+                               fixed("hold", "grasp", GATE_W),
+                               fixed("valence_app", "ingest", 3.0, src_range=HELD), fixed("no_hold", "ingest", GATE_W),
+                               fixed("valence_av", "reject", 3.0, src_range=HELD), fixed("no_hold", "reject", GATE_W),
+                               fixed("no_feed", "ingest", VALENCE_MOTOR_W),
+                               fixed("ingest", "out", VALENCE_MOTOR_W, dst_range=EAT_),
+                               fixed("reject", "out", VALENCE_MOTOR_W, dst_range=USE_)))
+
+
 BODY_TASTE = BodyConfig(taste=True)
 
 # same number of good bushes as 1.0 plus 2 poisonous types on top (density 0.07 * 6/4)
 # Each new hardship is offset by a lower metabolic rate, chosen so that the parent population keeps its lifetime
 # when it enters the new world (ADR-012: an increment, not a cliff). More bushes do not help: time per meal, not
 # food, is the limit.
-W11 = replace(W10, spawn_density=0.105, hunger_per_tick=0.025)
+W11 = replace(W10, spawn_density=0.105, hunger_per_tick=0.025, pain_decay=0.3)   # pain is a brief signal
 stage(Stage("1.1", "s1_1_valence", "1.0", B11, W11, VISION_CH1, BODY_TASTE,
             lambda exp: berry_world(exp, 6, poison=(4, 5), poison_food=POISON_INNATE), row_extra=poison_metrics,
-            generations=150, notes="innate good/bad cell types with fixed motor meaning; 2 of 6 berry types poison"))
+            generations=150, notes="value cells acting on approach and grasp programmes; 2 of 6 berry types poison"))
+
+# x.hands (side stage; the condition for eating on grasp, user 2026-10-03): can a lineage that evolved with a mouth
+# adapt when food has to be picked up, held and then eaten? The 1.1 population with the hands extension in the 1.1
+# world without eat_on_pick. Control: the plain 1.1 brain in that world.
+BXH = with_hands(B11)
+WXH = replace(W11, eat_on_pick=False)
+stage(Stage("x.hands", "sx_hands", "1.1", BXH, WXH, VISION_CH1, BODY_TASTE,
+            lambda exp: berry_world(exp, 6, poison=(4, 5), poison_food=POISON_INNATE), row_extra=poison_metrics,
+            generations=100, notes="side test: carrying returns (pick, hold, eat) with ingest and reject programmes"))
 
 
+# ---- 1.2-1.4 are a parked side branch (2026-10-03): defined on top of 1.1 but not on the path to chapter 2 until
+# ---- learning works. Their circuits were not used in the last runs (STATUS.md).
 # 1.2 drives (hypothalamus): named drive neurons read the body. 'hunger' is broadcast as a neuropeptide-like
 # modulator: receptors on valence_app raise appetite with need. 'cold' gates an innate thermotaxis circuit
 # (run-and-tumble on temperature changes, as C. elegans AFD -> AIY/AIZ): when cold and getting warmer, keep going
@@ -411,7 +452,7 @@ W12 = replace(W11, temperature=True, ambient_temp=0.25, heat_scale=0.15, heat_ra
               spawn_density=0.12, hunger_per_tick=0.019)
 stage(Stage("1.2", "s1_2_drives", "1.1", B12, W12, VISION_CH1, BODY_12,
             lambda exp: berry_world(exp, 6, poison=(4, 5), springs=0.6, poison_food=POISON_INNATE), row_extra=poison_metrics,
-            generations=150, notes="hunger (broadcast, receptors on appetite) and cold-gated thermotaxis; cold world with hot springs"))
+            generations=150, notes="PARKED side branch: hunger (broadcast) and cold-gated thermotaxis; cold world with hot springs"))
 
 # 1.3 affect: two slow, antagonistic neuromodulatory states, as in C. elegans (Flavell et al. 2013):
 #   raphe (serotonin, '5ht'): fires on taste (food found); the released serotonin is cleared slowly (decay 0.97
@@ -435,7 +476,7 @@ B13 = extend(B12,
 W13 = replace(W12, patches=80, patch_radius=6)   # the same number of objects, on at most half of the map
 stage(Stage("1.3", "s1_3_affect", "1.2", B13, W13, VISION_CH1, BODY_12,
             lambda exp: berry_world(exp, 6, poison=(4, 5), springs=0.6, poison_food=POISON_INNATE), row_extra=poison_metrics,
-            generations=150, notes="serotonin (dwell) and PDF (roam) broadcast states; patchy food"))
+            generations=150, notes="PARKED side branch: serotonin (dwell) and PDF (roam) broadcast states; patchy food"))
 
 # 1.4 habituation: short-term depression on the sensory -> appetitive synapses, so the pull of something that
 # stays in view fades (and recovers after about 150 ticks). World: dud bushes, which look like a bush with a
@@ -456,36 +497,30 @@ def dud_world(exp):
 
 stage(Stage("1.4", "s1_4_habituation", "1.3", B14, W14, VISION_CH1, BODY_12, dud_world,
             row_extra=poison_metrics, generations=150,
-            notes="habituating appetitive synapses; dud bushes with a per-life look"))
+            notes="PARKED side branch: habituating appetitive synapses; dud bushes with a per-life look"))
 
-# 1.5 associative learning. The world must be one that evolution cannot memorise (ADR-017): besides two ancestral
-# good types and two ancestral poison types (fixed looks, so innate preferences still pay), two *novel* types get
-# a new look every life and one of them is poison. Poison now costs as much as a berry gives, lives are twice as
-# long, and one lesson is worth a lot: the other five berries of the bush and every later bush of that look.
-# Dedicated US neurons (hard-wired from taste and pain) write the 'us' modulator; the
-# sensory -> valence synapses become plastic, gated by 'us', with an eligibility trace that bridges the delay
-# between eating and sickness (Aplysia-style CS-trace rule: dW = eta * us * trace(pre)).
-B15 = extend(B14,
-             regions=(R("us_taste", 1, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, group="us"),
-                      R("us_pain", 1, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, group="us")),
-             projections=(P("in", "us_taste", src_select=("taste",), density=1.0, w_init=2.0, evolve=False),
-                          P("in", "us_pain", src_select=("pain",), density=1.0, w_init=2.0, evolve=False)),
-             modulators=(Mod("us_app", pos="us_taste"), Mod("us_av", pos="us_pain")))
-
-
-CS_ETA = 0.05  # CS learning rate (probe 2026-09-30: 0.02 too slow; >= 0.1 over-generalises aversion); evolvable
-# Two teachers with their own time windows (as in insects, where separate dopamine neurons carry reward and
-# punishment to separate synapses): taste teaches the appetitive synapses about what was sensed just before
-# (short trace), sickness teaches the aversive synapses about what was sensed up to a dozen ticks earlier (long
-# trace). With one signed teacher (taste - pain) and one long trace, every good berry eaten soon after a poisoning
-# erased the aversion again and spread reward onto the poison's look (probes 2026-10-02).
-CS_ELIG = {"valence_app": 0.5, "valence_av": 0.92}   # eligibility decay per tick
+# 1.5 associative learning (ADR-017, ADR-021), built directly on 1.1. The world must be one that evolution cannot
+# memorise: besides one ancestral good type and one ancestral poison type (fixed looks, so innate preferences
+# still pay), four *novel* types get a new look every life and two of them are poison. Familiar food keeps a
+# non-learner alive; novel food is what a learner can add.
+# Rule: dW = eta * teacher * trace(pre) on the identity -> value synapses, with two teachers:
+#   taste teaches the appetitive synapses;
+#   pain teaches the aversive synapses, minus 'safety': a cell that fires when something tastes good although the
+#   aversive cells expected it to be bad at the bite (one tick earlier). A safe meal so undoes suspicion of what
+#   was just eaten. Without it an aversion learned for one food stayed on familiar food that shares part of its
+#   look, and learning lowered the eating of everything (generation-0 tests 2026-10-03).
+# Pain is immediate and both eligibility traces are short. Sickness that arrives several ticks after eating needs
+# a longer aversive trace (CS_ELIG_SICK) and is left for the prediction error of 2.5.
+CS_ETA = 0.05         # starting learning rate of both pathways; evolvable per projection
+CS_ELIG = {"valence_app": 0.5, "valence_av": 0.5}   # eligibility decay per tick
+CS_ELIG_SICK = 0.92   # aversive trace for delayed sickness (not used on the main path)
 CS_MOD = {"valence_app": "us_app", "valence_av": "us_av"}
 CS_MODS = tuple(CS_MOD.values())
+SAFETY_K = 1.0        # weight of the safety cell in the aversive teacher
 
 
 def _split_cs(projections):
-    """in[identity features] -> valence_* becomes plastic and US-gated: dW = eta * teacher * trace(pre)."""
+    """in[identity features] -> value cells becomes plastic and US-gated: dW = eta * teacher * trace(pre)."""
     out = []
     for p in projections:
         if p.src == "in" and p.src_select in (CS_VIS, CS_HELD) and p.dst in VAL:
@@ -496,12 +531,19 @@ def _split_cs(projections):
     return tuple(out)
 
 
+B15 = extend(B11,
+             regions=(R("us_taste", 1, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, group="us"),
+                      R("us_pain", 1, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, group="us"),
+                      # max(0, tanh(-2 + 2/3 taste + aversive cells one tick earlier)): tastes good, was expected bad
+                      R("safety", 1, sign="exc", alpha=1.0, bias=-2.0, evolve_bias=False, group="us")),
+             projections=(P("in", "us_taste", src_select=("taste",), density=1.0, w_init=2.0, evolve=False),
+                          P("in", "us_pain", src_select=("pain",), density=1.0, w_init=2.0, evolve=False),
+                          P("in", "safety", src_select=("taste",), density=1.0, w_init=2.0 / 3.0, evolve=False),
+                          fixed("valence_av", "safety", 1.0)),
+             modulators=(Mod("us_app", pos="us_taste"),
+                         Mod("us_av", terms=(("us_pain", 1.0), ("safety", -SAFETY_K)))))
 B15 = replace(B15, projections=_split_cs(B15.projections))
-# Sickness comes SICK_DELAY ticks after eating: by then half the bush is eaten, so the innate pain reflex (turn
-# away, stop feeding) comes late and a learned aversion helps.
-SICK_DELAY = 6
-# The metabolic rate stays high enough that an agent needs some 25 berries in a 2000-tick life (many meals).
-W15 = replace(W14, sickness_delay=SICK_DELAY, pain_decay=0.3, spawn_density=0.14, hunger_per_tick=0.025)
+W15 = replace(W11, spawn_density=0.12)
 LIFE_LEARN = 2000     # ticks per life in the learning stages
 NOVEL_SIM = 0.45      # novel types look less like the gooseberry than the ancestral look-alikes (0.8) do
 POISON_FOOD = -2.0    # OHOL food points lost per poison berry in the learning stages (a berry gives +3)
@@ -511,28 +553,28 @@ NOVEL = (1, 2, 3, 5)  # berry types whose look and meaning are drawn per life; t
 NOVEL_WEIGHT = 0.5    # spawn weight of each novel type (ancestral types: 1): novel foods are half of all bushes
 
 
-def learning_world(exp, reverse: bool = False, springs: float = 0.6):
+def learning_world(exp, reverse: bool = False, springs: float = 0.0):
     """Four novel berry types (two of them poison, drawn per life, with a look drawn per life), one ancestral good
     and one ancestral poison type, no onions. NOVEL_WEIGHT sets how much of the supply is novel: familiar food
     should keep a non-learner alive, novel food should be worth trying."""
     return berry_world(exp, 6, poison=(4,), per_life_pool=NOVEL, per_life_k=2, springs=springs, reverse=reverse,
                        novel_looks=NOVEL, novel_sim=NOVEL_SIM, poison_food=POISON_FOOD, onions=False,
-                       weights={v: NOVEL_WEIGHT for v in NOVEL})   # no duds here: one new thing per stage
+                       weights={v: NOVEL_WEIGHT for v in NOVEL})
 
 
-stage(Stage("1.5", "s1_5_association", "1.4", B15, W15, VISION_CH1, BODY_12, learning_world,
-            row_extra=poison_metrics, plastic=True, generations=200, ticks=LIFE_LEARN,
-            notes="classical conditioning: US-gated plasticity with eligibility traces; novel foods per life"))
+stage(Stage("1.5", "s1_5_association", "1.1", B15, W15, VISION_CH1, BODY_TASTE, learning_world,
+            row_extra=poison_metrics, plastic=True, generations=150, ticks=LIFE_LEARN,
+            notes="conditioning with two teachers and learned safety; novel foods per life; immediate pain"))
 
 
-# 1.6 extinction and reversal: the learned (US-gated) weights now relax back toward their inherited values
-# (a fast, forgetting component), so an association that stops being renewed fades and a new one can take
-# over. World: the per-life poison swaps to the other look-alike halfway through life.
+# 1.6 extinction and reversal: the learned weights now relax back toward their inherited values (a fast,
+# forgetting component), so an association that stops being renewed fades and a new one can take over. World: the
+# novel types swap their meaning halfway through life.
 B16 = replace(B15, projections=tuple(replace(p, decay=0.003) if p.modulator in CS_MODS else p for p in B15.projections))
 W16 = replace(W15, switch_tick=LIFE_LEARN // 2)
-stage(Stage("1.6", "s1_6_reversal", "1.5", B16, W16, VISION_CH1, BODY_12, lambda exp: learning_world(exp, reverse=True),
-            row_extra=poison_metrics, plastic=True, generations=200, ticks=LIFE_LEARN,
-            notes="reversal learning: learned weights decay toward w0; poison identity swaps mid-life"))
+stage(Stage("1.6", "s1_6_reversal", "1.5", B16, W16, VISION_CH1, BODY_TASTE, lambda exp: learning_world(exp, reverse=True),
+            row_extra=poison_metrics, plastic=True, generations=150, ticks=LIFE_LEARN,
+            notes="reversal learning: learned weights decay toward w0; the novel types swap meaning mid-life"))
 
 
 # ================================================================== chapter 2: reinforcing (early vertebrates)
@@ -548,7 +590,7 @@ B21 = extend(B16,
              projections=(P("in", "tectum", src_select=("vis*",), topology="topographic", groups=9, density=1.0),
                           P("tectum", "tectum_i", density=1.0), P("tectum_i", "tectum", density=1.0),
                           P("tectum", "out", density=1.0), P("tectum", "ganglion_e")))
-stage(Stage("2.1", "s2_1_tectum", "1.6", B21, W16, VISION_CH2, BODY_12, lambda exp: learning_world(exp, reverse=True),
+stage(Stage("2.1", "s2_1_tectum", "1.6", B21, W16, VISION_CH2, BODY_TASTE, lambda exp: learning_world(exp, reverse=True),
             row_extra=poison_metrics, plastic=True, generations=200, ticks=LIFE_LEARN,
             notes="retinotopic target selection with lateral inhibition; camera eyes (9 columns)"))
 
@@ -574,10 +616,10 @@ W22 = replace(W16, spawn_density=W16.spawn_density * 7 / 6)   # 7 berry types in
 
 def xor_world(exp):
     return berry_world(exp, 7, poison=(5, 6), per_life_sets=((1, 4), (2, 3)), appearance_mode="xor",
-                       springs=0.6, reverse=True)
+                       reverse=True)
 
 
-stage(Stage("2.2", "s2_2_pallium_expansion", "2.1", B22, W22, VISION_CH2, BODY_12, xor_world,
+stage(Stage("2.2", "s2_2_pallium_expansion", "2.1", B22, W22, VISION_CH2, BODY_TASTE, xor_world,
             row_extra=poison_metrics, plastic=True, generations=200, ticks=LIFE_LEARN,
             notes="sparse random expansion (k-WTA) before US-gated learning; XOR poison rule per life"))
 
@@ -589,20 +631,19 @@ B23 = replace(B22, projections=tuple(
     for p in B22.projections) + (P("pallium", "pallium", rule="hebb", eta_init=0.005, decay=0.01,
                                    abcd=(1.0, 0.0, 0.0, 0.0)),))
 VISION_23 = replace(VISION_CH2, appearance_noise=0.3)
-stage(Stage("2.3", "s2_3_pallium_clustering", "2.2", B23, W22, VISION_23, BODY_12, xor_world,
+stage(Stage("2.3", "s2_3_pallium_clustering", "2.2", B23, W22, VISION_23, BODY_TASTE, xor_world,
             row_extra=poison_metrics, plastic=True, generations=200, ticks=LIFE_LEARN,
             notes="unsupervised Oja input + recurrent Hebb in pallium; noisy appearance"))
 
 # 2.4 basal ganglia, fixed: inhibitory striatal channels (one per action) inhibit a tonically active GPi, which
 # inhibits the motor neurons one-to-one; an action is released by disinhibition. Striatum is driven by pallium,
-# tectum, valence and hypothalamus (evolved).
+# tectum and valence (evolved).
 B24 = extend(B23,
              regions=(R("striatum", 7, sign="inh", group="forebrain/basal_ganglia"), R("gpi", 7, sign="inh", bias=1.0, evolve_bias=False, group="forebrain/basal_ganglia")),
-             projections=(*(P(s, "striatum") for s in ("pallium", "tectum", "valence_app", "valence_av",
-                                                        "hunger", "cold", "ganglion_e")),
+             projections=(*(P(s, "striatum") for s in ("pallium", "tectum", "valence_app", "valence_av", "ganglion_e")),
                           P("striatum", "gpi", topology="one_to_one", w_init=2.0, evolve=False),
                           P("gpi", "out", topology="one_to_one", w_init=2.0, evolve=False)))
-stage(Stage("2.4", "s2_4_basal_ganglia", "2.3", B24, W22, VISION_23, BODY_12, xor_world,
+stage(Stage("2.4", "s2_4_basal_ganglia", "2.3", B24, W22, VISION_23, BODY_TASTE, xor_world,
             row_extra=poison_metrics, plastic=True, generations=200, ticks=LIFE_LEARN,
             notes="action selection by disinhibition (striatum -| GPi -| motor), fixed"))
 
@@ -643,7 +684,7 @@ B25 = extend(B24,
              modulators=(Mod("da", terms=(("us_taste", 1.0), ("us_pain", -1.0), ("value_app", GAMMA),
                                           ("value_av", -GAMMA), ("value_app_prev", -1.0), ("value_av_prev", 1.0))),))
 B25 = replace(B25, projections=to_dopamine(B25.projections))
-stage(Stage("2.5", "s2_5_dopamine_td", "2.4", B25, W22, VISION_23, BODY_12, xor_world,
+stage(Stage("2.5", "s2_5_dopamine_td", "2.4", B25, W22, VISION_23, BODY_TASTE, xor_world,
             row_extra=poison_metrics, plastic=True, generations=200, ticks=LIFE_LEARN,
             notes="TD critic (opponent value populations) and dopamine teaching instead of the raw US"))
 
@@ -661,25 +702,7 @@ BXTD = extend(B16,
               modulators=(Mod("da", terms=(("us_taste", 1.0), ("us_pain", -1.0), ("value_app", GAMMA),
                                            ("value_av", -GAMMA), ("value_app_prev", -1.0), ("value_av_prev", 1.0))),))
 BXTD = replace(BXTD, projections=to_dopamine(BXTD.projections))
-
-
-# x.learn (side experiment, not part of the lineage): conditioning directly on the 1.1 brain, without the drives,
-# affect and habituation of 1.2-1.4, in a warm world. A test bed for the learning rule and the learning world:
-# what works here goes into 1.5. Pain is immediate and both traces are short (the simple case).
-XL_ELIG = 0.5
-BXL = extend(B11,
-             regions=(R("us_taste", 1, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, group="us"),
-                      R("us_pain", 1, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, group="us")),
-             projections=(P("in", "us_taste", src_select=("taste",), density=1.0, w_init=2.0, evolve=False),
-                          P("in", "us_pain", src_select=("pain",), density=1.0, w_init=2.0, evolve=False)),
-             modulators=(Mod("us_app", pos="us_taste"), Mod("us_av", pos="us_pain")))
-BXL = replace(BXL, projections=tuple(replace(p, elig_tau=XL_ELIG) if p.modulator in CS_MODS else p
-                                     for p in _split_cs(BXL.projections)))
-WXL = replace(W11, sickness_delay=0, pain_decay=0.3, spawn_density=0.12)
-stage(Stage("x.learn", "sx_learn", "1.1", BXL, WXL, VISION_CH1, BODY_TASTE, lambda exp: learning_world(exp, springs=0.0),
-            row_extra=poison_metrics, plastic=True, generations=150, ticks=LIFE_LEARN,
-            notes="side test: conditioning on the 1.1 brain; immediate pain, short traces, novel foods per life"))
-stage(Stage("x.td", "sx_td_test", "1.6", BXTD, W16, VISION_CH1, BODY_12, STAGES["1.6"].build,
+stage(Stage("x.td", "sx_td_test", "1.6", BXTD, W16, VISION_CH1, BODY_TASTE, STAGES["1.6"].build,
             row_extra=poison_metrics, plastic=True, generations=200, ticks=LIFE_LEARN,
             notes="side test: 1.6 + TD critic, dopamine teaches instead of the raw US"))
 

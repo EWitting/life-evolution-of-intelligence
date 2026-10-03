@@ -18,6 +18,7 @@ so check a design in this order:
 |---|---|
 | `assay.py` | After scripted meals, what does an agent do when a bush of each type is ahead or its berry is in hand? |
 | `gen0.py` | Does switching learning on help the incoming population at generation 0? (`variants.py`: brain variants) |
+| `recovery.py` | Which evolution settings repair a damaged population fastest (fitness, recombination, mutation, siblings)? |
 | `events.py` | In a recorded life, how do picking, eating and valence for a berry type change after the first lesson? |
 | `precision.py` | What do recorded agents do in standard situations, split by good / poison / dud types? |
 | `strengths.py` | How far has evolution scaled each tunable hard-wired projection from its designed value? |

@@ -257,11 +257,12 @@ def test_tunable_hardwired_strength_scales_whole_projection():
     assert changed >= 3
 
 
-def test_valence_programmes_fire_only_in_their_context():
-    # stage 1.1 brain with every evolved weight removed: only the hard-wired value -> programme -> motor circuit acts
+def _bare(stage_key):
+    """A stage brain with every evolved weight removed (only the hard-wired circuits act) and a helper to add
+    single synapses: returns (exp, layout, input names, syn, genome factory)."""
     from life.experiments import stages as S
     from life.run import make_layout
-    s = S.STAGES["1.1"]
+    s = S.STAGES[stage_key]
     exp = S.make_exp(s, s.brain, "t", 1, 0)
     L = make_layout(exp)
     names = list(L.in_names)
@@ -269,37 +270,105 @@ def test_valence_programmes_fire_only_in_their_context():
     w0 = np.where(np.asarray(L.evolve_w) > 0, 0.0, np.asarray(g.w0))
     mask = np.asarray(g.mask).copy()
     b = np.where(np.asarray(L.evolve_b) > 0, 0.0, np.asarray(g.b))
-    app, av = L.region("valence_app"), L.region("valence_av")
 
     def syn(feature, post, w):
         i = names.index(feature)
         w0[i, post], mask[i, post] = w, 1.0
-    syn("vis+0.app0", app.start, 3.0); syn("vis+0.app0", app.start + 1, 3.0)   # look 0, seen: valued
-    syn("held_app0", app.start + 2, 3.0)                                        # look 0, in hand: valued
-    syn("held_app1", av.start + 2, 3.0)                                         # look 1, in hand: bad
-    g = g._replace(w0=jnp.asarray(w0), mask=jnp.asarray(mask), b=jnp.asarray(b))
 
-    def react(near=0.0, seen=None, held=None):
-        o = np.zeros(L.n_in, np.float32)
-        if near:
-            o[names.index("vis+0.hit")], o[names.index("vis+0.near")] = 1.0, near
-        if seen is not None:
-            o[names.index(f"vis+0.app{seen}")] = 1.0
-        if held is not None:
-            o[names.index("held")], o[names.index(f"held_app{held}")] = 1.0, 1.0
-        st, act = brain.step(exp.brain, L, g, brain.init_state(g, L), jnp.asarray(o), NO, jax.random.PRNGKey(0))
-        return [float(st.x[L.region(r)][0]) for r in ("approach", "grasp", "ingest", "reject")], int(act)
+    return exp, L, names, syn, lambda: g._replace(w0=jnp.asarray(w0), mask=jnp.asarray(mask), b=jnp.asarray(b))
+
+
+def _obs(L, names, near=0.0, seen=None, held=None, taste=0.0, pain=0.0):
+    o = np.zeros(L.n_in, np.float32)
+    if near:
+        o[names.index("vis+0.hit")], o[names.index("vis+0.near")] = 1.0, near
+    for k in ([seen] if isinstance(seen, int) else (seen or [])):
+        o[names.index(f"vis+0.app{k}")] = 1.0
+    if held is not None:
+        o[names.index("held")], o[names.index(f"held_app{held}")] = 1.0, 1.0
+    if "taste" in names:
+        o[names.index("taste")] = taste
+    o[names.index("pain")] = pain
+    return jnp.asarray(o)
+
+
+def test_valence_programmes_fire_only_in_their_context():
+    # chapter-1 animal (it eats what it grasps): value -> approach / grasp, gated by contact; aversion blocks the bite
+    exp, L, names, syn, genome = _bare("1.1")
+    app, av = L.region("valence_app"), L.region("valence_av")
+    for c in range(2):
+        syn("vis+0.app0", app.start + c, 3.0)             # look 0: valued
+        syn("vis+0.app1", av.start + c, 3.0)              # look 1: bad
+    g = genome()
+
+    def react(**kw):
+        st, act = brain.step(exp.brain, L, g, brain.init_state(g, L), _obs(L, names, **kw), NO, jax.random.PRNGKey(0))
+        return [float(st.x[L.region(r)][0]) for r in ("approach", "grasp")], int(act)
 
     on, off = 0.8, 0.05                                   # one tick is enough: the layers update in order (phases)
     p, act = react(near=0.4, seen=0)                      # something valued at a distance: approach
-    assert p[0] > on and max(p[1:]) < off and act == A.FORWARD
-    p, act = react(near=0.8, seen=0)                      # the same thing adjacent, empty hand: grasp, no approach
-    assert p[1] > on and max(p[0], p[2], p[3]) < off and act == A.USE
+    assert p[0] > on and p[1] < off and act == A.FORWARD
+    p, act = react(near=0.8, seen=0)                      # the same thing adjacent: grasp (= eat), no approach
+    assert p[1] > on and p[0] < off and act == A.USE
     p, _ = react(near=0.8)                                # something adjacent that is not valued: nothing
     assert max(p) < off
+    p, act = react(near=0.8, seen=1)                      # something bad adjacent: no grasp, turn away
+    assert max(p) < off and act in (A.TURN_LEFT, A.TURN_RIGHT)
+    p, act = react(near=0.8, seen=[0, 1])                 # valued and bad at once: aversion blocks the bite
+    assert p[1] < off and act != A.USE
+
+
+def test_hands_extension_adds_ingest_and_reject():
+    # the animal that carries things (pick, hold, eat): x.hands = the 1.1 brain + with_hands
+    exp, L, names, syn, genome = _bare("x.hands")
+    app, av = L.region("valence_app"), L.region("valence_av")
+    syn("vis+0.app0", app.start, 3.0); syn("vis+0.app0", app.start + 1, 3.0)   # look 0, seen: valued
+    syn("held_app0", app.start + 2, 3.0)                                        # look 0, in hand: valued
+    syn("held_app1", av.start + 2, 3.0)                                         # look 1, in hand: bad
+    g = genome()
+
+    def react(**kw):
+        st, act = brain.step(exp.brain, L, g, brain.init_state(g, L), _obs(L, names, **kw), NO, jax.random.PRNGKey(0))
+        return [float(st.x[L.region(r)][0]) for r in ("approach", "grasp", "ingest", "reject")], int(act)
+
+    on, off = 0.8, 0.05
+    p, act = react(near=0.4, seen=0)                      # something valued at a distance: approach
+    assert p[0] > on and max(p[1:]) < off and act == A.FORWARD
+    p, act = react(near=0.8, seen=0)                      # adjacent, empty hand: grasp
+    assert p[1] > on and max(p[0], p[2], p[3]) < off and act == A.USE
     p, act = react(held=0)                                # something valued in hand: ingest
     assert p[2] > on and max(p[0], p[1], p[3]) < off and act == A.EAT
     p, act = react(held=1)                                # something bad in hand: reject (USE puts it down), no eating
     assert p[3] > on and max(p[:3]) < off and act == A.USE
     p, act = react(near=0.8, seen=0, held=0)              # full hand next to a valued bush: eat, do not grasp
     assert p[2] > on and p[1] < off and act == A.EAT
+
+
+def test_safety_cell_undoes_suspicion_after_a_good_meal():
+    # 1.5: the aversive teacher is pain minus 'safety' (tastes good although the aversive cells expected bad)
+    exp, L, names, syn, genome = _bare("1.5")
+    av = L.region("valence_av")
+    i = names.index("vis+0.app1")
+    for c in range(2):
+        syn("vis+0.app1", av.start + c, 1.0)              # look 1 is mistrusted (aversive cells ~0.76)
+    g = genome()
+    m = L.mod_names.index("us_av")
+    look = dict(near=0.8, seen=1)
+
+    def run(second, third=None):
+        st = brain.init_state(g, L)
+        for o in [_obs(L, names, **look), second] + ([third] if third is not None else []):
+            st, _ = brain.step(exp.brain, L, g, st, o, NO, jax.random.PRNGKey(0))
+        return st
+
+    st = run(_obs(L, names, taste=3.0, **look))           # bitten, and it tastes good
+    assert float(st.x[L.region("safety")][0]) > 0.7 and float(st.mod[m]) < -0.7
+    st = run(_obs(L, names, **look))                      # no meal: no safety signal
+    assert float(st.x[L.region("safety")][0]) < 0.05 and abs(float(st.mod[m])) < 0.05
+    st = run(_obs(L, names, pain=1.0, **look))            # it hurts: the teacher is positive
+    assert float(st.x[L.region("safety")][0]) < 0.05 and float(st.mod[m]) > 0.7
+    w_before = float(g.w0[i, av.start])
+    st = run(_obs(L, names, taste=3.0, **look), _obs(L, names, **look))    # one tick later the weights have moved
+    assert float(st.w[i, av.start]) < w_before - 0.01                        # safe meal: less suspicion
+    st = run(_obs(L, names, pain=1.0, **look), _obs(L, names, **look))
+    assert float(st.w[i, av.start]) > w_before + 0.01                        # poisoning: more

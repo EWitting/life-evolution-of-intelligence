@@ -31,12 +31,13 @@ inb = (front >= 0).all(-1) & (front[..., 0] < H) & (front[..., 1] < W)
 fc = np.clip(front, 0, [H - 1, W - 1])
 obj = np.where(inb, grid[:-1][np.arange(T - 1)[:, None], fc[..., 0], fc[..., 1]], -1)
 dfood = food[1:] - food[:-1]
+ate = rec["ate"][1:].astype(int) if "ate" in rec else np.where(a == 5, hd, 0)   # what was eaten at each tick
 va_p, va_v = vap[:-1], vav[:-1]     # valence before the action
 
 # class of each type in this life, from what eating it did to the food level
 cls = {}
 for b in bush:
-    m = (a == 5) & (hd == berry_of[b]) & al
+    m = (ate == berry_of[b]) & al
     if m.sum():
         cls[b] = "good" if np.median(dfood[m]) > 0 else "poison"
 print(f"== {name} ({d.name}); types in this life: " + ", ".join(f"{tname(b)}={c}" for b, c in cls.items()))
@@ -44,7 +45,7 @@ print(f"== {name} ({d.name}); types in this life: " + ", ".join(f"{tname(b)}={c}
 rows = {("poison", "before"): [], ("poison", "after"): [], ("good", "before"): [], ("good", "after"): []}
 for i in range(N):
     for b, c in cls.items():
-        eats = np.nonzero((a[:, i] == 5) & (hd[:, i] == berry_of[b]) & al[:, i])[0]
+        eats = np.nonzero((ate[:, i] == berry_of[b]) & al[:, i])[0]
         if not len(eats):
             continue
         t0 = eats[0] + (delay if c == "poison" else 1)       # the lesson has arrived from here on
@@ -68,7 +69,7 @@ if any(c == "poison" for c in cls.values()):
     for i in range(N):
         for b, c in cls.items():
             if c != "poison": continue
-            for t in np.nonzero((a[:, i] == 5) & (hd[:, i] == berry_of[b]) & al[:, i])[0]:
+            for t in np.nonzero((ate[:, i] == berry_of[b]) & al[:, i])[0]:
                 if t + win < T - 1 and al[t + win, i]:
                     for j in range(win):
                         acc_a[j, a[t + j, i]] += 1
@@ -85,8 +86,8 @@ if len(sys.argv) > 2:
     print(f"\ntimeline of agent {i} (lived {int(alive[:, i].sum())} ticks):")
     for t in range(T - 1):
         if not al[t, i]: break
-        if a[t, i] == 5 and hd[t, i] in berry_of.values():
-            b = hd[t, i] - 1
+        if ate[t, i] in berry_of.values():
+            b = ate[t, i] - 1
             print(f"  t={t:4d} eats {tname(b):7s} ({cls.get(b, '?'):6s}) food {food[t, i]:5.1f} -> {food[t + 1, i]:5.1f}   valence app/av before: {va_p[t, i]:.2f}/{va_v[t, i]:.2f}")
         elif obj[t, i] in bush and hd[t, i] == 0 and a[t, i] != 4:
             print(f"  t={t:4d} faces {tname(obj[t, i]):7s} ({cls.get(obj[t, i], '?'):6s}) bush and does {ACT[a[t, i]]:5s}             valence app/av: {va_p[t, i]:.2f}/{va_v[t, i]:.2f}")

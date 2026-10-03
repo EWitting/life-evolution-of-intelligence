@@ -1,4 +1,5 @@
-"""Generational evolution over batched genomes (ADR-008): elitism + tournament selection + mutation."""
+"""Generational evolution over batched genomes (ADR-008): elitism + tournament selection, optional recombination,
+mutation."""
 from __future__ import annotations
 import jax
 import jax.numpy as jnp
@@ -44,18 +45,51 @@ def mutate(key: jax.Array, g: Genome, cfg: EvolutionConfig, layout: Layout) -> G
                   C=g.C + per(kc, cfg.mutation_std), D=g.D + per(kd, 0.1 * cfg.mutation_std))
 
 
+def crossover(key: jax.Array, a: Genome, b: Genome, layout: Layout, blend: bool = False) -> Genome:
+    """Child of two parents. The unit of inheritance is the neuron: its incoming weights, their presence and its bias
+    come together from one parent, so a neuron keeps the input pattern that made it useful. Genes that belong to a
+    projection as a whole (learning rule genes, the strength of a tunable hard-wired projection) come from one
+    parent per projection. Parents are assumed to be aligned (a common ancestor a few generations back)."""
+    if blend:   # mid-parent values; a synapse present in one parent only is inherited at half strength
+        half = lambda x, y: 0.5 * (x + y)
+        return Genome(w0=half(a.w0 * a.mask, b.w0 * b.mask), mask=jnp.maximum(a.mask, b.mask), b=half(a.b, b.b),
+                      eta=half(a.eta, b.eta), A=half(a.A, b.A), B=half(a.B, b.B), C=half(a.C, b.C), D=half(a.D, b.D))
+    n = a.b.shape[0]
+    k1, k2 = jax.random.split(key)
+    from_a = jax.random.bernoulli(k1, 0.5, (n,))
+    P = max(1, len(layout.proj_names))
+    pid = jnp.where(layout.proj_id >= 0, layout.proj_id, 0)
+    proj_a = jax.random.bernoulli(k2, 0.5, (P,))[pid]
+    col = from_a[None, :]
+    per_proj = lambda x, y: jnp.where(proj_a, x, y)
+    return Genome(w0=jnp.where(layout.tune > 0, per_proj(a.w0, b.w0), jnp.where(col, a.w0, b.w0)),
+                  mask=jnp.where(col, a.mask, b.mask), b=jnp.where(from_a, a.b, b.b), eta=per_proj(a.eta, b.eta),
+                  A=per_proj(a.A, b.A), B=per_proj(a.B, b.B), C=per_proj(a.C, b.C), D=per_proj(a.D, b.D))
+
+
 def next_generation(key: jax.Array, pop: Genome, fitness: jnp.ndarray, cfg: EvolutionConfig, layout: Layout) -> Genome:
     """pop is a Genome whose leaves have a leading population axis. Deterministic given key."""
     n_pop = fitness.shape[0]
     n_elite = max(1, int(round(cfg.elite_frac * n_pop)))
     order = jnp.argsort(-fitness)
-    k1, k2 = jax.random.split(key)
+    k1, k2, k3, k4, k5 = jax.random.split(key, 5)
     cand = jax.random.randint(k1, (n_pop, cfg.tournament), 0, n_pop)
     winners = cand[jnp.arange(n_pop), jnp.argmax(fitness[cand], axis=1)]
     parents = jnp.where(jnp.arange(n_pop) < n_elite, order[jnp.arange(n_pop)], winners)
     children = jax.tree_util.tree_map(lambda leaf: leaf[parents], pop)
+    if cfg.crossover > 0:   # a second parent, also by tournament
+        cand2 = jax.random.randint(k3, (n_pop, cfg.tournament), 0, n_pop)
+        second = cand2[jnp.arange(n_pop), jnp.argmax(fitness[cand2], axis=1)]
+        other = jax.tree_util.tree_map(lambda leaf: leaf[second], pop)
+        blend = cfg.crossover_mode == "blend"
+        crossed = jax.vmap(lambda k, x, y: crossover(k, x, y, layout, blend))(jax.random.split(k4, n_pop), children, other)
+        sexual = jax.random.uniform(k5, (n_pop,)) < cfg.crossover
+        children_x = jax.tree_util.tree_map(
+            lambda x, c: jnp.where(sexual.reshape((-1,) + (1,) * (c.ndim - 1)), x, c), crossed, children)
+    else:
+        children_x = children
     keys = jax.random.split(k2, n_pop)
-    mutated = jax.vmap(lambda k, g: mutate(k, g, cfg, layout))(keys, children)
+    mutated = jax.vmap(lambda k, g: mutate(k, g, cfg, layout))(keys, children_x)
     is_elite = jnp.arange(n_pop) < n_elite
     return jax.tree_util.tree_map(
         lambda c, m: jnp.where(is_elite.reshape((-1,) + (1,) * (c.ndim - 1)), c, m), children, mutated)

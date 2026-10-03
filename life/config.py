@@ -25,6 +25,8 @@ class WorldConfig:
     switch_tick: int = 0             # > 0: rules_for_generation returns two phases per life; phase 2 from this tick
                                      # (e.g. the poison identity reverses mid-life). Life halves in stats split here.
     sickness_delay: int = 0          # ticks between eating something with pain_value and feeling the pain
+    eat_on_pick: bool = False        # True: food that a USE puts into an empty hand is eaten in the same tick (an
+                                     # animal with a mouth, not hands; nothing edible is ever carried)
     # --- temperature (OHOL-style): body temp drifts toward the local temperature = ambient_temp + heat of
     # objects nearby (heatValue * heat_scale, falling off linearly to 0 beyond heat_radius cells).
     # Deviation from 0.5 multiplies hunger: hunger * (1 + temp_hunger * 2|T - 0.5|), as in OHOL.
@@ -182,6 +184,13 @@ class EvolutionConfig:
                                      # by several offspring, as in a real lineage.
     elite_frac: float = 0.125        # fraction copied unchanged
     tournament: int = 3              # tournament size for parent selection
+    crossover_mode: str = "neuron"   # 'neuron': see crossover; 'blend': the child is the average of its parents
+                                     # (the quantitative-genetics picture of a trait built from many small genes)
+    crossover: float = 0.0           # chance that a child has two parents (each chosen by tournament). It then
+                                     # takes every neuron (its incoming weights, their presence and its bias) from
+                                     # one parent or the other, and every projection's rule genes and tunable
+                                     # strength likewise. 0 = asexual. With noisy fitness, recombination lets a
+                                     # population average out luck and combine gains from different lineages.
     mutation_std: float = 0.1        # Gaussian std on weights and biases
     weight_mutation_prob: float = 1.0  # per synapse/neuron and child: chance that its weight/bias mutates
     mask_flip_prob: float = 0.005    # per allowed synapse: toggle presence

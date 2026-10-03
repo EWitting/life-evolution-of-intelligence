@@ -90,3 +90,25 @@ def test_quick_run_with_dashboard(tmp_path):
         assert (tmp_path / "run" / f).exists(), f
     rec = np.load(tmp_path / "run" / "recording.npz")
     assert rec["w_snap"].shape[0] == 2 and rec["x"].shape == (10, 4, res["pop"].b.shape[1])
+
+
+def test_crossover_takes_whole_neurons_from_either_parent():
+    from life.evolution import crossover, next_generation
+    cfg = BrainConfig(regions=(RegionSpec("h", 6),),
+                      projections=(ProjectionSpec("in", "h", density=1.0), ProjectionSpec("h", "out", density=1.0)))
+    L = brain.build_layout(cfg, n_in=4, n_out=A.NUM_ACTIONS)
+    a = brain.init_genome(jax.random.PRNGKey(1), L)
+    b = brain.init_genome(jax.random.PRNGKey(2), L)
+    c = crossover(jax.random.PRNGKey(3), a, b, L)
+    wa, wb, wc = (np.asarray(g.w0) for g in (a, b, c))
+    cols = np.nonzero(np.asarray(L.allowed).any(axis=0))[0]              # neurons that receive synapses
+    from_a = np.array([np.allclose(wc[:, j], wa[:, j]) for j in cols])
+    from_b = np.array([np.allclose(wc[:, j], wb[:, j]) for j in cols])
+    assert (from_a | from_b).all() and from_a.any() and from_b.any()      # each neuron whole, from one parent
+    ba, bb, bc = (np.asarray(g.b) for g in (a, b, c))
+    assert all(np.isclose(bc[j], ba[j]) if fa else np.isclose(bc[j], bb[j]) for j, fa in zip(cols, from_a))
+    # in a population the elites stay untouched and crossover = 0 gives the asexual result
+    pop = jax.vmap(lambda k: brain.init_genome(k, L))(jax.random.split(jax.random.PRNGKey(0), 8))
+    fit = jnp.arange(8.0)
+    nxt = next_generation(jax.random.PRNGKey(5), pop, fit, EvolutionConfig(crossover=1.0, mutation_std=0.0, mask_flip_prob=0.0), L)
+    assert np.allclose(np.asarray(nxt.w0[0]), np.asarray(pop.w0[7]))      # best genome first, unchanged

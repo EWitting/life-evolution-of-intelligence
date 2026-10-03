@@ -100,6 +100,7 @@ def make_simulate(exp: ExperimentConfig, record: bool):
                 rec = dict(grid=world.grid_obj.astype(jnp.int16), pos=world.pos.astype(jnp.int16),
                            dir=world.dir.astype(jnp.int8), alive=world.alive, held=world.held.astype(jnp.int16),
                            food=world.food, pain=world.pain, action=acts.astype(jnp.int8), mod=bstate.mod,
+                           ate=ev["ate"].astype(jnp.int16),
                            x=bstate.x.astype(jnp.float16))
             return (world, bstate, sig, eats, tsum, fed, meal, fed_meal), rec
 

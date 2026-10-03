@@ -30,7 +30,7 @@ def evaluate(stage, world, label, worlds=4):
         if rules.food_value.ndim > 1 + (exp.world.switch_tick > 0):
             rules = jax.tree_util.tree_map(lambda a: a[0], rules)
         stt, _ = sim(rules, pop, ks)
-        acc.append([float(stt[c].mean()) for c in ("fed_meal", "alive_ticks", "eaten")] + [float((stt["alive"]).sum())])
+        acc.append([float((stage.fitness or S.default_fitness)(stt).mean())] + [float(stt[c].mean()) for c in ("alive_ticks", "eaten")] + [float((stt["alive"]).sum())])
     m = np.mean(acc, 0)
     print(f"{label:46s} fitness {m[0]:5.0f}  lifetime {m[1]:5.0f} of {exp.evolution.ticks_per_generation}  eaten {m[2]:5.1f}  survivors {m[3]:4.1f}", flush=True)
 

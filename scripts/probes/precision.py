@@ -14,6 +14,8 @@ for name in sys.argv[1:]:
     T, N = act.shape; H, W = grid.shape[1:]
     g, p, q, hd, al = grid[:-1], pos[:-1].astype(int), dr[:-1].astype(int), held[:-1].astype(int), alive[:-1].astype(bool)
     a = act[1:].astype(int); dfood = food[1:] - food[:-1]
+    # what was eaten at each tick (0 = nothing); older recordings have no 'ate': EAT with an edible berry in hand
+    ate = rec["ate"][1:].astype(int) if "ate" in rec else np.where(a == 5, hd, 0)
     front = p + DIRS[q % 4]
     inb = (front >= 0).all(-1) & (front[..., 0] < H) & (front[..., 1] < W)
     fc = np.clip(front, 0, [H - 1, W - 1])
@@ -21,7 +23,7 @@ for name in sys.argv[1:]:
     bush = [i for i, n in enumerate(names) if n.endswith("Wild Gooseberry Bush") and "Empty" not in n]
     cls = {}
     for b in bush:
-        m = (a == 5) & (hd == b + 1) & al
+        m = (ate == b + 1) & al
         cls[b] = ("good" if np.median(dfood[m]) > 0 else "poison") if m.sum() >= 3 else "never eaten (dud or avoided)"
     print(f"\n== {name} ({d.name}), {N} recorded agents; lifetime mean {alive.sum(0).mean():.0f}")
 
@@ -36,9 +38,9 @@ for name in sys.argv[1:]:
         if not bs:
             continue
         show(f"{c} bush in front, empty hand", np.isin(obj, bs) & (hd == 0))
-        show(f"{c} berry in hand", np.isin(hd, [b + 1 for b in bs]))
+        if np.isin(hd, [b + 1 for b in bs]).sum() >= 20:      # only animals that carry things
+            show(f"{c} berry in hand", np.isin(hd, [b + 1 for b in bs]))
     show("empty bush in front, empty hand", np.isin(obj, [i for i, n in enumerate(names) if "Empty" in n]) & (hd == 0))
     show("nothing in front, empty hand", (obj == 0) & (hd == 0))
-    eats = (a == 5) & al
     good_b = [b + 1 for b in bush if cls[b] == "good"]; bad_b = [b + 1 for b in bush if cls[b] == "poison"]
-    print(f"  berries eaten per agent: good {(eats & np.isin(hd, good_b)).sum() / N:.1f}, poison {(eats & np.isin(hd, bad_b)).sum() / N:.1f}")
+    print(f"  berries eaten per agent: good {(al & np.isin(ate, good_b)).sum() / N:.1f}, poison {(al & np.isin(ate, bad_b)).sum() / N:.1f}")

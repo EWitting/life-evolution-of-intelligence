@@ -1,7 +1,7 @@
 """Generation-0 test of a learning stage: the parent stage's final population on this stage's brain (or a variant of
 it), in this stage's world, with learning on and off in the same worlds. No evolution: a sound rule should help
 straight away, or at least not hurt.
-    STAGE=x.learn uv run python scripts/probes/gen0.py [FIELD=value ...] <variant> [...]
+    STAGE=1.5 uv run python scripts/probes/gen0.py [FIELD=value ...] <variant> [...]
 variants: see variants.py. lower-case field=value overrides a WorldConfig field (hunger_per_tick=0.02), upper-case
 NAME=value a constant of life.experiments.stages (NOVEL_WEIGHT=1.0). STAGE defaults to 1.5."""
 import os, sys
@@ -40,7 +40,7 @@ for v in args:
             st, _ = sim(rules, g, ks)
             e = np.asarray(st["eats"]); n = e.shape[0]
             tot = lambda h, ts: sum(e[:, h, berry[t]].sum() for t in ts) / n
-            acc.append([float(st["fed_meal"].mean()), float(st["alive_ticks"].mean()), tot(0, good), tot(0, bad), tot(1, good), tot(1, bad),
+            acc.append([float((s.fitness or S.default_fitness)(st).mean()), float(st["alive_ticks"].mean()), tot(0, good), tot(0, bad), tot(1, good), tot(1, bad),
                         float(st["pain"].mean())])
         m = np.mean(acc, 0); se = np.std(acc, 0, ddof=1) / np.sqrt(WORLDS)
         print(f"{v:22s} {label}: fitness {m[0]:4.0f} +-{se[0]:.0f}  lifetime {m[1]:4.0f}  good / poison berries per agent: first half "

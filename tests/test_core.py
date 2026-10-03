@@ -61,6 +61,20 @@ def test_pick_eat_last_use_and_regrow():
     assert int(st.grid_obj[2, 3]) == bush and int(st.grid_uses[2, 3]) == 2
 
 
+def test_eat_on_pick_eats_what_is_grasped():
+    rs = toy_ruleset()
+    rules = rs.to_arrays(K)
+    cfg = WorldConfig(height=8, width=8, num_agents=1, hunger_per_tick=0.0, eat_on_pick=True)
+    st = empty_world(cfg, rules)
+    bush, berry = rs.local(10), rs.local(11)
+    st = place(st, 2, 3, bush, rules)
+    st = st._replace(pos=jnp.array([[3, 3]]), dir=jnp.array([0]), food=jnp.array([5.0]))
+    st, ev = step_world(cfg, rules, st, jnp.array([A.USE]), jax.random.PRNGKey(1))
+    assert int(st.held[0]) == 0 and int(ev["ate"][0]) == berry              # nothing is carried: eaten in the same tick
+    assert float(st.food[0]) == pytest.approx(5.0 + cfg.food_scale) and int(st.grid_uses[2, 3]) == 1
+    assert float(st.taste[0]) == pytest.approx(1.0)
+
+
 def test_move_turn_block_and_drop():
     rs = toy_ruleset()
     rules = rs.to_arrays(K)

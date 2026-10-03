@@ -166,6 +166,8 @@ def step_world(cfg: WorldConfig, rules: RuleArrays, state: WorldState, actions: 
 
     # --- EAT ---
     eat = (actions == A.EAT) & rules.edible[held]
+    if cfg.eat_on_pick:   # what a USE put into an empty hand is eaten at once
+        eat = eat | ((actions == A.USE) & (state.held == EMPTY) & (held != EMPTY) & rules.edible[held])
     ate = jnp.where(eat, held, EMPTY)
     gained = jnp.where(eat, rules.food_value[held] * cfg.food_scale, 0.0)
     recent = state.recent

@@ -861,3 +861,52 @@ within a population range from 0 to the cap.
 - Plasticity as a whole is therefore worth only about 3% (97% without it).
 - An earlier single seed with the safety cell (v20): main 45.1 vs control 39.2, head to head +20.6, no_plasticity
   89%, us_pain 84%, us_taste 101%, safety 98%, rates 0.13 / 0.16.
+
+## v22 (2026-10-03, evening): reversal left out, and what a drive could win
+
+### Stage 1.6 reversal (learned weights relax toward the inherited ones; novel types swap meaning mid-life), 3 seeds
+
+| | main | control (the 1.5 brain) |
+|---|---|---|
+| energy, last 50 generations | 42.8 +-1.2 [45.1 40.9 42.5] | 41.5 +-0.9 [42.6 42.2 39.7] |
+| re-evaluated in shared worlds | 46.6 +-0.7 | 43.9 +-1.3 |
+| head to head | -6.5 +-1.6 (-3, -9, -8) | |
+
+Lesions (% of intact, per seed, mean): no_plasticity 100 103 101 (101); us_taste 104 108 103 (105); us_pain 98 96 97
+(97); valence_app 7, grasp 5, valence_av 34, no_feed 44, no_touch 27; ganglion 100.
+
+- Learning is not used in the reversal world, and in direct competition the relaxing weights lose in every seed.
+- The taste teacher is at or above 100 in all six seeds of 1.5 and 1.6.
+- Decision (user): reversal stays out of the chain. Chapter 1 learning ends at 1.5.
+
+### Bites on a full stomach (recordings of the last generation)
+
+| stage | meals per life | meals within 1 unit of full | stomach rise per meal (berry = 2) |
+|---|---|---|---|
+| 1.0 | 88 | 80% | 0.42 |
+| 1.1 | 32 | 84% | 0.28 |
+| 1.5 | 30 | 59% | 0.44 |
+
+Energy acquired counts every bite at face value; of the 172 per life in stage 1.0 about 37 enter the body. Counting
+only absorbed energy would be the lifetime fitness again (absorbed = burned - starting store), so the fitness stays
+(user). Consequence: a hunger signal that holds back appetite cannot be selected in this chapter.
+
+### What the cold costs (`scripts/probes/drives.py`, the 1.5 population at generation 0, 4 worlds)
+
+The old cold world (hot-spring weight 0.6) is not cold at bush density 0.14: a third of the map is above 0.6 and
+agents average a body temperature of 0.64. With weight 0.1: 76% of cells below 0.3, 11% comfortable.
+
+| brain (springs 0.1, temp_rate 0.03) | energy | lifetime | body temperature |
+|---|---|---|---|
+| cold not sensed, world not cold | 37.8 +-2.7 | 758 | 0.50 |
+| cold not sensed, cold world | 35.2 +-3.3 | 521 | 0.37 |
+| + cold-gated thermotaxis | 33.2 +-2.8 | 516 | 0.39 |
+| + thermotaxis shut by a hunger gate | 34.1 +-2.6 | 524 | 0.39 |
+
+temp_rate 0.005 and springs 0.05 give the same picture (35.0 / 34.0 / 33.8 and 35.9 / 35.3 / 35.5).
+
+- Cold removes 30% of the lifetime but 7% of the energy: the ticks before starvation yield about 0.011 energy each
+  (average 0.05). The most a warmth drive can win is about 3 of 38.
+- Gradient thermotaxis does not change body temperature: a spring's gradient reaches four cells.
+- Nothing in the brain lets a drive switch foraging: steering is direct sensor -> motor reflexes, the ganglion is idle.
+- Open (user to decide): cold as sluggishness (failed actions when cold), or drives and affect move to chapter 2.

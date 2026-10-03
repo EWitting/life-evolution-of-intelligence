@@ -23,7 +23,7 @@ than control (user, 2026-10-01). One life is mostly luck, so a design is checked
 
 ## Stages (v21, 2026-10-03)
 
-Critical path: 1.0 -> 1.1 -> 1.5 -> 1.6 -> chapter 2. Three seeds unless stated; lesion = fitness with the region
+Critical path: 1.0 -> 1.1 -> 1.5 -> chapter 2. Three seeds unless stated; lesion = fitness with the region
 silenced, % of intact, mean over seeds.
 
 | stage | what it adds | status | finding |
@@ -31,7 +31,7 @@ silenced, % of intact, mean over seeds.
 | 1.0 steering | ganglion (exc + inh, lagging normalisation), evolved sensor -> motor reflexes; sees the outside world only; movement costs energy; the animal eats what it grasps | done (1 seed) | 172 energy per life, lifetime 801 of 1000, 88 meals. |
 | 1.1 valence | appetitive and aversive value cells (taste and pain enter the brain only here) acting on a contact-gated grasp programme; aversion turns away and blocks the bite | done | Main 60.1 vs control 29.5, head to head +81 +-3. Lesions: appetitive 46, aversive 52, no_feed 55, grasp 46, gate 59. The ganglion is idle in this stage (99-102). |
 | 1.5 association | taste teaches the identity -> appetitive synapses, pain the identity -> aversive ones (short traces); novel foods per life | done | Main 43.6 vs control 40.9 (+2.7 +-0.8), head to head +9.7 +-2.8. The pain teacher is used (92 when silenced, every seed); the taste teacher is not (104); plasticity as a whole 97. | |
-| 1.6 reversal | learned weights relax toward inherited values; the novel types swap meaning mid-life | defined, not run | |
+| 1.6 reversal | learned weights relax toward inherited values; the novel types swap meaning mid-life | done, **left out** | Main 42.8 vs control 41.5, head to head -6.5 +-1.6. Plasticity 101, taste teacher 105, pain teacher 97. Not part of the chain (user). |
 | x.hands (side) | pick, hold, then eat: held-item value cells and an ingest programme on the 1.1 brain | done (2 runs) | Adapts in ~10 generations with the extension (energy 65-67, as with eat on grasp); the plain brain adapted in one of two runs. Lesions: ingest 0, gate 55. | |
 | 1.2 drives, 1.3 affect, 1.4 habituation | hunger and cold; serotonin and PDF; depression with dud bushes | parked side branch on 1.1 | Not used in their last runs (v9, v13; STAGE_LOG). |
 | 2.1-2.5, x.td | tectum, pallium, basal ganglia, dopamine TD | defined on the new path, older design | To revisit: per-life pallium weights (ADR-017), holding before 2.6, delayed sickness with the prediction error. |
@@ -43,13 +43,15 @@ Per stage, three seeds: **used** (silencing the new cells costs energy in every 
 above control within one standard error, summary and head to head), **no regression** (the population does as well
 in the previous stage's world as the previous population).
 
-1. Stage 1.6 (reversal): three seeds running. Seed 0: plasticity 100, taste teacher 104, pain teacher 98. If the
-   other seeds agree, learning is frozen at 1.5 and the taste teacher is removed (appetitive learning returns with
-   the reward prediction error in chapter 2).
+1. Done: reversal (1.6) is left out; chapter 1 learning ends at 1.5. The taste teacher is at or above 100 when
+   silenced in all six seeds of 1.5 and 1.6 and is to be removed in the clean rerun.
 2. Unpark drives, affect and habituation, **appended after the learning stages**, each rebuilt on today's
    architecture with one design pass (generation-0 measurement of what the mechanic costs, then three seeds). A
    module that stays unused is left out of the frozen brain, unless later stages need the brain to have developed
    with it (the need state for reward valuation, the modulator systems); such a module is kept and worked on.
+   **Open:** the generation-0 measurement (STAGE_LOG v22) shows a warmth drive can win at most 3 of 38 energy
+   and a hunger gate on appetite cannot pay under energy-acquired fitness. Either cold becomes sluggishness (new
+   mechanic), or drives and affect move to chapter 2 (reward valued by need). Waiting for the user's choice.
 3. Final trim: the idle ganglion (decide after drives), designed strengths moved to where evolution put them.
 4. One clean rerun of the whole chain at the frozen settings, three seeds, plus a chapter exam (every stage's
    population in every earlier world).

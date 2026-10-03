@@ -988,3 +988,27 @@ Life cap (`scripts/probes/ceiling.py`, the same populations with longer lives):
   valued is adjacent, full or not, empties its surroundings and pays for the walking.
 - One seed; seeds 1 and 2 and stage 1.5 are running. If it holds, the valence brain needs the hunger signal (bite and
   search when hungry) to do well under a survival fitness, which argues for drives directly after 1.1.
+
+### Stage 1.1 under the well-fed lifetime, born full, three seeds (v23)
+
+| | main | control (pain-blind) |
+|---|---|---|
+| fitness, last 50 generations | 534 +-4 [538 526 538] | 427 +-57 [524 327 431] |
+| re-evaluated in shared worlds | 542 +-11 | 506 +-31 |
+| head to head | +262 +-47 (+173, +334, +278) | |
+
+Lesions (% of intact, per seed, mean): valence_av 59 60 53 (57); no_feed 62 61 62 (62); ganglion_e 72 28 21 (40);
+ganglion_i 75 100 85 (87); valence_app 103 108 99 (104); grasp 104 108 100 (104); no_touch 102 114 104 (107).
+
+- Main wins head to head in every seed; the control of seed 0 was one lineage that found the stay-put strategy.
+- Under the survival fitness the ganglion is used again and the aversive side still is; the appetitive side
+  (appetitive cells, grasp programme, contact gate) is not: a bite whenever something valued is adjacent, full or
+  not, does not help survival. This is where hunger belongs.
+- Stage 1.5, seed 0 only, last generation: main 551, control 581 (one noisy generation; not analysed).
+
+## v24 (2026-10-03, late): born a quarter full
+
+`WorldConfig.start_food` = 0.25 in W10 and every world derived from it (user agreed): a full stomach covered
+400-800 ticks at rest, most of a 1000-tick life, so sitting still reached the cap. The chain rerun on this footing
+(1.0 scratch + 60 generations at 10% mutation, then 1.1 with three seeds) was started and **interrupted by a
+shutdown**; nothing of it is analysed. Restart it from stage 1.0 (commands in STATUS).

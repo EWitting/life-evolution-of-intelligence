@@ -7,7 +7,8 @@ selection works; it does not need a setting's own fitness numbers to be comparab
 
     uv run python scripts/probes/recovery.py <stage key> <lane> <lanes> [generations] [seeds]
 
-DENSITY=<x> in the environment overrides the bush density of the run's world.
+DENSITY=<x> in the environment overrides the bush density of the run's world; ONLY=<a>,<b> keeps the settings
+whose name starts with one of these.
 Run one process per lane (lane = 0 .. lanes-1); together they cover all settings x seeds. Lines starting with
 'ROW' are results: setting, seed, generation, energy acquired, ticks alive, recovery of each in %."""
 import os, sys
@@ -26,6 +27,7 @@ YARD_WORLDS = 3
 # name: (fitness stat, crossover probability, crossover mode, weight mutation prob, mutation std, siblings)
 SETTINGS = {
     "current (well-fed lifetime, asexual)":        ("fed_meal", 0.0, "neuron", 0.10, 0.10, 4),
+    "well-fed lifetime + recombination":           ("fed_meal", 1.0, "neuron", 0.10, 0.10, 4),
     "energy acquired":                             ("eaten",    0.0, "neuron", 0.10, 0.10, 4),
     "energy + recombination (whole neurons)":      ("eaten",    1.0, "neuron", 0.10, 0.10, 4),
     "energy + recombination (blending)":           ("eaten",    1.0, "blend",  0.10, 0.10, 4),
@@ -34,6 +36,8 @@ SETTINGS = {
     "energy, every weight mutates (as stage 1.0)": ("eaten",    0.0, "neuron", 1.00, 0.10, 4),
 }
 
+if "ONLY" in os.environ:
+    SETTINGS = {n: v for n, v in SETTINGS.items() if n.startswith(tuple(os.environ["ONLY"].split(",")))}
 s = S.STAGES[key]
 run = latest_run(s.name)
 exp = ExperimentConfig.from_json((run / "config.json").read_text())

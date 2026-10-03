@@ -64,10 +64,11 @@ def measure(label, brain, w):
         rules = jax.tree_util.tree_map(lambda a: a[0], fn(0, kr))
         st, _ = sim(rules, pop, ks)
         acc.append([float(st["eaten"].mean()), float(st["alive_ticks"].mean()),
-                    float(st["temp_mean"].mean()) if "temp_mean" in st else float("nan"), float(st["pain"].mean())])
+                    float(st["temp_mean"].mean()) if "temp_mean" in st else float("nan"), float(st["pain"].mean()),
+                    float(st["fed_meal"].mean())])
     m = np.mean(acc, 0); se = np.std(acc, 0, ddof=1) / np.sqrt(WORLDS)
-    print(f"{label:28s} energy {m[0]:5.1f} +-{se[0]:.1f}  lifetime {m[1]:5.0f} +-{se[1]:.0f}  body temperature {m[2]:.2f}  "
-          f"pain {m[3]:.1f}", flush=True)
+    print(f"{label:28s} energy {m[0]:5.1f} +-{se[0]:.1f}  lifetime {m[1]:5.0f} +-{se[1]:.0f}  well-fed lifetime {m[4]:4.0f} +-{se[4]:.0f}  "
+          f"body temperature {m[2]:.2f}  pain {m[3]:.1f}", flush=True)
 
 
 print(f"parent {parent.key}; springs {SPRINGS}; ambient {world.ambient_temp}, temp_rate {world.temp_rate}, "

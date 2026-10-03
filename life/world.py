@@ -69,7 +69,7 @@ def init_world(cfg: WorldConfig, rules: RuleArrays, key: jax.Array) -> WorldStat
         pos=pos,
         dir=jax.random.randint(k5, (N,), 0, 4).astype(jnp.int32),
         held=jnp.zeros(N, jnp.int32),
-        food=jnp.full(N, cfg.max_food, jnp.float32),
+        food=jnp.full(N, cfg.max_food * cfg.start_food, jnp.float32),
         age=jnp.zeros(N, jnp.int32),
         alive=jnp.ones(N, bool),
         pain=jnp.zeros(N, jnp.float32),

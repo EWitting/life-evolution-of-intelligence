@@ -217,3 +217,19 @@ def test_novel_looks_are_drawn_per_life_and_fed_stat():
     from test_core import toy_ruleset
     stats, _ = make_simulate(exp2, record=False)(toy_ruleset().to_arrays(exp2.vision.appearance_dim), pop, jax.random.PRNGKey(0))
     assert np.allclose(np.asarray(stats["fed"]), 200.0, atol=2.0) and (np.abs(np.asarray(stats["alive_ticks"]) - 400) <= 1).all()
+
+
+def test_phases_propagate_within_one_tick():
+    # in -> a -> b: synchronously b sees a one tick late; with b in a later phase it responds in the same tick
+    mk = lambda ph: BrainConfig(regions=(R("a", 3, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False),
+                                         R("b", 3, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, phase=ph)),
+                                projections=(P("in", "a", topology="one_to_one", w_init=2.0, evolve=False),
+                                             P("a", "b", topology="one_to_one", w_init=2.0, evolve=False)))
+    L, g, st = run(mk(0), [1, 0, 1], n=1)
+    assert np.allclose(np.asarray(st.x[L.region("b")]), 0.0)
+    L, g, st = run(mk(1), [1, 0, 1], n=1)
+    a = np.tanh(2.0)
+    assert np.allclose(np.asarray(st.x[L.region("a")]), [a, 0, a], atol=1e-5)
+    assert np.allclose(np.asarray(st.x[L.region("b")]), [np.tanh(2 * a), 0, np.tanh(2 * a)], atol=1e-5)
+    L2, g2, st2 = run(mk(0), [1, 0, 1], n=2)                         # the synchronous brain gets there a tick later
+    assert np.allclose(np.asarray(st2.x[L2.region("b")]), np.asarray(st.x[L.region("b")]), atol=1e-5)

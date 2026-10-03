@@ -55,8 +55,9 @@ class Layout(NamedTuple):
     proj_names: tuple       # "src->dst" per projection, index = proj_id
     mod_names: tuple        # modulator names, index = modulator id
     mod_specs: tuple        # static: (kind, terms, unused, baseline, scale, decay) per modulator
-    kwta: tuple             # static: (offset, size, k) per region with k-WTA
-    norm: tuple             # static: (offset, size, strength, lag) per region with divisive normalisation
+    kwta: tuple             # static: (offset, size, k, phase) per region with k-WTA
+    norm: tuple             # static: (offset, size, strength, lag, phase) per region with divisive normalisation
+    phases: tuple           # static: per update phase, the indices of its (non-input) neurons; one entry = synchronous
     pl_rows: tuple          # static: pre neurons with any plastic, decaying or depressing synapse
     pl_cols: tuple          # static: their post neurons; plasticity is computed on the block [pl_rows, pl_cols] only
     groups: tuple           # visual group path per region (same order as names), '' = none
@@ -109,7 +110,8 @@ def modulator_specs(cfg: BrainConfig) -> tuple:
 
 
 def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None = None) -> Layout:
-    regions = [RegionSpec("in", n_in, alpha=1.0)] + list(cfg.regions) + [RegionSpec("out", n_out, alpha=cfg.out_alpha)]
+    regions = [RegionSpec("in", n_in, alpha=1.0)] + list(cfg.regions) \
+        + [RegionSpec("out", n_out, alpha=cfg.out_alpha, phase=cfg.out_phase)]
     names = tuple(r.name for r in regions)
     assert len(set(names)) == len(names), f"duplicate region names in {names}"
     sizes = tuple(r.size for r in regions)
@@ -148,6 +150,12 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
             assert 0 <= r0 < r1 <= d.stop - d.start, f"projection {key}: dst_range {p.dst_range} outside {p.dst}"
             d = slice(d.start + r0, d.start + r1)
             key += f"<{r0}:{r1}>"
+        if p.src_range:
+            assert p.src != "in", "src_range does not apply to 'in' (use src_select)"
+            r0, r1 = p.src_range
+            assert 0 <= r0 < r1 <= s.stop - s.start, f"projection {key}: src_range {p.src_range} outside {p.src}"
+            s = slice(s.start + r0, s.start + r1)
+            key = key.replace("->", f"<{r0}:{r1}>->", 1)
         if p.src_select:
             assert p.src == "in", "src_select only applies to projections from 'in'"
             rows = [i for i, f in enumerate(in_names) if any(fnmatch.fnmatchcase(f, pat) for pat in p.src_select)]
@@ -211,11 +219,15 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
             kind = m.source.split(":", 1)[1]
             assert m.source.startswith("world:") and kind in WORLD_SIGNALS, f"modulator {m.name}: bad source {m.source}"
             mod_specs.append((kind, (0, 0), (0, 0), m.baseline, m.scale, m.decay))
-    kwta = tuple((sl[r.name].start, r.size, r.kwta) for r in regions if r.kwta > 0 and r.name != "in")
+    kwta = tuple((sl[r.name].start, r.size, r.kwta, r.phase) for r in regions if r.kwta > 0 and r.name != "in")
+    phase_ids = sorted({r.phase for r in regions if r.name != "in"})
+    phases = tuple(tuple(i for r in regions if r.name != "in" and r.phase == ph
+                         for i in range(sl[r.name].start, sl[r.name].stop)) for ph in phase_ids)
+    kwta = tuple((o_, s_, k_, phase_ids.index(ph)) for o_, s_, k_, ph in kwta)
     changing = (rule > 0) | (dep_U > 0) | (decay > 0)
     pl_rows = tuple(int(i) for i in np.where(changing.any(axis=1))[0])
     pl_cols = tuple(int(i) for i in np.where(changing.any(axis=0))[0])
-    norm = tuple((sl[r.name].start, r.size, float(r.norm), bool(r.norm_lag)) for r in regions
+    norm = tuple((sl[r.name].start, r.size, float(r.norm), bool(r.norm_lag), phase_ids.index(r.phase)) for r in regions
                  if r.norm > 0 and r.name != "in")
     rec_gain = np.zeros((max(1, len(mod_names)), n), np.float32)
     rec_bias = np.zeros_like(rec_gain)
@@ -226,7 +238,7 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
             (rec_gain if effect == "gain" else rec_bias)[mod_names.index(mname), sl[r.name]] += sens
     j = jnp.asarray
     return Layout(n=n, n_in=n_in, n_out=n_out, names=names, offsets=offsets, sizes=sizes, in_names=tuple(in_names),
-                  proj_names=tuple(proj_names), mod_names=mod_names, mod_specs=tuple(mod_specs), kwta=kwta, norm=norm,
+                  proj_names=tuple(proj_names), mod_names=mod_names, mod_specs=tuple(mod_specs), kwta=kwta, norm=norm, phases=phases,
                   pl_rows=pl_rows, pl_cols=pl_cols,
                   alpha=j(alpha), trace_tau=j(tau), sign=j(sign), bias_init=j(bias_init), evolve_b=j(evolve_b),
                   allowed=j(allowed), density=j(density), one_to_one=j(o2o), proj_id=j(proj_id), rule=j(rule),
@@ -300,17 +312,21 @@ def compute_modulators(layout: Layout, x: jnp.ndarray, world_sig: jnp.ndarray, p
     return jnp.stack(out) if out else jnp.zeros(1, jnp.float32)
 
 
-def _kwta(layout: Layout, f: jnp.ndarray) -> jnp.ndarray:
-    for off, size, k in layout.kwta:
+def _kwta(layout: Layout, f: jnp.ndarray, phase: int | None = None) -> jnp.ndarray:
+    for off, size, k, ph in layout.kwta:
+        if phase is not None and ph != phase:
+            continue
         seg = f[off:off + size]
         thr = jnp.sort(seg)[size - min(k, size)]
         f = f.at[off:off + size].set(jnp.where(seg >= thr, seg, 0.0))
     return f
 
 
-def _normalise(layout: Layout, h: jnp.ndarray, g: jnp.ndarray):
+def _normalise(layout: Layout, h: jnp.ndarray, g: jnp.ndarray, phase: int | None = None):
     """Divisive normalisation per region. Returns (h, g) with g the pool drive of this step."""
-    for off, size, k, lag in layout.norm:
+    for off, size, k, lag, ph in layout.norm:
+        if phase is not None and ph != phase:
+            continue
         seg = h[off:off + size]
         pool = jnp.maximum(seg, 0.0).mean()
         div = g[off] if lag else pool
@@ -340,19 +356,40 @@ def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, ob
     h = None
     for _ in range(cfg.steps_per_tick):
         w_eff = effective(layout, w) * (u if layout.has_dep else 1.0)
-        h = x @ (w_eff * (1.0 - layout.gain) if layout.has_gain else w_eff) + genome.b
-        log_gain = 0.0
-        if layout.has_gain:
-            log_gain = x @ (w_eff * layout.gain)
-        if layout.has_receptors:   # broadcast neuromodulation via receptors of the target neurons
-            h = h + mod @ layout.rec_bias
-            log_gain = log_gain + mod @ layout.rec_gain
-        if layout.has_gain or layout.has_receptors:
-            h = h * jnp.exp(jnp.clip(log_gain, -GAIN_CLIP, GAIN_CLIP))
-        if layout.norm:
-            h, g = _normalise(layout, h, g)
-        f = _kwta(layout, jnp.maximum(jnp.tanh(h), 0.0))
-        x_new = ((1.0 - layout.alpha) * x + layout.alpha * f).at[:n_in].set(obs)
+        if len(layout.phases) <= 1:   # synchronous: every neuron reads the previous tick
+            h = x @ (w_eff * (1.0 - layout.gain) if layout.has_gain else w_eff) + genome.b
+            log_gain = 0.0
+            if layout.has_gain:
+                log_gain = x @ (w_eff * layout.gain)
+            if layout.has_receptors:   # broadcast neuromodulation via receptors of the target neurons
+                h = h + mod @ layout.rec_bias
+                log_gain = log_gain + mod @ layout.rec_gain
+            if layout.has_gain or layout.has_receptors:
+                h = h * jnp.exp(jnp.clip(log_gain, -GAIN_CLIP, GAIN_CLIP))
+            if layout.norm:
+                h, g = _normalise(layout, h, g)
+            f = _kwta(layout, jnp.maximum(jnp.tanh(h), 0.0))
+            x_new = ((1.0 - layout.alpha) * x + layout.alpha * f).at[:n_in].set(obs)
+        else:   # ordered: a phase reads this tick's activity of the phases before it
+            w_add = w_eff * (1.0 - layout.gain) if layout.has_gain else w_eff
+            xc, h = x, jnp.zeros_like(x)
+            for pi, cols in enumerate(layout.phases):
+                cols = np.asarray(cols)
+                hk = xc @ w_add[:, cols] + genome.b[cols]
+                lg = 0.0
+                if layout.has_gain:
+                    lg = xc @ (w_eff * layout.gain)[:, cols]
+                if layout.has_receptors:
+                    hk = hk + mod @ layout.rec_bias[:, cols]
+                    lg = lg + mod @ layout.rec_gain[:, cols]
+                if layout.has_gain or layout.has_receptors:
+                    hk = hk * jnp.exp(jnp.clip(lg, -GAIN_CLIP, GAIN_CLIP))
+                h = h.at[cols].set(hk)
+                if layout.norm:
+                    h, g = _normalise(layout, h, g, pi)
+                f = _kwta(layout, jnp.maximum(jnp.tanh(h), 0.0), pi)
+                xc = xc.at[cols].set((1.0 - layout.alpha[cols]) * x[cols] + layout.alpha[cols] * f[cols])
+            x_new = xc.at[:n_in].set(obs)
         if plastic:
             wb = w[ix]
             target = jnp.where(b_teacher >= 0, x_new[np.maximum(b_teacher, 0)], x_new[C])

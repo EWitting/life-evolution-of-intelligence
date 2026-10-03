@@ -81,6 +81,10 @@ class RegionSpec:
     receptors: tuple = ()            # broadcast neuromodulation of activity: (modulator, effect, sensitivity) with
                                      # effect 'gain' (input x exp(sensitivity * m), clipped e^+-2) or 'bias'
                                      # (input + sensitivity * m); the modulator of the previous step is used
+    phase: int = 0                   # order of updating within a tick: regions of phase p read the activity that
+                                     # regions of lower phase have *this* tick (and everything else from the
+                                     # previous tick), so a feedforward chain senses -> ... -> motor runs within
+                                     # one tick instead of one tick per layer. All 0 = fully synchronous.
     group: str = ""                  # visual grouping only (dashboard), e.g. 'hypothalamus' or
                                      # 'forebrain/basal_ganglia' for nested groups
 
@@ -117,6 +121,7 @@ class ProjectionSpec:
     groups: int = 0                  # topology 'topographic': src and dst split into this many aligned groups
                                      # (e.g. one group per vision column -> one tectum neuron group per column)
     dst_range: tuple = ()            # (start, stop): only these neurons of dst receive the projection (topography)
+    src_range: tuple = ()            # (start, stop): only these neurons of src send it (not for src 'in': use src_select)
     decay: float = 0.0               # per step, plastic weights relax by this fraction back toward w0 (forgetting;
                                      # lifetime learning then fades unless renewed: extinction, reversal)
     src_select: tuple = ()           # src 'in' only: input-feature name patterns (fnmatch, e.g. 'vis*', 'pain')
@@ -154,6 +159,8 @@ class BrainConfig:
     regions: tuple = DEFAULT_REGIONS          # tuple[RegionSpec, ...] excluding the reserved 'in' and 'out'
     projections: tuple = DEFAULT_PROJECTIONS  # tuple[ProjectionSpec, ...]
     out_alpha: float = 0.5           # leak of the output region
+    out_phase: int = 0               # RegionSpec.phase of the output region (set above every other phase so the
+                                     # action uses this tick's activity)
     w_max: float = 4.0               # plastic weights are clipped to [-w_max, w_max] (inherited, non-plastic
                                      # weights are used as they are)
     steps_per_tick: int = 1          # brain updates per world tick
@@ -188,7 +195,8 @@ class EvolutionConfig:
                                      # down to the same density; 0 or >= num_agents: the whole population
     tune_prob: float = 0.1           # per tunable projection and child: chance that its strength mutates
     tune_std: float = 0.2            # std of the log of the factor it is multiplied by
-    tune_range: float = 10.0         # the strength stays within [1/range, range] x the designed value
+    tune_range: float = 3.0          # the strength stays within [1/range, range] x the designed value (at 10 evolution
+                                     # turned the valence -> motor wiring down to ~0.15 x: free to disconnect)
     seed: int = 0
 
 

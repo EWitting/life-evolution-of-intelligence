@@ -138,3 +138,19 @@ def test_ohol_gooseberry_slice():
     assert rs2.trans_new_actor[rs2.use_table[0, cb]] == rs2.local(100031)
     assert rs2.decay_new[rs2.local(279)] == rs2.local(30) and rs2.decay_ticks[rs2.local(279)] == 50
     assert rs2.decay_new[rs2.local(100279)] == cb
+
+
+def test_siblings_share_a_genome(tmp_path):
+    from life.run import run_evolution, make_simulate, make_layout
+    from life import brain
+    exp = ExperimentConfig(world=WorldConfig(height=8, width=8, num_agents=8, spawn_density=0.1),
+                           evolution=EvolutionConfig(generations=2, ticks_per_generation=50, record_weights_every=50,
+                                                     siblings=4))
+    rs = toy_ruleset()
+    out = run_evolution(exp, rs, lambda st: st["alive_ticks"].astype(jnp.float32), out_dir=tmp_path, verbose=False,
+                        dashboard=False)
+    assert out["pop"].b.shape[0] == 2                                  # 8 agents = 2 genomes x 4 siblings
+    with np.load(tmp_path / "population.npz") as f:
+        assert f["w0"].shape[0] == 2
+    stats, _ = make_simulate(exp, record=False)(rs.to_arrays(exp.vision.appearance_dim), out["pop"], jax.random.PRNGKey(0))
+    assert stats["alive_ticks"].shape == (8,)                          # statistics stay per individual

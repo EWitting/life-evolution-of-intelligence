@@ -627,3 +627,142 @@ valence_app 526 (76%); valence_av 367 (53%); us_taste 643 (93%); us_pain 685 (99
   rate removed the many small meals that the v6 economy was built for. A calibration that keeps the meal rate
   (scale berry size and poison cost together with the metabolic rate, or make novel foods most of the supply) is
   the next thing to try.
+
+
+---
+
+## v11-v18 (2026-10-02 and 2026-10-03): why learning did not pay, and a redesign of the valence stage
+
+Probes used below live in `scripts/probes/` (see its README). All evolution results here are **one seed** unless
+stated; the measurements under "Selection signal" say how little one seed means.
+
+### Learning rule: one signed teacher erased its own lessons
+- v11 world (novel foods 3/4 of the supply, sickness after 12 ticks): both main and control stuck at lifetime ~350
+  of 2000, half of what they eat is poison, plasticity off = intact (117.8 vs 117.7).
+- In that population evolution had set the learning rate onto the aversive cells to 0.013 and onto the appetitive
+  cells to 0.33: aversive learning switched off.
+- Tick-by-tick trace on one brain: one poisoning raises the weights from the poison's look onto the aversive cells
+  by +0.26; the next good meals remove it again. Cause: one teacher (taste - pain) and one long eligibility trace
+  (long because sickness is delayed), so a good meal acts on everything still in the trace, including the poison
+  bush just left.
+- **Two teachers** (adopted): taste teaches the appetitive synapses with a short trace (0.5), sickness teaches the
+  aversive synapses with a long one (0.92). Scripted probe on fresh brains (3 poison + 3 good trials, change of net
+  valence of the poison look / the good look):
+
+| pain timing, trace | one teacher | two teachers |
+|---|---|---|
+| immediate, short trace (8 appearance features) | -0.04 / +0.18 | -0.02 / +0.11 |
+| after 6 ticks, long trace (8 features) | -0.06 / +0.46 | -0.26 / +0.01 |
+| after 6 ticks, long trace (4 features, similarity 0.6) | -0.06 / +0.31 | -0.19 / -0.05 |
+
+  With immediate pain one teacher is as good as two; with delayed sickness only two teachers work. Eight appearance
+  features (adopted, `APPEARANCE = 8`) keep the aversion from spreading to the good look.
+
+### Infrastructure added (v12-v13, v18)
+Tunable hard-wired strengths (`ProjectionSpec.tune`), population 256 on 128 x 128 with a 64-agent recording,
+`stages versus` (head to head), dud bushes for 1.4, siblings (64 genomes x 4), `RegionSpec.phase` (ordered
+propagation), `ProjectionSpec.src_range`, regrowth tied to the metabolic rate, side stage `x.learn`.
+
+### Population 256, chain on the v13 definitions (seed 0, 150 generations; 1.0: 400)
+| stage | main | control | note |
+|---|---|---|---|
+| 1.0 | lifetime 688 of 1000, 79 of 256 survive, 41 meals per life | | 4.4 s per generation |
+| 1.1 | 506 | 551 | |
+| 1.2 | 643 | 666 | body temperature 0.44 vs 0.39 |
+| 1.3 | 620 | 603 | |
+| 1.4 (dud bushes) | 629 | 594 | |
+| 1.5 (two teachers, novel foods 3/4) | 306 | 333 | flat over 150 generations; plasticity off = 94% of intact, sickness teacher off = 93% |
+
+### Following individuals (1.5 recording, 64 agents): learning changes behaviour but does not pay
+| before -> after the first lesson about a type | learning brain | control |
+|---|---|---|
+| poison type: USE when its bush is in front | 0.49 -> 0.27 | 0.40 -> 0.34 |
+| poison type: EAT when its berry is in hand | 0.68 -> 0.32 | 0.73 -> 0.65 |
+| good type: EAT when its berry is in hand | 0.19 -> 0.32 | 0.85 -> 0.93 |
+| aversive valence at a good bush | 0.53 -> 0.56 | 0.07 -> 0.09 |
+| ticks with a (good-type) berry in hand | 3085 | 1122 |
+
+The aversion is not specific (aversive cells at ~0.5 for good bushes too), and an agent holding a berry it mistrusts
+could neither eat it nor put it down (aversion blocked USE as well as EAT).
+
+### Generation-0 tests on the v13 lineage (stage-1.4 population, learning on vs off, 6 shared worlds)
+| variant | fitness on / off | poison share of berries eaten, on / off |
+|---|---|---|
+| delayed sickness, rule as defined | 253 / 295 | 0.32 / 0.34 |
+| aversion blocks EAT only | 249 / 273 | 0.36 / 0.36 |
+| sickness blames only the item in hand | 293 / 295 | 0.34 / 0.34 |
+| rebalanced world (novel half of supply), delayed | 334 / 376 | 0.31 / 0.33 |
+| same, immediate pain, short traces | 379 / 406 | 0.31 / 0.31 |
+| same, 6 x learning rate, with decay 0.01 | 351 / 348 | 0.34 / 0.35 |
+| immediate pain, mutual inhibition between the valence cells | 375 / 363 | 0.33 / 0.34 |
+
+No variant of the *rule* gave selectivity in the world: learning lowered eating of everything.
+
+### The broken link was valence -> action (brain-only action assay, `scripts/probes/assay.py`)
+- v13 lineage: evolution had scaled the hard-wired valence wiring to 0.12-0.39 x the designed value (the range
+  allowed 0.1 x). After training at learning rate 0.5 the valence cells discriminate (poison 0.57 / 0.90
+  appetitive / aversive, good 0.84 / 0.41, staple 0.78 / 0.67) but at the staple bush USE fell from 63% to 19%.
+- With one motor meaning per appetitive cell (v15) a learned "good" came out as FORWARD in every context: at the
+  staple bush FORWARD / USE went from 64% / 34% to 100% / 0%, EAT with the berry in hand from 84% to 1%.
+- Small animals do it differently: value acts on motor *programmes*; approach is driven from a distance, grasping
+  and swallowing are contact reflexes that value permits or blocks (worm command neurons, *Aplysia* feeding, fly
+  proboscis reflex).
+
+### Stage 1.1 redesign, step by step (one seed each; lesion = fitness with the region silenced, % of intact)
+| version | change | main / control | head to head | lesions | at a good bush: USE / EAT (empty hand); EAT (berry in hand) |
+|---|---|---|---|---|---|
+| v14 | poison costs a berry, tuning range 0.33-3 x, siblings | 657 / 681 | -54 | app 56, av 60, no_feed 66 | 0.36 / 0.47; 0.67 |
+| v15 | one motor meaning per appetitive cell; aversion blocks EAT only | 689 / 681 | +9 | app 98, av 97, no_feed 99 | 0.68 / 0.01; 0.25 |
+| v16 | taste and pain reach the brain only through the valence cells | - / - | +8 | app 79, av 91, no_feed 97 | 0.57 / 0.12; 0.51 |
+| v17 | value cells (seen / held) + gated programmes approach, grasp, ingest, reject | 646 / 697 | -40 | app 39, approach 53, ingest 69, grasp 102, reject 100, av 94 | 0.50 / 0.03; 0.61 |
+| v18 | + ordered propagation, hand-full gate, regrowth tied to metabolism | 518 / 564 | +54 | app 37, av 61 (poison share 0.06 -> 0.25), no_feed 81, grasp 37, approach 100, ingest 104, reject 100 | 0.78 / 0.00; 0.81 |
+
+- v14's high lesion numbers were dependence, not benefit: main lost to control.
+- v17 (two ticks from sense to programme-driven action): one berry every ~6 ticks through the programme path, and
+  for single-pick items the stale second USE puts the item down again. v18 lets activity pass through the layers in
+  order within a tick (`RegionSpec.phase`); behaviour at the bush becomes clean.
+- v18: main and control disagree between separate worlds (-46) and shared worlds (+54): one seed, and a better
+  forager population also depletes its own world.
+- v17/v18 agents spend 45-55% of their time pressing USE at empty bushes (25-32 thousand of ~57 thousand
+  agent-ticks). Resting costs little at the calibrated metabolic rate and the fitness stops rewarding an agent whose
+  stomach is full; the contact reflex has nothing that stops it (what habituation is for).
+
+### Learning test bed `x.learn` (conditioning on the 1.1 brain, immediate pain, short traces), generation 0
+| stage-1.1 population | fitness on / off | note |
+|---|---|---|
+| v16 (cells drive the motor neurons) | 440 / 549 | second-half eating collapses: learned value comes out as FORWARD |
+| v17 (gated programmes) | 646 / 632 | first time learning does not hurt; poison share in the first half of life 0.23 / 0.25 |
+| v17, 4 x learning rate | 529 / 632 | poison share in the first half 0.21 / 0.25, less eating overall |
+| v18 (ordered propagation) | 460 / 469 | poison share over the whole life 0.16 / 0.19, pain 2.6 / 3.9, berries eaten 16 / 21, lifetime 927 / 900 of 2000 |
+| v18, 4 x learning rate | 431 / 469 | poison share 0.14 / 0.19, pain 2.0 / 3.9, berries eaten 14 / 21 |
+
+At v18 learning is selective from generation 0 (a third less pain, poison share down by a sixth to a quarter) and
+no longer harmful, but it still lowers the eating of good food by a quarter, so it does not pay yet.
+
+### Evolution settings (population 256, v13 chain)
+- Curves: most of the gain comes in the first 60-90 generations, then a plateau; 150 generations are enough.
+- One life is mostly luck: the correlation between an agent's fitness in two worlds is 0.00-0.13; of 32 elites 4-7
+  are elite again (chance 4). Mutational load per round: -23 ... +5, not resolved (noise ~10).
+- Siblings (64 genomes x 4) did not change stage 1.0 visibly (lifetime 650, 30 meals, USE at a good bush 79%).
+
+### Selection signal (`scripts/probes/fitness_signal.py`, stage 1.0, v18, 8 worlds)
+Intact genomes and mutated copies of themselves in the same worlds; d = difference in rank / spread of one life.
+
+| damage | well-fed lifetime from first meal (current) | energy acquired | ticks alive |
+|---|---|---|---|
+| one round of warm-stage mutation (10% of weights, std 0.1) | 0.04 +-0.05 | 0.04 +-0.04 | -0.11 |
+| one round of stage-1.0 mutation (every weight, std 0.1) | 0.16 +-0.07 | 0.20 +-0.07 | -0.01 |
+| every weight, std 0.25 | 0.67 +-0.04 | 0.77 +-0.03 | 0.47 |
+| share of the variance between lives due to the genome (intraclass correlation) | 0.18 | 0.22 (per tick alive: 0.24) | 0.17 |
+
+- A normal mutation is invisible to selection; warm stages are mostly drift. Rough yardstick: an advantage below
+  about 10% of fitness cannot be selected for with this machinery.
+- "Energy acquired" (food eaten, not capped by the stomach: surplus becomes offspring) separates genomes 15-30%
+  better than the current fitness and has no ceiling.
+
+### What the two days taught (for every later stage)
+A new capability pays only if all four hold: (1) the mechanism computes the right thing, (2) its output reaches
+behaviour in a form that fits the situation, (3) the world offers something only it can exploit, (4) selection can
+see the benefit. For learning we found and fixed (1) (two teachers) and (2) (programmes), built (3), and measured
+that (4) is weak. Still open in the learning stage: specificity (aversion spreads to the staple, which shares 45% of
+its look with novel foods); animals solve it with latent inhibition and blocking.

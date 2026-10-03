@@ -233,3 +233,73 @@ def test_phases_propagate_within_one_tick():
     assert np.allclose(np.asarray(st.x[L.region("b")]), [np.tanh(2 * a), 0, np.tanh(2 * a)], atol=1e-5)
     L2, g2, st2 = run(mk(0), [1, 0, 1], n=2)                         # the synchronous brain gets there a tick later
     assert np.allclose(np.asarray(st2.x[L2.region("b")]), np.asarray(st.x[L.region("b")]), atol=1e-5)
+
+
+def test_tunable_hardwired_strength_scales_whole_projection():
+    from life.evolution import mutate
+    cfg = BrainConfig(regions=(R("a", 3, sign="exc", alpha=1.0), R("i", 2, sign="inh", alpha=1.0)),
+                      projections=(P("in", "a", density=1.0, w_init=-2.0, evolve=False, tune=True),
+                                   P("a", "i", density=1.0, w_init=1.5, evolve=False, tune=True),
+                                   P("i", "out", density=1.0, w_init=1.0, evolve=False)))
+    L = brain.build_layout(cfg, n_in=3, n_out=A.NUM_ACTIONS)
+    g = brain.init_genome(jax.random.PRNGKey(0), L)
+    ecfg = EvolutionConfig(tune_prob=1.0, tune_std=0.5, tune_range=3.0)
+    changed = 0
+    for seed in range(5):
+        m = mutate(jax.random.PRNGKey(seed), g, ecfg, L)
+        ia = np.asarray(m.w0[L.region("in"), L.region("a")])
+        ai = np.asarray(m.w0[L.region("a"), L.region("i")])
+        io = np.asarray(m.w0[L.region("i"), L.region("out")])
+        assert np.allclose(ia, ia[0, 0]) and -6.0 - 1e-5 <= ia[0, 0] <= -2.0 / 3 + 1e-5   # one factor, sign kept, in range
+        assert np.allclose(ai, ai[0, 0]) and 0.5 - 1e-5 <= ai[0, 0] <= 4.5 + 1e-5
+        assert np.allclose(io, 1.0)                                                   # hard-wired without tune: exact
+        changed += int(abs(ia[0, 0] + 2.0) > 1e-3)
+    assert changed >= 3
+
+
+def test_valence_programmes_fire_only_in_their_context():
+    # stage 1.1 brain with every evolved weight removed: only the hard-wired value -> programme -> motor circuit acts
+    from life.experiments import stages as S
+    from life.run import make_layout
+    s = S.STAGES["1.1"]
+    exp = S.make_exp(s, s.brain, "t", 1, 0)
+    L = make_layout(exp)
+    names = list(L.in_names)
+    g = brain.init_genome(jax.random.PRNGKey(0), L)
+    w0 = np.where(np.asarray(L.evolve_w) > 0, 0.0, np.asarray(g.w0))
+    mask = np.asarray(g.mask).copy()
+    b = np.where(np.asarray(L.evolve_b) > 0, 0.0, np.asarray(g.b))
+    app, av = L.region("valence_app"), L.region("valence_av")
+
+    def syn(feature, post, w):
+        i = names.index(feature)
+        w0[i, post], mask[i, post] = w, 1.0
+    syn("vis+0.app0", app.start, 3.0); syn("vis+0.app0", app.start + 1, 3.0)   # look 0, seen: valued
+    syn("held_app0", app.start + 2, 3.0)                                        # look 0, in hand: valued
+    syn("held_app1", av.start + 2, 3.0)                                         # look 1, in hand: bad
+    g = g._replace(w0=jnp.asarray(w0), mask=jnp.asarray(mask), b=jnp.asarray(b))
+
+    def react(near=0.0, seen=None, held=None):
+        o = np.zeros(L.n_in, np.float32)
+        if near:
+            o[names.index("vis+0.hit")], o[names.index("vis+0.near")] = 1.0, near
+        if seen is not None:
+            o[names.index(f"vis+0.app{seen}")] = 1.0
+        if held is not None:
+            o[names.index("held")], o[names.index(f"held_app{held}")] = 1.0, 1.0
+        st, act = brain.step(exp.brain, L, g, brain.init_state(g, L), jnp.asarray(o), NO, jax.random.PRNGKey(0))
+        return [float(st.x[L.region(r)][0]) for r in ("approach", "grasp", "ingest", "reject")], int(act)
+
+    on, off = 0.8, 0.05                                   # one tick is enough: the layers update in order (phases)
+    p, act = react(near=0.4, seen=0)                      # something valued at a distance: approach
+    assert p[0] > on and max(p[1:]) < off and act == A.FORWARD
+    p, act = react(near=0.8, seen=0)                      # the same thing adjacent, empty hand: grasp, no approach
+    assert p[1] > on and max(p[0], p[2], p[3]) < off and act == A.USE
+    p, _ = react(near=0.8)                                # something adjacent that is not valued: nothing
+    assert max(p) < off
+    p, act = react(held=0)                                # something valued in hand: ingest
+    assert p[2] > on and max(p[0], p[1], p[3]) < off and act == A.EAT
+    p, act = react(held=1)                                # something bad in hand: reject (USE puts it down), no eating
+    assert p[3] > on and max(p[:3]) < off and act == A.USE
+    p, act = react(near=0.8, seen=0, held=0)              # full hand next to a valued bush: eat, do not grasp
+    assert p[2] > on and p[1] < off and act == A.EAT

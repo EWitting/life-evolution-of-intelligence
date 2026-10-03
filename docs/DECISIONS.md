@@ -199,3 +199,58 @@ override them freely; when one does, add or amend an entry so the record stays c
     population keeps its lifetime in the new world (density does not help: time per meal is the limit).
   - Thermotaxis reads `skin_change` (change of the temperature at the agent's cell), the body temperature is slow,
     and neuromodulators can persist (`ModulatorSpec.decay`; serotonin 0.97).
+
+## ADR-019 Activity passes through the layers in order within a tick (2026-10-03)
+
+- Amends ADR-002 / ADR-007 (synchronous update). `RegionSpec.phase` (and `BrainConfig.out_phase`): a region reads
+  this tick's activity of regions with a lower phase and the previous tick's activity of everything else, so a
+  feedforward chain senses -> value and gate cells -> programmes -> motor neurons completes within one tick.
+  Recurrent connections still see the previous tick. All phases 0 = the old behaviour (default; tested).
+- Why: one tick is about a second of behaviour, a synapse takes milliseconds. Updating everything at once cost a
+  tick per layer: a programme reacted to what was sensed two ticks earlier and repeated its action after the
+  situation had changed (one berry per ~6 ticks; single-pick items were put down again).
+- Used from stage 1.0: ganglion, value, gate and drive cells phase 0, `no_feed` 1, programmes 2, motor neurons 3.
+
+## ADR-020 Value cells act on motor programmes; senses are routed by kind (2026-10-03)
+
+- Amends ADR-016. The valence stage (1.1) has **value cells** (appetitive, aversive; two cells each for what is
+  seen, one each for what is in hand) and **programme cells**, each with one motor meaning and a context that
+  permits it: approach (-> FORWARD; shut on contact), grasp (-> USE; only when something is adjacent ahead and the
+  hand is empty), ingest (-> EAT; only with something in hand), reject (-> USE; only with something in hand, driven
+  by aversion). Context is disinhibition by small gate cells. Aversion also turns the animal away and blocks eating.
+  USE both picks and puts down in OHOL, which is why grasp and reject are separate programmes.
+- Why: value added straight onto the motor neurons ignored the situation (a learned "good" came out as FORWARD
+  at an adjacent bush), and the decision with the user was to follow how small animals do it: value biases
+  programmes, consummatory acts are contact reflexes.
+- **Routing of the senses.** The ganglion and the motor neurons see the outside world (vision, the held item,
+  sound). Taste and pain reach the brain only through the value cells; food level and temperature only through the
+  drive cells of 1.2. What an object looks like stays available to the ganglion in parallel (not a bottleneck
+  through valence: the animal must be able to do different things with different objects).
+- **Hard-wired strengths are tunable** (`ProjectionSpec.tune`, set by `stages.fixed`): evolution may scale a whole
+  hard-wired projection by one factor within [1/3, 3] x the designed value; wiring and sign stay. At [0.1, 10] x it
+  turned the valence wiring down to ~0.15 x. Designed strengths are not assumed right: a pile-up at a bound means
+  the design, not evolution, should change. Delay lines and copies are not tunable.
+
+## ADR-021 Conditioning has two teachers; objects have eight appearance features (2026-10-02)
+
+- Supersedes the single `us` modulator of 1.5. `us_app` (taste) teaches the identity -> appetitive synapses with a
+  short eligibility trace, `us_av` (sickness) the identity -> aversive synapses with a long one; neither subtracts
+  from the other pathway (unlearning is the decay of 1.6). At 2.5 both hand over to the signed dopamine error
+  (`stages.to_dopamine`).
+- `VisionConfig.appearance_dim` is 8 in the stages (1 feature shared by a family of look-alikes + 7 for its colour).
+- Known gap: nothing keeps a learned aversion from spreading to familiar food that shares part of its look.
+  Latent inhibition and blocking are the candidates (to decide: in chapter 1 or with the prediction error of 2.5).
+
+## ADR-022 Population, siblings and how a design is checked (2026-10-03)
+
+- 256 agents on a 128 x 128 world = 64 genomes x 4 siblings (`EvolutionConfig.siblings`): each individual lives one
+  life, siblings are scattered independently, a genome's fitness is their mean. The dashboard records a 64-agent
+  sample in a 64 x 64 world. Warm-started stages run 150 generations.
+- One life is mostly luck (ADR-018 fitness: intraclass correlation ~0.18) and one round of mutation shifts fitness
+  by ~0.04 of the spread of a life, so evolution here can select large effects only. Consequences:
+  1. A design is checked in this order: brain-only assay, generation-0 paired test (mechanism on vs off in the
+     same worlds), and only then evolution (`scripts/probes/README.md`).
+  2. A single evolution run is never evidence for or against a small effect.
+  3. A stage succeeds when its circuit is used and main is not clearly worse than control (user, 2026-10-01).
+- Open, to decide with the user: fitness = energy acquired; recombination; a recovery benchmark for evolution
+  settings.

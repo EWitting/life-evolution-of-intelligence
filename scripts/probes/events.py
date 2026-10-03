@@ -39,7 +39,7 @@ cls = {}
 for b in bush:
     m = (ate == berry_of[b]) & al
     if m.sum():
-        cls[b] = "good" if np.median(dfood[m]) > 0 else "poison"
+        cls[b] = "poison" if np.median(dfood[m]) < -0.5 else "good"
 print(f"== {name} ({d.name}); types in this life: " + ", ".join(f"{tname(b)}={c}" for b, c in cls.items()))
 
 rows = {("poison", "before"): [], ("poison", "after"): [], ("good", "before"): [], ("good", "after"): []}

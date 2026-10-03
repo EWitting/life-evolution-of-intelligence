@@ -204,12 +204,12 @@ existing ganglion and the new module stays unused (stage 1.1 v1/v2 in `docs/STAG
   few interneurons (in *C. elegans*, AIY/AIZ-type interneurons bias forward runs vs turns; aversive cues suppress
   pharyngeal pumping). Bennett argues that valence, classifying the world into good and bad, is the original
   function of a brain.
-- **Adds (v18, ADR-020).** Value cells `valence_app` and `valence_av` (two cells each for what is seen, one each
-  for what is in hand; taste and pain enter the brain only here) acting on four motor programmes, each permitted
-  only in its context: `approach` (FORWARD; shut on contact), `grasp` (USE; something adjacent, empty hand),
-  `ingest` (EAT; something in hand), `reject` (USE; something bad in hand). Aversion also turns the animal away
-  and, through `no_feed`, blocks eating. Evolved input from object identity (appearance) and, separately, from
-  generic features (something there, near, wall), because only identity may later become a conditioned stimulus.
+- **Adds (v21, ADR-020, ADR-023).** Value cells `valence_app` and `valence_av` (two each; taste and pain enter the
+  brain only here) acting on a motor programme that is permitted only in its context: `grasp` (USE; something
+  adjacent ahead). Aversion turns the animal away and, through `no_feed`, blocks the bite. The animal eats what it
+  grasps; holding returns later (`stages.with_hands`: a value cell per sign for the thing in hand and an `ingest`
+  programme). Evolved input from object identity (appearance) and, separately, from generic features (something
+  there, near, wall), because only identity may later become a conditioned stimulus.
 - **World.** 6 berry types, 2 of them always poison (inheritable); more bushes so the good food stays constant.
 - **Result.** Clearly better than the control; valence lesions destroy foraging (STATUS).
 - **Confidence.** Medium. The valence/steering framing is Bennett's synthesis; the ancestor's anatomy is inferred.
@@ -261,11 +261,10 @@ existing ganglion and the new module stays unused (stage 1.1 v1/v2 in `docs/STAG
   is activity-dependent, modulator-gated plasticity: the synapse from the CS neuron is strengthened when
   it was recently active *and* the US modulator arrives. In insects this happens at the mushroom body
   output synapses, with dopamine neurons carrying the US (Aso, Rubin et al.).
-- **Adds (ADR-021).** US neurons `us_taste` and `us_pain` (hard-wired from the senses), each its own teacher:
-  taste (`us_app`) teaches the identity -> appetitive synapses about what was sensed just before (short eligibility
-  trace), sickness (`us_av`) teaches the identity -> aversive synapses about what was sensed up to several ticks
-  earlier (long trace): `dW = eta * teacher * trace(pre)`. One signed teacher with one long trace erased its own
-  lessons. Learning rates evolve per projection.
+- **Adds (ADR-021, ADR-023).** US neurons `us_taste` and `us_pain` (hard-wired from the senses), each its own
+  teacher: taste (`us_app`) teaches the identity -> appetitive synapses, pain (`us_av`) the identity -> aversive
+  ones, about what was sensed just before (short eligibility traces): `dW = eta * teacher * trace(pre)`. Pain is
+  immediate. Learning rates evolve per projection. Built directly on 1.1 (1.2-1.4 are parked).
 - **World (v5, ADR-017).** Two novel berry types get a new look every life and one of them is poison (on top
   of two ancestral good and two ancestral poison types); poison costs a whole berry; lives last 2000 ticks;
   sickness arrives 12 ticks after eating and fades quickly, so no reactive policy can use it.

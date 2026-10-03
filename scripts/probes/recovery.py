@@ -7,9 +7,10 @@ selection works; it does not need a setting's own fitness numbers to be comparab
 
     uv run python scripts/probes/recovery.py <stage key> <lane> <lanes> [generations] [seeds]
 
+DENSITY=<x> in the environment overrides the bush density of the run's world.
 Run one process per lane (lane = 0 .. lanes-1); together they cover all settings x seeds. Lines starting with
 'ROW' are results: setting, seed, generation, energy acquired, ticks alive, recovery of each in %."""
-import sys
+import os, sys
 from dataclasses import replace
 import jax, jax.numpy as jnp, numpy as np
 from life.config import ExperimentConfig
@@ -28,16 +29,16 @@ SETTINGS = {
     "energy acquired":                             ("eaten",    0.0, "neuron", 0.10, 0.10, 4),
     "energy + recombination (whole neurons)":      ("eaten",    1.0, "neuron", 0.10, 0.10, 4),
     "energy + recombination (blending)":           ("eaten",    1.0, "blend",  0.10, 0.10, 4),
-    "energy + few large mutations":                ("eaten",    0.0, "neuron", 0.02, 0.30, 4),
     "energy + recombination + few large mutations": ("eaten",   1.0, "neuron", 0.02, 0.30, 4),
     "energy + recombination, 256 genomes x 1":     ("eaten",    1.0, "neuron", 0.10, 0.10, 1),
-    "energy + recombination, 32 genomes x 8":      ("eaten",    1.0, "neuron", 0.10, 0.10, 8),
     "energy, every weight mutates (as stage 1.0)": ("eaten",    0.0, "neuron", 1.00, 0.10, 4),
 }
 
 s = S.STAGES[key]
 run = latest_run(s.name)
 exp = ExperimentConfig.from_json((run / "config.json").read_text())
+if "DENSITY" in os.environ:   # a richer or poorer world than the run's own
+    exp = replace(exp, world=replace(exp.world, spawn_density=float(os.environ["DENSITY"])))
 layout = make_layout(exp)
 intact = load_population(run)
 N = exp.world.num_agents

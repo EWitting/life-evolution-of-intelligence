@@ -254,3 +254,30 @@ override them freely; when one does, add or amend an entry so the record stays c
   3. A stage succeeds when its circuit is used and main is not clearly worse than control (user, 2026-10-01).
 - Open, to decide with the user: fitness = energy acquired; recombination; a recovery benchmark for evolution
   settings.
+
+## ADR-023 Energy fitness, recombination, a mouth before hands; cells must earn their place (2026-10-03)
+
+- Decided with the user after the v18 reflection; amends ADR-018, ADR-020, ADR-021, ADR-022.
+- **Fitness = energy acquired** (`stages.default_fitness`): all food eaten in a life, not capped by the stomach
+  (surplus becomes offspring); poison counts negative. The well-fed lifetime stopped rewarding an agent whose
+  stomach was full. It did not win the recovery benchmark; it is kept for having no ceiling.
+- **Recombination** (`EvolutionConfig.crossover` = 1 in the stages): a child takes every neuron (incoming weights,
+  presence, bias) from one of two parents, and every projection's rule genes and tunable strength likewise.
+  6-7% further than asexual reproduction in the recovery benchmark, in every seed.
+- **Bush density 0.14** in every critical-path stage: more food per agent roughly doubled the genome's share of
+  the variance between lives. The economy is not tuned further (user): running into the supply limit is what good
+  foragers do, and a converged population always shows a weak genome signal.
+- **Chapter-1 animals eat what they grasp** (`WorldConfig.eat_on_pick`). Pick, hold, then eat is OHOL's
+  formulation and holding is a late invention; it caused much of the valence stage's wiring. Holding returns as
+  its own stage with `stages.with_hands` (one value cell per sign for the thing in hand, an `ingest` programme and
+  its gate). Condition (user): a mouth-feeding lineage must be able to adapt; checked in side stage `x.hands`.
+- **Critical path**: 1.0 -> 1.1 -> 1.5 -> 1.6 -> chapter 2. Drives, affect and habituation (1.2-1.4) are a parked
+  side branch on top of 1.1.
+- **Learning rule** (1.5): two teachers, immediate pain, short traces on both pathways. With short traces each
+  teacher writes only about what was just bitten, which keeps a learned aversion specific. Delayed sickness (a long
+  aversive trace) is left for the prediction error of 2.5.
+- **Cells must earn their place.** A hard-wired cell that lesions show unused in every seed is removed, with a
+  comment where it was. Removed on that basis: the approach programme and contact gate (1.1), the reject programme
+  and full-hand gate (hands), the safety cell (1.5).
+- **A generation-0 test is a diagnostic, not a gate** (user): old and new parts may need evolution to tune to each
+  other, so main below control at generation 0 is a reason to look closer, not to stop.

@@ -766,3 +766,98 @@ behaviour in a form that fits the situation, (3) the world offers something only
 see the benefit. For learning we found and fixed (1) (two teachers) and (2) (programmes), built (3), and measured
 that (4) is weak. Still open in the learning stage: specificity (aversion spreads to the staple, which shares 45% of
 its look with novel foods); animals solve it with latent inhibition and blocking.
+
+
+---
+
+## v19-v21 (2026-10-03, afternoon): five decisions and the first learning stage that is used
+
+Decided with the user after the reflection at v18: fitness = energy acquired; recombination, chosen on a recovery
+benchmark; chapter-1 animals eat what they grasp (holding returns later); 1.2-1.4 parked; the learning rule kept
+simple. Later the same day: leave the food economy alone; a generation-0 result is a diagnostic, not a gate; drop
+cells that lesions show unused.
+
+### Selection signal and the food supply (`scripts/probes/world_size.py`)
+The stage-1.0 population (eat on grasp, bush density 0.07) left 57% of all bushes empty: fitness was a race for a
+fixed supply. The same population with more food per agent:
+
+| world | energy per life | lifetime | share of the variance between lives due to the genome |
+|---|---|---|---|
+| 128 x 128, density 0.07 | 69 | 614 | 0.08 |
+| 181 x 181, density 0.07 | 118 | 820 | 0.27 |
+| 256 x 256, density 0.07 | 128 | 805 | 0.39 |
+| 128 x 128, density 0.14 (adopted) | 139 | 853 | 0.35 |
+| 128 x 128, density 0.28 | 120 | 729 | 0.34 |
+
+A population evolved at 0.14 empties 60% of the bushes again and its genome share is 0.18 in its own world: better
+foragers always push to the supply limit. Accepted (user): no more tuning of the economy.
+
+### Recovery benchmark (`scripts/probes/recovery.py`): damaged stage-1.0 population, 40 generations, 3 seeds
+| setting | energy, poor world (0.07) | energy, rich world (0.14) | lifetime (rich) |
+|---|---|---|---|
+| well-fed lifetime, asexual (v18) | 65.2 | 163.7 | 871 |
+| energy acquired, asexual | 67.5 | 160.9 | 837 |
+| energy + recombination, whole neurons (adopted) | 68.6 | 171.4 [170 173 172] | 827 |
+| energy + recombination + few large mutations | 68.4 | 170.7 | 809 |
+| energy + recombination, blending | 71.0 | 169.8 | 816 |
+| energy + recombination, 256 genomes x 1 | 67.6 | 168.2 | 832 |
+| energy, every weight mutates (stage 1.0 from scratch) | 59.7 | 159.5 | 835 |
+
+- In the poor world every setting hits the supply ceiling. In the rich world recombination is 6-7% ahead of asexual
+  reproduction in every seed (seeds within +-2). The energy fitness is not better than the well-fed lifetime at
+  recovery; it is kept because it has no ceiling.
+- Mutating every weight is the worst setting: stage 1.0 now ends with 60 generations at 10% (`--init-from <run>
+  --mutation-prob 0.1`), which took it from 155 to 172 energy.
+
+### Chapter 1 on the new footing (64 genomes x 4 siblings, recombination, energy fitness, density 0.14, eat on grasp)
+| stage | main | control | head to head | note |
+|---|---|---|---|---|
+| 1.0 | 172 energy, lifetime 801, 88 meals per life | | | USE at a bush 90%, EAT never pressed, 6% camping |
+| 1.1, 3 seeds | 60.1 +-2.5 | 29.5 +-1.9 | +81 +-3 | poison share 0.09 vs 0.29 |
+
+1.1 lesions over three seeds (% of intact): valence_app 46, valence_av 52, no_feed 55, grasp 46, no_touch 59;
+ganglion_e 99, ganglion_i 102 (the ganglion is idle in this stage: steering is done by the sensor -> motor
+reflexes). An approach programme with a contact gate was unused in all three seeds (100, 100) and removed; energy
+unchanged (60.0 before, 60.1 after).
+
+- The control (no cells that receive pain or taste) eats poison at chance (0.29, 0.29, 0.30) in all three seeds.
+  It could learn to avoid poison by look, since looks are fixed, and an earlier control did (v16); under the current
+  conditions it does not within 150 generations. Not investigated further (user: move on).
+- In main most avoidance is by look before any bite (USE at 5% of poison bushes faced); the pain reflex is the
+  backup after a bite.
+- The 1.1 world is hard on the incoming population (24 energy on entry, 175 in its own world).
+
+### x.hands: can a mouth-feeding lineage adapt to pick, hold, eat?
+Two runs of 100 generations, the 1.1 population moved into a pick-then-eat world. With the hands extension: energy 2 -> 45 after ten generations -> 65 (first run, before trimming) and 10 -> 56 -> 67 (trimmed); the lineage reaches what it had with eat on grasp (60-63). With the plain 1.1 brain: 0 throughout in the first run, 2 -> 38 -> 66 in the second. Lesions of the trimmed extension: ingest 0%, grasp 0%, valence_app 0%, no_hold 55%, valence_av 39%. So the lineage can adapt; the ingest programme makes it reliable and fast, and is what the adapted animal uses.
+
+### Learning (1.5 on the 1.1 brain; immediate pain, short traces, two teachers)
+Assay on the 1.1 population (`scripts/probes/assay.py`, learning rate 0.3, two rounds of meals), USE when the bush
+is adjacent, before -> after: staple 79% -> 87% (100% after four more staple meals), novel good 29% -> 90%, novel
+poison 17% -> 0% (turns away 62%), innately avoided poison 0% -> 49% (it looks 80% like the staple; appetite learned
+for the staple spreads to it). Value cells after: staple 0.99 / 0.05, novel good 0.83 / 0.01, poison 0.86 / 0.66.
+At the starting rate 0.05 the same directions, small.
+
+Generation 0 (6 shared worlds): rate 0.05: energy 52 on / 52 off, poison berries 4.3 / 5.1; rate 0.3: 47 / 52,
+poison 2.4 / 5.1, good berries 25.0 / 29.5.
+
+Evolution, three seeds, 150 generations (trimmed brain, no safety cell):
+
+| | main | control |
+|---|---|---|
+| energy acquired | 43.6 +-0.8 [43.5 45.1 42.2] | 40.9 +-0.5 [41.9 40.8 40.0] |
+| head to head | +9.7 +-2.8 | |
+| poison share / pain / lifetime (of 2000) | 0.23 / 8.1 / 720 | 0.25 / 8.9 / 677 |
+
+Lesions (% of intact, per seed, mean): no_plasticity 103 96 92 (97); us_pain 94 92 90 (92); us_taste 105 106 101
+(104); valence_app 53, valence_av 34, no_feed 48, grasp 54, no_touch 48; ganglion 101 / 98.
+Evolved learning rates (start 0.05, cap 0.5): appetitive 0.28 / 0.36 / 0.35, aversive 0.05 / 0.11 / 0.08; genomes
+within a population range from 0 to the cap.
+
+- Main is ahead of control in both comparisons in every seed, by a small margin (about 7% energy).
+- The aversive half of the rule helps consistently (silencing the pain teacher costs 6-10% in every seed). The
+  appetitive half does not: silencing the taste teacher *raises* energy by 1-6%, although evolution raised its
+  learning rate sixfold. Likely the spread of learned appetite onto look-alike poison seen in the assay; a few
+  percent is below what selection can see.
+- Plasticity as a whole is therefore worth only about 3% (97% without it).
+- An earlier single seed with the safety cell (v20): main 45.1 vs control 39.2, head to head +20.6, no_plasticity
+  89%, us_pain 84%, us_taste 101%, safety 98%, rates 0.13 / 0.16.

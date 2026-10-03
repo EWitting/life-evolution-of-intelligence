@@ -24,7 +24,8 @@ for name in sys.argv[1:]:
     cls = {}
     for b in bush:
         m = (ate == b + 1) & al
-        cls[b] = ("good" if np.median(dfood[m]) > 0 else "poison") if m.sum() >= 3 else "never eaten (dud or avoided)"
+        # poison costs more than a tick of hunger; a good berry on a full stomach only shows the hunger
+        cls[b] = ("poison" if np.median(dfood[m]) < -0.5 else "good") if m.sum() >= 3 else "never eaten (dud or avoided)"
     print(f"\n== {name} ({d.name}), {N} recorded agents; lifetime mean {alive.sum(0).mean():.0f}")
 
     def show(label, m):

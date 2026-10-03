@@ -37,11 +37,26 @@ silenced, % of intact, mean over seeds.
 | 2.1-2.5, x.td | tectum, pallium, basal ganglia, dopamine TD | defined on the new path, older design | To revisit: per-life pallium weights (ADR-017), holding before 2.6, delayed sickness with the prediction error. |
 | 2.6-2.10, 3.x-5.x | actor, curiosity, hippocampus, cerebellum; simulating, mentalizing, speaking | planned | |
 
-## Next steps
+## Next steps: finalizing chapter 1 (plan agreed 2026-10-03)
 
-1. Stage 1.6 (reversal) on the 1.5 lineage: assay, generation 0, three seeds.
-2. Chapter 2, starting with a review of 2.1-2.5 against today's architecture (programme cells, phases, two teachers).
-3. Decide where holding returns (before 2.6, which needs carried tools) and whether the parked stages rejoin.
+Per stage, three seeds: **used** (silencing the new cells costs energy in every seed), **not worse** (main at or
+above control within one standard error, summary and head to head), **no regression** (the population does as well
+in the previous stage's world as the previous population).
+
+1. Stage 1.6 (reversal): three seeds running. Seed 0: plasticity 100, taste teacher 104, pain teacher 98. If the
+   other seeds agree, learning is frozen at 1.5 and the taste teacher is removed (appetitive learning returns with
+   the reward prediction error in chapter 2).
+2. Unpark drives, affect and habituation, **appended after the learning stages**, each rebuilt on today's
+   architecture with one design pass (generation-0 measurement of what the mechanic costs, then three seeds). A
+   module that stays unused is left out of the frozen brain, unless later stages need the brain to have developed
+   with it (the need state for reward valuation, the modulator systems); such a module is kept and worked on.
+3. Final trim: the idle ganglion (decide after drives), designed strengths moved to where evolution put them.
+4. One clean rerun of the whole chain at the frozen settings, three seeds, plus a chapter exam (every stage's
+   population in every earlier world).
+5. Freeze: a configuration snapshot test per stage, stored final populations, a git tag, one reference table, a list
+   of known side paths. Then the review of chapter 2.
+
+Learning at its present strength is accepted as final if it is significant over seeds (user, 2026-10-03).
 
 ## Known issues and open points
 

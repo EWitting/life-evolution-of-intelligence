@@ -62,6 +62,7 @@ class BodyConfig:
     skin_change: bool = False        # change over the last tick of the temperature *at the agent's cell* x 10: the
                                      # spatial gradient along its path (thermosensory neurons such as C. elegans
                                      # AFD respond to changes of the ambient temperature)
+    skin: bool = False               # the temperature at the agent's cell, in [0, 1] (the body's own follows slowly)
 
 
 @dataclass(frozen=True)

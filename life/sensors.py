@@ -33,6 +33,8 @@ def body_names(v: VisionConfig, b: BodyConfig | None = None) -> list[str]:
         names.append("temp_change")
     if b.skin_change:
         names.append("skin_change")
+    if b.skin:
+        names.append("skin")
     if b.efference:
         names += [f"efc_{a}" for a in A.NAMES]
     return names
@@ -74,7 +76,7 @@ def observe_all(v: VisionConfig, w: WorldConfig, rules: RuleArrays, state: World
     occ = jnp.zeros((H, W), jnp.int32).at[state.pos[:, 0], state.pos[:, 1]].add(state.alive.astype(jnp.int32))
     cols = jnp.arange(v.columns)
 
-    def one(pos, d, held, food, age, pain, taste, temp, dtemp, dskin, last):
+    def one(pos, d, held, food, age, pain, taste, temp, dtemp, dskin, skin, last):
         cells = pos[None, None, :] + offsets[d]                       # [W, R, 2]
         inb = ((cells >= 0) & (cells <= bounds)).all(axis=-1)        # [W, R]
         cc = jnp.clip(cells, 0, bounds)
@@ -100,12 +102,14 @@ def observe_all(v: VisionConfig, w: WorldConfig, rules: RuleArrays, state: World
             parts.append(50.0 * dtemp[None])
         if b.skin_change:
             parts.append(10.0 * dskin[None])
+        if b.skin:
+            parts.append(skin[None])
         if b.efference:
             parts.append(jax.nn.one_hot(last, A.NUM_ACTIONS, dtype=jnp.float32))
         return vision, jnp.concatenate(parts).astype(jnp.float32)
 
     vision, body = jax.vmap(one)(state.pos, state.dir, state.held, state.food, state.age, state.pain, state.taste,
-                                 state.temp, state.temp_delta, state.skin_delta, state.last_action)
+                                 state.temp, state.temp_delta, state.skin_delta, state.skin, state.last_action)
     delta = jnp.abs(state.pos[:, None, :] - state.pos[None, :, :]).max(axis=-1)   # [N, N] Chebyshev
     n = state.pos.shape[0]
     within = (delta <= w.hear_radius) & ~jnp.eye(n, dtype=bool)

@@ -340,8 +340,8 @@ def test_hands_extension_adds_ingest():
     assert max(p) < off and act != A.EAT
 
 
-def test_two_teachers_move_only_their_own_synapses():
-    # 1.5: taste teaches the appetitive synapses, pain the aversive ones, about what was just in view
+def test_pain_teaches_only_the_aversive_synapses():
+    # 1.5: pain teaches the identity -> aversive synapses about what was just in view; appetite is inherited
     exp, L, names, syn, genome = _bare("1.5")
     app, av = L.region("valence_app"), L.region("valence_av")
     i = names.index("vis+0.app1")
@@ -356,7 +356,7 @@ def test_two_teachers_move_only_their_own_synapses():
         return float(st.w[i, app.start]) - 0.5, float(st.w[i, av.start]) - 0.5
 
     d_app, d_av = after(taste=3.0)
-    assert d_app > 0.01 and abs(d_av) < 1e-6              # a good meal: more appetite, aversion untouched
+    assert abs(d_app) < 1e-6 and abs(d_av) < 1e-6         # a good meal: nothing is learned in chapter 1
     d_app, d_av = after(pain=1.0)
     assert d_av > 0.01 and abs(d_app) < 1e-6              # a poisoning: more aversion, appetite untouched
     d_app, d_av = after()

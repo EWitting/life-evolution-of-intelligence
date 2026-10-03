@@ -81,16 +81,17 @@ def stage(s: Stage) -> Stage:
 
 
 def default_fitness(stats):
-    """Energy acquired (ADR-018, amended 2026-10-03): all the food an individual ate in its life, not capped by its
-    stomach: what it cannot store becomes offspring. Poison counts negative, and an animal that never eats scores
-    zero however slowly it burns its birth reserve. (v6-v18 used the well-fed lifetime, `fitness_fed_meal`: it
-    stopped rewarding an agent whose stomach was full and separated genomes 15-30% less well.)"""
-    return stats["eaten"]
-
-
-def fitness_fed_meal(stats):
-    """Well-fed lifetime from the first meal (the fitness of v6-v18), kept for comparisons."""
+    """Well-fed lifetime from the first meal (v6-v18, and again from v23): the stomach level, as a fraction of full,
+    summed over the ticks alive after the first meal. An animal that never eats scores zero. Survival is what counts,
+    so a bite on a full stomach earns nothing and cold, which burns the reserve faster, costs in proportion. (v19-v22
+    used energy acquired, `fitness_energy`: with recombination the two repair a damaged population equally well,
+    STAGE_LOG v23, but energy acquired pays for every bite, hungry or not, so no need state can be selected.)"""
     return stats["fed_meal"]
+
+
+def fitness_energy(stats):
+    """Energy acquired (the fitness of v19-v22), kept for comparisons: all food eaten, not capped by the stomach."""
+    return stats["eaten"]
 
 
 def fitness_v4(stats):
@@ -495,9 +496,11 @@ stage(Stage("1.4", "s1_4_habituation", "1.3", B14, W14, VISION_CH1, BODY_12, dud
 # memorise: besides one ancestral good type and one ancestral poison type (fixed looks, so innate preferences
 # still pay), four *novel* types get a new look every life and two of them are poison. Familiar food keeps a
 # non-learner alive; novel food is what a learner can add.
-# Rule: dW = eta * teacher * trace(pre) on the identity -> value synapses, with two teachers:
-#   taste teaches the appetitive synapses, pain the aversive ones.
-# Pain is immediate and both eligibility traces are short, so each teacher writes only about what was just bitten.
+# Rule: dW = eta * teacher * trace(pre) on the identity -> aversive synapses, with pain as the teacher. Pain is
+# immediate and the eligibility trace short, so the teacher writes only about what was just bitten.
+# (A second teacher, taste on the identity -> appetitive synapses, was part of v19-v22 and removed: silencing it
+# left fitness at or above intact in all six seeds of 1.5 and 1.6. Appetitive learning returns with the reward
+# prediction error of chapter 2; CS_MOD keeps both names for that.)
 # (A 'safety' cell that subtracted from the aversive teacher after a good meal of something mistrusted was tried:
 # silencing it changed nothing, 98% of intact, so it is not part of the brain.) Sickness that arrives several ticks after eating needs
 # a longer aversive trace (CS_ELIG_SICK) and is left for the prediction error of 2.5.
@@ -506,13 +509,14 @@ CS_ELIG = {"valence_app": 0.5, "valence_av": 0.5}   # eligibility decay per tick
 CS_ELIG_SICK = 0.92   # aversive trace for delayed sickness (not used on the main path)
 CS_MOD = {"valence_app": "us_app", "valence_av": "us_av"}
 CS_MODS = tuple(CS_MOD.values())
+CS_TAUGHT = ("valence_av",)   # value cells whose identity synapses learn in chapter 1
 
 
-def _split_cs(projections):
-    """in[identity features] -> value cells becomes plastic and US-gated: dW = eta * teacher * trace(pre)."""
+def _split_cs(projections, taught=CS_TAUGHT):
+    """in[identity features] -> the taught value cells becomes plastic and US-gated: dW = eta * teacher * trace(pre)."""
     out = []
     for p in projections:
-        if p.src == "in" and p.src_select in (CS_VIS, CS_HELD) and p.dst in VAL:
+        if p.src == "in" and p.src_select in (CS_VIS, CS_HELD) and p.dst in taught:
             out.append(replace(p, rule="hebb", modulator=CS_MOD[p.dst], eta_init=CS_ETA, elig_tau=CS_ELIG[p.dst],
                                abcd=(0.0, 1.0, 0.0, 0.0)))
         else:
@@ -521,11 +525,9 @@ def _split_cs(projections):
 
 
 B15 = extend(B11,
-             regions=(R("us_taste", 1, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, group="us"),
-                      R("us_pain", 1, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, group="us")),
-             projections=(P("in", "us_taste", src_select=("taste",), density=1.0, w_init=2.0, evolve=False),
-                          P("in", "us_pain", src_select=("pain",), density=1.0, w_init=2.0, evolve=False)),
-             modulators=(Mod("us_app", pos="us_taste"), Mod("us_av", pos="us_pain")))
+             regions=(R("us_pain", 1, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, group="us"),),
+             projections=(P("in", "us_pain", src_select=("pain",), density=1.0, w_init=2.0, evolve=False),),
+             modulators=(Mod("us_av", pos="us_pain"),))
 B15 = replace(B15, projections=_split_cs(B15.projections))
 W15 = W11
 LIFE_LEARN = 2000     # ticks per life in the learning stages
@@ -548,7 +550,7 @@ def learning_world(exp, reverse: bool = False, springs: float = 0.0):
 
 stage(Stage("1.5", "s1_5_association", "1.1", B15, W15, VISION_CH1, BODY_TASTE, learning_world,
             row_extra=poison_metrics, plastic=True, generations=150, ticks=LIFE_LEARN,
-            notes="conditioning with two teachers (taste, pain); novel foods per life; immediate pain"))
+            notes="aversive conditioning (pain teaches the identity -> aversive synapses); novel foods per life"))
 
 
 # 1.6 extinction and reversal: the learned weights now relax back toward their inherited values (a fast,
@@ -561,6 +563,15 @@ stage(Stage("1.6", "s1_6_reversal", "1.5", B16, W16, VISION_CH1, BODY_TASTE, lam
             notes="reversal learning: learned weights decay toward w0; the novel types swap meaning mid-life"))
 
 
+# Chapter 2 (older design, to be reviewed) is written for a brain with both teachers: the taste teacher that chapter 1
+# dropped is added back here, on the reversal brain.
+B16_TASTE = extend(B16, regions=(R("us_taste", 1, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, group="us"),),
+                   projections=(P("in", "us_taste", src_select=("taste",), density=1.0, w_init=2.0, evolve=False),),
+                   modulators=(Mod("us_app", pos="us_taste"),))
+B16_TASTE = replace(B16_TASTE, projections=tuple(
+    replace(q, decay=0.003) if q.modulator in CS_MODS else q for q in _split_cs(B16_TASTE.projections, taught=VAL)))
+
+
 # ================================================================== chapter 2: reinforcing (early vertebrates)
 
 # camera eyes: 9 columns over 120 degrees, range 6. Columns at -60, -30, 0, 30, 60 keep their names (and so their
@@ -569,7 +580,7 @@ VISION_CH2 = VisionConfig(columns=9, fov_degrees=120.0, range=6, appearance_dim=
 
 # 2.1 optic tectum: a retinotopic map (2 neurons per vision column) with a pool of inhibitory interneurons for
 # competition between targets, projecting to the motor neurons (orienting) and the ganglion.
-B21 = extend(B16,
+B21 = extend(B16_TASTE,
              regions=(R("tectum", 18, sign="exc", group="midbrain/tectum"), R("tectum_i", 3, sign="inh", group="midbrain/tectum")),
              projections=(P("in", "tectum", src_select=("vis*",), topology="topographic", groups=9, density=1.0),
                           P("tectum", "tectum_i", density=1.0), P("tectum_i", "tectum", density=1.0),
@@ -676,7 +687,7 @@ stage(Stage("2.5", "s2_5_dopamine_td", "2.4", B25, W22, VISION_23, BODY_TASTE, x
 # x.td (side experiment, not part of the lineage): does error-driven TD learning fix the over-generalisation of
 # 1.5/1.6 conditioning? The 1.6 brain plus only the TD critic of 2.5 (value populations from identity features,
 # dopamine replacing the raw US as teacher), in the 1.6 world; control = the 1.6 brain.
-BXTD = extend(B16,
+BXTD = extend(B16_TASTE,
               regions=(R("value_app", 3, **VALUE), R("value_av", 3, **VALUE),
                        R("value_app_prev", 3, **VALUE), R("value_av_prev", 3, **VALUE)),
               projections=(td_plastic("in", "value_app", CS_SEL), td_plastic("in", "value_av", CS_SEL),

@@ -1,0 +1,227 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Evolving a brain, stage by stage",
+    "section": "",
+    "text": "Introduction\nThis book follows one experiment: growing a brain in a simulation, one piece at a time, in roughly the order in which brains are thought to have evolved.\nEach stage adds a small circuit to the brain of the previous stage and changes the world so that the new circuit has something to be good for. Evolution then gets a number of generations to put the circuit to use. A page of this book is the report of one stage: what was added and why, the biology it is modelled on, and what happened.",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "index.html#the-animals-and-their-world",
+    "href": "index.html#the-animals-and-their-world",
+    "title": "Evolving a brain, stage by stage",
+    "section": "The animals and their world",
+    "text": "The animals and their world\nThe animals live on a grid. Each has a stomach that empties a little every tick (one tick is about a second of behaviour) and faster when it moves. An animal whose stomach is empty dies. Food grows on bushes; an eaten bush regrows after a while.\nThe objects, their names and their pictures come from the game One Hour One Life. The simulation uses a small slice of the game’s rules at each stage and a larger one as the brain grows.\nAn animal senses the world through a few coarse “eyes”: a handful of directions, in each of which it sees whether something is there, how near it is, and what it looks like. What something looks like is a short list of numbers, its appearance. It can step forward, turn left or right, and grasp what is in front of it.",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "index.html#the-brain",
+    "href": "index.html#the-brain",
+    "title": "Evolving a brain, stage by stage",
+    "section": "The brain",
+    "text": "The brain\nThe brain is a network of model neurons. A neuron has an activity between 0 and 1 and passes it on through synapses, each with a strength. A neuron is either excitatory (it raises the activity of the neurons it reaches) or inhibitory (it lowers it), never both. Neurons are grouped into regions, and a projection is the set of synapses from one region to another.\nSome projections are evolved: which synapses exist and how strong they are is inherited, with mutations, and shaped by selection. Others are hard-wired: they are designed, and evolution can only make the whole projection stronger or weaker. A hard-wired projection gives a group of neurons a fixed meaning, such as “this hurts”, that later stages can build on.",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "index.html#how-evolution-runs",
+    "href": "index.html#how-evolution-runs",
+    "title": "Evolving a brain, stage by stage",
+    "section": "How evolution runs",
+    "text": "How evolution runs\nA population is 64 genomes. Each genome lives as four siblings in a shared world, once. The genomes that did best have children, each from two parents, with a few mutations. That is one generation.\nFitness is what selection rewards. Here it is the well-fed lifetime: how long the animal lived, counted from its first meal, with each tick weighted by how full its stomach was. An animal that never eats scores zero.",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "index.html#how-a-stage-is-judged",
+    "href": "index.html#how-a-stage-is-judged",
+    "title": "Evolving a brain, stage by stage",
+    "section": "How a stage is judged",
+    "text": "How a stage is judged\nOne life is mostly luck, and one evolution run can end almost anywhere. So every stage is run three times with different random seeds, and every result is given as a mean with its standard error over those seeds.\nEach stage has a main run, with the new circuit, and a control: the brain of the previous stage in the same new world, starting from the same population. The new circuit is then the only difference between them.\nA stage succeeds when two things hold:\n\nThe circuit is used. The final population is put back in its world with the new neurons silenced. If the animals do clearly worse without them, in every seed, they were using them. This is called a lesion test.\nMain is not worse than control. It does not have to be better. The point of a stage is a circuit that later stages can build on.\n\nA circuit that is not used is left out of the brain, and the page says so.",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "index.html#how-to-read-a-stage-page",
+    "href": "index.html#how-to-read-a-stage-page",
+    "title": "Evolving a brain, stage by stage",
+    "section": "How to read a stage page",
+    "text": "How to read a stage page\nEvery page has the same parts: the idea and its biology, the circuit as a diagram, the results, and the list of runs behind them, with a link to a dashboard that replays the last generation of a run. Where it helps, a page zooms in on one animal over a few dozen ticks, so that you can watch the circuit work.\nThe numbers, graphs and diagrams are drawn from data files that are written when a stage is run. Only the text is written by hand.",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "1-0-steering.html",
+    "href": "1-0-steering.html",
+    "title": "1.0 Steering",
+    "section": "",
+    "text": "The brain\nA ganglion of excitatory and inhibitory interneurons between the senses and the motor neurons, and direct reflex arcs from senses to motor neurons. Every synapse is evolved. The animal sees the outside world only.",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>1.0 Steering</span>"
+    ]
+  },
+  {
+    "objectID": "1-0-steering.html#results",
+    "href": "1-0-steering.html#results",
+    "title": "1.0 Steering",
+    "section": "Results",
+    "text": "Results",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>1.0 Steering</span>"
+    ]
+  },
+  {
+    "objectID": "1-0-steering.html#the-runs-behind-this-page",
+    "href": "1-0-steering.html#the-runs-behind-this-page",
+    "title": "1.0 Steering",
+    "section": "The runs behind this page",
+    "text": "The runs behind this page",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>1.0 Steering</span>"
+    ]
+  },
+  {
+    "objectID": "1-1-valence.html",
+    "href": "1-1-valence.html",
+    "title": "1.1 Valence: good and bad",
+    "section": "",
+    "text": "The world: two kinds of berry are poison\nThe animal of the previous stage steers by reflex. What it sees is wired, through a small ganglion, straight to its motor neurons. It has no way of knowing what happened after it bit something.\nThis stage gives it that. It adds a handful of neurons that stand for this is good and this is bad, and puts food in the world that is bad to eat.\nThere are now six kinds of berry bush instead of four. They look alike, in the way that different berries look alike: each kind has the shape of a bush and its own colour.\nFour kinds are food. Two are poison, and always the same two. Eating a poison berry empties the stomach by about as much as a good berry fills it, and it hurts for a moment.\nBecause the same two kinds are poison in every life, nothing has to be learned during a life. Which colours to avoid can be inherited. Learning it within a life is the subject of a later stage.",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>1.1 Valence: good and bad</span>"
+    ]
+  },
+  {
+    "objectID": "1-1-valence.html#the-biology-valence",
+    "href": "1-1-valence.html#the-biology-valence",
+    "title": "1.1 Valence: good and bad",
+    "section": "The biology: valence",
+    "text": "The biology: valence\nIn small animals, most sensory neurons fall into two classes. Some respond to things worth approaching, such as the smell of food. Others respond to things worth avoiding, such as a harmful chemical or a hard touch on the nose. The two classes converge onto a few interneurons that bias the animal towards carrying on or turning away.\nValence is the name for this sorting of the world into good and bad. In the worm C. elegans, a much-studied animal with 302 neurons, harmful stimuli do two things at once: they trigger a turn, and they stop the pumping of the throat with which the worm feeds. Max Bennett argues that this sorting is what the first brains were for.\nThe worm is only a stand-in. The animal that this chapter is about, the common ancestor of animals with a left and a right side, left no nervous system to look at.",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>1.1 Valence: good and bad</span>"
+    ]
+  },
+  {
+    "objectID": "1-1-valence.html#the-circuit",
+    "href": "1-1-valence.html#the-circuit",
+    "title": "1.1 Valence: good and bad",
+    "section": "The circuit",
+    "text": "The circuit\nFive new groups of neurons, each with a meaning that is fixed by its wiring:\n\nvalence_app, the appetitive cells: active when something is good. The sense of taste is hard-wired to them, and reaches the brain nowhere else.\nvalence_av, the aversive cells: active when something is bad. Pain is hard-wired to them, and reaches the brain nowhere else.\ngrasp, a motor programme: when it fires, the animal bites what is in front of it.\nno_touch, a gate: an inhibitory cell that is active whenever nothing is directly ahead, and holds grasp shut.\nno_feed: an inhibitory pair driven by the aversive cells, which blocks the bite.\n\nTaste and pain are unconditioned signals: they mean good and bad without any experience. But they arrive only after the bite. To act in time, the value cells also get input from the eyes, and that input is evolved. Over generations, the look of a poison berry comes to excite the aversive cells before anything has been eaten.\nValue does not move the animal by itself. The appetitive cells excite grasp, but grasp can only fire when no_touch is silent, that is, when something is within reach. Releasing an action by switching off its inhibition is called disinhibition, and it is a common arrangement in real nervous systems. Here it makes a value turn into the right action for the situation: bite when the good thing is in front of the mouth, and not before.\nThe aversive cells do what the worm does. They drive the motor neurons for turning, and through no_feed they shut down biting.\n\n\n\nHover over a box or an arrow for details. The dark arrows are the designed wiring described above. The grey ones were left to evolution.",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>1.1 Valence: good and bad</span>"
+    ]
+  },
+  {
+    "objectID": "1-1-valence.html#watching-it-work",
+    "href": "1-1-valence.html#watching-it-work",
+    "title": "1.1 Valence: good and bad",
+    "section": "Watching it work",
+    "text": "Watching it work\nBelow is one animal from the last generation, around the moment it bites a poison berry.\nStep through it one tick at a time. At the bite, nothing in the brain has changed yet: the pain arrives with the next tick. Then the pain sense is on, both aversive cells fire, no_feed switches on and grasp falls silent. The animal turns away. A few ticks later the pain has faded and it is eating again.\n\n\n\nNothing was learned here. The animal will react in the same way the next time. What stops it from biting poison often is the evolved input from the eyes, which acts before the bite.",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>1.1 Valence: good and bad</span>"
+    ]
+  },
+  {
+    "objectID": "1-1-valence.html#results",
+    "href": "1-1-valence.html#results",
+    "title": "1.1 Valence: good and bad",
+    "section": "Results",
+    "text": "Results\n\nIs main worse than control?\nThe control is the brain of stage 1.0 in this world. It cannot feel pain or taste at all, so it can only avoid poison if evolution happens to wire the look of the poison berries to turning away.\n\n\n\n\n\n\nThe three rows measure the same thing with less and less noise. The first is taken from the generations as they ran. The second gives every final population the same eight worlds. In the third, main and control animals live together and compete for the same bushes, so a difference cannot come from one population having had an easier world.\n\n\nIs the circuit used?\n\n\n\nRead this chart region by region. A short bar means the animals depended on that region. A bar near 100 means they did as well without it, and three dots far apart mean the seeds disagree.\n\n\n\n\n\n\nNoteWhat did not work: appetite on a full stomach\n\n\n\nIn the runs where animals are born with a full stomach, the aversive side is used and the appetitive side is not: silencing valence_app, no_touch or grasp leaves the animals as well off as before. The reason is that the appetitive side makes the animal bite whenever food is in reach, hungry or not, and a bite on a full stomach earns nothing under a fitness that counts being well fed. Nothing in this brain can sense hunger yet.\nThis note describes the born-full runs. If the chart above shows those three bars well below 100, the stage has been rerun with animals born a quarter full, and this note is due for rewriting.",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>1.1 Valence: good and bad</span>"
+    ]
+  },
+  {
+    "objectID": "1-1-valence.html#the-runs-behind-this-page",
+    "href": "1-1-valence.html#the-runs-behind-this-page",
+    "title": "1.1 Valence: good and bad",
+    "section": "The runs behind this page",
+    "text": "The runs behind this page",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>1.1 Valence: good and bad</span>"
+    ]
+  },
+  {
+    "objectID": "1-5-association.html",
+    "href": "1-5-association.html",
+    "title": "1.5 Association: learning what is bad",
+    "section": "",
+    "text": "The brain\nSome kinds of berry now look different in every life, so no inherited synapse can know them. Pain teaches the synapses from what was just bitten to the aversive cells.",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>1.5 Association: learning what is bad</span>"
+    ]
+  },
+  {
+    "objectID": "1-5-association.html#results",
+    "href": "1-5-association.html#results",
+    "title": "1.5 Association: learning what is bad",
+    "section": "Results",
+    "text": "Results",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>1.5 Association: learning what is bad</span>"
+    ]
+  },
+  {
+    "objectID": "1-5-association.html#the-runs-behind-this-page",
+    "href": "1-5-association.html#the-runs-behind-this-page",
+    "title": "1.5 Association: learning what is bad",
+    "section": "The runs behind this page",
+    "text": "The runs behind this page",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>1.5 Association: learning what is bad</span>"
+    ]
+  },
+  {
+    "objectID": "drives.html",
+    "href": "drives.html",
+    "title": "Drives: hunger and cold",
+    "section": "",
+    "text": "Note\n\n\n\nThis stage is still being designed. Its page will be written when the stage is frozen.",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Drives: hunger and cold</span>"
+    ]
+  },
+  {
+    "objectID": "affect.html",
+    "href": "affect.html",
+    "title": "Affect: dwelling and roaming",
+    "section": "",
+    "text": "Note\n\n\n\nThis stage is still being designed. Its page will be written when the stage is frozen.",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Affect: dwelling and roaming</span>"
+    ]
+  },
+  {
+    "objectID": "habituation.html",
+    "href": "habituation.html",
+    "title": "Habituation",
+    "section": "",
+    "text": "Note\n\n\n\nThis stage is still being designed. Its page will be written when the stage is frozen.",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>Habituation</span>"
+    ]
+  }
+]

@@ -631,6 +631,39 @@ stage(Stage("1.5f", "s1_5_association_fwd", "1.1l", B15F, W15, VISION_CH1, BODY_
             notes="1.5 with only the eye pointing ahead learning (variant)"))
 
 
+# 1.7 drives (trial, v29): two need cells and a warmth mode, on the learning brain. The circuit is the one that won
+# the generation-0 probe (`scripts/probes/drives.py`, STAGE_LOG v23 and 2026-10-08):
+#   cold       fires while the skin is colder than about 0.47 (max(0, tanh(3.3 - 7 skin)));
+#   warm_seek  cold -> FORWARD: keep moving while it is cold (orthokinesis; no gradient, no sight of the spring);
+#   rest       an inhibitory cell that fires where it is warm and holds FORWARD back: stay;
+#   hungry     an inhibitory cell that fires below two thirds of a stomach and shuts warm_seek and rest: forage when
+#              hungry, look after warmth when fed. Without it the warmth seeker starves.
+# New here: `hungry` also gets evolvable synapses (starting at zero) onto the grasp programme, the bite block, the
+# appetitive cells and the ganglion, so evolution can make feeding depend on hunger (user, 2026-10-07: not
+# hard-wired). The cell is inhibitory, so it can only release or hold back: for example release the bite block.
+# World: the 1.5 world made cold (ambient 0.25), with a few hot springs; the cold makes the body burn more.
+DRIVE_HYP = dict(alpha=0.5, evolve_bias=False, group="hypothalamus")
+B17 = extend(B15,
+             regions=(R("cold", 1, sign="exc", bias=3.3, **DRIVE_HYP),
+                      R("warm_seek", 1, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, group="thermotaxis"),
+                      R("rest", 1, sign="inh", bias=-3.3, **DRIVE_HYP),
+                      R("hungry", 1, sign="inh", bias=6.0 * 0.67, **DRIVE_HYP)),
+             projections=(fixed("in", "cold", -7.0, src_select=("skin",)),
+                          fixed("cold", "warm_seek", 3.0), fixed("warm_seek", "out", 3.0, dst_range=FWD),
+                          fixed("in", "rest", 7.0, src_select=("skin",)), fixed("rest", "out", 9.0, dst_range=FWD),
+                          fixed("in", "hungry", -6.0, src_select=("food",)),
+                          fixed("hungry", "warm_seek", 6.0), fixed("hungry", "rest", 6.0),
+                          *(P("hungry", d, density=1.0, w_init=0.0) for d in
+                            ("grasp", "no_feed", "valence_app", "ganglion_e", "ganglion_i"))))
+BODY_17 = BodyConfig(taste=True, temperature=True, skin_change=True, skin=True)
+W17 = replace(W15, temperature=True, ambient_temp=0.25, heat_scale=0.15, heat_radius=4, temp_rate=0.03, temp_hunger=1.5)
+SPRINGS_17 = 0.1      # spawn weight of hot springs (a bush type: 1)
+stage(Stage("1.7", "s1_7_drives", "1.5", B17, W17, VISION_CH1, BODY_17,
+            lambda exp: learning_world(exp, springs=SPRINGS_17, berries=LEARN_BERRIES), **_S15,
+            notes="TRIAL: cold and hungry need cells, warmth by kinesis, hunger decides between foraging and warmth; "
+                  "the 1.5 world made cold with hot springs"))
+
+
 # 1.6 extinction and reversal: the learned weights now relax back toward their inherited values (a fast,
 # forgetting component), so an association that stops being renewed fades and a new one can take over. World: the
 # novel types swap their meaning halfway through life.

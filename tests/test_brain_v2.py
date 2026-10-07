@@ -340,27 +340,24 @@ def test_hands_extension_adds_ingest():
     assert max(p) < off and act != A.EAT
 
 
-def test_pain_teaches_the_aversive_synapses_and_safety_takes_it_back():
-    # 1.5: pain teaches the identity -> aversive synapses about what was just in view; a good meal of something the
-    # aversive cells expected to be bad (the safety cell) lowers them again; appetite is inherited
+def test_pain_teaches_only_the_aversive_synapses():
+    # 1.5: pain teaches the look -> aversive synapses about what was just in view; appetite is inherited
     exp, L, names, syn, genome = _bare("1.5")
     app, av = L.region("valence_app"), L.region("valence_av")
     i = names.index("vis+0.app1")
+    syn("vis+0.app1", app.start, 0.5); syn("vis+0.app1", av.start, 0.5)
+    g = genome()
     look = dict(near=0.8, seen=1)
 
-    def after(w_av, **outcome):
-        syn("vis+0.app1", app.start, 0.5); syn("vis+0.app1", av.start, w_av)
-        g = genome()
+    def after(**outcome):
         st = brain.init_state(g, L)
         for o in (_obs(L, names, **look), _obs(L, names, **outcome, **look), _obs(L, names, **look)):
             st, _ = brain.step(exp.brain, L, g, st, o, NO, jax.random.PRNGKey(0))
-        return float(st.w[i, app.start]) - 0.5, float(st.w[i, av.start]) - w_av
+        return float(st.w[i, app.start]) - 0.5, float(st.w[i, av.start]) - 0.5
 
-    d_app, d_av = after(0.0, taste=3.0)
-    assert abs(d_app) < 1e-6 and abs(d_av) < 1e-6         # a good meal of something trusted: nothing is learned
-    d_app, d_av = after(0.5, taste=3.0)
-    assert d_av < -0.01 and abs(d_app) < 1e-6             # a good meal of something mistrusted: less aversion
-    d_app, d_av = after(0.5, pain=1.0)
+    d_app, d_av = after(taste=3.0)
+    assert abs(d_app) < 1e-6 and abs(d_av) < 1e-6         # a good meal: nothing is learned in chapter 1
+    d_app, d_av = after(pain=1.0)
     assert d_av > 0.01 and abs(d_app) < 1e-6              # a poisoning: more aversion, appetite untouched
-    d_app, d_av = after(0.5)
+    d_app, d_av = after()
     assert abs(d_app) < 1e-6 and abs(d_av) < 1e-6         # no outcome: nothing is learned

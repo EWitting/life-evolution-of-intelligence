@@ -75,6 +75,8 @@ class Stage:
     ticks: int = 1000
     plastic: bool = False
     eta_max: float = 0.5          # evolution clips learning rates to [0, eta_max]
+    dense_plastic: bool = False   # warm start: every synapse of a learned projection exists (the inherited ones keep
+                                  # their weight, the others start at 0); an absent synapse could not learn
     notes: str = ""
 
 
@@ -530,53 +532,69 @@ CS_MODS = tuple(CS_MOD.values())
 CS_TAUGHT = ("valence_av",)   # value cells whose identity synapses learn in chapter 1
 
 
-def _split_cs(projections, taught=CS_TAUGHT):
-    """in[identity features] -> the taught value cells becomes plastic and US-gated: dW = eta * teacher * trace(pre)."""
+def _split_cs(projections, taught=CS_TAUGHT, eta=None, centred=False, only=()):
+    """in[identity features] -> the taught value cells becomes plastic and US-gated: dW = eta * teacher * trace(pre).
+    centred: pre is the look minus the slow average of each look input (ProjectionSpec.centred).
+    only: input-feature patterns that learn (e.g. the eye pointing ahead); the rest of the projection stays as
+    inherited."""
     out = []
     for p in projections:
         if p.src == "in" and p.src_select in (CS_VIS, CS_HELD) and p.dst in taught:
-            out.append(replace(p, rule="hebb", modulator=CS_MOD[p.dst], eta_init=CS_ETA, elig_tau=CS_ELIG[p.dst],
-                               abcd=(0.0, 1.0, 0.0, 0.0)))
+            learned = replace(p, rule="hebb", modulator=CS_MOD[p.dst], eta_init=CS_ETA if eta is None else eta,
+                              elig_tau=CS_ELIG[p.dst], abcd=(0.0, 1.0, 0.0, 0.0), centred=centred)
+            if only and p.src_select == CS_VIS:
+                out.append(replace(learned, src_select=tuple(only)))
+                out.append(replace(p, src_select=SIDE_EYES))
+            else:
+                out.append(learned)
         else:
             out.append(p)
     return tuple(out)
 
 
-# The safety cell (v26, back from v19-v20): pain alone only ever raises the aversive weights, and since every look
-# shares part of the gooseberry look, suspicion of a poison ends on the staple and is never taken back
-# (`scripts/probes/classify.py`; pain minus taste fails the other way: the many good meals erase every aversion).
-# The safety cell fires when a bite tastes good although the aversive cells expected bad one tick earlier,
-# max(0, tanh(-2 + 2/3 taste + aversive cells)), and is subtracted from the pain teacher. It is the downward half
-# of a prediction error; in the fly, reward-type dopamine neurons do this when an expected punishment is omitted.
-SAFETY_K = 1.0        # weight of the safety cell in the aversive teacher
-B15 = extend(B11,
-             regions=(R("us_pain", 1, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, group="us"),
-                      R("safety", 1, sign="exc", alpha=1.0, bias=-2.0, evolve_bias=False, group="us")),
-             projections=(P("in", "us_pain", src_select=("pain",), density=1.0, w_init=2.0, evolve=False),
-                          P("in", "safety", src_select=("taste",), density=1.0, w_init=2.0 / 3.0, evolve=False),
-                          fixed("valence_av", "safety", 1.0)),
-             modulators=(Mod("us_av", terms=(("us_pain", 1.0), ("safety", -SAFETY_K))),))
-B15 = replace(B15, projections=_split_cs(B15.projections))
-# A life that holds many decisions (v26, tried on this stage first): a life of 1000-2000 ticks was 1.25-2.5 stomachs
-# long, so a life was a handful of bushes, a lesson was used about once, and an animal that filled up and froze
-# still reached the cap (STAGE_LOG 2026-10-07). Here a life is 4000 ticks (five stomachs) and a bush holds 3
-# berries; fewer generations pay for the longer lives. The world keeps as much familiar good food as the 1.1 world
-# (staple weight 3 at density 0.19) and adds the novel types on top, a third of the bushes: with novel food as half
-# of the supply the 1.1 animals died after two to four bushes whatever the other settings (a cliff). Doubling the
-# metabolic rate as well was a cliff too (first v26 trial).
-W15 = replace(W11, spawn_density=0.19)
+AHEAD_EYE, SIDE_EYES = ("vis+0.app*",), ("vis-*.app*", "vis+[36]0.app*")
+
+
+# What the lesson is about (v27, STAGE_LOG 2026-10-07). Pain alone, on the whole look, only ever raises the aversive
+# weights, and every look shares part of the gooseberry look, so suspicion of a poison ends on good food and is
+# never taken back; evolution then sets the learning rate to zero. Three things make the lesson land on the poison:
+#   centred    the synapse learns from the look minus the slow average of each look input (about 100 ticks): what
+#              sets this food apart, not what all berries share (a covariance rule; the average sits in the input
+#              neuron);
+#   one tick   pain lasts one tick in this world (pain_decay 0). While it faded over three ticks the teacher was
+#              still at half strength when the animal had turned to a neighbouring bush, and taught about that one;
+#   dense      every learned synapse exists (Stage.dense_plastic); only 42% did, and an absent synapse cannot learn.
+# Tried and left out: a 'safety' cell (a good meal of something mistrusted lowers the aversion). It never fires in
+# a living animal, which bites only while its aversive cells are silent (variant `safety` in scripts/probes).
+# Variant 1.5f: only the eye pointing straight ahead learns (what is at the mouth); as defined every eye does, and
+# at a bite the side eyes mostly see other bushes.
+ETA_15 = 0.3          # starting learning rate of stage 1.5 (evolvable up to Stage.eta_max)
+_B15 = extend(B11,
+              regions=(R("us_pain", 1, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, group="us"),),
+              projections=(P("in", "us_pain", src_select=("pain",), density=1.0, w_init=2.0, evolve=False),),
+              modulators=(Mod("us_av", pos="us_pain"),), in_trace_tau=0.99)
+B15 = replace(_B15, projections=_split_cs(_B15.projections, eta=ETA_15, centred=True))
+B15F = replace(_B15, projections=_split_cs(_B15.projections, eta=ETA_15, centred=True, only=AHEAD_EYE))
+# The world (v28): nothing familiar. Four novel types, a new look and a new meaning every life, two of them poison;
+# no staple and no ancestral poison. With familiar food as half of the bushes the animals ate eleven good berries
+# for every poison one and a lesson had to be near perfect to pay; here whoever cannot learn pays one bite on every
+# visit to a poison bush, half of all bushes, for life, and 'never touch anything novel' is starving. A life is
+# 4000 ticks (five stomachs; the 1.1 animals froze after a meal and still reached a 1000-tick cap), with fewer
+# generations to pay for it.
+W15 = replace(W11, spawn_density=0.19, pain_decay=0.0)
 LIFE_15 = 4000        # ticks per life in stage 1.5
-LEARN_BERRIES = 3     # berries per bush in stage 1.5
+LEARN_BERRIES = 6     # berries per bush in stage 1.5
 LIFE_LEARN = 2000     # ticks per life in the later learning stages (older designs, to be revisited)
 NOVEL_SIM = 0.45      # novel types look less like the gooseberry than the ancestral look-alikes (0.8) do
 POISON_FOOD = -6.0    # OHOL food points lost per poison berry in the learning stages (a berry gives +3): a mistake
-                      # costs two berries and the pain reflex ends the visit, a good bush gives three, so trying an
-                      # unknown bush still pays on average and each avoided mistake is worth something
+                      # costs two berries and the pain reflex ends the visit, a good bush gives six, so trying an
+                      # unknown bush pays on average and each avoided mistake is worth a third of a good bush
 
 
 NOVEL = (1, 2, 3, 5)  # berry types whose look and meaning are drawn per life; type 0 is always good, 4 always poison
-NOVEL_WEIGHT = 0.5    # spawn weight of each novel type (ancestral poison: 1): novel foods are a third of all bushes
-STAPLE_WEIGHT = 3.0   # spawn weight of the ancestral good type: half of all bushes
+NOVEL_WEIGHT = 1.0    # spawn weight of each novel type
+STAPLE_WEIGHT = 0.0   # spawn weight of the ancestral good type (0: no familiar food)
+ANC_POISON_WEIGHT = 0.0   # spawn weight of the ancestral poison type (0: none)
 
 
 def learning_world(exp, reverse: bool = False, springs: float = 0.0, berries: int | None = None):
@@ -585,14 +603,18 @@ def learning_world(exp, reverse: bool = False, springs: float = 0.0, berries: in
     should keep a non-learner alive, novel food should be worth trying."""
     return berry_world(exp, 6, poison=(4,), per_life_pool=NOVEL, per_life_k=2, springs=springs, reverse=reverse,
                        novel_looks=NOVEL, novel_sim=NOVEL_SIM, poison_food=POISON_FOOD, onions=False,
-                       weights={0: STAPLE_WEIGHT, **{v: NOVEL_WEIGHT for v in NOVEL}}, berries=berries)
+                       weights={0: STAPLE_WEIGHT, 4: ANC_POISON_WEIGHT, **{v: NOVEL_WEIGHT for v in NOVEL}},
+                       berries=berries)
 
 
+_S15 = dict(row_extra=poison_metrics, plastic=True, generations=40, ticks=LIFE_15, eta_max=1.0, dense_plastic=True)
 stage(Stage("1.5", "s1_5_association", "1.1", B15, W15, VISION_CH1, BODY_TASTE,
-            lambda exp: learning_world(exp, berries=LEARN_BERRIES),
-            row_extra=poison_metrics, plastic=True, generations=50, ticks=LIFE_15,
-            notes="aversive conditioning (pain teaches the identity -> aversive synapses, a safety cell takes "
-                  "suspicion back); novel foods per life; long lives of many small meals"))
+            lambda exp: learning_world(exp, berries=LEARN_BERRIES), **_S15,
+            notes="aversive conditioning: pain teaches the look -> aversive synapses what sets the bitten food apart; "
+                  "only novel foods, half of them poison; long lives"))
+stage(Stage("1.5f", "s1_5_association_fwd", "1.1", B15F, W15, VISION_CH1, BODY_TASTE,
+            lambda exp: learning_world(exp, berries=LEARN_BERRIES), **_S15,
+            notes="1.5 with only the eye pointing ahead learning (variant)"))
 
 
 # 1.6 extinction and reversal: the learned weights now relax back toward their inherited values (a fast,
@@ -781,6 +803,10 @@ def run_stage(key: str, generations: int | None = None, control: bool = False, i
     if init_from and init_from not in ("auto", "none"):
         print(f"warm start from {init_from}")
         init = load_population(init_from, exp, seed=seed)
+        if s.dense_plastic and not control:
+            from life.run import make_layout
+            lay = make_layout(exp)
+            init = init._replace(mask=jnp.where(((np.asarray(lay.rule) > 0) & (np.asarray(lay.allowed) > 0))[None], 1.0, init.mask))
     rs, rules_fn = s.build(exp)
     return run_evolution(exp, rs, s.fitness or default_fitness, rules_for_generation=rules_fn, init_population=init,
                          row_extra=s.row_extra(rs) if s.row_extra else None, dashboard=dashboard)

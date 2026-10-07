@@ -27,6 +27,10 @@ print("settings:", [a for a in sys.argv[1:] if "=" in a], flush=True)
 for v in args:
     exp = S.make_exp(s, variant(s.brain, v), "gen0", 1, 0)
     pop = load_population(os.environ.get("RUN") or latest_run(S.STAGES[s.parent].name), exp, seed=0)   # RUN: another run
+    if os.environ.get("DENSE"):   # every learned synapse exists (inherited ones keep their weight, new ones start at 0)
+        from life.run import make_layout as _ml
+        _L = _ml(exp); _pl = (np.asarray(_L.rule) > 0) & (np.asarray(_L.allowed) > 0)
+        pop = pop._replace(mask=jax.numpy.where(_pl[None], 1.0, pop.mask))
     rs, fn = s.build(exp)
     sim = make_simulate(exp, record=False)
     berry = [rs.local(S.variant(t)[S.BERRY]) for t in range(6)]

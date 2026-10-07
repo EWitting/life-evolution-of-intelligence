@@ -587,10 +587,13 @@ W15 = replace(W11, spawn_density=0.19, pain_decay=0.0, start_food=0.5)
 LIFE_15 = 4000        # ticks per life in stage 1.5
 LEARN_BERRIES = 6     # berries per bush in stage 1.5
 LIFE_LEARN = 2000     # ticks per life in the later learning stages (older designs, to be revisited)
-NOVEL_SIM = 0.45      # novel types look less like the gooseberry than the ancestral look-alikes (0.8) do
-POISON_FOOD = -6.0    # OHOL food points lost per poison berry in the learning stages (a berry gives +3): a mistake
-                      # costs two berries and the pain reflex ends the visit, a good bush gives six, so trying an
-                      # unknown bush pays on average and each avoided mistake is worth a third of a good bush
+NOVEL_SIM = 0.8       # novel types look as much like the gooseberry as the 1.1 types do: a new kind of berry bush is
+                      # recognisable as a berry bush, and differs in its colour. At 0.45 (until v27) the 1.1
+                      # animals hardly took them for food (one good bush per life)
+POISON_FOOD = -3.0    # OHOL food points lost per poison berry in the learning stages (a berry gives +3): a mistake
+                      # costs one berry and the pain reflex ends the visit. At two berries (4 food units) a bite on
+                      # a stomach under a fifth full killed, a coin flip for any hungry animal in a world where
+                      # half of the bushes are poison. Generation 0: a perfect learner would save 23% of intake
 
 
 NOVEL = (1, 2, 3, 5)  # berry types whose look and meaning are drawn per life; type 0 is always good, 4 always poison
@@ -609,7 +612,7 @@ def learning_world(exp, reverse: bool = False, springs: float = 0.0, berries: in
                        berries=berries)
 
 
-_S15 = dict(row_extra=poison_metrics, plastic=True, generations=40, ticks=LIFE_15, eta_max=1.0, dense_plastic=True)
+_S15 = dict(row_extra=poison_metrics, plastic=True, generations=60, ticks=LIFE_15, eta_max=1.0, dense_plastic=True)
 stage(Stage("1.5", "s1_5_association", "1.1", B15, W15, VISION_CH1, BODY_TASTE,
             lambda exp: learning_world(exp, berries=LEARN_BERRIES), **_S15,
             notes="aversive conditioning: pain teaches the look -> aversive synapses what sets the bitten food apart; "

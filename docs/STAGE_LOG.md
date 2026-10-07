@@ -1012,3 +1012,89 @@ ganglion_i 75 100 85 (87); valence_app 103 108 99 (104); grasp 104 108 100 (104)
 400-800 ticks at rest, most of a 1000-tick life, so sitting still reached the cap. The chain rerun on this footing
 (1.0 scratch + 60 generations at 10% mutation, then 1.1 with three seeds) was started and **interrupted by a
 shutdown**; nothing of it is analysed. Restart it from stage 1.0 (commands in STATUS).
+
+### The chain rerun born a quarter full (2026-10-07)
+
+Stage 1.0 from scratch, 400 generations (`s1_0_steering/20261007-164901`): well-fed lifetime 151 in the first ten
+generations, 630 over the last fifty, 174 of 256 alive at the cap (born full: 644, 162). It evolves with the small
+reserve; the ceiling is unchanged. Then 60 generations at 10% mutation (`20261007-172058`).
+
+Stage 1.1, three seeds, 150 generations, evaluated with `python -m life.book export 1.1 --evaluate` (8 shared
+worlds):
+
+| | main | control |
+|---|---|---|
+| well-fed lifetime, last 50 generations | 519 +-18 [551 487 520] | 394 +-94 [440 214 528] |
+| re-evaluated in shared worlds | 525 +-15 [550 498 528] | 433 +-105 [501 228 571] |
+| poison share of meals | 0.06 [0.06 0.02 0.09] | 0.13 [0.12 0.19 0.09] |
+| head to head | +290 +-105 [+283 +476 +112] | |
+
+Lesions (% of intact, per seed, mean): valence_av 38 32 34 (35); no_feed 44 39 39 (41); ganglion_e 12 27 14 (17);
+valence_app 94 84 75 (84); grasp 94 83 67 (81); no_touch 106 24 106 (79); ganglion_i 76 99 107 (94).
+
+- The aversive side is used in every seed, as born full. The appetitive side and the grasp programme now cost
+  6-33% when silenced (born full: 104, unused); the effect is small in seed 0.
+- The ganglion is the main forager (17% without it), as under the well-fed lifetime born full.
+- The control of seed 2 reaches main's level (528 vs 520, poison share 0.09 vs 0.09): a pain-blind brain can evolve
+  avoidance by look, since the poison looks the same in every generation. Main minus control measures how much
+  easier the value cells make that, not what pain is worth.
+
+Stage 1.5, seed 0 only (current definition), last 50 generations: main 434 vs control 455, poison share 0.20 vs
+0.17, lifetime 768 vs 803 of 2000. The two further seeds were not started (below).
+
+### Why learning does not pay in 1.5: the rule and the food stock (2026-10-07)
+
+**The rule cannot become a classifier** (`scripts/probes/classify.py`: one aversive cell on the 8 look features of
+the six types, bites with probability 1 - aversion, no brain and no world). Probability of biting after 200
+encounters, rate 0.3, 200 lives: staple / novel good / novel poison:
+
+| rule | NOVEL_SIM 0.45 | NOVEL_SIM 0.1 |
+|---|---|---|
+| pain only, dw = eta * pain * look (1.5 as defined) | 0.09 / 0.40 / 0.05 | 0.35 / 0.92 / 0.07 |
+| pain minus the safety cell (v19-v20) | 0.88 / 1.00 / 0.10 | 0.94 / 1.00 / 0.07 |
+| prediction error, dw = eta * (pain - a) * look | 0.97 / 1.00 / 0.22 | 0.99 / 1.00 / 0.19 |
+
+Every look shares part of the gooseberry look and nothing lowers the aversive weights (no negative teacher, no
+decay), so suspicion of the poison ends on the staple. Both corrected rules converge.
+
+**Generation 0** (`gen0.py`, new 1.1 population, 6 shared worlds, well-fed lifetime, learning on / off; good and
+poison berries per agent over the life):
+
+| world | rule, rate | fitness on / off | good on / off | poison on / off |
+|---|---|---|---|---|
+| as defined (poison -2) | 0.05 | 379 / 414 | 18.9 / 22.5 | 3.5 / 5.1 |
+| as defined | 0.3 | 276 / 414 | 12.9 / 22.5 | 1.5 / 5.1 |
+| NOVEL_SIM 0.1, poison -6 | 0.05 | 318 / 294 | 17.5 / 17.4 | 2.0 / 2.3 |
+| NOVEL_SIM 0.1, poison -6 | 0.3 | 281 / 294 | 14.7 / 17.4 | 1.2 / 2.3 |
+| poison -3 (both blanket policies earn zero from novel food) | 0.05 | 350 / 374 | 18.6 / 21.5 | 3.2 / 4.4 |
+| poison -3 | 0.3 | 255 / 374 | 12.7 / 21.5 | 1.5 / 4.4 |
+| poison -3, safety cell | 0.05 | 351 / 374 | 18.8 / 21.5 | 3.2 / 4.4 |
+| poison -3, safety cell | 0.3 | 263 / 374 | 13.1 / 21.5 | 1.5 / 4.4 |
+| poison -3, NOVEL_SIM 0.1 | 0.05 | 377 / 372 | 19.1 / 20.0 | 2.6 / 3.3 |
+| poison -3, NOVEL_SIM 0.1 | 0.3 | 321 / 372 | 15.4 / 20.0 | 1.4 / 3.3 |
+| poison -3, NOVEL_SIM 0.1, safety cell | 0.3 | 328 / 372 | 15.7 / 20.0 | 1.4 / 3.3 |
+
+Standard errors 31-46 over worlds (not paired). The safety cell changes nothing in the world although it repairs
+the rule on paper; not traced yet (probably: aversion blocks the bite, so a mistrusted good food rarely gets its
+safe meal, and lives end first, next point).
+
+**The food is a stock that is raced down.** An empty bush regrows after REGROW_FOOD / hunger_per_tick = 960 ticks
+in the 1.1 and 1.5 worlds (480 in 1.0) and every bush starts full. Share of bushes with berries and animals alive
+(of 64) in the last-generation recordings:
+
+| tick | 1.0 all types | alive | 1.1 the four types eaten | alive | 1.5 staple | alive |
+|---|---|---|---|---|---|---|
+| 100 | 52-58% | 63 | 36-67% | 64 | 49% | 62 |
+| 300 | 14-19% | 63 | 10-21% | 63 | 17% | 57 |
+| 500 | 14-21% | 49 | 1-11% | 61 | 9% | 50 |
+| 750 | 42-50% | 36 | 1-5% | 43 | 5% | 35 |
+| 999 | 25-31% | 35 | 19-32% | 18 | 29% | 16 |
+
+The mean stomach goes from 5 to 18 of 20 in the first 100 ticks. In the 1.5 recording three types (the ancestral
+poison and two novel ones) stay 86-100% full all life while animals starve; 9 are alive at tick 1500, when the
+bushes are back at 93%. Holding back cannot be selected: whoever waits finds nothing left (user, 2026-10-07).
+
+Proposed, to be decided by the user: (1) food as a flow: bushes start at random points of their regrowth cycle and
+grow berries back one at a time; (2) a full stomach blocks the bite, as a reflex in the 1.1 grasp programme;
+(3) 1.5 on the prediction-error rule with a poison cost of 3, checked with classify.py, the assay and generation 0.
+

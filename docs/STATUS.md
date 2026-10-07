@@ -1,7 +1,7 @@
 # Status
 
 One screen on where the project is. Plan: `docs/BRAIN_EVOLUTION.md`. Details, numbers and run directories:
-`docs/STAGE_LOG.md`. Newest decisions: `docs/DECISIONS.md` (ADR-017 to ADR-024). Last updated 2026-10-03, late night.
+`docs/STAGE_LOG.md`. Newest decisions: `docs/DECISIONS.md` (ADR-017 to ADR-024). Last updated 2026-10-07.
 
 ## How a stage is judged
 
@@ -19,9 +19,6 @@ than control (user, 2026-10-01). One life is mostly luck, so a design is checked
        stages versus <key>         main and control agents in the same worlds
        stages lesions <key>        fitness with each region silenced, % of intact, per seed
 
-**Fitness = well-fed lifetime from the first meal** (ADR-024; v19-v22 used energy acquired). Cells that lesions
-show unused in every seed are removed.
-
 4. **Book**: when the three seeds of a stage are finished, update its page in the interactive book (`book/`,
    workflow in `book/README.md`) and commit the data file:
 
@@ -32,17 +29,20 @@ show unused in every seed are removed.
    minutes for 1.1), so `stages summary/versus/lesions` need not be run separately for the book. Tables, graphs
    and diagrams on the page follow the data file; the text of a page is written by hand when the stage is frozen.
 
-## Stages (v23, 2026-10-03)
+**Fitness = well-fed lifetime from the first meal** (ADR-024; v19-v22 used energy acquired). Cells that lesions
+show unused in every seed are removed.
 
-Chain: 1.0 -> 1.1 -> 1.5, then drives -> affect -> habituation -> chapter 2. **The chain is being rerun under the
-well-fed lifetime.** Findings marked v21/v22 are from the energy-acquired fitness. Three seeds unless stated;
+## Stages (v24, 2026-10-07)
+
+Chain: 1.0 -> 1.1 -> 1.5, then drives -> affect -> habituation -> chapter 2. 1.0 and 1.1 are rerun born a quarter
+full (v24); **1.5 is on hold** (see next steps). Findings marked v21/v22 are from the energy-acquired fitness. Three seeds unless stated;
 lesion = fitness with the region silenced, % of intact, mean over seeds.
 
 | stage | what it adds | status | finding |
 |---|---|---|---|
-| 1.0 steering | ganglion (exc + inh, lagging normalisation), evolved sensor -> motor reflexes; sees the outside world only; movement costs energy; the animal eats what it grasps | rerun (1 seed) | Well-fed lifetime 644, lifetime 839 of 1000, 162 energy; 162 of 256 alive at the cap (ceiling). |
-| 1.1 valence | appetitive and aversive value cells (taste and pain enter the brain only here) acting on a contact-gated grasp programme; aversion turns away and blocks the bite | passes born full (v23); to rerun born a quarter full | v23: main 534 +-4 vs control 427 +-57, head to head +262 +-47. Lesions: aversive 57, no_feed 62, ganglion_e 40; appetitive 104, grasp 104, gate 107 (unused: bites on a full stomach). v21: main 60.1 vs control 29.5 energy, head to head +81 +-3; lesions appetitive 46, aversive 52, no_feed 55, grasp 46, gate 59; ganglion idle. |
-| 1.5 association | pain teaches the identity -> aversive synapses about what was just bitten (short trace); novel foods per life | rerunning (pain teacher only) | v21, two teachers: main 43.6 vs control 40.9, head to head +9.7 +-2.8; pain teacher 92 when silenced, taste teacher 104 (removed), plasticity 97. |
+| 1.0 steering | ganglion (exc + inh, lagging normalisation), evolved sensor -> motor reflexes; sees the outside world only; movement costs energy; the animal eats what it grasps | rerun v24 (1 seed) | Evolves from scratch born a quarter full: well-fed lifetime 630, 174 of 256 alive at the cap (ceiling, as born full). |
+| 1.1 valence | appetitive and aversive value cells (taste and pain enter the brain only here) acting on a contact-gated grasp programme; aversion turns away and blocks the bite | **passes** (v24, three seeds) | Main 519 +-18 vs control 394 +-94, head to head +290 +-105. Lesions: aversive 35, no_feed 41, ganglion_e 17, appetitive 84, grasp 81, no_touch 79. The control of one seed evolved avoidance by look and equals main. |
+| 1.5 association | pain teaches the identity -> aversive synapses about what was just bitten (short trace); novel foods per life | **on hold**: the rule fails on paper | v24, one seed: main 434 vs control 455. The pain-only rule cannot separate good from poison (suspicion spreads to the staple and is never taken back), and the edible food is gone by mid-life (STAGE_LOG, 2026-10-07). v21, two teachers: head to head +9.7 +-2.8. |
 | drives (old 1.2) | `cold` and `hungry` need cells; warmth by kinesis: `warm_seek` (run while the skin is cold), `rest` (stay where it is warm); `hungry` shuts the warmth mode: forage when hungry, look after warmth when fed. Senses: body and skin temperature. World: cold, few hot springs | designed, generation-0 probe done | Generation 0: well-fed lifetime 438 vs 266 for the cold-blind brain (+65%), body temperature 0.44 vs 0.37 (STAGE_LOG v23). To do: stage definition, three seeds, lesions. |
 | affect (old 1.3) | serotonin (dwell) and PDF (roam) states | to redesign on drives | Unused in its last run (v13, old architecture). Kept if at all possible: later stages need the modulator systems. |
 | habituation (old 1.4) | depression on the identity -> appetitive synapses; dud bushes | one design pass | Unused in its last run (v13). |
@@ -57,19 +57,15 @@ Per stage, three seeds: **used** (silencing the new cells costs fitness in every
 above control within one standard error, summary and head to head), **no regression** (the population does as well
 in the previous stage's world as the previous population).
 
-1. **Resume here.** The worlds now start agents a quarter full (v24). The rerun on that footing was interrupted
-   by a shutdown; start it again (runs older than v24 are born-full and only for comparison):
-
-       python -m life.experiments.stages 1.0
-       python -m life.experiments.stages 1.0 --init-from <that run> --mutation-prob 0.1 --generations 60
-       python -m life.experiments.stages chain 1.1 1.1 --mutation-prob 0.1
-       python -m life.experiments.stages replicate 1.1 --seeds 1,2 --mutation-prob 0.1
-       python -m life.experiments.stages chain 1.5 1.5 --mutation-prob 0.1     (then replicate, summary, versus, lesions)
-
-   Check first that stage 1.0 still evolves from scratch with the small reserve (about 100 ticks to the first meal).
-2. Born full, stage 1.1 passes over three seeds (main 534 vs control 427, head to head +262 +-47), but its
-   appetitive side is unused (104): the grasp programme bites whether hungry or not. Decide with the user whether
-   drives come directly after 1.1, and whether `hungry` should also gate the appetitive grasp.
+1. **Resume here: three proposals wait for the user's decision** (STAGE_LOG, 2026-10-07):
+   (a) food as a flow: bushes start at random points of their regrowth cycle and grow berries back one at a time
+   (now every bush starts full and regrows after 960 ticks, so the stock is raced down in about 500 ticks and most
+   animals starve); (b) a full stomach blocks the bite, as a reflex in the 1.1 grasp programme; (c) 1.5 on the
+   prediction-error rule (dw = eta * (pain - aversive activity) * look) with a poison cost of 3. (a) and (b) change
+   the footing of every stage, so 1.0 and 1.1 are rerun after them. Check a rule first with
+   `scripts/probes/classify.py`, then the assay, then generation 0.
+2. Stage 1.1 passes born a quarter full, and its appetitive side is now used a little (84). Decide whether drives
+   come directly after 1.1.
 3. Drives: stage definition from the probe circuit, three seeds, lesions of `cold`, `hungry`, `warm_seek`, `rest`.
 4. Affect, redesigned on the drives stage; then one design pass for habituation. An unused module stays out of the
    frozen brain unless later stages need the brain to have developed with it.
@@ -79,10 +75,11 @@ in the previous stage's world as the previous population).
 
 ## Known issues and open points
 
-- The ganglion (24 neurons) is unused in stage 1.1 in every seed.
 - The pain-blind control of 1.1 does not evolve avoidance by look within 150 generations, though it could.
 - Learned appetite for the staple spreads to the innately avoided poison type, which looks 80% like it (assay).
 - Fitness is supply-limited once a population forages well (60% of bushes empty); accepted.
+- The food is a stock, not a flow: all bushes start full and regrow after 960 ticks (480 in 1.0); it is eaten down
+  in about 500 ticks, then most animals starve. Read every lifetime and late-life result with this in mind.
 - Most meals are taken on a nearly full stomach (59-84%, STAGE_LOG v22); nothing before the drives stage can
   sense hunger.
 - The well-fed lifetime has a ceiling at the life cap; in 1.0 most agents reach it at any cap (STAGE_LOG v23).

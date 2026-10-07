@@ -1141,3 +1141,37 @@ ganglion_i 55 41 96 (64); valence_app 85 93 93 (90); grasp 87 90 91 (89); no_tou
 - Supply over a life (seed 0): edible bushes full 32% at birth, then 14-19%; stomach 62-72%; 52% alive at the end;
   half of the bites on a stomach over 90% full.
 
+### Stage 1.5 on the v25 footing: the safety cell works, but a life holds about one use of a lesson (2026-10-07)
+
+Brain-only assay (`assay.py`, new 1.1 population, rate 0.3, two rounds), P(USE) with the bush adjacent, before ->
+after -> after four more staple meals:
+
+| bush | pain only | with the safety cell (variant `safety`) |
+|---|---|---|
+| staple | 0.37 -> 0.08 -> 0.08 | 0.37 -> 0.33 -> 0.79 |
+| novel good | 0.37 -> 0.47 -> 0.47 | 0.37 -> 0.66 -> 0.66 |
+| novel poison | 0.41 -> 0.06 -> 0.06 | 0.41 -> 0.06 -> 0.14 |
+
+Generation 0 (`gen0.py`, 6 shared worlds; well-fed lifetime; good / poison berries per agent over the life;
+learning off is the same population with the rates at zero):
+
+| poison cost (food points; a good berry is +3) | off | rate 0.05 | rate 0.3 | safety, rate 0.3 |
+|---|---|---|---|---|
+| -3 | 300; 17.9 / 1.8 | 321; 19.0 / 1.8 | 301; 16.0 / 1.3 | 311; 17.0 / 1.4 |
+| -9 | 206; 12.6 / 0.9 | 210; 12.8 / 0.9 | 205; 12.0 / 0.9 | 213; 12.4 / 0.8 |
+| -18 | 164; 10.3 / 0.7 | 156; 9.6 / 0.6 | 156; 9.5 / 0.6 | 158; 9.6 / 0.6 |
+
+Standard errors 37-60 over worlds: no variant differs from learning off. Unlike in the v24 world, learning no
+longer lowers the eating of everything much (that was largely the famine).
+
+Why nothing shows (`scripts/probes/lessons.py`, learning off, 3 worlds, poison -3): lifetime 517 of 2000; **2.1
+visits to a good bush per life (5.6 bites each), 1.8 visits to a poison bush (1.0 bite each: the pain reflex ends
+the visit), 0.95 later visits to a type that already hurt.** A perfect learner saves about one bite per life.
+(The user's point, 2026-10-07: the cost of trying a bush is one berry, the gain six.) A bush holds 12 food units,
+480 ticks of resting metabolism, so a life is a handful of bushes.
+
+Smaller bushes with the density raised to match (`BUSH_BERRIES`, new constant, default 6) do not change this at
+generation 0: 2 berries at density 0.42: lifetime 460, 3.6 good visits, 2.0 poison visits, 0.87 repeats; 3 berries
+at 0.28: 568, 3.7, 2.3, 1.21; 2 berries with poison -9: 256, 1.8, 0.9, 0.13. The population is not adapted to these
+worlds and dies early, so this is a weak test.
+

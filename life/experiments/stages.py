@@ -41,8 +41,13 @@ REGROW_FOOD = 24.0                              # an empty bush regrows after th
                                                 # never pays, whatever the metabolic rate of the stage
 
 
+BUSH_BERRIES = 6                                # berries a bush carries (the OHOL gooseberry bush: 6). Probes vary it:
+                                                # smaller bushes, with the density raised to match, mean more
+                                                # decisions per life for the same food
+
+
 def regrow_ticks(exp) -> int:
-    return int(min(exp.world.max_decay_ticks, round(REGROW_FOOD / exp.world.hunger_per_tick)))
+    return int(min(exp.world.max_decay_ticks, round(REGROW_FOOD * BUSH_BERRIES / 6 / exp.world.hunger_per_tick)))
 
 
 
@@ -136,6 +141,8 @@ def berry_world(exp: ExperimentConfig, n_types: int = 4, poison: tuple = (), per
     rs = ohol.slice_ruleset(data, ids, ticks_per_second=exp.world.ticks_per_ohol_second,
                             max_decay_ticks=exp.world.max_decay_ticks, clone_sets=sets,
                             extra_decays={EMPTY_BUSH: (BUSH, regrow_ticks(exp))})
+    for v in range(n_types):
+        rs.num_uses[rs.local(variant(v)[BUSH])] = int(BUSH_BERRIES)
     for v in duds:   # no transition from USE on this bush
         b = rs.local(variant(v)[BUSH])
         rs.use_table[:, b] = -1

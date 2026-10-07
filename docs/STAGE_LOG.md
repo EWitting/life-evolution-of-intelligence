@@ -1270,3 +1270,86 @@ With a hard block every uncentred rule refuses the staple for good at a rate lar
 inherited drives; at a small rate it works on paper but is too weak in the brain. Only the centred lesson (the eyes
 adapted to the look shared by everything met) is robust to the rate. Not yet implemented in the brain.
 
+## v27-v28 (2026-10-07 night to 2026-10-08): where a lesson lands, and a world that makes learning worth having
+
+All at generation 0 or single seed. Population: `s1_1_valence_long` (the 1.1 animals after 30 generations of
+4000-tick lives). Probes added: `learned.py` (rates, weight changes per type, aversive responses, teacher
+activity), `record.py` (one recorded generation-0 life on a brain variant), `lessons.py` (visits, repeats, value of
+perfect learning), variants `centred`, `ahead`, `pulse`, `safety`; `DENSE=1` and `RUN=` in the environment.
+
+### Three attribution faults, found by looking inside a recorded life
+
+Generation 0 in the v26 trial world (staple half of the bushes), learning on vs off in the same 3 worlds, rate 0.3
+unless stated; learning off: well-fed lifetime 746, good berries 52.9, poison berries 4.6.
+
+| variant | well-fed lifetime | good berries | poison berries |
+|---|---|---|---|
+| as defined in v26 (whole look, all eyes, safety cell) | 456 | 26.5 | 2.1 |
+| centred | 661 | 42.9 | 3.3 |
+| centred, rate 0.1 | 744 | 50.4 | 4.1 |
+| forward eye only (`ahead`) | 680 | 43.6 | 3.3 |
+| ahead, rate 0.1 | 791 | 52.4 | 4.4 |
+| ahead, centred | 705 | 47.6 | 3.9 |
+| ahead, one-tick teacher (`pulse`) | 760 | 49.7 | 3.9 |
+| ahead, pulse, centred | 749 | 52.0 | 4.2 |
+| ahead, pulse, no safety cell | 759 | 49.9 | 3.8 |
+| all eyes, pulse | 521 | 31.7 | 2.5 |
+| all eyes, pulse, centred | 700 | 46.1 | 3.6 |
+| ahead, pulse, every learned synapse present (`DENSE`) | 552 | 32.7 | 2.5 |
+| ahead, pulse, centred, DENSE | 814 | 55.8 | 3.9 |
+| all eyes, pulse, centred, DENSE | 687 | 45.7 | 3.2 |
+
+Standard errors over the three worlds are 235-380 (not paired); read the table as directions.
+
+1. **The shared look.** Every look is 0.45 gooseberry, so a lesson about a poison is 45% a lesson about the staple.
+   Centring (the synapse learns from the look minus the slow average of each look input, tau 0.99) removes it. The
+   forward eye sees something on 73% of ticks alive (53% a full bush, 44% an empty bush, 3% a berry); with that
+   real average the spill onto the staple falls from 0.45 to about 0.10 (all ticks) or -0.07 (ticks with something
+   in view). The average lives in the input neuron (its activity trace, `BrainConfig.in_trace_tau`);
+   `ProjectionSpec.centred` makes a learned projection read it. Transmission is unchanged. The user prefers this
+   mechanism, and would move it into the input neuron itself (everything downstream sees the adapted look) as the
+   habituation stage.
+2. **The side eyes.** All five eye columns had learned look -> aversive synapses. Going into a poison bite the
+   forward eye sees the bitten type 80% of the time; each side eye sees something at 48-68% of bites, and 88-96%
+   of that is another type, at full strength. `ahead`: only vis+0 learns.
+3. **The fading pain.** With pain_decay 0.3 the teacher is 0.96, 0.54, 0.18, 0.05 on ticks +1..+4 after the bite;
+   the forward eye is on the bitten type 99% at +1 and 8-11% from +2 on (another bush 56-63%). In a recorded life
+   the staple's drive on the aversive cells rose by 0.29, the bitten poison's by 0.30. Fix adopted: pain lasts one
+   tick in the 1.5 world (pain_decay 0; user's choice over a threshold on the teacher cell). The reflex is intact:
+   1.0 bites per poison visit, lifetime 1264 vs 1310.
+
+Also: only 42% of the forward look -> aversive synapses exist (the learned projection inherits the sparse evolved
+wiring); an absent synapse cannot learn. With all present and the lesson centred, one bite raises the poison's
+drive by 0.44 and the staple's by 0.11, but the aversive response facing it only goes 0.06 -> 0.13 (the innately
+avoided types sit at a drive of 0.8-0.9, response 0.3-0.4): a lesson has to be about twice as large to block the
+next bite. `Stage.dense_plastic`, and the learning rate may evolve up to 1.0 in 1.5.
+
+The safety cell never fires in a living animal (above 0.05 after 0.8-4.5% of good bites): removed again.
+
+### The economy made learning nearly worthless (user, 2026-10-08)
+
+In the v26 trial world the animals ate eleven good berries for every poison one (4.5 good visits per poison visit,
+three berries against one). Losing a fifth of the good berries to avoid a third of the poison bites costs 21 food
+units and gains 5; break-even needs 2 good berries lost per bite avoided, measured 7.7. `lessons.py`: a perfect
+learner would save 8% of intake. The world asked for near-perfect learning.
+
+v28 world: only the four novel types, half of them poison each life, no staple and no ancestral poison; 6-berry
+bushes; a poison bite costs two berries. Whoever cannot learn pays one bite on every visit to a poison bush for
+life, and avoiding everything novel is starving.
+
+`lessons.py` at generation 0 (learning off): the 1.1 animals starve there (lifetime 283-358 of 4000, about one
+good bush per life; with the staple as a fifth of the bushes 414): they have no appetite for looks they did not
+evolve with. The user: a cliff is acceptable if enough fitness signal is left to recover in a few dozen
+generations.
+
+### First one-seed runs in the v28 world: the first bite was a coin flip
+
+Stage 1.5 (all eyes, centred, dense, rate 0.3 up to 1.0), variant 1.5f (forward eye only) and the control, 40
+generations of 4000 ticks, born a quarter full. Generations 30-39: well-fed lifetime 145 / 102 / 105, mean
+lifetime 341 / 303 / 295, no climb in any of them. Inside: median lifetime 130-160 ticks; first meal at tick 25;
+20-25% never eat. Born with 5 food units, a first bite that is poison (one chance in two) costs 4 and the animal
+is dead 40 ticks later, whatever its genome. USE is 60-75% of all ticks, moving 20%, facing a full bush 3-4%.
+In main the inherited learning rate went up for the first time (0.30 -> mean 0.40, median 0.46); drive of the two
+poison types after the first bite +0.35 and +0.43, of the two good types -0.04 and +0.04.
+Correction: born half full in the 1.5 world (W15 start_food 0.5).
+

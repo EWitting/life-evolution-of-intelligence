@@ -5,7 +5,7 @@
   --lb-s1: #2a78d6;            /* main */
   --lb-s2: #eb6834;            /* control */
   --lb-seq: #1c5cab; --lb-cell0: #eef2f8;   /* activity: one hue, light to dark */
-  --lb-hard: #2e2e2e; --lb-evolved: #a9a8a2; --lb-new: #1baf7a;
+  --lb-hard: #2e2e2e; --lb-evolved: #a9a8a2; --lb-new: #1baf7a; --lb-learned: #4a3aa7;
   --lb-exc: #f1f8f1; --lb-inh: #fbf0ef; --lb-io: #ffffff;
   --lb-ground: #eef0e6; --lb-wall: #c3c2b7; --lb-animal: #0b0b0b; --lb-other: #898781;
   --lb-good: #006300; --lb-bad: #d03b3b; --lb-note: #fff8e6; --lb-noteline: #eda100;
@@ -15,7 +15,7 @@
   --lb-gridline: #2c2c2a; --lb-axis: #383835; --lb-border: rgba(255, 255, 255, 0.10);
   --lb-s1: #3987e5; --lb-s2: #d95926;
   --lb-seq: #6da7ec; --lb-cell0: #232a33;
-  --lb-hard: #e8e8e4; --lb-evolved: #6d6c67; --lb-new: #199e70;
+  --lb-hard: #e8e8e4; --lb-evolved: #6d6c67; --lb-new: #199e70; --lb-learned: #9085e9;
   --lb-exc: #1f2a20; --lb-inh: #2e2020; --lb-io: #232322;
   --lb-ground: #23261f; --lb-wall: #383835; --lb-animal: #ffffff; --lb-other: #898781;
   --lb-good: #0ca30c; --lb-bad: #e66767; --lb-note: #2b2616; --lb-noteline: #c98500;
@@ -34,7 +34,7 @@
 .lb-tip .lb-muted { color: inherit; opacity: 0.7; }
 .lb-key { display: inline-block; width: 16px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
 .lb-key.lb-s1 { background: var(--lb-s1); } .lb-key.lb-s2 { background: var(--lb-s2); }
-.lb-hardkey { background: var(--lb-hard); } .lb-evokey { background: var(--lb-evolved); }
+.lb-hardkey { background: var(--lb-hard); } .lb-evokey { background: var(--lb-evolved); } .lb-learnkey { background: var(--lb-learned); }
 .lb-newkey { height: 10px; width: 14px; background: none; border: 2px solid var(--lb-new); border-radius: 3px; }
 
 .lb-controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; font-size: 0.85rem; margin-bottom: 0.4rem; color: var(--lb-ink2); }
@@ -80,6 +80,7 @@
 .lb-grouplabel { font-size: 10px; fill: var(--lb-ink2); paint-order: stroke; stroke: var(--lb-surface); stroke-width: 4px; }
 .lb-hard { stroke: var(--lb-hard); } .lb-hard-fill { fill: var(--lb-hard); }
 .lb-evolved { stroke: var(--lb-evolved); } .lb-evolved-fill { fill: var(--lb-evolved); }
+.lb-learned { stroke: var(--lb-learned); } .lb-learned-fill { fill: var(--lb-learned); }
 .lb-edge { cursor: default; } .lb-edge:hover path:first-child { stroke: var(--lb-s1); }
 
 /* zoomed-in example */

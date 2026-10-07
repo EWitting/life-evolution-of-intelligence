@@ -101,6 +101,16 @@ world.
 Read this chart region by region. A short bar means the animals depended on that region. A bar near 100 means
 they did as well without it, and three dots far apart mean the seeds disagree.
 
+::: {.callout-note title="What did not work: appetite on a full stomach"}
+In the runs where animals are born with a full stomach, the aversive side is used and the appetitive side is not:
+silencing `valence_app`, `no_touch` or `grasp` leaves the animals as well off as before. The reason is that the
+appetitive side makes the animal bite whenever food is in reach, hungry or not, and a bite on a full stomach
+earns nothing under a fitness that counts being well fed. Nothing in this brain can sense hunger yet.
+
+This note describes the born-full runs. If the chart above shows those three bars well below 100, the stage has
+been rerun with animals born a quarter full, and this note is due for rewriting.
+:::
+
 ## The runs behind this page
 
 <div data-life="runs" data-stage="1.1"></div>

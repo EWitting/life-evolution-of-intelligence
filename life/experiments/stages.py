@@ -287,8 +287,13 @@ B10 = BrainConfig(
 # fixed supply, and the genome explained 8% of the variance between lives; at 0.14 it explains 35%.
 # Born a quarter full (from v23): a full stomach lasts 400-800 ticks at rest, most of a 1000-tick life, so under a
 # survival fitness an animal that sat still reached the life cap almost unfed and could not be told from a forager.
+# Food as a flow (v25): with every bush full at birth and a regrowth as long as a life, the food was a stock: eaten
+# down in about 500 ticks, then famine, and nobody could gain by holding back. Now 70% of the bushes start empty at
+# a random point of their regrowth, which is where a grazed world settles (about a fifth of the edible bushes full
+# all life, `scripts/probes/supply.py`). The regrowth itself is unchanged (all berries back at once), so camping at
+# a bush still does not pay. A bite costs a tenth of a berry, so one on a full stomach is a loss.
 W10 = WorldConfig(height=128, width=128, num_agents=256, spawn_density=0.14, max_decay_ticks=2000, food_scale=2 / 3,
-                  move_cost=0.5, turn_cost=0.25, eat_on_pick=True, start_food=0.25)
+                  move_cost=0.5, turn_cost=0.25, eat_on_pick=True, start_food=0.25, start_spent=0.7, eat_cost=0.2)
 
 stage(Stage("1.0", "s1_0_steering", None, B10, W10, VISION_CH1, BodyConfig(), lambda exp: berry_world(exp, 4),
             generations=400, notes="evolved reflexive steering to 4 kinds of berry bushes and onions; movement costs energy"))

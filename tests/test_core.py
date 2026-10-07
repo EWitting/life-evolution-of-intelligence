@@ -75,6 +75,29 @@ def test_eat_on_pick_eats_what_is_grasped():
     assert float(st.taste[0]) == pytest.approx(1.0)
 
 
+def test_start_spent_staggers_regrowth_and_bites_cost_energy():
+    rs = toy_ruleset()
+    rules = rs.to_arrays(K)
+    bush, stump = rs.local(10), rs.local(12)
+    cfg = WorldConfig(height=32, width=32, num_agents=1, spawn_density=0.5, start_spent=0.5)
+    st = init_world(cfg, rules, jax.random.PRNGKey(0))
+    g, t = np.asarray(st.grid_obj), np.asarray(st.grid_timer)
+    n_bush, n_stump = (g == bush).sum(), (g == stump).sum()
+    assert n_stump > 0.3 * (n_bush + n_stump) and n_bush > 0.3 * (n_bush + n_stump)   # about half start spent
+    assert set(np.unique(t[g == stump])) == {1, 2, 3, 4, 5}                           # at every point of the regrowth
+    full = init_world(WorldConfig(height=32, width=32, num_agents=1, spawn_density=0.5), rules, jax.random.PRNGKey(0))
+    assert (np.asarray(full.grid_obj) == stump).sum() == 0                            # default: every bush starts full
+    assert ((g == bush) | (g == stump)).sum() == (np.asarray(full.grid_obj) == bush).sum()   # same bushes, some spent
+
+    cfg = WorldConfig(height=8, width=8, num_agents=1, hunger_per_tick=0.0, eat_on_pick=True, eat_cost=0.25)
+    st = place(empty_world(cfg, rules), 2, 3, bush, rules)
+    st = st._replace(pos=jnp.array([[3, 3]]), dir=jnp.array([0]), food=jnp.array([cfg.max_food]))
+    st, _ = step_world(cfg, rules, st, jnp.array([A.USE]), jax.random.PRNGKey(1))
+    assert float(st.food[0]) == pytest.approx(cfg.max_food - 0.25)                    # a bite on a full stomach is a loss
+    st, _ = step_world(cfg, rules, st, jnp.array([A.NOOP]), jax.random.PRNGKey(1))
+    assert float(st.food[0]) == pytest.approx(cfg.max_food - 0.25)                    # no bite, no cost
+
+
 def test_move_turn_block_and_drop():
     rs = toy_ruleset()
     rules = rs.to_arrays(K)

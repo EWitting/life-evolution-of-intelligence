@@ -45,6 +45,7 @@ class WorldState(NamedTuple):
 
 def init_world(cfg: WorldConfig, rules: RuleArrays, key: jax.Array) -> WorldState:
     k1, k2, k3, k4, k5 = jax.random.split(key, 5)
+    k6, k7 = jax.random.split(jax.random.fold_in(key, 6))
     H, W, N = cfg.height, cfg.width, cfg.num_agents
     w = rules.spawn_weight.at[EMPTY].set(0.0)
     total = w.sum()
@@ -61,11 +62,20 @@ def init_world(cfg: WorldConfig, rules: RuleArrays, key: jax.Array) -> WorldStat
     place = (jax.random.uniform(k1, (H, W)) < density) & (total > 0)
     obj = jax.random.choice(k2, w.shape[0], (H, W), p=p)
     grid = jnp.where(place, obj, EMPTY).astype(jnp.int32)
+    timer = rules.decay_ticks[grid]
+    if cfg.start_spent > 0:   # staggered regrowth: some objects start as the spent form that decays into them
+        M = rules.decay_new.shape[0]
+        spent_of = jnp.full(M, -1, jnp.int32).at[jnp.where(rules.decay_new >= 0, rules.decay_new, M)].set(
+            jnp.arange(M, dtype=jnp.int32), mode="drop")
+        spent = (spent_of[grid] >= 0) & (jax.random.uniform(k6, (H, W)) < cfg.start_spent)
+        grid = jnp.where(spent, spent_of[grid], grid)
+        full_time = jnp.maximum(rules.decay_ticks[grid], 1)
+        timer = jnp.where(spent, 1 + jnp.floor(jax.random.uniform(k7, (H, W)) * full_time).astype(jnp.int32), timer)
     pos = jnp.stack([jax.random.randint(k3, (N,), 0, H), jax.random.randint(k4, (N,), 0, W)], axis=1).astype(jnp.int32)
     return WorldState(
         grid_obj=grid,
         grid_uses=rules.num_uses[grid],
-        grid_timer=rules.decay_ticks[grid],
+        grid_timer=timer,
         pos=pos,
         dir=jax.random.randint(k5, (N,), 0, 4).astype(jnp.int32),
         held=jnp.zeros(N, jnp.int32),
@@ -179,6 +189,8 @@ def step_world(cfg: WorldConfig, rules: RuleArrays, state: WorldState, actions: 
     pain_eat = jnp.where(eat, rules.pain_value[held], 0.0)
     held = jnp.where(eat, EMPTY, held)
     food = jnp.clip(state.food + gained, 0.0, cfg.max_food)
+    if cfg.eat_cost > 0:   # a bite costs energy, so one on a full stomach is a loss
+        food = food - cfg.eat_cost * eat
     # sickness: pain from what was eaten arrives sickness_delay ticks later (0 = at once)
     if cfg.sickness_delay > 0:
         pain_in = state.sick[:, 0]

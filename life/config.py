@@ -10,6 +10,10 @@ class WorldConfig:
     num_agents: int = 32             # agents = genomes per generation (ADR-008)
     max_food: float = 20.0           # food units the stomach holds
     start_food: float = 1.0          # fraction of max_food an agent is born with
+    start_spent: float = 0.0         # chance that an object which regrows from a spent form (a berry bush from an
+                                     # empty bush) starts the life spent, at a random point of its regrowth. 0: every
+                                     # bush starts full and the first-emptied ones all come back at the same time
+    eat_cost: float = 0.0            # food units spent on every bite, also one on a full stomach that gains nothing
     hunger_per_tick: float = 0.05    # food units lost per tick while alive (20/0.05 = 400 ticks to starve)
     food_scale: float = 2.0          # food units gained per OHOL foodValue point
     max_age: int = 100000            # ticks; death of old age (large = effectively off)

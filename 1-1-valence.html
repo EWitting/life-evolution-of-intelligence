@@ -264,6 +264,8 @@ ul.task-list li input[type="checkbox"] {
 <div data-life="summary" data-stage="1.1">
 
 </div>
+<p>In principle the control can end up where main does. The poison looks the same in every generation, so pain tells the animal nothing that the colour of the bush does not, and a brain without pain can evolve “this colour, turn away” in its reflex wiring. So the gap between the curves does not say what pain is worth. It says how much easier the value cells make the solution to find: main has a ready path from the look of a berry to a cell that turns the animal away and stops the bite, and it starts out with a reaction to the pain itself.</p>
+<p>Whether a control finds the solution within the generations it is given is a matter of luck. Under an earlier food economy two of three controls did, late and suddenly, after dozens of generations without progress. If a grey curve above stays flat, that control had not found it yet.</p>
 <p>The three rows measure the same thing with less and less noise. The first is taken from the generations as they ran. The second gives every final population the same eight worlds. In the third, main and control animals live together and compete for the same bushes, so a difference cannot come from one population having had an easier world.</p>
 </section>
 <section id="is-the-circuit-used" class="level3">
@@ -272,6 +274,7 @@ ul.task-list li input[type="checkbox"] {
 
 </div>
 <p>Read this chart region by region. A short bar means the animals depended on that region. A bar near 100 means they did as well without it, and three dots far apart mean the seeds disagree.</p>
+<p>The two halves of the circuit are not used equally. The aversive side, <code>valence_av</code> and <code>no_feed</code>, is what the animals depend on. The appetitive side, <code>valence_app</code> and <code>grasp</code>, matters much less: the reflexes of the previous stage already bring the animal to food and make it bite.</p>
 <div class="callout callout-style-default callout-note callout-titled" title="What did not work: appetite on a full stomach">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -282,8 +285,8 @@ ul.task-list li input[type="checkbox"] {
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>In the runs where animals are born with a full stomach, the aversive side is used and the appetitive side is not: silencing <code>valence_app</code>, <code>no_touch</code> or <code>grasp</code> leaves the animals as well off as before. The reason is that the appetitive side makes the animal bite whenever food is in reach, hungry or not, and a bite on a full stomach earns nothing under a fitness that counts being well fed. Nothing in this brain can sense hunger yet.</p>
-<p>This note describes the born-full runs. If the chart above shows those three bars well below 100, the stage has been rerun with animals born a quarter full, and this note is due for rewriting.</p>
+<p>In the first runs of this stage the animals were born with a full stomach, and the appetitive side was not used at all: silencing <code>valence_app</code>, <code>no_touch</code> or <code>grasp</code> left them as well off as before. A full stomach lasted for most of a life, so there was little to gain from eating well. Born a quarter full, the animals depend on the appetitive side a little, as the chart shows.</p>
+<p>One fault remains. The appetitive side makes the animal bite whenever food is in reach, hungry or not, and a large share of all bites lands on a stomach that is nearly full. Nothing in this brain can sense the stomach. That comes with a later stage, which adds a cell for hunger.</p>
 </div>
 </div>
 </section>

@@ -84,6 +84,10 @@ in the previous stage's world as the previous population).
   stomach. In drives, give `hungry` an evolvable connection onto the grasp programme (not hard-wired).
 - Most meals are taken on a nearly full stomach (59-84%, STAGE_LOG v22); nothing before the drives stage can
   sense hunger.
+- Delayed sickness (planned for chapter 2) blames the wrong bush: the animal bites poison, turns to a good bush,
+  the sickness starts, and whatever it is looking at then is taught as bad (seen in v11-v13; user, 2026-10-07).
+  A longer trace does not solve it. Any design with delay must show in `classify.py` and the assay that the blame
+  lands on what was eaten (for example a trace of what was in the mouth, not of what is in view).
 - The well-fed lifetime has a ceiling at the life cap; in 1.0 most agents reach it at any cap (STAGE_LOG v23).
 - The birth reserve lasts 800 ticks at rest, so staying put is a good strategy under a survival fitness.
 - Chapter 2 definitions are stale. The dashboard clips displayed weights at `w_max`.

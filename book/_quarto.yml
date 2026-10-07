@@ -1,0 +1,31 @@
+project:
+  type: book
+  output-dir: _book
+  resources:
+    - "data/*.json"
+    - "js/*.js"
+    - "dashboards/*.html"
+
+book:
+  title: "Evolving a brain, stage by stage"
+  author: "Emiel Witting"
+  chapters:
+    - index.qmd
+    - part: "Chapter 1: steering"
+      chapters:
+        - 1-0-steering.qmd
+        - 1-1-valence.qmd
+        - 1-5-association.qmd
+        - drives.qmd
+        - affect.qmd
+        - habituation.qmd
+
+format:
+  html:
+    theme: cosmo
+    css: life-book.css
+    toc: true
+    number-sections: false
+    include-after-body:
+      text: |
+        <script src="js/life-book.js"></script>

@@ -1,0 +1,28 @@
+# 1.5 Association: learning what is bad {#sec-association}
+
+<div data-life="status" data-stage="1.5"></div>
+
+::: {.callout-note}
+The text of this page will be written when the stage is frozen. The figures below are drawn from the newest runs.
+:::
+
+Some kinds of berry now look different in every life, so no inherited synapse can know them. Pain teaches the
+synapses from what was just bitten to the aversive cells.
+
+<div data-life="settings" data-stage="1.5"></div>
+
+## The brain
+
+<div data-life="brain" data-stage="1.5"></div>
+
+## Results
+
+<div data-life="curves" data-stage="1.5"></div>
+
+<div data-life="summary" data-stage="1.5"></div>
+
+<div data-life="lesions" data-stage="1.5"></div>
+
+## The runs behind this page
+
+<div data-life="runs" data-stage="1.5"></div>

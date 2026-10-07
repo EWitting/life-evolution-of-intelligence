@@ -1,6 +1,7 @@
 """Export a self-contained interactive dashboard.html for a run directory (ADR-014).
 
     python -m life.dashboard runs/<exp>/<timestamp>        # (re)generate dashboard.html, then open it in a browser
+    python -m life.dashboard runs/<exp>/<timestamp> --light   # dashboard_light.html: a few MB, for publishing
 
 The page embeds the recording as base64 typed arrays, OHOL sprites, player bodies and a grassland ground texture if available, the layout (regions) and the
 fitness curve. See life/dashboard.html for the page itself (plain HTML + JS, no build step).
@@ -24,7 +25,34 @@ def _b64(a: np.ndarray, dtype) -> dict:
     return {"dtype": np.dtype(dtype).name, "shape": list(a.shape), "data": base64.b64encode(a.tobytes()).decode()}
 
 
-def build_data(run_dir: Path) -> dict:
+BRAIN_AGENTS = 6   # light export: agents whose activations and weights are stored
+
+
+def _light(data: dict, rec, x: np.ndarray, w_max: float, eta_max: float) -> dict:
+    """The light export (docs/BOOK_BRIEF.md): three arrays make up almost all of a dashboard's size. Activations
+    and weights are kept for a few agents (the best one and others spread evenly over the recorded sample, which
+    is ordered by fitness), and the world grid as its first tick plus the cells that change. All agents and the
+    whole life stay in the world view."""
+    n, best = x.shape[1], int(rec["best"])
+    agents = sorted({best, *np.linspace(0, n - 1, BRAIN_AGENTS).astype(int).tolist()})
+    data["meta"]["brain_agents"] = agents
+    data["x"] = _b64(np.round(x[:, agents] * 127), np.int8)
+    for k in ("w_snap", "w0"):
+        a = rec[k][:, agents] if k == "w_snap" else rec[k][agents]
+        data[k] = _b64(np.round(np.clip(a.astype(np.float32) / w_max, -1, 1) * 127), np.int8)
+    data["eta"] = _b64(np.round(np.clip(rec["eta"][agents].astype(np.float32) / eta_max, 0, 1) * 255), np.uint8)
+    grid = rec["grid"]
+    flat = grid.reshape(grid.shape[0], -1)
+    t, cell = np.nonzero(flat[1:] != flat[:-1])                                       # sorted by tick
+    del data["grid"]
+    data["grid0"] = _b64(grid[0], np.int16)
+    data["grid_n"] = _b64(np.bincount(t + 1, minlength=grid.shape[0]), np.int32)      # changes per tick
+    data["grid_i"] = _b64(cell, np.int32)
+    data["grid_v"] = _b64(flat[1:][t, cell], np.int16)
+    return data
+
+
+def build_data(run_dir: Path, light: bool = False) -> dict:
     rec = np.load(run_dir / "recording.npz")
     cfg = json.loads((run_dir / "config.json").read_text())
     rs = json.loads((run_dir / "ruleset.json").read_text())
@@ -51,7 +79,7 @@ def build_data(run_dir: Path) -> dict:
         print(f"sprites skipped: {e}")
         sprites, ground, people = {}, None, []
     x = np.clip(rec["x"].astype(np.float32), -1, 1)
-    return {
+    data = {
         "meta": {"T": int(x.shape[0]), "N": int(x.shape[1]), "H": int(rec["grid"].shape[1]), "W": int(rec["grid"].shape[2]),
                  "best": int(rec["best"]), "names": rs["names"], "ohol_id": rs["ohol_id"], "colours": colours,
                  "appearance": appearance, "food_value": rs["food_value"], "actions": A.NAMES, "layout": layout,
@@ -68,16 +96,17 @@ def build_data(run_dir: Path) -> dict:
         "eta": _b64(np.round(np.clip(rec["eta"].astype(np.float32) / eta_max, 0, 1) * 255), np.uint8),
         "sprites": sprites, "ground": ground, "people": people,
     }
+    return _light(data, rec, x, w_max, eta_max) if light else data
 
 
-def export_dashboard(run_dir: Path | str) -> Path:
+def export_dashboard(run_dir: Path | str, light: bool = False, out: Path | str | None = None) -> Path:
     run_dir = Path(run_dir)
-    data = build_data(run_dir)
+    data = build_data(run_dir, light)
     html = TEMPLATE.read_text(encoding="utf-8").replace("/*__DATA__*/null", json.dumps(data))
-    out = run_dir / "dashboard.html"
+    out = Path(out) if out else run_dir / ("dashboard_light.html" if light else "dashboard.html")
     out.write_text(html, encoding="utf-8")
     return out
 
 
 if __name__ == "__main__":
-    print("wrote", export_dashboard(sys.argv[1]))
+    print("wrote", export_dashboard(sys.argv[1], light="--light" in sys.argv[2:]))

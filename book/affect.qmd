@@ -1,0 +1,5 @@
+# Affect: dwelling and roaming {#sec-affect}
+
+::: {.callout-note}
+This stage is still being designed. Its page will be written when the stage is frozen.
+:::

@@ -1,0 +1,5 @@
+# Drives: hunger and cold {#sec-drives}
+
+::: {.callout-note}
+This stage is still being designed. Its page will be written when the stage is frozen.
+:::

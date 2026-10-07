@@ -1,0 +1,28 @@
+# 1.0 Steering {#sec-steering}
+
+<div data-life="status" data-stage="1.0"></div>
+
+::: {.callout-note}
+The text of this page will be written when the stage is frozen. The figures below are drawn from the newest runs.
+:::
+
+A ganglion of excitatory and inhibitory interneurons between the senses and the motor neurons, and direct reflex
+arcs from senses to motor neurons. Every synapse is evolved. The animal sees the outside world only.
+
+<div data-life="settings" data-stage="1.0"></div>
+
+## The brain
+
+<div data-life="brain" data-stage="1.0"></div>
+
+## Results
+
+<div data-life="curves" data-stage="1.0"></div>
+
+<div data-life="summary" data-stage="1.0"></div>
+
+<div data-life="lesions" data-stage="1.0"></div>
+
+## The runs behind this page
+
+<div data-life="runs" data-stage="1.0"></div>

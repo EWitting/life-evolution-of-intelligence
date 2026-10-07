@@ -1,0 +1,106 @@
+# 1.1 Valence: good and bad {#sec-valence}
+
+<div data-life="status" data-stage="1.1"></div>
+
+The animal of the previous stage steers by reflex. What it sees is wired, through a small ganglion, straight to
+its motor neurons. It has no way of knowing what happened after it bit something.
+
+This stage gives it that. It adds a handful of neurons that stand for *this is good* and *this is bad*, and puts
+food in the world that is bad to eat.
+
+## The world: two kinds of berry are poison
+
+There are now six kinds of berry bush instead of four. They look alike, in the way that different berries look
+alike: each kind has the shape of a bush and its own colour.
+
+Four kinds are food. Two are poison, and always the same two. Eating a poison berry empties the stomach by about
+as much as a good berry fills it, and it hurts for a moment.
+
+Because the same two kinds are poison in every life, nothing has to be learned during a life. Which colours to
+avoid can be inherited. Learning it within a life is the subject of a later stage.
+
+<div data-life="settings" data-stage="1.1"></div>
+
+## The biology: valence
+
+In small animals, most sensory neurons fall into two classes. Some respond to things worth approaching, such as
+the smell of food. Others respond to things worth avoiding, such as a harmful chemical or a hard touch on the
+nose. The two classes converge onto a few interneurons that bias the animal towards carrying on or turning away.
+
+*Valence* is the name for this sorting of the world into good and bad. In the worm *C. elegans*, a much-studied
+animal with 302 neurons, harmful stimuli do two things at once: they trigger a turn, and they stop the pumping of
+the throat with which the worm feeds. Max Bennett argues that this sorting is what the first brains were for.
+
+The worm is only a stand-in. The animal that this chapter is about, the common ancestor of animals with a left
+and a right side, left no nervous system to look at.
+
+## The circuit
+
+Five new groups of neurons, each with a meaning that is fixed by its wiring:
+
+- **`valence_app`**, the *appetitive* cells: active when something is good. The sense of taste is hard-wired to
+  them, and reaches the brain nowhere else.
+- **`valence_av`**, the *aversive* cells: active when something is bad. Pain is hard-wired to them, and reaches
+  the brain nowhere else.
+- **`grasp`**, a *motor programme*: when it fires, the animal bites what is in front of it.
+- **`no_touch`**, a *gate*: an inhibitory cell that is active whenever nothing is directly ahead, and holds
+  `grasp` shut.
+- **`no_feed`**: an inhibitory pair driven by the aversive cells, which blocks the bite.
+
+Taste and pain are *unconditioned* signals: they mean good and bad without any experience. But they arrive only
+after the bite. To act in time, the value cells also get input from the eyes, and that input is evolved. Over
+generations, the look of a poison berry comes to excite the aversive cells before anything has been eaten.
+
+Value does not move the animal by itself. The appetitive cells excite `grasp`, but `grasp` can only fire when
+`no_touch` is silent, that is, when something is within reach. Releasing an action by switching off its
+inhibition is called *disinhibition*, and it is a common arrangement in real nervous systems. Here it makes a
+value turn into the right action for the situation: bite when the good thing is in front of the mouth, and not
+before.
+
+The aversive cells do what the worm does. They drive the motor neurons for turning, and through `no_feed` they
+shut down biting.
+
+<div data-life="brain" data-stage="1.1"></div>
+
+Hover over a box or an arrow for details. The dark arrows are the designed wiring described above. The grey ones
+were left to evolution.
+
+## Watching it work
+
+Below is one animal from the last generation, around the moment it bites a poison berry.
+
+Step through it one tick at a time. At the bite, nothing in the brain has changed yet: the pain arrives with the
+next tick. Then the `pain` sense is on, both aversive cells fire, `no_feed` switches on and `grasp` falls silent.
+The animal turns away. A few ticks later the pain has faded and it is eating again.
+
+<div data-life="strip" data-stage="1.1" data-example="bad_berry"></div>
+
+Nothing was learned here. The animal will react in the same way the next time. What stops it from biting poison
+often is the evolved input from the eyes, which acts before the bite.
+
+## Results
+
+### Is main worse than control?
+
+The control is the brain of stage 1.0 in this world. It cannot feel pain or taste at all, so it can only avoid
+poison if evolution happens to wire the look of the poison berries to turning away.
+
+<div data-life="curves" data-stage="1.1"></div>
+
+<div data-life="summary" data-stage="1.1"></div>
+
+The three rows measure the same thing with less and less noise. The first is taken from the generations as they
+ran. The second gives every final population the same eight worlds. In the third, main and control animals live
+together and compete for the same bushes, so a difference cannot come from one population having had an easier
+world.
+
+### Is the circuit used?
+
+<div data-life="lesions" data-stage="1.1"></div>
+
+Read this chart region by region. A short bar means the animals depended on that region. A bar near 100 means
+they did as well without it, and three dots far apart mean the seeds disagree.
+
+## The runs behind this page
+
+<div data-life="runs" data-stage="1.1"></div>

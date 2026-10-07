@@ -31,7 +31,7 @@
   #archSvg text.sub { font-size:10px; fill:var(--muted); }
   #archSvg text.elab { paint-order:stroke; stroke:#fff; stroke-width:3px; }
   .small { color:var(--muted); font-size:12px; }
-  #archDetail a, #archLegend a { color:#1b3a6b; }
+  #archDetail a, #archLegend a, #noBrain a { color:#1b3a6b; }
 </style>
 </head>
 <body>
@@ -53,6 +53,7 @@
     <div id="legendObjects" style="margin-top:6px"></div>
   </div>
   <div class="right">
+    <div class="panel small" id="noBrain" style="display:none"></div>
     <div class="panel">
       <h2>Architecture <span id="archInfo" style="text-transform:none;font-weight:400"></span></h2>
       <svg id="archSvg" width="100%"></svg>
@@ -94,13 +95,25 @@ const NN = L.n, NIN = L.n_in;
 function decode(d) {
   const bin = atob(d.data); const buf = new ArrayBuffer(bin.length); const u8 = new Uint8Array(buf);
   for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
-  const C = {int8: Int8Array, uint8: Uint8Array, int16: Int16Array, float32: Float32Array}[d.dtype];
+  const C = {int8: Int8Array, uint8: Uint8Array, int16: Int16Array, int32: Int32Array, float32: Float32Array}[d.dtype];
   return {a: new C(buf), shape: d.shape};
 }
-const grid = decode(DATA.grid), pos = decode(DATA.pos), dir = decode(DATA.dir), alive = decode(DATA.alive);
+// light export (dashboard.py, light=True): the grid is stored as its first tick plus the cells that change per tick
+function expandGrid() {
+  const n = decode(DATA.grid_n).a, ci = decode(DATA.grid_i).a, cv = decode(DATA.grid_v).a, a = new Int16Array(T * H * W), S = H * W;
+  a.set(decode(DATA.grid0).a);
+  for (let tt = 1, k = 0; tt < T; tt++) { a.copyWithin(tt * S, (tt - 1) * S, tt * S); for (const e = k + n[tt]; k < e; k++) a[tt * S + ci[k]] = cv[k]; }
+  return {a, shape: [T, H, W]};
+}
+const grid = DATA.grid ? decode(DATA.grid) : expandGrid(), pos = decode(DATA.pos), dir = decode(DATA.dir), alive = decode(DATA.alive);
 const held = decode(DATA.held), food = decode(DATA.food), pain = decode(DATA.pain), action = decode(DATA.action);
 const mod = decode(DATA.mod), X = decode(DATA.x), WS = decode(DATA.w_snap), W0 = decode(DATA.w0), ETA = decode(DATA.eta);
 const SNAPS = WS.shape[0];
+// light export: activations and weights are stored for the agents in M.brain_agents only. BI[agent] = its row in
+// those arrays, -1 = no brain view; NBR = rows per tick. A full export stores every agent (BI[i] = i).
+const BA = M.brain_agents || null, NBR = BA ? BA.length : N;
+const BI = Array.from({length: N}, (_, i) => BA ? BA.indexOf(i) : i);
+const brainRow = () => BI[focus] >= 0 ? BI[focus] : BI[M.best];   // weights shown when the focused agent has none
 const NMOD = mod.shape[2] || 1, MODN = (L.mod_names && L.mod_names.length) ? L.mod_names : ['modulator'];
 const sprites = {};
 for (const [oid, url] of Object.entries(DATA.sprites)) { const im = new Image(); im.src = url; sprites[oid] = im; }
@@ -114,7 +127,7 @@ let t = 0, focus = M.best, playing = false;
 const $ = id => document.getElementById(id);
 $('title').textContent = `${M.experiment} / ${M.run}`;
 $('tick').max = T - 1;
-for (let i = 0; i < N; i++) { const o = document.createElement('option'); o.value = i; o.textContent = i + (i === M.best ? ' (best)' : ''); $('agent').appendChild(o); }
+for (let i = 0; i < N; i++) { const o = document.createElement('option'); o.value = i; o.textContent = i + (i === M.best ? ' (best)' : '') + (BA && BI[i] >= 0 ? ' · brain view' : ''); $('agent').appendChild(o); }
 $('agent').value = focus;
 $('config').textContent = JSON.stringify(M.config, null, 1);
 $('legendObjects').innerHTML = M.names.map((n, i) => i ? `<span style="display:inline-block;margin:0 8px 2px 0"><i style="display:inline-block;width:10px;height:10px;background:${objColour[i]};border:1px solid #999;vertical-align:middle"></i> ${n}${M.food_value[i] ? ' (food ' + M.food_value[i] + ')' : ''}</span>` : '').join('');
@@ -218,6 +231,7 @@ function drawWorld() {
     }
     wctx.restore();
     if (i === focus) { wctx.strokeStyle = '#c8102e'; wctx.lineWidth = 2; wctx.beginPath(); wctx.arc(cx, cy, CELL * 0.6, 0, 7); wctx.stroke(); }
+    else if (BA && BI[i] >= 0 && al) { wctx.strokeStyle = '#1b3a6b'; wctx.lineWidth = 1; wctx.beginPath(); wctx.arc(cx, cy, CELL * 0.6, 0, 7); wctx.stroke(); }
   }
   wctx.setTransform(1, 0, 0, 1, 0, 0);
   let na = 0; for (let i = 0; i < N; i++) na += alive.a[t * N + i];
@@ -244,10 +258,12 @@ function hideTip() { $('tip').style.display = 'none'; }
 // ---------- agent panel ----------
 const V = M.vision, FV = 4 + V.appearance_dim, NV = V.columns * FV, NB = NIN - NV - 1;
 const INN = L.in_names || [];
-function xval(tt, i, j) { return X.a[(tt * N + i) * NN + j] / 127; }
+function xval(tt, i, j) { const b = BI[i]; return b < 0 ? 0 : X.a[(tt * NBR + b) * NN + j] / 127; }
 function drawAgent() {
   const i = focus, f = food.a[t * N + i], p = pain.a[t * N + i], h = held.a[t * N + i];
   $('agentTitle').textContent = `#${i} ${alive.a[t * N + i] ? 'alive' : 'dead'}`;
+  const nb = $('noBrain'); nb.style.display = BI[i] < 0 ? 'block' : 'none';
+  if (BI[i] < 0) nb.innerHTML = `This light export stores the brain (activations, weights) of ${BA.length} of the ${N} agents. Agent #${i} is not one of them: its retina, inputs and activations below are empty, and the weights are those of agent #${M.best}. Agents with a brain view (ringed in the world): ` + BA.map(a => `<a href="#" data-a="${a}">#${a}</a>`).join(' ');
   const kv = [['food', `<span class="bar"><i style="width:${Math.max(0, 100 * f / M.world.max_food)}%"></i></span> ${f.toFixed(1)}`],
     ['pain', p.toFixed(2)], ['held', h ? M.names[h] : '-'], ['action', M.actions[action.a[t * N + i]]],
     ...MODN.map((nm, k) => ['mod ' + nm, mod.a[(t * N + i) * NMOD + k].toFixed(2)]), ['pos', `(${pos.a[(t * N + i) * 2]}, ${pos.a[(t * N + i) * 2 + 1]}) facing ${['up', 'right', 'down', 'left'][dir.a[t * N + i]]}`]];
@@ -304,10 +320,11 @@ function neuronName(j) { if (j < NIN && INN.length) return `in[${j}] ${INN[j]}`;
 const wm = $('wmat'), wctx2 = wm.getContext('2d');
 const PX = NN > 200 ? 1 : NN > 100 ? 3 : 4; wm.width = NN * PX; wm.height = NN * PX;
 function wget(mode, s, i, pre, post) {
+  i = BI[i] >= 0 ? BI[i] : BI[M.best];   // row in the weight arrays
   const k = (i * NN + pre) * NN + post;
   if (mode === 'eta') return ETA.a[k] / 255;
   if (mode === 'w0') return W0.a[k] / 127;
-  const wv = s < 0 ? W0.a[k] / 127 : WS.a[(s * N + i) * NN * NN + pre * NN + post] / 127;
+  const wv = s < 0 ? W0.a[k] / 127 : WS.a[(s * NBR + i) * NN * NN + pre * NN + post] / 127;
   return mode === 'dw' ? (wv - W0.a[k] / 127) : wv;
 }
 const wOff = document.createElement('canvas'); wOff.width = NN; wOff.height = NN;   // one pixel per (pre, post)
@@ -380,7 +397,7 @@ function inferProjections() {   // runs recorded before regions/projections exis
   for (const a of REG) for (const b of REG) {
     if (b.name === 'in') continue;
     let any = false;
-    for (let i = a.off; i < a.off + a.size && !any; i++) for (let j = b.off; j < b.off + b.size; j++) if (W0.a[(focus * NN + i) * NN + j]) { any = true; break; }
+    for (let i = a.off; i < a.off + a.size && !any; i++) for (let j = b.off; j < b.off + b.size; j++) if (W0.a[(brainRow() * NN + i) * NN + j]) { any = true; break; }
     if (any) out.push({src: a.name, dst: b.name, rule: '?', modulated: false});
   }
   return out;
@@ -419,12 +436,12 @@ const LSKEY = 'life-arch:' + M.experiment + ':' + L.names.join(',');
 function loadPos() { try { const s = JSON.parse(localStorage.getItem(LSKEY) || 'null'); if (s) for (const r of REG) if (s[r.name]) AR.pos[r.name] = s[r.name]; } catch (e) {} }
 function savePos() { try { localStorage.setItem(LSKEY, JSON.stringify(AR.pos)); } catch (e) {} }
 function projStats(p, s) {
-  const a = regOf(p.src), b = regOf(p.dst);
+  const a = regOf(p.src), b = regOf(p.dst), fb = brainRow();
   let n = 0, sw = 0, sdw = 0, np = 0;
   for (const i of p.rows) for (const j of p.cols) {
-    const k = (focus * NN + i) * NN + j, w0 = W0.a[k];
+    const k = (fb * NN + i) * NN + j, w0 = W0.a[k];
     if (!w0 && !ETA.a[k]) continue;
-    const wv = s < 0 ? w0 : WS.a[(s * N + focus) * NN * NN + i * NN + j];
+    const wv = s < 0 ? w0 : WS.a[(s * NBR + fb) * NN * NN + i * NN + j];
     n++; sw += Math.abs(wv); sdw += Math.abs(wv - w0); if (ETA.a[k]) np++;
   }
   const sc = M.w_max / 127;
@@ -653,6 +670,7 @@ function fmtTime(sec) { const m = Math.floor(sec / 60), s = Math.floor(sec % 60)
 function setFocus(i) { focus = i; $('agent').value = i; setTick(t, true); }
 $('tick').addEventListener('input', e => setTick(+e.target.value));
 $('agent').addEventListener('change', e => setFocus(+e.target.value));
+$('noBrain').addEventListener('click', e => { const a = e.target.closest('[data-a]'); if (a) { e.preventDefault(); setFocus(+a.dataset.a); } });
 $('useSprites').addEventListener('change', drawWorld);
 $('back').addEventListener('click', () => setTick(t - 1, true));
 $('fwd').addEventListener('click', () => setTick(t + 1, true));
@@ -670,7 +688,7 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 document.addEventListener('keydown', e => { if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return; if (e.key === ' ') { e.preventDefault(); $('play').click(); } else if (e.key === 'ArrowLeft') setTick(t - (e.shiftKey ? 10 : 1), true); else if (e.key === 'ArrowRight') setTick(t + (e.shiftKey ? 10 : 1), true); });
-$('legend').textContent = `${N} agents, ${T} ticks, ${NN} neurons, weight snapshots every ${M.snap_every} ticks. Keys: space, arrows (shift = 10). Click an agent to focus; zoomed views follow it during playback. Speed is relative to real time. Zoom: mouse wheel (activations: time, shift+wheel = neurons), drag to pan, double-click to reset.`;
+$('legend').textContent = (BA ? `Light export: brain views for agents ${BA.join(', ')}. ` : '') + `${N} agents, ${T} ticks, ${NN} neurons, weight snapshots every ${M.snap_every} ticks. Keys: space, arrows (shift = 10). Click an agent to focus; zoomed views follow it during playback. Speed is relative to real time. Zoom: mouse wheel (activations: time, shift+wheel = neurons), drag to pan, double-click to reset.`;
 drawFit(); setTick(0);
 const imgs = Object.values(sprites).concat(ground ? [ground] : [], people);
 let pending = imgs.length; imgs.forEach(im => { im.onload = () => { if (--pending <= 0) drawWorld(); }; });

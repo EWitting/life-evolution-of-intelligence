@@ -1,0 +1,67 @@
+# Introduction {.unnumbered}
+
+This book follows one experiment: growing a brain in a simulation, one piece at a time, in roughly the order in
+which brains are thought to have evolved.
+
+Each stage adds a small circuit to the brain of the previous stage and changes the world so that the new circuit
+has something to be good for. Evolution then gets a number of generations to put the circuit to use. A page of
+this book is the report of one stage: what was added and why, the biology it is modelled on, and what happened.
+
+## The animals and their world
+
+The animals live on a grid. Each has a stomach that empties a little every tick (one tick is about a second of
+behaviour) and faster when it moves. An animal whose stomach is empty dies. Food grows on bushes; an eaten bush
+regrows after a while.
+
+The objects, their names and their pictures come from the game *One Hour One Life*. The simulation uses a small
+slice of the game's rules at each stage and a larger one as the brain grows.
+
+An animal senses the world through a few coarse "eyes": a handful of directions, in each of which it sees whether
+something is there, how near it is, and what it looks like. What something looks like is a short list of numbers,
+its *appearance*. It can step forward, turn left or right, and grasp what is in front of it.
+
+## The brain
+
+The brain is a network of model neurons. A neuron has an activity between 0 and 1 and passes it on through
+synapses, each with a strength. A neuron is either excitatory (it raises the activity of the neurons it reaches)
+or inhibitory (it lowers it), never both. Neurons are grouped into *regions*, and a *projection* is the set of
+synapses from one region to another.
+
+Some projections are **evolved**: which synapses exist and how strong they are is inherited, with mutations, and
+shaped by selection. Others are **hard-wired**: they are designed, and evolution can only make the whole
+projection stronger or weaker. A hard-wired projection gives a group of neurons a fixed meaning, such as "this
+hurts", that later stages can build on.
+
+## How evolution runs
+
+A population is 64 genomes. Each genome lives as four siblings in a shared world, once. The genomes that did best
+have children, each from two parents, with a few mutations. That is one generation.
+
+**Fitness** is what selection rewards. Here it is the *well-fed lifetime*: how long the animal lived, counted
+from its first meal, with each tick weighted by how full its stomach was. An animal that never eats scores zero.
+
+## How a stage is judged
+
+One life is mostly luck, and one evolution run can end almost anywhere. So every stage is run three times with
+different random seeds, and every result is given as a mean with its standard error over those seeds.
+
+Each stage has a **main** run, with the new circuit, and a **control**: the brain of the previous stage in the
+same new world, starting from the same population. The new circuit is then the only difference between them.
+
+A stage succeeds when two things hold:
+
+1. **The circuit is used.** The final population is put back in its world with the new neurons silenced. If the
+   animals do clearly worse without them, in every seed, they were using them. This is called a *lesion* test.
+2. **Main is not worse than control.** It does not have to be better. The point of a stage is a circuit that
+   later stages can build on.
+
+A circuit that is not used is left out of the brain, and the page says so.
+
+## How to read a stage page
+
+Every page has the same parts: the idea and its biology, the circuit as a diagram, the results, and the list of
+runs behind them, with a link to a *dashboard* that replays the last generation of a run. Where it helps, a page
+zooms in on one animal over a few dozen ticks, so that you can watch the circuit work.
+
+The numbers, graphs and diagrams are drawn from data files that are written when a stage is run. Only the text
+is written by hand.

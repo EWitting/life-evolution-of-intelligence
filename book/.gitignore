@@ -1,0 +1,7 @@
+# built output: published to a separate branch, never committed to main (docs/BOOK_BRIEF.md)
+/_book/
+/.quarto/
+/dashboards/
+/site_libs/
+
+**/*.quarto_ipynb

@@ -46,8 +46,9 @@ BUSH_BERRIES = 6                                # berries a bush carries (the OH
                                                 # decisions per life for the same food
 
 
-def regrow_ticks(exp) -> int:
-    return int(min(exp.world.max_decay_ticks, round(REGROW_FOOD * BUSH_BERRIES / 6 / exp.world.hunger_per_tick)))
+def regrow_ticks(exp, berries: float | None = None) -> int:
+    berries = BUSH_BERRIES if berries is None else berries
+    return int(min(exp.world.max_decay_ticks, round(REGROW_FOOD * berries / 6 / exp.world.hunger_per_tick)))
 
 
 
@@ -120,7 +121,7 @@ def berry_world(exp: ExperimentConfig, n_types: int = 4, poison: tuple = (), per
                 per_life_k: int = 1, onions: bool = True, springs: float = 0.0, poison_food: float = -1.0,
                 poison_pain: float = 1.0, reverse: bool = False, per_life_sets: tuple = (),
                 appearance_mode: str = "lookalike", novel_looks: tuple = (), novel_sim: float | None = None,
-                weights: dict | None = None, duds: tuple = ()):
+                weights: dict | None = None, duds: tuple = (), berries: int | None = None):
     """Several berry-bush types (the OHOL gooseberry and colour look-alikes; all behave like the gooseberry:
     6 berries, then empty, regrowing after regrow_ticks(exp)), optional wild onions and hot springs.
     poison: types whose berries always drain food and hurt (an inheritable fact). per_life_pool/per_life_k:
@@ -134,15 +135,18 @@ def berry_world(exp: ExperimentConfig, n_types: int = 4, poison: tuple = (), per
     weight can know them (ADR-017). Combine with per_life_pool so that their meaning is drawn per life as well.
     weights: {type: spawn weight} overriding the default of 1 per bush type.
     duds: types whose bush looks like a bush but yields nothing (USE does nothing): a meaningless stimulus. With a
-    look drawn per life (novel_looks) evolution cannot learn to ignore it by inheritance."""
+    look drawn per life (novel_looks) evolution cannot learn to ignore it by inheritance.
+    berries: berries per bush (default BUSH_BERRIES); the regrowth time scales with it, so the food per bush and
+    tick stays the same and a smaller bush only means more, smaller visits."""
+    berries = int(BUSH_BERRIES if berries is None else berries)
     data = ohol.load()
     ids = [BUSH, BERRY, EMPTY_BUSH] + ([ONION_PLANT, ONION] if onions else []) + ([HOT_SPRING] if springs else [])
     sets = [(variant(v), COLOURS[v - 1] + " ") for v in range(1, n_types)]
     rs = ohol.slice_ruleset(data, ids, ticks_per_second=exp.world.ticks_per_ohol_second,
                             max_decay_ticks=exp.world.max_decay_ticks, clone_sets=sets,
-                            extra_decays={EMPTY_BUSH: (BUSH, regrow_ticks(exp))})
+                            extra_decays={EMPTY_BUSH: (BUSH, regrow_ticks(exp, berries))})
     for v in range(n_types):
-        rs.num_uses[rs.local(variant(v)[BUSH])] = int(BUSH_BERRIES)
+        rs.num_uses[rs.local(variant(v)[BUSH])] = berries
     for v in duds:   # no transition from USE on this bush
         b = rs.local(variant(v)[BUSH])
         rs.use_table[:, b] = -1
@@ -538,33 +542,54 @@ def _split_cs(projections, taught=CS_TAUGHT):
     return tuple(out)
 
 
+# The safety cell (v26, back from v19-v20): pain alone only ever raises the aversive weights, and since every look
+# shares part of the gooseberry look, suspicion of a poison ends on the staple and is never taken back
+# (`scripts/probes/classify.py`; pain minus taste fails the other way: the many good meals erase every aversion).
+# The safety cell fires when a bite tastes good although the aversive cells expected bad one tick earlier,
+# max(0, tanh(-2 + 2/3 taste + aversive cells)), and is subtracted from the pain teacher. It is the downward half
+# of a prediction error; in the fly, reward-type dopamine neurons do this when an expected punishment is omitted.
+SAFETY_K = 1.0        # weight of the safety cell in the aversive teacher
 B15 = extend(B11,
-             regions=(R("us_pain", 1, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, group="us"),),
-             projections=(P("in", "us_pain", src_select=("pain",), density=1.0, w_init=2.0, evolve=False),),
-             modulators=(Mod("us_av", pos="us_pain"),))
+             regions=(R("us_pain", 1, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, group="us"),
+                      R("safety", 1, sign="exc", alpha=1.0, bias=-2.0, evolve_bias=False, group="us")),
+             projections=(P("in", "us_pain", src_select=("pain",), density=1.0, w_init=2.0, evolve=False),
+                          P("in", "safety", src_select=("taste",), density=1.0, w_init=2.0 / 3.0, evolve=False),
+                          fixed("valence_av", "safety", 1.0)),
+             modulators=(Mod("us_av", terms=(("us_pain", 1.0), ("safety", -SAFETY_K))),))
 B15 = replace(B15, projections=_split_cs(B15.projections))
-W15 = W11
-LIFE_LEARN = 2000     # ticks per life in the learning stages
+# A life that holds many decisions (v26, tried on this stage first): a life of 1000-2000 ticks was 1.25-2.5 stomachs
+# long and a bush 0.6 of a stomach, so a life was a handful of bushes, a lesson was used about once, and an animal
+# that filled up and froze still reached the cap (STAGE_LOG 2026-10-07). Here a stomach lasts 400 ticks at rest
+# (the 1.0 rate), a life is 4000 ticks (ten stomachs) and a bush holds 3 berries (0.3 of a stomach). Fewer
+# generations pay for the longer lives.
+W15 = replace(W11, hunger_per_tick=0.05)
+LIFE_15 = 4000        # ticks per life in stage 1.5
+LEARN_BERRIES = 3     # berries per bush in stage 1.5
+LIFE_LEARN = 2000     # ticks per life in the later learning stages (older designs, to be revisited)
 NOVEL_SIM = 0.45      # novel types look less like the gooseberry than the ancestral look-alikes (0.8) do
-POISON_FOOD = -2.0    # OHOL food points lost per poison berry in the learning stages (a berry gives +3)
+POISON_FOOD = -6.0    # OHOL food points lost per poison berry in the learning stages (a berry gives +3): a mistake
+                      # costs two berries and the pain reflex ends the visit, a good bush gives three, so trying an
+                      # unknown bush still pays on average and each avoided mistake is worth something
 
 
 NOVEL = (1, 2, 3, 5)  # berry types whose look and meaning are drawn per life; type 0 is always good, 4 always poison
 NOVEL_WEIGHT = 0.5    # spawn weight of each novel type (ancestral types: 1): novel foods are half of all bushes
 
 
-def learning_world(exp, reverse: bool = False, springs: float = 0.0):
+def learning_world(exp, reverse: bool = False, springs: float = 0.0, berries: int | None = None):
     """Four novel berry types (two of them poison, drawn per life, with a look drawn per life), one ancestral good
     and one ancestral poison type, no onions. NOVEL_WEIGHT sets how much of the supply is novel: familiar food
     should keep a non-learner alive, novel food should be worth trying."""
     return berry_world(exp, 6, poison=(4,), per_life_pool=NOVEL, per_life_k=2, springs=springs, reverse=reverse,
                        novel_looks=NOVEL, novel_sim=NOVEL_SIM, poison_food=POISON_FOOD, onions=False,
-                       weights={v: NOVEL_WEIGHT for v in NOVEL})
+                       weights={v: NOVEL_WEIGHT for v in NOVEL}, berries=berries)
 
 
-stage(Stage("1.5", "s1_5_association", "1.1", B15, W15, VISION_CH1, BODY_TASTE, learning_world,
-            row_extra=poison_metrics, plastic=True, generations=150, ticks=LIFE_LEARN,
-            notes="aversive conditioning (pain teaches the identity -> aversive synapses); novel foods per life"))
+stage(Stage("1.5", "s1_5_association", "1.1", B15, W15, VISION_CH1, BODY_TASTE,
+            lambda exp: learning_world(exp, berries=LEARN_BERRIES),
+            row_extra=poison_metrics, plastic=True, generations=50, ticks=LIFE_15,
+            notes="aversive conditioning (pain teaches the identity -> aversive synapses, a safety cell takes "
+                  "suspicion back); novel foods per life; long lives of many small meals"))
 
 
 # 1.6 extinction and reversal: the learned weights now relax back toward their inherited values (a fast,

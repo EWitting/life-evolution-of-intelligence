@@ -20,12 +20,13 @@ def variant(brain, v):
             brain = replace(brain, projections=tuple(
                 replace(p, elig_tau=0.5) if p.modulator == "us_av" else p for p in brain.projections))
         elif part.startswith("safety"):
-            k = float(part[6:] or 1.0)
-            brain = S.extend(brain,
-                             regions=(S.R("safety", 1, sign="exc", alpha=1.0, bias=-2.0, evolve_bias=False, group="us"),),
-                             projections=(S.P("in", "safety", src_select=("taste",), density=1.0, w_init=2.0 / 3.0, evolve=False),
-                                          S.fixed("valence_av", "safety", 1.0)))
-            brain = replace(brain, modulators=tuple(
+            k = float(part[6:]) if part[6:] else 1.0
+            if not any(r.name == "safety" for r in brain.regions):   # stage 1.5 has the cell itself from v26 on
+                brain = S.extend(brain,
+                                 regions=(S.R("safety", 1, sign="exc", alpha=1.0, bias=-2.0, evolve_bias=False, group="us"),),
+                                 projections=(S.P("in", "safety", src_select=("taste",), density=1.0, w_init=2.0 / 3.0, evolve=False),
+                                              S.fixed("valence_av", "safety", 1.0)))
+            brain = replace(brain, modulators=tuple(   # safety0 takes the cell out of the teacher
                 replace(m, pos="", terms=(("us_pain", 1.0), ("safety", -k))) if m.name == "us_av" else m
                 for m in brain.modulators))
         elif part.startswith("eta"):

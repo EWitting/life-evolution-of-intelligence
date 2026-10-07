@@ -4,7 +4,7 @@ whether the food is a stock that is raced down (everything full at the start, em
 
     uv run python scripts/probes/supply.py <stage key> [field=value ...] [+ field=value ...]
 each group of field=value after a '+' is one more variant of the WorldConfig (start_spent=0.5 eat_cost=0.2)."""
-import sys
+import os, sys
 from dataclasses import replace
 import jax, numpy as np
 from life.experiments import stages as S
@@ -18,10 +18,15 @@ for a in sys.argv[2:]:
     else:
         groups[-1].append(a)
 s0 = S.STAGES[key]
+if os.environ.get("TICKS"):          # a longer or shorter life than the stage defines
+    s0 = replace(s0, ticks=int(os.environ["TICKS"]))
 for g in groups:
     over = {}
     for a in g:
         k_, v_ = a.split("=")
+        if k_[0].isupper():          # a constant of stages.py (BUSH_BERRIES=2); stays set for the later variants
+            setattr(S, k_, float(v_))
+            continue
         over[k_] = type(getattr(s0.world, k_))(float(v_))
     s = replace(s0, world=replace(s0.world, **over))
     exp = S.make_exp(s, s.brain, "supply", 1, 0)

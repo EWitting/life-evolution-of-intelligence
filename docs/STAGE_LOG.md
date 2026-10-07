@@ -1175,3 +1175,38 @@ generation 0: 2 berries at density 0.42: lifetime 460, 3.6 good visits, 2.0 pois
 at 0.28: 568, 3.7, 2.3, 1.21; 2 berries with poison -9: 256, 1.8, 0.9, 0.13. The population is not adapted to these
 worlds and dies early, so this is a weak test.
 
+### Longer lives: the animals freeze and starve next to food (2026-10-07, late)
+
+The user proposed longer lives (fewer generations to match), a lower metabolic rate and bushes of 2-3 berries, so
+that a life holds many decisions. Probes with 6000-tick lives, populations not adapted to them.
+
+`lessons.py`, the 1.1 population in the 1.5 world, learning off, poison -3 (density unchanged; regrowth scales
+with bush size and metabolic rate, so the food flow per bush follows the metabolic rate):
+
+| world | lifetime of 6000 | good-bush visits (bites each) | poison-bush visits | repeat visits to a type that hurt |
+|---|---|---|---|---|
+| as defined | 586 | 2.3 (5.7) | 1.4 | 0.66 |
+| 2 berries per bush | 441 | 3.1 (2.0) | 1.1 | 0.35 |
+| 2 berries, hunger 0.0125 | 1055 | 4.4 (2.0) | 1.7 | 0.70 |
+| 3 berries, hunger 0.0125 | 1252 | 4.2 (2.9) | 2.2 | 1.07 |
+
+`supply.py`, the 1.1 population in its own world, 6000 ticks: alive at tick 600 / 1800 / 3000 / 5400 and edible
+bushes full at the same ticks:
+
+| world | alive | edible bushes full |
+|---|---|---|
+| as defined | 65 / 29 / 9 / 0 % | 15 / 50 / 76 / 99 % |
+| hunger 0.0125 | 82 / 51 / 38 / 21 % | 7 / 12 / 27 / 65 % |
+| 3 berries, hunger 0.0125 | 79 / 61 / 52 / 39 % | 12 / 20 / 28 / 40 % |
+
+The animals die while the bushes fill up: not a shortage. Trace of the as-defined run: of 166 animals that starved
+after tick 600, 120 stood in one cell with USE on over 70% of the ticks 200 ticks before death, facing open ground
+(81) or an empty bush (36), with 6.7 full bushes within 3 cells on average; median 780 ticks from the last meal
+to death, about one stomach at rest. No pairs facing each other. In a normal 1000-tick life "USE at nothing" takes
+6-15% of the ticks alive (1.0 and 1.1).
+
+Reading: a life of 1000 ticks is 1.25 stomachs long in the 1.1 world (20 / 0.025 = 800 ticks at rest) and 2.5 in
+1.0. An animal that fills up and then freezes still scores well under the well-fed lifetime, and reaches the cap,
+so selection cannot remove the trap. This is the "staying put is a good strategy" issue and the ceiling at the
+life cap. Lives have to be many stomachs long. The mechanism of the freeze itself is not traced yet.
+

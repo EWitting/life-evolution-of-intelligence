@@ -4,7 +4,8 @@ and how often an animal comes back to a poison type it has already been hurt by.
 later visits.
 
     STAGE=1.5 uv run python scripts/probes/lessons.py [FIELD=value ...]     as gen0.py: lower-case = WorldConfig field,
-                                                                            upper-case = constant of stages.py"""
+                                                                            upper-case = constant of stages.py
+TICKS in the environment overrides the length of a life."""
 import os, sys
 from dataclasses import replace
 import jax, jax.numpy as jnp, numpy as np
@@ -18,13 +19,15 @@ for a in sys.argv[1:]:
         setattr(S, k_, float(v_))
     else:
         s = replace(s, world=replace(s.world, **{k_: type(getattr(s.world, k_))(float(v_))}))
+if os.environ.get("TICKS"):
+    s = replace(s, ticks=int(os.environ["TICKS"]))
 exp = S.make_exp(s, s.brain, "lessons", 1, 0)
 pop = load_population(latest_run(S.STAGES[s.parent].name), exp, seed=0)
 pop = pop._replace(eta=jnp.zeros_like(pop.eta))
 rs, fn = s.build(exp)
 sim = make_simulate(exp, record=True)
 acc = []
-for k in jax.random.split(jax.random.PRNGKey(31), 3):
+for k in jax.random.split(jax.random.PRNGKey(31), 2):
     kr, ks = jax.random.split(k)
     rules = jax.tree_util.tree_map(lambda a: a[0], fn(0, kr))
     pain = np.asarray(rules.pain_value)
@@ -44,9 +47,9 @@ for k in jax.random.split(jax.random.PRNGKey(31), 3):
         seen, again = set(), 0
         for o, _ in bad:
             again += o in seen; seen.add(o)
-        acc.append([life[i], len(good), np.mean([b for _, b in good]) if good else np.nan, len(bad),
+        acc.append([life[i], life[i] >= T, len(good), np.mean([b for _, b in good]) if good else np.nan, len(bad),
                     np.mean([b for _, b in bad]) if bad else np.nan, len(seen), again])
 m = np.nanmean(np.array(acc, float), 0)
-print(f"settings {sys.argv[1:]}: lifetime {m[0]:.0f} of {exp.evolution.ticks_per_generation}")
-print(f"  visits to a good bush per life {m[1]:.1f} ({m[2]:.1f} bites each); to a poison bush {m[3]:.1f} ({m[4]:.1f} bites each)")
-print(f"  poison types an animal is hurt by {m[5]:.1f}; later visits to a type that already hurt it {m[6]:.2f} per life", flush=True)
+print(f"settings {sys.argv[1:]}: lifetime {m[0]:.0f} of {exp.evolution.ticks_per_generation}, alive at the cap {m[1]:.0%}")
+print(f"  visits to a good bush per life {m[2]:.1f} ({m[3]:.1f} bites each); to a poison bush {m[4]:.1f} ({m[5]:.1f} bites each)")
+print(f"  poison types an animal is hurt by {m[6]:.1f}; later visits to a type that already hurt it {m[7]:.2f} per life", flush=True)

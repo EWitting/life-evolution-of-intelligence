@@ -22,7 +22,7 @@ Results are published as an interactive book, one page per stage:
 .venv\Scripts\python.exe -m life.experiments.stages list
 .venv\Scripts\python.exe -m life.experiments.stages 1.0 --generations 200          # root of the lineage
 .venv\Scripts\python.exe -m life.experiments.stages 1.1 [--control]                 # warm-starts from newest 1.0 run
-.venv\Scripts\python.exe -m life.experiments.stages chain 1.1 1.6 --mutation-prob 0.1   # main + control per stage
+.venv\Scripts\python.exe -m life.experiments.stages chain 1.1 1.1 --mutation-prob 0.1   # main + control of a stage
 start runs\s1_1_valence\<timestamp>\dashboard.html
 ```
 

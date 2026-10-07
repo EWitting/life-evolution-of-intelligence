@@ -2,35 +2,137 @@
 
 <div data-life="status" data-stage="1.5"></div>
 
-::: {.callout-warning title="On hold: the learning rule is being redesigned"}
-The figures below come from runs of an older design, made under different settings, and the seeds are not
-comparable with each other: they were scored with different measures of fitness. Do not read results from them.
+Until now everything the animal knows was put there by evolution. That works for poison that looks the same in
+every generation. It cannot work for food that is new.
 
-The rule in those runs only ever raised the weights onto the aversive cells: pain taught "what I just bit is
-bad", and nothing taught "that was fine after all". All berries share part of their look, so suspicion of a
-poison berry spread to the good ones and was never taken back, and the animals ended up eating less of
-everything. The next design adds a cell that fires when the animal expected something bad and the bite turned out
-fine, and lowers the weights again.
+This stage adds the simplest kind of learning from experience: after a bite that hurts, the look of what was
+bitten comes to mean *bad*.
 
-The text of this page will be written when the stage is frozen.
-:::
+## The world: nothing is familiar
 
-Some kinds of berry now look different in every life, so no inherited synapse can know them. Pain teaches the
-synapses from what was just bitten to the aversive cells.
+There are four kinds of berry bush, and all four are new in every life. Each life draws a new colour for every
+kind, and draws which two of the four are poison. Nothing an ancestor learned about colours is worth inheriting.
+
+The bushes still look like berry bushes. A new kind differs from the others in its colour, not in its shape, the
+way a new berry is recognisable as a berry.
+
+A poison berry costs about what a good berry gives, and it hurts for one tick. Half of all bushes are poison, so
+an animal that cannot learn pays that price on every second bush it tries, for as long as it lives. Leaving
+everything unknown alone is not an option either: there is nothing else to eat.
+
+Lives are four times longer than in the earlier stages, so that a lesson learned early can be used many times.
+Before this stage began, the animals of the previous stage were given a number of generations of this longer life
+in their own world, with no change to the brain. In a short life an animal that ate once and then stood still
+could reach the end; in a long one it cannot.
 
 <div data-life="settings" data-stage="1.5"></div>
 
-## The brain
+::: {.callout-note title="What did not work: a world where learning was hardly worth it"}
+The first versions of this world kept a familiar, safe kind of berry as half of all bushes, so that an animal that
+learned nothing would still get by. It got by very well: it ate about eleven good berries for every poison one. A
+perfect learner would have gained less than a tenth of its food. With so little to win, a lesson had to be nearly
+free of side effects to pay at all, and evolution switched learning off whenever it was not.
+
+Removing the familiar food turned this around. In the world above, a perfect learner would save about a quarter of
+what it eats.
+:::
+
+## The biology: learning by association
+
+A sea slug that is shocked after a touch learns to pull back from the touch. A rat that gets sick after a new food
+avoids that food afterwards. This is *associative learning*: something neutral (the touch, the taste) comes to
+predict something that already matters (the shock, the sickness), and the animal starts to respond to the first as
+it would to the second.
+
+The synapse-level picture, worked out in the sea slug *Aplysia* and the fruit fly, has three parts. A sensory
+neuron that was just active leaves a short-lived trace at its synapses. A *teaching signal*, released when
+something bad happens, reaches many synapses at once. Only the synapses that carry a fresh trace are strengthened.
+Pain says *something bad happened*; the trace says *and this is what was there*.
+
+## The circuit
+
+One new cell and one change to existing synapses:
+
+- **`us_pain`**, the *teacher*: driven by pain alone. When it fires, it broadcasts a teaching signal.
+- The synapses from the eyes' **look** inputs onto the aversive cells `valence_av`, which evolution shaped in the
+  previous stage, can now also change during a life. A synapse grows when its input was just active and the
+  teacher fires.
+
+The aversive cells already turn the animal away and block the bite. So nothing else has to change: once the look
+of a berry excites them, the animal treats that berry as it treats the poison it was born knowing.
 
 <div data-life="brain" data-stage="1.5"></div>
 
+### What exactly gets blamed
+
+A bite hurts, and something has to take the blame. Getting this right turned out to be most of the work of this
+stage, and three things were needed.
+
+**The lesson is about what sets the food apart.** All berry bushes look alike in most respects. If pain
+strengthened the synapses of the whole look, one bad red berry would make the animal wary of every berry. So each
+look input keeps a slow average of its own activity, of what it usually sees, and the synapse learns from the
+difference between the look right now and that average. What all bushes share cancels out. What is left is the
+colour.
+
+**The pain is brief.** While pain faded over several ticks, the teacher was still firing after the animal had
+turned away, and by then its eyes were on the next bush. The animal learned to distrust the neighbour of the
+poison as much as the poison.
+
+**Every learned synapse exists.** The look synapses were sparse, as evolution had left them, and a synapse that is
+not there cannot learn. In this stage all of them are present, the new ones starting at zero.
+
+::: {.callout-note title="What did not work: unlearning by tasting again"}
+An earlier design had a second cell that lowered the aversion whenever something the animal distrusted turned out
+to taste fine. It worked when meals were fed to the brain in a test. In a living animal it never fired: aversion
+blocks the bite, so food that is distrusted is never tasted again, and the mistake cannot be found out.
+
+This is why the lesson has to land on the right food in the first place.
+:::
+
+## Watching it work
+
+One animal from the last generation, at two moments of its life.
+
+First, its first bite of a kind of berry that is poison in this life. Before the bite the aversive cells are
+silent and `grasp` fires. One tick after the bite the pain arrives, the teacher `us_pain` fires, and the aversive
+cells and `no_feed` switch on by reflex, as in the previous stage. What cannot be seen is the change the teacher
+leaves behind in the synapses.
+
+<div data-life="strip" data-stage="1.5" data-example="first_lesson"></div>
+
+Later in the same life the animal comes up to a bush of the same kind. Nothing hurts now, and yet the aversive
+cells fire and `no_feed` holds the bite back. The animal moves on. It learned this; no ancestor could have told
+it.
+
+<div data-life="strip" data-stage="1.5" data-example="lesson_again"></div>
+
 ## Results
+
+### Is main worse than control?
+
+The control is the brain of the previous stage in this world: it feels pain and turns away from it, but it cannot
+change. It pays for every poison bush it tries, every time.
 
 <div data-life="curves" data-stage="1.5"></div>
 
 <div data-life="summary" data-stage="1.5"></div>
 
+### Is the circuit used?
+
 <div data-life="lesions" data-stage="1.5"></div>
+
+`no_plasticity` freezes every synapse at its inherited strength, and `us_pain` silences the teacher. If the
+animals do clearly worse without either, they depend on what they learn during their life.
+
+::: {.callout-note title="What still goes wrong: standing at an empty bush"}
+The animals of this stage spend a large part of their life standing in front of a bush that has no berries, biting
+at it. An empty bush has the colour of the full one, the appetitive cells respond to the colour, and the bite
+follows. Biting at nothing costs no energy, and nothing tells the animal that it is getting hungry. Few animals
+live out the long life this world offers.
+
+Two later stages are meant for exactly this: a sense of hunger, and habituation to things that keep yielding
+nothing.
+:::
 
 ## The runs behind this page
 

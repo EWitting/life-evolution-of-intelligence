@@ -1353,3 +1353,68 @@ In main the inherited learning rate went up for the first time (0.30 -> mean 0.4
 poison types after the first bite +0.35 and +0.43, of the two good types -0.04 and +0.04.
 Correction: born half full in the 1.5 world (W15 start_food 0.5).
 
+### v28, second and third one-seed runs: learning is used (2026-10-08)
+
+**Born half full** (nothing else changed), generations 30-39: well-fed lifetime 249 (main), 221 (1.5f), 198
+(control); lifetimes about 550 ticks, no climb. `forage.py`: the parent in its own world moves on 66% of ticks and
+grasps at nothing on 19%; in the novel-only world main moves on 38% and grasps at nothing on 49%, the control on
+8% and 89%; the bushes are 96-100% full from mid-life on.
+
+**Two constants retuned** (generation 0, `lessons.py`, learning off):
+
+| NOVEL_SIM | poison bite | lifetime | good / poison visits | repeat poison visits | perfect learning saves |
+|---|---|---|---|---|---|
+| 0.45 | -6 | 543 | 1.2 / 1.0 | 0.3 | 11% of intake |
+| 0.65 | -6 | 503 | 2.1 / 2.3 | 1.1 | 20% |
+| 0.8 | -6 | 409 | 2.5 / 3.4 | 1.9 | 28% |
+| 0.8 | -4.5 | 480 | 2.8 / 4.3 | 2.7 | 27% |
+| 0.8 | -3 | 591 | 3.4 / 6.0 | 4.3 | 23% |
+| 0.65 | -3 | 678 | 2.8 / 3.6 | 2.2 | 15% |
+
+NOVEL_SIM 0.8: a novel bush looks as much like the gooseberry as the six types of the 1.1 world do (at 0.45 the
+1.1 animals hardly took it for food). POISON_FOOD -3 (one berry, 2 food units): at -6 a bite on a stomach under a
+fifth full killed, a coin flip for a hungry animal when half of the bushes are poison.
+
+**Third runs** (NOVEL_SIM 0.8, POISON_FOOD -3, born half full, 60 generations; `s1_5_association/20261008-001544`,
+`_fwd`, `_control`), generations 50-59:
+
+| | main (all eyes) | 1.5f (forward eye) | control |
+|---|---|---|---|
+| well-fed lifetime | 485 | 462 | 272 |
+| lifetime of 4000 | 808 | 804 | 576 |
+| poison share of meals | 0.17 | 0.15 | 0.26 |
+| poison share, first / second half of life | 0.20 / 0.04 | 0.18 / 0.04 | 0.26 / 0.07 |
+
+Main is ahead from the first generations (0-4: 539 vs 354). No run climbs over the 60 generations.
+Lesions of main (8 worlds; well-fed lifetime, poison share): intact 787, 0.13; **no_plasticity 458, 0.22; us_pain
+458, 0.22**; valence_av 85; no_feed 90; ganglion_e 389; no_touch 499; ganglion_i 509; grasp 553; valence_app 570.
+The first run in which the teacher is used: without it the animals lose 42%.
+Inside (`learned.py`): learning rate mean 0.24, median 0.18 (start 0.3, cap 1.0; range 0.01-0.75). A poison type's
+drive on the aversive cells rises by 0.27-0.41 after the first bite, a good type's by 0.16; the aversive response
+facing the poison goes 0.13 -> 0.22 and 0.22 -> 0.26; a poison type is still bitten 2.5-2.8 times. All eyes and
+forward eye only do equally well, so all eyes stays (the user's preference); 1.5f is kept as a variant.
+
+### The freeze is biting at an empty bush, and it is resting (`scripts/probes/freeze.py`)
+
+Episodes of 50+ ticks in one cell with USE and no full bush in front:
+
+| population | share of ticks alive | in front: empty bush / open ground | ends in death | stomach at start / end |
+|---|---|---|---|---|
+| 1.0 (v25) | 7% | 7% / 93% | 10% | 80% / 55% |
+| 1.1 (v25) | 29% | 64% / 28% | 24% | 70% / 54% |
+| 1.1 long | 15% | 53% / 42% | 10% | 73% / 56% |
+| 1.5 main (third run) | 45% | 91% / 5% | 15% | 61% / 39% |
+
+Mid-freeze in 1.5: appetitive cells 0.51, grasp 0.83, no_touch 0.05, aversive 0.00; median length about 100
+ticks; 85% end with the animal moving on. An empty bush carries the colour of the full bush of its type, the value
+cells answer to the colour, and the contact-gated grasp programme bites. Grasping at nothing costs no energy
+(eat_cost is charged per bite that yields), moving does, so standing at an empty bush is the cheapest thing a fed
+animal can do; nothing tells it when to stop. Two planned stages address this without new mechanisms: hunger (rest
+when fed, forage when hungry) and habituation (the pull of what yields nothing fades). Hunger probably belongs
+before the learning stage; not decided (the user's decision, STATUS).
+
+### Chain for the final runs
+
+1.0 -> 1.1 (v25, unchanged; 1.1 three seeds) -> **1.1l** (new: the 1.1 brain and world under lives of 4000 ticks,
+60 generations, no control: an adaptation step) -> 1.5 (40 generations, three seeds, control = the 1.1 brain).
+

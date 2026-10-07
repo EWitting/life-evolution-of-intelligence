@@ -581,7 +581,9 @@ B15F = replace(_B15, projections=_split_cs(_B15.projections, eta=ETA_15, centred
 # visit to a poison bush, half of all bushes, for life, and 'never touch anything novel' is starving. A life is
 # 4000 ticks (five stomachs; the 1.1 animals froze after a meal and still reached a 1000-tick cap), with fewer
 # generations to pay for it.
-W15 = replace(W11, spawn_density=0.19, pain_decay=0.0)
+# Born half full: with a quarter (5 food units) the first bite, poison with one chance in two and costing 4, killed
+# the animal within 40 ticks whatever its genome, and no population climbed in 40 generations.
+W15 = replace(W11, spawn_density=0.19, pain_decay=0.0, start_food=0.5)
 LIFE_15 = 4000        # ticks per life in stage 1.5
 LEARN_BERRIES = 6     # berries per bush in stage 1.5
 LIFE_LEARN = 2000     # ticks per life in the later learning stages (older designs, to be revisited)

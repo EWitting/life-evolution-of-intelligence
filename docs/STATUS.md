@@ -22,6 +22,16 @@ than control (user, 2026-10-01). One life is mostly luck, so a design is checked
 **Fitness = well-fed lifetime from the first meal** (ADR-024; v19-v22 used energy acquired). Cells that lesions
 show unused in every seed are removed.
 
+4. **Book**: when the three seeds of a stage are finished, update its page in the interactive book (`book/`,
+   workflow in `book/README.md`) and commit the data file:
+
+       python -m life.book export <key> --evaluate     book/data/<key>.json: curves, summary, lesions, head to head
+       python -m life.book dashboards <key>            light dashboards of seed 0 (not committed)
+
+   `--evaluate` runs the lesions, the head to head and the re-evaluation itself (one JAX process, about 20
+   minutes for 1.1), so `stages summary/versus/lesions` need not be run separately for the book. Tables, graphs
+   and diagrams on the page follow the data file; the text of a page is written by hand when the stage is frozen.
+
 ## Stages (v23, 2026-10-03)
 
 Chain: 1.0 -> 1.1 -> 1.5, then drives -> affect -> habituation -> chapter 2. **The chain is being rerun under the

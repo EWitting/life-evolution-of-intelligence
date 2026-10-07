@@ -11,6 +11,9 @@ One Hour One Life (OHOL) objects and recipes. Goal and motivation: `Intention.md
 4. `docs/DECISIONS.md`: design decisions (ADRs). Guidance from the initial build; newer ADRs supersede older ones.
 5. `docs/SETUP.md`, `docs/OHOL_FORMAT.md`, then `life/__init__.py` for the module map.
 
+Results are published as an interactive book, one page per stage (`book/`; how to update it after a run:
+`book/README.md`).
+
 ## Quick start (Windows, CPU)
 
 ```
@@ -29,6 +32,8 @@ python -m life.compare s1_1_valence s1_1_valence_control        # first/last 25-
 python -m life.experiments.stages lesion  <run>                  # silence each region (and plasticity), measure
 python -m life.experiments.stages respond <run>                  # region activity / action probabilities per object
 python -m life.dashboard <run>                                   # regenerate dashboard.html
+python -m life.dashboard <run> --light                           # dashboard_light.html, a few MB (for the book)
+python -m life.book export 1.1 --evaluate                        # the stage's data file for the book (book/README.md)
 ```
 
 Every run directory contains `dashboard.html`: the first panel shows the architecture (regions as blocks grouped

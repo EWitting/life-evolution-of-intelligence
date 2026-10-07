@@ -68,6 +68,10 @@
 .lb-table code { font-size: 0.8rem; }
 .lb-kv td:first-child { color: var(--lb-ink2); white-space: nowrap; width: 1%; padding-right: 18px; }
 .lb-se { color: var(--lb-ink2); }
+.lb-details { border: 1px solid var(--lb-border); border-radius: 8px; padding: 0.45rem 0.9rem; background: var(--lb-surface); }
+.lb-details summary { cursor: pointer; font-size: 0.9rem; color: var(--lb-ink2); }
+.lb-details[open] summary { margin-bottom: 0.4rem; }
+.lb-details .lb-table tr:last-child td { border-bottom: none; }
 .lb-seeds { font-size: 0.74rem; color: var(--lb-muted); }
 
 /* brain diagram */

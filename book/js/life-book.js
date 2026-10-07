@@ -250,7 +250,8 @@
       ['Life', `${e.ticks_per_generation} ticks, one life per individual`],
       ['Evolution', `${w.num_agents / e.siblings} genomes × ${e.siblings} siblings, ${e.generations} generations, ${e.crossover ? 'two parents per child' : 'one parent per child'}, a weight mutates with probability ${e.weight_mutation_prob}`],
       ['Learning within a life', e.plastic ? 'yes' : 'none: every weight is inherited']];
-    root.innerHTML = `<table class="lb-table lb-kv"><tbody>${rows.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}</tbody></table>`;
+    // folded away by default: reference material, not part of the story (data-open on the placeholder opens it)
+    root.innerHTML = `<details class="lb-details"${root.dataset.open !== undefined ? ' open' : ''}><summary>World and evolution settings of this stage</summary><table class="lb-table lb-kv"><tbody>${rows.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}</tbody></table></details>`;
   }
 
   // ------------------------------------------------------------------ zoomed-in example: one animal, a few dozen ticks

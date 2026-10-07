@@ -1,5 +1,10 @@
 # Brief: the interactive book
 
+**Status 2026-10-07: built.** The pipeline, the 1.1 pilot page and the light dashboards exist. How to keep the
+book up to date after a run, and how to add a figure for one stage: `book/README.md`. This brief stays as the
+record of what the user asked for and why. Still open: publishing (GitHub Pages, `gh-pages` branch), the text of
+the other stage pages (written when each stage is frozen), evaluation data for 1.0 and 1.5.
+
 Written 2026-10-07 for a separate Claude Code session. The experiment session keeps running chapter 1 in the same
 working tree while you work on this; see "Working next to the experiment session" at the end.
 

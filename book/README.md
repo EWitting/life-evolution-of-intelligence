@@ -15,6 +15,15 @@ diagram; only the text is written by hand. Never copy a number into the text.
 
 Commit `data/*.json`. `dashboards/` and the rendered `_book/` are not committed to `main`.
 
+The export takes the newest finished run of every seed (`stages.seed_runs`) and records the run directories. The
+page then warns by itself when the runs differ from the current stage definition, when there are fewer than three
+seeds, or when the lesions were measured on older runs than the curves. Run at most one `--evaluate` at a time
+next to other experiments: it is a JAX process.
+
+After a rerun, also read the page's text. Most of it describes the mechanism and stays true, but a paragraph or
+callout that describes a *result* (for example "What did not work" on the 1.1 page) may no longer match the
+figures and has to be rewritten by hand.
+
 ## Preview and publish
 
     quarto preview book                          # local preview in the browser, reloads on save
@@ -28,7 +37,7 @@ public repository.
 | component | shows | needs |
 |---|---|---|
 | `status` | a note when the runs are provisional, fewer than three seeds, or not evaluated | |
-| `settings` | world, senses and evolution settings | |
+| `settings` | world, senses and evolution settings, in a box that is closed until clicked (`data-open` opens it) | |
 | `brain` | regions and projections; hard-wired dark, new in this stage outlined | |
 | `curves` | main and control over the generations, every seed and the mean | |
 | `summary` | results table: last generations, re-evaluation, head to head | `--evaluate` for the last two |

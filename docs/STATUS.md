@@ -42,7 +42,7 @@ lesion = fitness with the region silenced, % of intact, mean over seeds.
 |---|---|---|---|
 | 1.0 steering | ganglion (exc + inh, lagging normalisation), evolved sensor -> motor reflexes; sees the outside world only; movement costs energy; the animal eats what it grasps | rerun v25 (1 seed) | Evolves from scratch: well-fed lifetime 608, 183 of 256 alive at the cap (ceiling). Supply steady: 18-25% of bushes full all life. |
 | 1.1 valence | appetitive and aversive value cells (taste and pain enter the brain only here) acting on a contact-gated grasp programme; aversion turns away and blocks the bite | **passes** (v25, three seeds) | Main 452 +-15 vs control 186 +-13, head to head +401 +-35. Lesions: aversive 40, no_feed 45, ganglion_e 63, ganglion_i 64, appetitive 90, grasp 89, no_touch 94. v24 (every bush full at birth): main 519 vs control 394; two of three controls evolved avoidance by look. |
-| 1.5 association | pain teaches the identity -> aversive synapses about what was just bitten (short trace); novel foods per life | **on hold**: the rule fails on paper | v24, one seed: main 434 vs control 455. The pain-only rule cannot separate good from poison (suspicion spreads to the staple and is never taken back), and the edible food is gone by mid-life (STAGE_LOG, 2026-10-07). v21, two teachers: head to head +9.7 +-2.8. |
+| 1.5 association | pain teaches the identity -> aversive synapses about what was just bitten (short trace); novel foods per life | **in single-seed trials** (v26) | v26, one seed, long lives: main 1470 vs control 1570, teacher unused (no_plasticity 100, us_pain 99, safety 100), learning rate evolved to near zero. v24, one seed: main 434 vs control 455. The pain-only rule cannot separate good from poison (suspicion spreads to the staple and is never taken back), and the edible food is gone by mid-life (STAGE_LOG, 2026-10-07). v21, two teachers: head to head +9.7 +-2.8. |
 | drives (old 1.2) | `cold` and `hungry` need cells; warmth by kinesis: `warm_seek` (run while the skin is cold), `rest` (stay where it is warm); `hungry` shuts the warmth mode: forage when hungry, look after warmth when fed. Senses: body and skin temperature. World: cold, few hot springs | designed, generation-0 probe done | Generation 0: well-fed lifetime 438 vs 266 for the cold-blind brain (+65%), body temperature 0.44 vs 0.37 (STAGE_LOG v23). To do: stage definition, three seeds, lesions. |
 | affect (old 1.3) | serotonin (dwell) and PDF (roam) states | to redesign on drives | Unused in its last run (v13, old architecture). Kept if at all possible: later stages need the modulator systems. |
 | habituation (old 1.4) | depression on the identity -> appetitive synapses; dud bushes | one design pass | Unused in its last run (v13). |
@@ -57,12 +57,15 @@ Per stage, three seeds: **used** (silencing the new cells costs fitness in every
 above control within one standard error, summary and head to head), **no regression** (the population does as well
 in the previous stage's world as the previous population).
 
-1. **Resume here.** v25 (agreed 2026-10-07): 70% of the bushes start empty at a random point of their regrowth and
-   a bite costs 0.2 food units; 1.0 and 1.1 are rerun on that footing and 1.1 passes. Open, for the user: stage 1.5
-   with the safety cell (pain teacher minus "expected bad, was fine"; the conservative one of the two rules that
-   converge on paper, `scripts/probes/classify.py`) and a poison cost of 3. Order: brain assay, generation 0 (trace
-   why the safety cell changed nothing in the v24 world), then three seeds. The prediction-error rule stays for
-   chapter 2.
+1. **Resume here.** v25 (70% of bushes start empty, a bite costs 0.2) holds for 1.0 and 1.1 (1.1 passes, three
+   seeds). Stage 1.5 is in single-seed trials (v26, STAGE_LOG): lives of 4000 ticks, 3-berry bushes, a world that
+   keeps the familiar food of 1.1 and adds novel food on top, the safety cell, 50 generations, from a 1.1
+   population first evolved under long lives (`s1_1_valence_long`). Result: the teacher is unused; evolution set
+   the learning rate to near zero, and the safety cell cannot fire because animals bite only while their aversive
+   cells are silent. Open, for the user: a lesson attached to what sets a food apart (dw = eta * pain * (look -
+   usual look)), the only rule that survives the paper check with the all-or-none block. Then: assay with bites
+   chosen by the brain, generation 0, one seed. Rules of work: cheap single-seed trials before full reruns; look
+   inside a finished run (`learned.py`, `supply.py`, `lessons.py`) before starting the next.
 2. Stage 1.1: the appetitive side is used a little (90). Decide whether drives
    come directly after 1.1.
 3. Drives: stage definition from the probe circuit, three seeds, lesions of `cold`, `hungry`, `warm_seek`, `rest`.

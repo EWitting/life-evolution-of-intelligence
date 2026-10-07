@@ -1210,3 +1210,63 @@ Reading: a life of 1000 ticks is 1.25 stomachs long in the 1.1 world (20 / 0.025
 so selection cannot remove the trap. This is the "staying put is a good strategy" issue and the ceiling at the
 life cap. Lives have to be many stomachs long. The mechanism of the freeze itself is not traced yet.
 
+## v26 trials (2026-10-07, night): long lives, and why the animals still do not learn
+
+All single seed, cheap runs (user: no full reruns until a design looks final; and look inside a finished run,
+beyond lesions, before starting the next).
+
+**First trial of 1.5, a cliff:** hunger 0.05, 4000 ticks, 3-berry bushes, poison -6, safety cell, 50 generations.
+Mean lifetime 100-300 of 4000 in main and control for all 50 generations. Doubling the metabolic rate and halving
+the bush asked four times the visit rate of a population that already struggled. No generation-0 check was made
+first; `lessons.py` shows it in three minutes.
+
+**The parent has to be evolved under long lives first.** 1.1 population, own world, 4000 ticks, 30 generations
+(`s1_1_valence_long/20261007-213445`): lifetime 1340 -> about 1900, alive at the cap 9 -> about 70 of 256. Supply
+probe: 52% die in the first 1200 ticks (edible bushes 13% full), then survival is nearly flat (45% at tick 1600,
+31% at 3600; bushes 25-39% full). Still climbing at generation 30.
+
+**The learning world must not replace familiar food.** `lessons.py`, 4000 ticks, learning off, hunger 0.025:
+
+| world | population | lifetime | good visits | poison visits | repeats |
+|---|---|---|---|---|---|
+| novel half of the supply, 6 berries, poison -3 | 1.1 | 586 | 2.3 | 1.4 | 0.66 |
+| novel half, 3 berries, poison -6 | 1.1 | 453 | 2.7 | 0.9 | 0.24 |
+| the same, born half full | 1.1 | 677 | 3.9 | 1.6 | 0.55 |
+| novel half, 6 berries, poison -3 | 1.1 long | 696 | 3.3 | 2.1 | 1.13 |
+| staple weight 3 at density 0.19 (familiar food as in 1.1), 3 berries, poison -6 | 1.1 long | 1310 | 15.8 | 3.5 | 2.05 |
+| the same, 6 berries | 1.1 long | 1236 | 11.9 | 3.8 | 2.34 |
+
+(Reference: the 1.1 population in its own world, 4000 ticks: lifetime 1286; the long-life one: 1908.)
+
+**Second trial of 1.5** (`s1_5_association/20261007-214843` and control): W15 = W11 at density 0.19, staple weight
+3, 3-berry bushes, poison -6, safety cell, 4000 ticks, 50 generations, from the long-life 1.1 population.
+Generations 40-49: main 1470 vs control 1570; lifetime 1970 vs 2070; poison share 0.051 vs 0.049, first / second
+half of life 0.057 / 0.042 vs 0.055 / 0.042. Both still climbing (832 -> 1470, 961 -> 1570).
+Lesions, main (8 worlds; intact 1625): no_plasticity 1622, us_pain 1613, safety 1633; valence_av 58, no_feed 74,
+ganglion_e 257, valence_app 514, grasp 575, ganglion_i 751, no_touch 992. The teacher is unused.
+
+**Inside that run** (`scripts/probes/learned.py`, 64 recorded animals):
+- Inherited learning rate, look -> aversive: mean 0.021, median 0.006 (start 0.05, cap 0.5): evolution turned
+  learning down.
+- Red, a novel poison: 47 animals bit it, 5.2 bites each; drive of its look on the aversive cells -0.37 inherited,
+  +0.028 after the first bite; aversive activity facing it 0.05 before, 0.04 after. Inherited drives of the novel
+  looks range from -0.38 to +0.58, so a lesson has to be large to matter.
+- Pain cell 0.96 after a poison bite, 0.00 after a good one. Safety cell above 0.05 after 0.8% of good bites:
+  aversive activity at the moment of a good bite is 0.001. An animal bites only while its aversive cells are
+  silent, so "expected bad, was fine" never happens. That is why the safety cell did nothing in the world while
+  it works in the assay, where the meals are scripted.
+
+**Paper check with that all-or-none block** (`classify.py`, BLOCK=hard: bites only while aversion < 0.1; share of
+lives in which the type is still eaten after 200 encounters: staple / novel good / novel poison):
+
+| rule | rate 0.05 | rate 0.3 |
+|---|---|---|
+| pain only | 0.70 / 1.00 / 0.00 | 0.00 / 0.00 / 0.00 |
+| safety cell | 1.00 / 1.00 / 0.00 | 0.00 / 0.46 / 0.00 |
+| prediction error | 1.00 / 1.00 / 0.00 | 0.00 / 0.64 / 0.00 |
+| centred: dw = eta * pain * (look - usual look) | 1.00 / 1.00 / 0.00 | 1.00 / 1.00 / 0.00 |
+
+With a hard block every uncentred rule refuses the staple for good at a rate large enough to matter against the
+inherited drives; at a small rate it works on paper but is too weak in the brain. Only the centred lesson (the eyes
+adapted to the look shared by everything met) is robust to the rate. Not yet implemented in the brain.
+

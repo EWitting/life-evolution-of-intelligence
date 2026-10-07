@@ -555,6 +555,15 @@ def _split_cs(projections, taught=CS_TAUGHT, eta=None, centred=False, only=()):
 AHEAD_EYE, SIDE_EYES = ("vis+0.app*",), ("vis-*.app*", "vis+[36]0.app*")
 
 
+# 1.1l long lives: the 1.1 brain in the 1.1 world with lives of 4000 ticks instead of 1000. No new circuit and so
+# no control: a step of adaptation. A full stomach lasts 800 ticks at rest, so in a life of 1000 ticks an animal
+# that ate once and then stood still reached the cap; under long lives that is selected against (lifetime 1340 ->
+# 1900 of 4000 in 30 generations, STAGE_LOG 2026-10-07). Every later stage has long lives and starts from here.
+stage(Stage("1.1l", "s1_1_valence_long", "1.1", B11, W11, VISION_CH1, BODY_TASTE,
+            lambda exp: berry_world(exp, 6, poison=(4, 5), poison_food=POISON_INNATE), row_extra=poison_metrics,
+            generations=60, ticks=4000, notes="the 1.1 brain under lives of 4000 ticks (adaptation step, no control)"))
+
+
 # What the lesson is about (v27, STAGE_LOG 2026-10-07). Pain alone, on the whole look, only ever raises the aversive
 # weights, and every look shares part of the gooseberry look, so suspicion of a poison ends on good food and is
 # never taken back; evolution then sets the learning rate to zero. Three things make the lesson land on the poison:
@@ -612,12 +621,12 @@ def learning_world(exp, reverse: bool = False, springs: float = 0.0, berries: in
                        berries=berries)
 
 
-_S15 = dict(row_extra=poison_metrics, plastic=True, generations=60, ticks=LIFE_15, eta_max=1.0, dense_plastic=True)
-stage(Stage("1.5", "s1_5_association", "1.1", B15, W15, VISION_CH1, BODY_TASTE,
+_S15 = dict(row_extra=poison_metrics, plastic=True, generations=40, ticks=LIFE_15, eta_max=1.0, dense_plastic=True)
+stage(Stage("1.5", "s1_5_association", "1.1l", B15, W15, VISION_CH1, BODY_TASTE,
             lambda exp: learning_world(exp, berries=LEARN_BERRIES), **_S15,
             notes="aversive conditioning: pain teaches the look -> aversive synapses what sets the bitten food apart; "
                   "only novel foods, half of them poison; long lives"))
-stage(Stage("1.5f", "s1_5_association_fwd", "1.1", B15F, W15, VISION_CH1, BODY_TASTE,
+stage(Stage("1.5f", "s1_5_association_fwd", "1.1l", B15F, W15, VISION_CH1, BODY_TASTE,
             lambda exp: learning_world(exp, berries=LEARN_BERRIES), **_S15,
             notes="1.5 with only the eye pointing ahead learning (variant)"))
 

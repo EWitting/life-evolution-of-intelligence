@@ -3,6 +3,8 @@
     base          the stage's brain as defined
     eta<x>        both conditioning learning rates start at x (e.g. eta0.2)
     decay<x>      learned weights relax toward the inherited ones by this fraction per tick (e.g. decay0.01)
+    centred       the learned look synapses learn from the look minus the slow average of each look input
+                  (ProjectionSpec.centred, BrainConfig.in_trace_tau 0.99); centred<tau> sets the trace decay
     short         the sickness teacher gets the same short eligibility trace as the taste teacher (0.5)
     safety        a 'safety' cell (tastes good although the aversive cells expected bad one tick earlier) is
                   subtracted from the pain teacher, so a safe meal undoes suspicion of what was just eaten (the
@@ -29,6 +31,9 @@ def variant(brain, v):
             brain = replace(brain, modulators=tuple(   # safety0 takes the cell out of the teacher
                 replace(m, pos="", terms=(("us_pain", 1.0), ("safety", -k))) if m.name == "us_av" else m
                 for m in brain.modulators))
+        elif part.startswith("centred"):
+            brain = replace(brain, in_trace_tau=float(part[7:]) if part[7:] else 0.99, projections=tuple(
+                replace(p, centred=True) if p.modulator in S.CS_MODS else p for p in brain.projections))
         elif part.startswith("eta"):
             brain = replace(brain, projections=tuple(
                 replace(p, eta_init=float(part[3:])) if p.modulator in S.CS_MODS else p for p in brain.projections))

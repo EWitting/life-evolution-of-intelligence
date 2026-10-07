@@ -132,6 +132,10 @@ class ProjectionSpec:
     src_range: tuple = ()            # (start, stop): only these neurons of src send it (not for src 'in': use src_select)
     decay: float = 0.0               # per step, plastic weights relax by this fraction back toward w0 (forgetting;
                                      # lifetime learning then fades unless renewed: extinction, reversal)
+    centred: bool = False            # rule 'hebb': the presynaptic term is the source neuron's activity minus its own
+                                     # slow average (its activity trace, RegionSpec.trace_tau; BrainConfig.in_trace_tau
+                                     # for inputs): the synapse learns from what is unusual about the input, not from
+                                     # what is always there (a covariance rule). Transmission is not changed.
     src_select: tuple = ()           # src 'in' only: input-feature name patterns (fnmatch, e.g. 'vis*', 'pain')
                                      # restricting which input neurons project; several projections from 'in'
                                      # to the same region may use disjoint selections
@@ -167,6 +171,9 @@ class BrainConfig:
     regions: tuple = DEFAULT_REGIONS          # tuple[RegionSpec, ...] excluding the reserved 'in' and 'out'
     projections: tuple = DEFAULT_PROJECTIONS  # tuple[ProjectionSpec, ...]
     out_alpha: float = 0.5           # leak of the output region
+    in_trace_tau: float = 0.8        # decay per step of the input neurons' activity trace (RegionSpec.trace_tau of
+                                     # 'in'); near 1 = a slow average of what each input usually carries, for
+                                     # ProjectionSpec.centred
     out_phase: int = 0               # RegionSpec.phase of the output region (set above every other phase so the
                                      # action uses this tick's activity)
     w_max: float = 4.0               # plastic weights are clipped to [-w_max, w_max] (inherited, non-plastic

@@ -12,7 +12,7 @@ from life.run import load_population, latest_run, make_simulate
 from variants import variant
 
 s = S.STAGES[os.environ.get("STAGE", "1.5")]
-WORLDS = 6
+WORLDS = int(os.environ.get("WORLDS", 6))
 args = [a for a in sys.argv[1:] if "=" not in a]
 for a in sys.argv[1:]:
     if "=" in a:
@@ -26,7 +26,7 @@ print("settings:", [a for a in sys.argv[1:] if "=" in a], flush=True)
 
 for v in args:
     exp = S.make_exp(s, variant(s.brain, v), "gen0", 1, 0)
-    pop = load_population(latest_run(S.STAGES[s.parent].name), exp, seed=0)
+    pop = load_population(os.environ.get("RUN") or latest_run(S.STAGES[s.parent].name), exp, seed=0)   # RUN: another run
     rs, fn = s.build(exp)
     sim = make_simulate(exp, record=False)
     berry = [rs.local(S.variant(t)[S.BERRY]) for t in range(6)]

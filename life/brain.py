@@ -85,6 +85,7 @@ class Layout(NamedTuple):
     teacher: jnp.ndarray    # [N] int32 teacher neuron of each post neuron for 'delta', -1 = none
     eta_init: jnp.ndarray   # [N, N]
     abcd_init: jnp.ndarray  # [4, N, N]
+    centred: jnp.ndarray    # [N, N] 1 where the rule's presynaptic term is activity minus the neuron's slow average
     has_gain: bool
     has_elig: bool
     has_dep: bool
@@ -110,7 +111,7 @@ def modulator_specs(cfg: BrainConfig) -> tuple:
 
 
 def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None = None) -> Layout:
-    regions = [RegionSpec("in", n_in, alpha=1.0)] + list(cfg.regions) \
+    regions = [RegionSpec("in", n_in, alpha=1.0, trace_tau=cfg.in_trace_tau)] + list(cfg.regions) \
         + [RegionSpec("out", n_out, alpha=cfg.out_alpha, phase=cfg.out_phase)]
     names = tuple(r.name for r in regions)
     assert len(set(names)) == len(names), f"duplicate region names in {names}"
@@ -131,6 +132,7 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
     allowed, density, o2o, gain, evolve_w, tune = z(), z(), z(), z(), z(), z()
     proj_id, rule, mod_idx = z(np.int32, -1), z(np.int32), z(np.int32, -1)
     elig, dep_U, dep_rec, eta_init, decay = z(), z(), z(), z(), z()
+    centred = z()
     w_init = z(v=np.nan)
     abcd = np.zeros((4, n, n), np.float32)
     teacher = -np.ones(n, np.int32)
@@ -188,6 +190,7 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
             assert mname in mod_names, f"projection {key}: unknown modulator {mname!r}; have {mod_names}"
             mod_idx[s, d] = mod_names.index(mname)
         elig[s, d] = p.elig_tau
+        centred[s, d] = float(p.centred)
         gain[s, d] = float(p.kind == "gain")
         evolve_w[s, d] = float(p.evolve)
         assert not (p.tune and (p.evolve or p.w_init is None)), f"projection {key}: tune needs evolve=False and w_init"
@@ -244,6 +247,7 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
                   allowed=j(allowed), density=j(density), one_to_one=j(o2o), proj_id=j(proj_id), rule=j(rule),
                   mod_idx=j(mod_idx), elig=j(elig), gain=j(gain), evolve_w=j(evolve_w), tune=j(tune * allowed), w_init=j(w_init),
                   dep_U=j(dep_U), dep_rec=j(dep_rec), decay=j(decay), teacher=j(teacher), eta_init=j(eta_init), abcd_init=j(abcd),
+                  centred=j(centred),
                   has_gain=bool(gain.any()), has_elig=bool((elig > 0).any()), has_dep=bool((dep_U > 0).any()),
                   has_decay=bool((decay > 0).any()), groups=tuple(r.group for r in regions),
                   rec_gain=j(rec_gain), rec_bias=j(rec_bias), has_receptors=bool(rec_gain.any() or rec_bias.any()))
@@ -282,15 +286,16 @@ def init_state(genome: Genome, layout: Layout | None = None, w_max: float = 4.0)
                       mod=jnp.zeros(max(m, 1), jnp.float32), g=jnp.zeros(n, jnp.float32))
 
 
-def plasticity_rule(rule, A, B, C, D, w, x_pre, x_post, tr_pre, tr_post, target):
+def plasticity_rule(rule, A, B, C, D, w, x_pre, x_post, tr_pre, tr_post, target, centred=None):
     """Rule value per synapse of a block [pre, post] (before learning rate and modulator), selected by `rule`
     (a constant array). Only the rules that occur in the block are computed. `target`: teacher activity per
-    post neuron (rule 'delta')."""
+    post neuron (rule 'delta'). `centred`: where 1, 'hebb' uses the pre activity minus its slow average tr_pre."""
     pre, post = x_pre[:, None], x_post[None, :]
     present = set(np.unique(rule).tolist())
     out = jnp.zeros_like(w)
     if 1 in present:
-        out = jnp.where(rule == 1, A * pre * post + B * pre + C * post + D, out)
+        dev = pre if centred is None else pre - centred * tr_pre[:, None]
+        out = jnp.where(rule == 1, A * dev * post + B * dev + C * post + D, out)
     if 2 in present:
         out = jnp.where(rule == 2, A * post * (pre - post * w), out)
     if 3 in present:
@@ -393,7 +398,8 @@ def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, ob
         if plastic:
             wb = w[ix]
             target = jnp.where(b_teacher >= 0, x_new[np.maximum(b_teacher, 0)], x_new[C])
-            base = plasticity_rule(b_rule, b_A, b_B, b_C, b_D, wb, x[R], x_new[C], tr[R], tr[C], target)
+            base = plasticity_rule(b_rule, b_A, b_B, b_C, b_D, wb, x[R], x_new[C], tr[R], tr[C], target,
+                                   np.asarray(layout.centred)[ix] if np.asarray(layout.centred)[ix].any() else None)
             if layout.has_elig:
                 eb = jnp.where(b_elig > 0, b_elig * e[ix] + base, 0.0)
                 e = e.at[ix].set(eb)

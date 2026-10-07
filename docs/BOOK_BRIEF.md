@@ -59,8 +59,14 @@ introduces the biology and builds intuition. Per stage:
    is learned within a life, so the example is the innate reaction to a bad berry; the learning version (weights
    stepping up after pain) belongs to 1.5.
 5. **Light dashboard export.** The dashboards are 33 MB (stage 1.0) to 71 MB (stage 1.5) each; GitHub Pages allows
-   100 MB per file and about 1 GB per site. Add an option to `life/dashboard.py` for fewer agents and a shorter
-   window, aiming under 10 MB, and link one reference run per stage. Publish built output to a separate branch so
+   100 MB per file and about 1 GB per site. Add an option to `life/dashboard.py` aiming under 10 MB, and link one
+   reference run per stage. Keep all 64 agents and the full life in the world view (user, 2026-10-07) and cut the
+   three arrays that make up almost all of the size (measured on a stage 1.5 run, 70 MB page):
+   - activations `x`, 19.5 MB, and weight snapshots `w_snap`, 22.2 MB: store them for a few agents only (the best
+     one and a few chosen ones); the page must then show which agents have a brain view;
+   - the world `grid`, 21.8 MB: it is stored in full every tick although few cells change per tick; store the
+     first tick and the changes.
+   Everything else (positions, actions, food, pain, modulators) is about 4 MB together and can stay for all agents. Publish built output to a separate branch so
    it stays out of the history of `main`.
 
 ## Style

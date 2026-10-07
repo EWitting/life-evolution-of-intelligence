@@ -6,6 +6,7 @@ One aversive cell a = max(0, tanh(w . look)) reads the 8 appearance features; th
 per life) and bites with probability 1 - a (aversion blocks the bite). After a bite the rule changes w:
 
     additive   dw = eta * pain * look                      the 1.5 rule: pain only, weights only grow
+    signed     dw = eta * (pain - good) * look             pain minus taste: every good meal lowers the weights
     safety     dw = eta * (pain - tanh(a) * good) * look   the v19-v20 safety cell: a good meal of something mistrusted
     delta      dw = eta * (pain - a) * look                prediction error: the cell's own activity is the prediction
 
@@ -41,7 +42,7 @@ def life(rule, eta, rng, always_bite=False):
         v = rng.choice(6, p=P_MEET); a = act(w, X[v])
         if always_bite or rng.random() < 1 - a:
             pain = 1.0 if v in poison else 0.0
-            teach = {"additive": pain, "safety": pain - np.tanh(a) * (1 - pain), "delta": pain - a}[rule]
+            teach = {"additive": pain, "signed": pain - (1 - pain), "safety": pain - np.tanh(a) * (1 - pain), "delta": pain - a}[rule]
             w = w + eta * teach * X[v]
     return out
 
@@ -49,7 +50,7 @@ def life(rule, eta, rng, always_bite=False):
 print(f"novel similarity {SIM}; cosine between looks (staple, 3 novel, ancestral poison, novel):")
 print(np.round(X @ X.T, 2))
 print("\nprobability of biting: staple / novel good / novel poison / ancestral poison")
-for rule in ("additive", "safety", "delta"):
+for rule in ("additive", "signed", "safety", "delta"):
     for eta in (0.05, 0.3):
         r = np.mean([life(rule, eta, np.random.default_rng(s)) for s in range(200)], 0)
         print(f"{rule:9s} eta {eta:4.2f}  " + "   ".join(

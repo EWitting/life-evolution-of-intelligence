@@ -10,8 +10,13 @@ this book is the report of one stage: what was added and why, the biology it is 
 ## The animals and their world
 
 The animals live on a grid. Each has a stomach that empties a little every tick (one tick is about a second of
-behaviour) and faster when it moves. An animal whose stomach is empty dies. Food grows on bushes; an eaten bush
-regrows after a while.
+behaviour) and faster when it moves. An animal whose stomach is empty dies.
+
+Food grows on bushes. A bush carries a few berries, and once the last one is eaten it stays empty for a long time,
+about as long as a life, and then has all its berries back at once. Waiting beside an empty bush costs more than
+the bush will give, so an animal has to keep moving. At the start of a life most bushes are empty and somewhere
+along their regrowth, as in a world that has been grazed for a while. Through a life, food therefore comes at a
+steady rate: a small share of the bushes carries berries at any moment. A bite costs a little energy.
 
 The objects, their names and their pictures come from the game *One Hour One Life*. The simulation uses a small
 slice of the game's rules at each stage and a larger one as the brain grows.

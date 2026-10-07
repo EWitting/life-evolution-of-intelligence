@@ -313,8 +313,8 @@ def bad_berry(s, main: list[Path], control: list[Path]):
     rec = np.load(run / "recording.npz")
     ate, food, alive, act = rec["ate"], rec["food"], rec["alive"], rec["action"]
     T, N = ate.shape
-    dfood = np.diff(food, axis=0, prepend=food[:1])
-    bad, good = (ate > 0) & (dfood < 0), (ate > 0) & (dfood > 0)
+    hurts = np.asarray(json.loads((run / "ruleset.json").read_text())["pain_value"]) > 0
+    bad, good = (ate > 0) & hurts[ate], (ate > 0) & ~hurts[ate]   # not by the stomach: a bite when full gains nothing
     before, after = 8, 22
     best = None
     for i in range(N):

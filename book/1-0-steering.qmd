@@ -11,6 +11,18 @@ arcs from senses to motor neurons. Every synapse is evolved. The animal sees the
 
 <div data-life="settings" data-stage="1.0"></div>
 
+::: {.callout-note title="What did not work: all the food at once"}
+In earlier runs every bush was full when the animals were born. The animals filled their stomachs within the
+first tenth of their life and kept eating, the bushes were stripped by the middle of it, and since a bush needs
+about a lifetime to regrow, most animals then starved together. Whatever an animal might have done better later
+in life could not show, and holding back could not pay: whoever waited found nothing left.
+
+Starting most bushes empty, each at a random point of its regrowth, turned that stock into a steady flow. The
+share of bushes carrying berries now stays about the same from the first tenth of a life to its end, and so does
+the average stomach. The animals still bite when their stomach is full; nothing in this brain can feel the
+stomach yet.
+:::
+
 ## The brain
 
 <div data-life="brain" data-stage="1.0"></div>

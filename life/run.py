@@ -26,6 +26,7 @@ from .world import init_world, step_world, WorldState
 from . import actions as A
 
 RUNS_DIR = Path(__file__).resolve().parent.parent / "runs"
+STOP_CHECK = 100   # ticks between checks whether anyone is still alive (unrecorded simulations stop when nobody is)
 
 
 def make_layout(exp: ExperimentConfig) -> brain.Layout:
@@ -116,9 +117,24 @@ def make_simulate(exp: ExperimentConfig, record: bool):
         eats = jnp.zeros((N, 2, M), jnp.float32)
         tsum = jnp.zeros(N, jnp.float32)
         fed, meal, fed_meal = jnp.zeros(N, jnp.float32), jnp.zeros(N, jnp.float32), jnp.zeros(N, jnp.float32)
-        keys = jax.random.split(ks, T).reshape(T // every, every, -1)
-        (world, bstate, sig, eats, tsum, fed, meal, fed_meal), (recs, snaps) = jax.lax.scan(
-            chunk, (world, bstate, sig, eats, tsum, fed, meal, fed_meal), keys)
+        carry = (world, bstate, sig, eats, tsum, fed, meal, fed_meal)
+        if not record and T > STOP_CHECK and T % STOP_CHECK == 0:
+            # nothing to record: stop once every agent is dead (no statistic changes after that). Long lives are
+            # mostly empty ticks in the first generations of a stage; the random keys per tick are unchanged
+            keys = jax.random.split(ks, T).reshape(T // STOP_CHECK, STOP_CHECK, -1)
+
+            def body(c):
+                i, carry = c
+                carry, _ = jax.lax.scan(one_tick, carry, keys[i])
+                return i + 1, carry
+
+            _, carry = jax.lax.while_loop(lambda c: (c[0] < T // STOP_CHECK) & c[1][0].alive.any(), body,
+                                          (jnp.int32(0), carry))
+            recs = snaps = None
+        else:
+            keys = jax.random.split(ks, T).reshape(T // every, every, -1)
+            carry, (recs, snaps) = jax.lax.scan(chunk, carry, keys)
+        world, bstate, sig, eats, tsum, fed, meal, fed_meal = carry
         # eats[N, 2, M]: objects eaten per local id in the first and second half of life (learning curves);
         # column 0 (empty) instead counts eating anything painful (poison), whatever its id in this world.
         # fed: sum over ticks alive of the food level as a fraction of max_food ('well-fed lifetime');

@@ -264,10 +264,9 @@ def life_strip(run: Path, agent: int, t0: int, t1: int, regions: tuple, inputs: 
     k = cfg["vision"]["appearance_dim"]
     app = rec["appearance"] if "appearance" in rec else np.zeros((len(rs["names"]), k))
     # what eating each object did in this recording: the stage's poison is set per world, not in ruleset.json
-    dfood = np.diff(food, axis=0, prepend=food[:1])
-    effect = {}
+    effect = {}                                  # by the pain it gave, not by the stomach: a bite when full gains nothing
     for o in np.unique(ate[ate > 0]):
-        effect[int(o)] = "poison" if np.median(dfood[ate == o]) < 0 else "food"
+        effect[int(o)] = "poison" if np.mean(pain[ate == o] > 0.5) > 0.5 else "food"
     # a bush is judged by its berry (the next object id, as in scripts/probes/events.py)
     names = rs["names"]
     kind = lambda n: "empty bush" if "Empty" in n else "bush" if n.endswith("Bush") else "other"
@@ -334,6 +333,70 @@ def bad_berry(s, main: list[Path], control: list[Path]):
                        inputs=("taste", "pain"))
     strip["event_tick"] = t
     return "bad_berry", strip
+
+
+_LESSON: dict = {}
+
+
+def _lesson(main: list[Path]):
+    """Learning within a life, two moments of one animal of the lineage run: its first bite of a poison type that
+    is new to it, and a later meeting with a bush of the same type that it leaves alone. Chosen automatically."""
+    run = main[0]
+    if run in _LESSON:
+        return _LESSON[run]
+    rec = np.load(run / "recording.npz")
+    rs = json.loads((run / "ruleset.json").read_text()); layout = json.loads((run / "layout.json").read_text())
+    names = rs["names"]
+    grid, pos, dr, act, ate, pain, alive, x = (rec[k] for k in ("grid", "pos", "dir", "action", "ate", "pain", "alive", "x"))
+    T, N = act.shape; H, W = grid.shape[1:]
+    off = dict(zip(layout["names"], zip(layout["offsets"], layout["sizes"])))
+    av = x[..., off["valence_av"][0]:off["valence_av"][0] + off["valence_av"][1]].astype(np.float32).mean(-1)
+    dirs = np.array([[-1, 0], [0, 1], [1, 0], [0, -1]])
+    front = pos.astype(int) + dirs[dr.astype(int) % 4]
+    inb = (front >= 0).all(-1) & (front[..., 0] < H) & (front[..., 1] < W)
+    fc = np.clip(front, 0, [H - 1, W - 1])
+    obj = np.where(inb, grid[np.arange(T)[:, None], fc[..., 0], fc[..., 1]], -1)
+    bush = [i for i, n in enumerate(names) if n.endswith("Bush") and "Empty" not in n]
+    poison = [b for b in bush if (ate == b + 1).any() and np.mean(pain[ate == b + 1] > 0.5) > 0.5]
+    before, after = 8, 14
+    best = None
+    for i in range(N):
+        for b in poison:
+            bites = np.nonzero(ate[:, i] == b + 1)[0]
+            if not len(bites) or bites[0] < before + 1:
+                continue
+            t1 = int(bites[0])
+            # later: the same type right in front for two ticks, alive long after, and no bite of it then
+            for t2 in np.nonzero((obj[:-1, i] == b) & (obj[1:, i] == b))[0]:
+                t2 = int(t2)
+                if t2 < t1 + 30 or t2 + after >= T or not alive[t2 + after, i] or t2 - before < 1:
+                    continue
+                if (ate[t2 - 2:t2 + after, i] == b + 1).any():
+                    continue
+                score = float(av[t2:t2 + 2, i].mean() - av[t1 - 1, i]) + 0.3 * bool((ate[t2:t2 + after, i] > 0).any())
+                if best is None or score > best[0]:
+                    best = (score, i, t1, t2)
+                break
+    if best is None:
+        _LESSON[run] = (None, None)
+        return _LESSON[run]
+    _, agent, t1, t2 = best
+    regions = ("valence_app", "valence_av", "no_feed", "no_touch", "grasp", "us_pain")
+    bite = life_strip(run, agent, t1 - before, t1 + after, regions=regions, inputs=("taste", "pain"))
+    again = life_strip(run, agent, t2 - before, t2 + after, regions=regions, inputs=("taste", "pain"))
+    bite["event_tick"], again["event_tick"] = t1, t2
+    _LESSON[run] = (bite, again)
+    return _LESSON[run]
+
+
+@extra("1.5")
+def first_lesson(s, main: list[Path], control: list[Path]):
+    return "first_lesson", _lesson(main)[0]
+
+
+@extra("1.5")
+def lesson_again(s, main: list[Path], control: list[Path]):
+    return "lesson_again", _lesson(main)[1]
 
 
 # ------------------------------------------------------------------ export

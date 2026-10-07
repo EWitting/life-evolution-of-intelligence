@@ -1098,3 +1098,46 @@ Proposed, to be decided by the user: (1) food as a flow: bushes start at random 
 grow berries back one at a time; (2) a full stomach blocks the bite, as a reflex in the 1.1 grasp programme;
 (3) 1.5 on the prediction-error rule with a poison cost of 3, checked with classify.py, the assay and generation 0.
 
+## v25 (2026-10-07, evening): food as a flow, a bite cost
+
+Agreed with the user: bushes keep regrowing all at once (so camping still does not pay), but the start is
+staggered; no hand-built block on eating when full (the animal should come to that itself once it can sense its
+stomach), but a bite costs energy so that restraint can pay.
+
+- `WorldConfig.start_spent` = 0.7 in W10 and every world derived from it: that share of the bushes starts empty, at
+  a random point of its regrowth.
+- `WorldConfig.eat_cost` = 0.2 food units per bite (a tenth of a berry), also on a full stomach.
+
+Values chosen with `scripts/probes/supply.py` (the born-a-quarter-full 1.1 population, one life, not adapted):
+
+| world | edible bushes full at tick 0 / 300 / 600 / 900 | mean stomach at 300 / 600 / 900 | alive at the end (of 256) |
+|---|---|---|---|
+| v24 | 100 / 19 / 5 / 2 % | 83 / 54 / 26 % | 89 |
+| start_spent 0.5 | 51 / 19 / 12 / 12 % | 78 / 68 / 62 % | 177 |
+| start_spent 0.5, eat_cost 0.2 | 51 / 19 / 14 / 15 % | 76 / 60 / 55 % | 160 |
+| start_spent 0.7, eat_cost 0.2 | 32 / 19 / 18 / 21 % | 73 / 69 / 67 % | 162 |
+
+Stage 1.0 from scratch (`s1_0_steering/20261007-184358`, 400 generations): well-fed lifetime 40 in the first ten
+generations, 533 over the last fifty; after 60 generations at 10% mutation (`20261007-191412`) 608, 183 of 256
+alive at the cap. Supply over a life of that population: edible bushes full 33% at birth, then 18-25% all life;
+stomach 73-82%; 80% alive at the end; 66% of bites on a stomach over 90% full.
+
+Stage 1.1, three seeds, 150 generations (`python -m life.book export 1.1 --evaluate`, 8 shared worlds):
+
+| | main | control |
+|---|---|---|
+| well-fed lifetime, last 50 generations | 452 +-15 [422 458 475] | 186 +-13 [189 163 207] |
+| re-evaluated in shared worlds | 465 +-17 [431 481 482] | 188 +-27 [172 150 241] |
+| poison share of meals | 0.07 [0.09 0.06 0.05] | 0.17 [0.16 0.18 0.17] |
+| head to head | +401 +-35 [+342 +464 +398] | |
+
+Lesions (% of intact, per seed, mean): valence_av 44 40 37 (40); no_feed 50 45 40 (45); ganglion_e 44 95 52 (63);
+ganglion_i 55 41 96 (64); valence_app 85 93 93 (90); grasp 87 90 91 (89); no_touch 86 99 95 (94).
+
+- Passes: the aversive side is used in every seed and main is far ahead of control in every seed.
+- No control found avoidance by look within 150 generations on this footing (poison share 0.16-0.18 at the end;
+  born a quarter full with every bush full, two of three did after generation 60).
+- Appetitive cells and grasp cost 7-15% when silenced in every seed: used, weakly.
+- Supply over a life (seed 0): edible bushes full 32% at birth, then 14-19%; stomach 62-72%; 52% alive at the end;
+  half of the bites on a stomach over 90% full.
+

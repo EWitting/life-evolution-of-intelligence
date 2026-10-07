@@ -22,7 +22,7 @@ for a in sys.argv[1:]:
 if os.environ.get("TICKS"):
     s = replace(s, ticks=int(os.environ["TICKS"]))
 exp = S.make_exp(s, s.brain, "lessons", 1, 0)
-pop = load_population(latest_run(S.STAGES[s.parent].name), exp, seed=0)
+pop = load_population(os.environ.get("RUN") or latest_run(S.STAGES[s.parent].name), exp, seed=0)   # RUN: another run
 pop = pop._replace(eta=jnp.zeros_like(pop.eta))
 rs, fn = s.build(exp)
 sim = make_simulate(exp, record=True)

@@ -558,11 +558,13 @@ B15 = extend(B11,
              modulators=(Mod("us_av", terms=(("us_pain", 1.0), ("safety", -SAFETY_K))),))
 B15 = replace(B15, projections=_split_cs(B15.projections))
 # A life that holds many decisions (v26, tried on this stage first): a life of 1000-2000 ticks was 1.25-2.5 stomachs
-# long and a bush 0.6 of a stomach, so a life was a handful of bushes, a lesson was used about once, and an animal
-# that filled up and froze still reached the cap (STAGE_LOG 2026-10-07). Here a stomach lasts 400 ticks at rest
-# (the 1.0 rate), a life is 4000 ticks (ten stomachs) and a bush holds 3 berries (0.3 of a stomach). Fewer
-# generations pay for the longer lives.
-W15 = replace(W11, hunger_per_tick=0.05)
+# long, so a life was a handful of bushes, a lesson was used about once, and an animal that filled up and froze
+# still reached the cap (STAGE_LOG 2026-10-07). Here a life is 4000 ticks (five stomachs) and a bush holds 3
+# berries; fewer generations pay for the longer lives. The world keeps as much familiar good food as the 1.1 world
+# (staple weight 3 at density 0.19) and adds the novel types on top, a third of the bushes: with novel food as half
+# of the supply the 1.1 animals died after two to four bushes whatever the other settings (a cliff). Doubling the
+# metabolic rate as well was a cliff too (first v26 trial).
+W15 = replace(W11, spawn_density=0.19)
 LIFE_15 = 4000        # ticks per life in stage 1.5
 LEARN_BERRIES = 3     # berries per bush in stage 1.5
 LIFE_LEARN = 2000     # ticks per life in the later learning stages (older designs, to be revisited)
@@ -573,7 +575,8 @@ POISON_FOOD = -6.0    # OHOL food points lost per poison berry in the learning s
 
 
 NOVEL = (1, 2, 3, 5)  # berry types whose look and meaning are drawn per life; type 0 is always good, 4 always poison
-NOVEL_WEIGHT = 0.5    # spawn weight of each novel type (ancestral types: 1): novel foods are half of all bushes
+NOVEL_WEIGHT = 0.5    # spawn weight of each novel type (ancestral poison: 1): novel foods are a third of all bushes
+STAPLE_WEIGHT = 3.0   # spawn weight of the ancestral good type: half of all bushes
 
 
 def learning_world(exp, reverse: bool = False, springs: float = 0.0, berries: int | None = None):
@@ -582,7 +585,7 @@ def learning_world(exp, reverse: bool = False, springs: float = 0.0, berries: in
     should keep a non-learner alive, novel food should be worth trying."""
     return berry_world(exp, 6, poison=(4,), per_life_pool=NOVEL, per_life_k=2, springs=springs, reverse=reverse,
                        novel_looks=NOVEL, novel_sim=NOVEL_SIM, poison_food=POISON_FOOD, onions=False,
-                       weights={v: NOVEL_WEIGHT for v in NOVEL}, berries=berries)
+                       weights={0: STAPLE_WEIGHT, **{v: NOVEL_WEIGHT for v in NOVEL}}, berries=berries)
 
 
 stage(Stage("1.5", "s1_5_association", "1.1", B15, W15, VISION_CH1, BODY_TASTE,
@@ -758,8 +761,10 @@ def make_exp(s: Stage, brain: BrainConfig, name: str, generations: int, seed: in
 
 
 def run_stage(key: str, generations: int | None = None, control: bool = False, init_from: str | None = "auto",
-              seed: int = 0, dashboard: bool = True, suffix: str = ""):
+              seed: int = 0, dashboard: bool = True, suffix: str = "", ticks: int | None = None):
     s = STAGES[key]
+    if ticks:   # a trial with a longer or shorter life than the stage defines; use a suffix to keep it apart
+        s = replace(s, ticks=ticks)
     gens = generations or s.generations
     if control:
         assert s.parent, "stage has no parent, so no control"
@@ -1113,6 +1118,7 @@ def main(argv=None):
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--mutation-prob", type=float, default=None, help="per-synapse chance that a weight mutates")
     p.add_argument("--suffix", default="", help="appended to the run's experiment name (variants)")
+    p.add_argument("--ticks", type=int, default=None, help="ticks per life, instead of the stage's own (trials)")
     a = p.parse_args(argv)
     if a.stage == "list":
         for s in STAGES.values():
@@ -1120,7 +1126,7 @@ def main(argv=None):
         return
     if a.mutation_prob is not None:
         EVOLUTION_OVERRIDES["weight_mutation_prob"] = a.mutation_prob
-    return run_stage(a.stage, a.generations, a.control, a.init_from, a.seed, suffix=a.suffix)
+    return run_stage(a.stage, a.generations, a.control, a.init_from, a.seed, suffix=a.suffix, ticks=a.ticks)
 
 
 if __name__ == "__main__":

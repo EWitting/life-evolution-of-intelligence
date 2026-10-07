@@ -30,7 +30,7 @@ for g in groups:
         over[k_] = type(getattr(s0.world, k_))(float(v_))
     s = replace(s0, world=replace(s0.world, **over))
     exp = S.make_exp(s, s.brain, "supply", 1, 0)
-    pop = load_population(latest_run(s.name), exp, seed=0)
+    pop = load_population(os.environ.get("RUN") or latest_run(s.name), exp, seed=0)   # RUN: another run directory
     rs, fn = s.build(exp)
     sim = make_simulate(exp, record=True)
     kr, ks = jax.random.split(jax.random.PRNGKey(5))

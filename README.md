@@ -11,7 +11,8 @@ One Hour One Life (OHOL) objects and recipes. Goal and motivation: `Intention.md
 4. `docs/DECISIONS.md`: design decisions (ADRs). Guidance from the initial build; newer ADRs supersede older ones.
 5. `docs/SETUP.md`, `docs/OHOL_FORMAT.md`, then `life/__init__.py` for the module map.
 
-Results are published as an interactive book, one page per stage (`book/`; how to update it after a run:
+Results are published as an interactive book, one page per stage:
+**https://ewitting.github.io/life-evolution-of-intelligence/** (sources in `book/`; how to update it after a run:
 `book/README.md`).
 
 ## Quick start (Windows, CPU)

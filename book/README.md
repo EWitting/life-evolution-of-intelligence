@@ -1,6 +1,7 @@
 # The book
 
-A Quarto book with one page per stage. Design and decisions: `docs/BOOK_BRIEF.md`.
+A Quarto book with one page per stage, published at https://ewitting.github.io/life-evolution-of-intelligence/.
+Design and decisions: `docs/BOOK_BRIEF.md`.
 
 Prose and numbers are separate. A page is Markdown (`.qmd`) with placeholders such as
 `<div data-life="curves" data-stage="1.1"></div>`. `js/life-book.js` fills them from `data/<stage>.json`, which

@@ -13,7 +13,7 @@ A later change that has to touch a frozen stage (removing a cell that lesions sh
 made by remapping the stored populations onto the new layout and freezing again, with the reason in
 `docs/STAGE_LOG.md`. Results and criteria per stage: `docs/STATUS.md` and the book.
 
-## Chapter 1 (frozen 2026-10-08, git tag `chapter-1-partial`)
+## Chapter 1 (frozen 2026-10-08, git tag `chapter-1-drives`; 1.0 to 1.5 also as `chapter-1-partial`)
 
 The lineage is one chain: every stage starts from the seed-0 run of its parent. Seeds 1 and 2 of a stage start
 from that same parent run.
@@ -24,9 +24,10 @@ from that same parent run.
 | 1.1 | valence: appetitive and aversive value cells, contact-gated grasp programme | 1.0 | 4000 | 3 |
 | 1.2h | habituation: the look inputs adapt to their slow average; world with a dud bush type | 1.1 | 4000 | 3 |
 | 1.5 | association: pain teaches the look -> aversive synapses; only novel foods, half poison | 1.2h | 4000 | 3 |
+| 1.7 | drives: `cold`, `warm_seek`, `rest`, `hungry`; the 1.5 world made cold, with hot springs | 1.5 | 4000 | 3 |
 
-Not frozen yet: 1.7 drives (run over three seeds on the frozen 1.5; see `docs/STATUS.md`) and affect (to be
-designed on drives). Both sit at the end of the chain, so finishing them cannot change anything above.
+Not frozen yet: affect (to be designed on drives). It sits at the end of the chain, so finishing it cannot change
+anything above.
 
 ## Side paths (defined in `stages.py`, not part of the lineage)
 

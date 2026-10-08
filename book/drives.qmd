@@ -84,11 +84,6 @@ does not show that resting is a mistake for the animal that does it. Inside the 
 where every animal competes with others that also rest, evolution left the strength of `rest` where it was
 designed and made the hunger gate stronger.
 
-::: {.callout-note}
-This stage is not frozen yet. Whether the result above is a reason to change the circuit or the world is still
-open.
-:::
-
 ### Is the circuit used?
 
 <div data-life="lesions" data-stage="1.7"></div>

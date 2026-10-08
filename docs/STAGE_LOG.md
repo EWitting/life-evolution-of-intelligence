@@ -1702,3 +1702,6 @@ and the main half slightly worse than among its own (402-444 vs 401-519): animal
 (32 vs 43 berries) and leave the bushes to the roamers; what they gain is a warm body that burns less. Within
 main populations resting was not selected down. Not shown: whether a roamer could invade a population with
 drives. Left for the user: freeze as it is, or tune (a retune reruns drives only).
+
+**Drives frozen as it is** (user, 2026-10-08, evening): the control wins the head-to-head by being greedy in a food
+race; the animals with drives are the more efficient ones among their own. `frozen/1.7`, tag `chapter-1-drives`.

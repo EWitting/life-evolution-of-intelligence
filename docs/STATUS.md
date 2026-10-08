@@ -39,7 +39,7 @@ ticks from the settling run of 1.0 on. Footing v25 (born a quarter full, food as
 starts from the seed-0 run of its parent. Three seeds unless stated; lesion = fitness with the region silenced, %
 of intact, per seed.
 
-**Frozen (2026-10-08, tag `chapter-1-partial`): 1.0, 1.1, 1.2h, 1.5.** Definitions and final populations are in
+**Frozen (2026-10-08, tag `chapter-1-drives`): 1.0, 1.1, 1.2h, 1.5, 1.7.** Definitions and final populations are in
 `frozen/` (`frozen/README.md`, `life/freeze.py`); `tests/test_frozen.py` fails when a frozen definition changes.
 **Do not rerun these stages or their lineage** (user, 2026-10-08). A change that has to touch one is made by
 remapping the stored populations and freezing again.
@@ -50,7 +50,7 @@ remapping the stored populations and freezing again.
 | 1.1 valence | appetitive and aversive value cells (taste and pain enter the brain only here) acting on a contact-gated grasp programme; aversion turns away and blocks the bite | **frozen**, passes | Main 1139 +-40 vs control 176 +-6; re-evaluated 1479 vs 190; head to head +1919 +-155. Lesions: aversive 9 9 12, no_feed 17 10 13, grasp 90 71 88, appetitive 90 73 93, no_touch 99 91 73. Seeds 1 and 2 needed 100 generations (seed 0: 50). No control found avoidance by look. |
 | 1.2h habituation | no new cells: every look input passes on its input minus its slow average (about 50 ticks), so what stays in view fades and what is unusual stands out. World: the 1.1 world plus a dud bush type (colour per life, never a berry) | **frozen**, passes | Main 1139 +-15 vs control 1073 +-35; re-evaluated 1361 vs 1272 (+89 +-65: 218, 42, 8). Adaptation switched off: 36, 55, 36% of intact. Biting at nothing 28% of ticks vs 62%. Without the dud the adaptation was used weakly (84%). No head to head (the change is in the inputs). |
 | 1.5 association | `us_pain` teaches the look -> aversive synapses (plain: the adapted look already carries what sets a food apart); a world of only novel foods, half of them poison | **frozen**, passes | Main 592 +-20 vs control 354 +-19; re-evaluated 721 vs 360 (+361 +-66); head to head +520 +-120. Lesions: no_plasticity and us_pain 43 48 43. Poison share 0.13-0.15 vs 0.23-0.24. Learning rate evolved up (0.3 -> 0.60 in seed 0). Clearer than the old order (+175, head to head +71). Lives are short (about 1170 of 4000 in the recorded generation). |
-| 1.7 drives | `cold` and `hungry` need cells; warmth by kinesis: `warm_seek` (run while the skin is cold), `rest` (stay where it is warm); `hungry` shuts the warmth mode; evolvable `hungry` -> feeding synapses. World: the 1.5 world made cold, hot springs (which do not block) | three seeds, **not frozen** | Main 386 +-14 vs control 309 +-18; re-evaluated 401 vs 341 (+60 +-37: 124, -4, 62). **Head to head -65 +-33** (-88, -108, 0): the control half does better next to main animals (432-532) than among its own (276-409). Lesions: hungry 26 27 18, rest 72 86 71, cold and warm_seek 89 94 86, plasticity 71 66 76. Main moves 45% of ticks vs 71%, bites at nothing 32% vs 12%. See next steps. |
+| 1.7 drives | `cold` and `hungry` need cells; warmth by kinesis: `warm_seek` (run while the skin is cold), `rest` (stay where it is warm); `hungry` shuts the warmth mode; evolvable `hungry` -> feeding synapses. World: the 1.5 world made cold, hot springs (which do not block) | **frozen**, passes (user's decision on the head to head) | Main 386 +-14 vs control 309 +-18; re-evaluated 401 vs 341 (+60 +-37: 124, -4, 62). **Head to head -65 +-33** (-88, -108, 0): the control half does better next to main animals (432-532) than among its own (276-409). Lesions: hungry 26 27 18, rest 72 86 71, cold and warm_seek 89 94 86, plasticity 71 66 76. Main moves 45% of ticks vs 71%, bites at nothing 32% vs 12%. Either population alone at half density does 55-80% better (`density.py`): food is a race, resting animals leave food to roamers and gain by burning less. |
 | affect (old 1.3) | serotonin (dwell) and PDF (roam) states | to redesign on drives | Unused in its last run (v13, old architecture). Kept if at all possible: later stages need the modulator systems. |
 | side paths | 1.1l, 1.5c (centred association before habituation), 1.5f, 1.6h, 1.6 reversal, x.hands, x.td, old 1.2-1.4 | defined, not on the path | Listed with reasons in `frozen/README.md`. |
 | 2.1-2.5 | tectum, pallium, basal ganglia, dopamine TD | defined, older design | To revisit: per-life pallium weights (ADR-017), holding before 2.6, delayed sickness and appetitive learning with the prediction error. |
@@ -58,16 +58,12 @@ remapping the stored populations and freezing again.
 
 ## Next steps
 
-1. **Resume here: drives (1.7).** Three seeds are run and exported. It is used and ahead in its own worlds, but
-   loses the head-to-head test. Reading to check (`scripts/probes/density.py 1.7`: each population alone at full
-   and half density in the head-to-head worlds): animals that rest when fed leave food to roaming neighbours, so
-   the control half gains from sharing a world with them. `rest -> out` was not scaled down by evolution (x0.98 to
-   x1.09), the hunger gates were strengthened (x1.10 to x1.64). The user (2026-10-08): 90% of intact for the
-   warmth cells is fine if consistent, warmth need not dominate; a slightly colder world is allowed if needed.
-   Decide with the user whether drives is frozen as it is; a retune reruns drives only.
-2. **Affect**, redesigned on the drives brain: assay and generation 0 first, design choices with the user. It is
-   the last stage of the chapter, so it cannot disturb anything above it.
-3. Then freeze drives and affect (`python -m life.freeze 1.7 ...`), move the tag, chapter 2.
+1. **Resume here: affect**, redesigned on the frozen drives brain: assay and generation 0 first, design choices
+   with the user. It is the last stage of the chapter, so it cannot disturb anything above it. Drives is frozen as
+   it is (user, 2026-10-08): it is fine that the greedy control wins the head-to-head food race while the animals
+   with drives are the more efficient ones among their own.
+2. Then freeze affect (`python -m life.freeze <key>`), tag, chapter 2.
+3. Optional, out of curiosity: the frozen populations in earlier worlds (a sanity check, not a criterion).
 4. Rules of work (user): cheap trials first (one stage, one seed, generation 0 where possible); look inside a
    finished run before starting the next (`scripts/probes/README.md`, step 4); no new mechanisms without the
    user; **no reruns of frozen stages**. The chapter exam (every population in every earlier world) is dropped as

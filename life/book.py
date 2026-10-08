@@ -117,11 +117,19 @@ def run_info(run: Path) -> dict:
 
 # ------------------------------------------------------------------ the standard parts
 
-def curves(runs: list[Path]) -> list[dict]:
+def _history(run: Path) -> list[Path]:
+    """The run and the earlier finished runs of the same directory it continues: same world and life length, in
+    time order (a stage evolved from scratch and then settled shows both, not only the short settling run)."""
+    cfg = _config(run)
+    same = lambda r: (lambda c: c["world"] == cfg["world"] and c["evolution"]["ticks_per_generation"] == cfg["evolution"]["ticks_per_generation"])(_config(r))
+    return [r for r in sorted(run.parent.iterdir()) if (r / "population.npz").exists() and r.name <= run.name and same(r)]
+
+
+def curves(runs: list[Path], whole_history: bool = False) -> list[dict]:
     """Per seed: one list per fitness.csv column worth plotting, one value per generation."""
     out = []
     for run in runs:
-        rows = _rows(run)
+        rows = [row for r in (_history(run) if whole_history else [run]) for row in _rows(r)]
         out.append({"seed": _seed(run), **{c: [r[c] for r in rows] for c in CURVE_COLUMNS if c in rows[0]}})
     return out
 
@@ -460,7 +468,7 @@ def export(key: str, do_evaluate: bool = False, worlds: int = 8) -> Path:
         "exported": datetime.now().isoformat(timespec="minutes"),
         "runs": {"main": [run_info(r) for r in main], "control": [run_info(r) for r in control]},
         "provisional": provisional(s, main + control),
-        "curves": {"main": curves(main), "control": curves(control)},
+        "curves": {"main": curves(main, whole_history=s.parent is None), "control": curves(control)},
         "summary": summary(main, control),
         "brain": brain_view(s, main[0]),
         "settings": settings(s, main[0]),

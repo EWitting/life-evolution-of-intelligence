@@ -568,6 +568,13 @@ stage(Stage("1.1l", "s1_1_valence_long", "1.1", B11, W11, VISION_CH1, BODY_TASTE
             generations=60, ticks=4000, notes="the 1.1 brain under lives of 4000 ticks (adaptation step, no control)"))
 
 
+# 1.2h habituation before association (trial for the planned order of the chapter rerun, user 2026-10-08): adapting
+# look inputs on the 1.1 brain, in the 1.1 world with long lives. Control: the 1.1 brain. ADAPT_TAU is set below.
+stage(Stage("1.2h", "s1_2_habituation", "1.1l", replace(B11, in_adapt=CS_VIS, in_trace_tau=0.98), W11, VISION_CH1, BODY_TASTE,
+            lambda exp: berry_world(exp, 6, poison=(4, 5), poison_food=POISON_INNATE), row_extra=poison_metrics,
+            generations=40, ticks=4000, notes="TRIAL: adapting look inputs before any learning, familiar foods"))
+
+
 # What the lesson is about (v27, STAGE_LOG 2026-10-07). Pain alone, on the whole look, only ever raises the aversive
 # weights, and every look shares part of the gooseberry look, so suspicion of a poison ends on good food and is
 # never taken back; evolution then sets the learning rate to zero. Three things make the lesson land on the poison:

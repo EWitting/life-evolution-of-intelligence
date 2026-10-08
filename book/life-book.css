@@ -107,3 +107,8 @@
 .lb-track { fill: var(--lb-cell0); } .lb-food { fill: var(--lb-muted); }
 .lb-cursor { fill: none; stroke: var(--lb-ink); stroke-width: 1.5; pointer-events: none; }
 .lb-heat .lb-hit { cursor: pointer; }
+
+.lb-watchrow { display: flex; gap: 0.8rem; flex-wrap: wrap; margin: 0.4rem 0 0.5rem; }
+.lb-watch { display: inline-block; padding: 0.6rem 1.1rem; border-radius: 8px; background: var(--lb-ink, #222); color: #fff !important;
+            text-decoration: none; font-weight: 600; }
+.lb-watch:hover { opacity: 0.85; }

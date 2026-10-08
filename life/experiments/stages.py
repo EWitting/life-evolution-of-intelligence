@@ -160,6 +160,10 @@ def berry_world(exp: ExperimentConfig, n_types: int = 4, poison: tuple = (), per
         spawn[rs.local(ONION_PLANT)] = 0.5
     if springs:
         spawn[rs.local(HOT_SPRING)] = springs
+        # an animal can stand in a spring. As a blocking object (the OHOL default, and the only one in these worlds)
+        # it was a trap: the animals walked into it and stayed, facing a spring on a third of their ticks, and
+        # springs alone cut fitness by 60% before any cold (STAGE_LOG 2026-10-08)
+        rs.blocks[rs.local(HOT_SPRING)] = False
     berry = [rs.local(variant(v)[BERRY]) for v in range(n_types)]
 
     app = lookalike_appearance(rs, n_types, exp.vision.appearance_dim, mode=appearance_mode)

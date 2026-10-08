@@ -1,7 +1,7 @@
 # Status
 
-One screen on where the project is. Plan: `docs/BRAIN_EVOLUTION.md`. Details, numbers and run directories:
-`docs/STAGE_LOG.md`. Newest decisions: `docs/DECISIONS.md` (ADR-017 to ADR-024). Last updated 2026-10-07.
+One screen on where the project is. Plan: `docs/BRAIN_EVOLUTION.md`. **Next piece of work: `docs/RERUN_PLAN.md`.** Details, numbers and run directories:
+`docs/STAGE_LOG.md`. Newest decisions: `docs/DECISIONS.md` (ADR-017 to ADR-024). Last updated 2026-10-08.
 
 ## How a stage is judged
 
@@ -59,27 +59,19 @@ Per stage, three seeds: **used** (silencing the new cells costs fitness in every
 above control within one standard error, summary and head to head), **no regression** (the population does as well
 in the previous stage's world as the previous population).
 
-1. **Resume here: a complete rerun of chapter 1 is agreed** (user, 2026-10-08), all stages, three seeds, as the
-   milestone that closes the learning work, provided the findings carry over to a new lineage. Decided:
-   - **Order: habituation before association is allowed**, so 1.0 -> 1.1 -> habituation (adapting look inputs;
-     control the 1.1 brain) -> association (plain learned synapses on adapted inputs; control the habituation
-     brain) -> drives. A one-seed check of habituation on the 1.1 brain in the 1.1 world was started
-     (`stages chain 1.2h 1.2h`, runs/s1_2_habituation): read it first. The risk it tests: in the familiar world
-     long lives alone already cut the standing still to 7% of ticks, so habituation may have little left to win
-     there and could fail "used" before the novel-food world.
-   - **1.1l is not meant to stay a stage.** It exists because 1.0 and 1.1 were evolved with lives of 1000 ticks.
-     In the rerun, long lives start earlier: 1.0 from scratch at 1000 ticks (nearly everything dies young at
-     first), its settling run at 4000 ticks, and 4000 from then on. Check with `freeze.py` and `supply.py` that
-     the settled 1.0 population uses a long life before going on.
-   - **Hunger** stays one inhibitory cell with the evolvable path onto feeding; no second pathway (user: with the
-     path present, low hunger is close enough to "stop biting when fed", and the results are good).
-   - **Drives over three seeds** is part of the rerun.
-   - **Short lives** (about 900 of 4000 ticks) are accepted as long as there is time to learn and fitness tells
-     animals apart. No tuning now. If it is tuned later: first find out why they starve; born full is acceptable
-     when a stomach is a quarter of a life or less (user: a full stomach was only a problem when it lasted a
-     lifetime).
-   - Before the rerun, list what could stop working with a new lineage and check the cheap ones at generation 0;
-     run the chain one seed first, then the other seeds, then the evaluations and the book.
+1. **Resume here: the complete rerun of chapter 1, agreed with the user on 2026-10-08. The plan, the code changes
+   it needs, the order of work, the risks and the book work are in `docs/RERUN_PLAN.md`. Read that next.** In
+   short:
+   - Order: 1.0 -> 1.1 -> habituation -> association -> drives, three seeds each, one seed down the whole chain
+     first. Lives of 4000 ticks from the settling run of 1.0 on; stage 1.1l disappears.
+   - The stage table above describes the chain as it was *run* in session 5 (association before habituation, 1.1
+     with lives of 1000 ticks). Those results stand until the rerun replaces them.
+   - The one risk checked in advance (one seed, `s1_2_habituation`): habituation before association, in the
+     familiar world, ends level with its control (1610 vs 1681) and is used weakly (84% of intact with the
+     adaptation off; standing still 8% vs 21%). Go ahead, judge over three seeds; the fallback is the order that
+     already passed.
+   - Hunger stays one inhibitory cell with its evolvable path onto feeding. Short lives are accepted; no tuning.
+   - Nothing is running. All work is committed and pushed; the book is published.
 2. Rules of work (user, 2026-10-07): cheap trials first (one stage, one seed, generation 0 where possible), full
    chain and three seeds only when a design looks final; look inside a finished run before starting the next
    (`scripts/probes/README.md`, step 4); no new mechanisms without the user.

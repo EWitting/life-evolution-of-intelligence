@@ -6,6 +6,7 @@ One Hour One Life (OHOL) objects and recipes. Goal and motivation: `Intention.md
 **Start here, in this order:**
 1. `docs/STATUS.md`: where the project is: every stage of the brain-evolution sequence, its status and findings,
    future goals, known simplifications.
+   The next piece of work, when there is one, is written out in `docs/RERUN_PLAN.md`.
 2. `docs/BRAIN_EVOLUTION.md`: the plan: the sequence of brain architectures and experiments.
 3. `docs/STAGE_LOG.md`: the detailed lab notebook behind STATUS (runs, numbers, what went wrong and why).
 4. `docs/DECISIONS.md`: design decisions (ADRs). Guidance from the initial build; newer ADRs supersede older ones.

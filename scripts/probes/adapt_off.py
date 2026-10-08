@@ -24,7 +24,9 @@ for key in sys.argv[1:]:
             acc = []
             for k in jax.random.split(jax.random.PRNGKey(91), WORLDS):
                 kr, ks = jax.random.split(k)
-                rules = jax.tree_util.tree_map(lambda a: a[0], fn(0, kr))
+                rules = fn(0, kr)
+                if rules.food_value.ndim > 1 + (exp.world.switch_tick > 0):   # one ruleset per world (looks drawn per life)
+                    rules = jax.tree_util.tree_map(lambda a: a[0], rules)
                 st, _ = sim(rules, pop, ks)
                 acc.append([float((s.fitness or S.default_fitness)(st).mean()), float(st["alive_ticks"].mean())])
             res[label] = np.mean(acc, 0)

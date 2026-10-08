@@ -1542,3 +1542,26 @@ no sign that evolution uses them.
 (The two earlier drives trials, on the 1.5 brain and on the habituation brain with blocking springs, gave main 309
 vs control 186 and 307 vs 187; superseded.)
 
+## v31 (2026-10-08, morning): the check for the rerun order; the plan
+
+The user agreed to a complete rerun of chapter 1 with habituation before association (`docs/RERUN_PLAN.md`).
+The one risk checked first: does habituation still pay in the familiar 1.1 world, where long lives alone had
+already cut the standing still to 7% of ticks?
+
+**1.2h, trial, one seed** (`s1_2_habituation/20261008-091643` and control): adapting look inputs on the 1.1 brain,
+the 1.1 world, lives of 4000 ticks, 40 generations, from the 1.1l population; control the 1.1 brain.
+By block of generations (0-4, 5-9, 10-19, 20-29, 30-39): main 984, 1479, 1545, 1518, 1610; control 1546, 1614,
+1649, 1591, 1681. Alive at the cap 97 vs 106 of 256. Main recovers from the setback within about ten generations
+and ends level with the control, not ahead.
+`adapt_off.py` (3 worlds): adaptation on 1593, off 1345: **84% of intact** (31-35% in the novel-food world).
+`forage.py`: standing and biting at nothing 8% of ticks vs 21%; moving 75% vs 61%; berries per life 127 vs 122;
+alive at the end 48% vs 47%.
+Reading: used, weakly; not worse within the noise of one seed. Enough to go ahead with the planned order and
+judge it over three seeds; the fallback order (association with the centred rule, then habituation) has passed
+with three seeds.
+
+Book (all published): the 1.0 page shows the scratch run followed by the settling run; "Watch a main / control
+run" buttons, run directories folded away; light and dark theme with Quarto's switch; buttons and dropdown
+readable in dark mode; the zoomed-in world tile repaints when the theme is switched.
+`adapt_off.py` now also works for worlds without per-life looks.
+

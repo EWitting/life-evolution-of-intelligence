@@ -418,9 +418,13 @@ BODY_TASTE = BodyConfig(taste=True)
 # when it enters the new world (ADR-012: an increment, not a cliff). More bushes do not help: time per meal, not
 # food, is the limit.
 W11 = replace(W10, hunger_per_tick=0.025, pain_decay=0.3)   # same bush density; pain is a brief signal
+# Lives are 4000 ticks from the settling run of 1.0 on (`stages 1.0 --ticks 4000 --init-from <the scratch run>`): a
+# stomach lasts 400 ticks at rest in 1.0 and 800 in 1.1, so in a life of 1000 ticks an animal that ate once and then
+# stood still reached the cap. Stage 1.0 from scratch keeps 1000 ticks (nearly everything dies young at first).
+LIFE = 4000
 stage(Stage("1.1", "s1_1_valence", "1.0", B11, W11, VISION_CH1, BODY_TASTE,
             lambda exp: berry_world(exp, 6, poison=(4, 5), poison_food=POISON_INNATE), row_extra=poison_metrics,
-            generations=150, notes="value cells acting on approach and grasp programmes; 2 of 6 berry types poison"))
+            generations=50, ticks=LIFE, notes="value cells acting on a contact-gated grasp programme; 2 of 6 berry types poison"))
 
 # x.hands (side stage; the condition for eating on grasp, user 2026-10-03): can a lineage that evolved with a mouth
 # adapt when food has to be picked up, held and then eaten? The 1.1 population with the hands extension in the 1.1
@@ -559,28 +563,51 @@ def _split_cs(projections, taught=CS_TAUGHT, eta=None, centred=False, only=()):
 AHEAD_EYE, SIDE_EYES = ("vis+0.app*",), ("vis-*.app*", "vis+[36]0.app*")
 
 
-# 1.1l long lives: the 1.1 brain in the 1.1 world with lives of 4000 ticks instead of 1000. No new circuit and so
-# no control: a step of adaptation. A full stomach lasts 800 ticks at rest, so in a life of 1000 ticks an animal
-# that ate once and then stood still reached the cap; under long lives that is selected against (lifetime 1340 ->
-# 1900 of 4000 in 30 generations, STAGE_LOG 2026-10-07). Every later stage has long lives and starts from here.
+# 1.1l long lives (side path since the rerun of 2026-10-08, in which 1.1 itself has long lives): the 1.1 brain in
+# the 1.1 world with lives of 4000 ticks after a 1.1 of 1000 ticks. No new circuit and so no control.
 stage(Stage("1.1l", "s1_1_valence_long", "1.1", B11, W11, VISION_CH1, BODY_TASTE,
             lambda exp: berry_world(exp, 6, poison=(4, 5), poison_food=POISON_INNATE), row_extra=poison_metrics,
-            generations=60, ticks=4000, notes="the 1.1 brain under lives of 4000 ticks (adaptation step, no control)"))
+            generations=60, ticks=4000, notes="SIDE PATH: the 1.1 brain under lives of 4000 ticks (adaptation step, no control)"))
 
 
-# 1.2h habituation before association (trial for the planned order of the chapter rerun, user 2026-10-08): adapting
-# look inputs on the 1.1 brain, in the 1.1 world with long lives. Control: the 1.1 brain. ADAPT_TAU is set below.
-stage(Stage("1.2h", "s1_2_habituation", "1.1l", replace(B11, in_adapt=CS_VIS, in_trace_tau=0.98), W11, VISION_CH1, BODY_TASTE,
-            lambda exp: berry_world(exp, 6, poison=(4, 5), poison_food=POISON_INNATE), row_extra=poison_metrics,
-            generations=40, ticks=4000, notes="TRIAL: adapting look inputs before any learning, familiar foods"))
+# 1.2h habituation by sensory adaptation (v30, v31; the user's preferred form, 2026-10-07): no new cells. Every look
+# input (`vis*.app*`) passes on its input minus the slow average of that input, so everything downstream sees what
+# is unusual, and a look that stays in view fades: the pull of a bush that yields nothing wears off (`freeze.py`).
+# The inherited synapses were shaped on the raw look, so the population has to re-tune. Control: the 1.1 brain.
+# There is no region to silence: the lesion is `scripts/probes/adapt_off.py`.
+ADAPT_TAU = 0.98      # the look inputs' average runs over about 50 ticks
+B12H = replace(B11, in_adapt=CS_VIS, in_trace_tau=ADAPT_TAU)
+# World: the 1.1 world plus a dud, a bush type that never carries a berry and whose colour is drawn anew every life,
+# so no inherited weight can know it (the world of the parked stage 1.4). It is the case habituation is for: an
+# animal that finds the dud's look attractive keeps biting at it unless the pull fades. In the 1.1 world alone long
+# lives had already selected most standing still away and the adaptation was used weakly (84% of intact with it off,
+# main level with control); with the dud 34%, main ahead (one seed each, STAGE_LOG v32). Giving the good types novel
+# colours instead did not help (72-78%, main behind control).
+DUD_12 = 1.0          # spawn weight of the dud (a berry type: 1); the density is raised so that the food stays the same
+W12 = replace(W11, spawn_density=round(W11.spawn_density * (6.5 + DUD_12) / 6.5, 3))
+
+
+def habituation_world(exp, novel: tuple = (), dud: float = DUD_12):
+    """The 1.1 world (four good types, two innately known poison types, onions) plus a dud bush type with a look
+    drawn per life at spawn weight `dud`. novel (trials): good types that get a look drawn per life as well."""
+    if not dud:
+        return berry_world(exp, 6, poison=(4, 5), poison_food=POISON_INNATE, novel_looks=tuple(novel), novel_sim=NOVEL_SIM)
+    return berry_world(exp, 7, poison=(4, 5), poison_food=POISON_INNATE, novel_looks=tuple(novel) + (DUD,),
+                       novel_sim=NOVEL_SIM, duds=(DUD,), weights={DUD: dud})
+
+
+stage(Stage("1.2h", "s1_2_habituation", "1.1", B12H, W12, VISION_CH1, BODY_TASTE, habituation_world,
+            row_extra=poison_metrics, generations=40, ticks=LIFE,
+            notes="the look inputs adapt to their slow average: what stays in view fades; a dud bush type with a "
+                  "colour drawn per life"))
 
 
 # What the lesson is about (v27, STAGE_LOG 2026-10-07). Pain alone, on the whole look, only ever raises the aversive
 # weights, and every look shares part of the gooseberry look, so suspicion of a poison ends on good food and is
 # never taken back; evolution then sets the learning rate to zero. Three things make the lesson land on the poison:
-#   centred    the synapse learns from the look minus the slow average of each look input (about 100 ticks): what
-#              sets this food apart, not what all berries share (a covariance rule; the average sits in the input
-#              neuron);
+#   adapted    the look inputs adapt since the habituation stage, so the synapse learns from the look minus the slow
+#              average of each look input: what sets this food apart, not what all berries share. (Before the rerun
+#              of 2026-10-08 association came first and its synapses did this themselves, `centred`: side stage 1.5c.)
 #   one tick   pain lasts one tick in this world (pain_decay 0). While it faded over three ticks the teacher was
 #              still at half strength when the animal had turned to a neighbouring bush, and taught about that one;
 #   dense      every learned synapse exists (Stage.dense_plastic); only 42% did, and an absent synapse cannot learn.
@@ -593,7 +620,9 @@ _B15 = extend(B11,
               regions=(R("us_pain", 1, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, group="us"),),
               projections=(P("in", "us_pain", src_select=("pain",), density=1.0, w_init=2.0, evolve=False),),
               modulators=(Mod("us_av", pos="us_pain"),), in_trace_tau=0.99)
-B15 = replace(_B15, projections=_split_cs(_B15.projections, eta=ETA_15, centred=True))
+B15C = replace(_B15, projections=_split_cs(_B15.projections, eta=ETA_15, centred=True))   # side path (old order)
+# the association brain: the habituation brain + the pain teacher; the learned synapses are plain
+B15 = replace(_B15, in_adapt=CS_VIS, in_trace_tau=ADAPT_TAU, projections=_split_cs(_B15.projections, eta=ETA_15))
 B15F = replace(_B15, projections=_split_cs(_B15.projections, eta=ETA_15, centred=True, only=AHEAD_EYE))
 # The world (v28): nothing familiar. Four novel types, a new look and a new meaning every life, two of them poison;
 # no staple and no ancestral poison. With familiar food as half of the bushes the animals ate eleven good berries
@@ -633,30 +662,27 @@ def learning_world(exp, reverse: bool = False, springs: float = 0.0, berries: in
 
 
 _S15 = dict(row_extra=poison_metrics, plastic=True, generations=40, ticks=LIFE_15, eta_max=1.0, dense_plastic=True)
-stage(Stage("1.5", "s1_5_association", "1.1l", B15, W15, VISION_CH1, BODY_TASTE,
+stage(Stage("1.5", "s1_5_association", "1.2h", B15, W15, VISION_CH1, BODY_TASTE,
             lambda exp: learning_world(exp, berries=LEARN_BERRIES), **_S15,
-            notes="aversive conditioning: pain teaches the look -> aversive synapses what sets the bitten food apart; "
-                  "only novel foods, half of them poison; long lives"))
+            notes="aversive conditioning: pain teaches the (adapted) look -> aversive synapses; "
+                  "only novel foods, half of them poison"))
+# Side paths: the order that passed with three seeds before the rerun (1.1l -> 1.5 with the centred rule -> 1.6h) and
+# the forward-eye variant. The runs of the old 1.5 are in runs/s1_5_association*, older than those of the rerun.
+stage(Stage("1.5c", "s1_5c_association", "1.1l", B15C, W15, VISION_CH1, BODY_TASTE,
+            lambda exp: learning_world(exp, berries=LEARN_BERRIES), **_S15,
+            notes="SIDE PATH: association before habituation, the learned synapses centre the look themselves"))
 stage(Stage("1.5f", "s1_5_association_fwd", "1.1l", B15F, W15, VISION_CH1, BODY_TASTE,
             lambda exp: learning_world(exp, berries=LEARN_BERRIES), **_S15,
-            notes="1.5 with only the eye pointing ahead learning (variant)"))
+            notes="SIDE PATH: 1.5c with only the eye pointing ahead learning"))
 
 
-# 1.6h habituation by sensory adaptation (trial, v30; user's preference 2026-10-07): the look inputs themselves
-# adapt. Each look input passes on its input minus the slow average of that input, so everything downstream sees
-# what is unusual: the lesson of 1.5 is about what sets a food apart without a special rule (the learned synapses
-# are plain again), and a look that stays in view fades, so the pull of a bush that yields nothing wears off
-# (`freeze.py`: the 1.5 animals spend 45% of their life biting at an empty bush). One mechanism in the input
-# neuron for both. The inherited synapses were shaped on the raw look, so the population has to re-tune.
-# Control: the 1.5 brain (raw look, centred learning).
-ADAPT_TAU = 0.98      # the look inputs' average runs over about 50 ticks
-B16H = replace(_B15, in_adapt=CS_VIS, in_trace_tau=ADAPT_TAU, projections=_split_cs(_B15.projections, eta=ETA_15))
-stage(Stage("1.6h", "s1_6_habituation", "1.5", B16H, W15, VISION_CH1, BODY_TASTE,
+# 1.6h (side path, the old order): habituation after the centred association 1.5c; the same brain as 1.5 is now.
+stage(Stage("1.6h", "s1_6_habituation", "1.5c", B15, W15, VISION_CH1, BODY_TASTE,
             lambda exp: learning_world(exp, berries=LEARN_BERRIES), **_S15,
-            notes="TRIAL: the look inputs adapt to their slow average (habituation and centred learning in one)"))
+            notes="SIDE PATH: habituation after association (the old order)"))
 
 
-# 1.7 drives (trial, v29; on the habituation brain from v30): two need cells and a warmth mode. The circuit is the one that won
+# 1.7 drives (v29, v30): two need cells and a warmth mode. The circuit is the one that won
 # the generation-0 probe (`scripts/probes/drives.py`, STAGE_LOG v23 and 2026-10-08):
 #   cold       fires while the skin is colder than about 0.47 (max(0, tanh(3.3 - 7 skin)));
 #   warm_seek  cold -> FORWARD: keep moving while it is cold (orthokinesis; no gradient, no sight of the spring);
@@ -668,7 +694,7 @@ stage(Stage("1.6h", "s1_6_habituation", "1.5", B16H, W15, VISION_CH1, BODY_TASTE
 # hard-wired). The cell is inhibitory, so it can only release or hold back: for example release the bite block.
 # World: the 1.5 world made cold (ambient 0.25), with a few hot springs; the cold makes the body burn more.
 DRIVE_HYP = dict(alpha=0.5, evolve_bias=False, group="hypothalamus")
-B17 = extend(B16H,
+B17 = extend(B15,
              regions=(R("cold", 1, sign="exc", bias=3.3, **DRIVE_HYP),
                       R("warm_seek", 1, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, group="thermotaxis"),
                       R("rest", 1, sign="inh", bias=-3.3, **DRIVE_HYP),
@@ -683,18 +709,18 @@ B17 = extend(B16H,
 BODY_17 = BodyConfig(taste=True, temperature=True, skin_change=True, skin=True)
 W17 = replace(W15, temperature=True, ambient_temp=0.25, heat_scale=0.15, heat_radius=4, temp_rate=0.03, temp_hunger=1.5)
 SPRINGS_17 = 0.1      # spawn weight of hot springs (a bush type: 1)
-stage(Stage("1.7", "s1_7_drives", "1.6h", B17, W17, VISION_CH1, BODY_17,
+stage(Stage("1.7", "s1_7_drives", "1.5", B17, W17, VISION_CH1, BODY_17,
             lambda exp: learning_world(exp, springs=SPRINGS_17, berries=LEARN_BERRIES), **_S15,
-            notes="TRIAL: cold and hungry need cells, warmth by kinesis, hunger decides between foraging and warmth; "
+            notes="cold and hungry need cells, warmth by kinesis, hunger decides between foraging and warmth; "
                   "the 1.5 world made cold with hot springs"))
 
 
 # 1.6 extinction and reversal: the learned weights now relax back toward their inherited values (a fast,
 # forgetting component), so an association that stops being renewed fades and a new one can take over. World: the
 # novel types swap their meaning halfway through life.
-B16 = replace(B15, projections=tuple(replace(p, decay=0.003) if p.modulator in CS_MODS else p for p in B15.projections))
+B16 = replace(B15C, projections=tuple(replace(p, decay=0.003) if p.modulator in CS_MODS else p for p in B15C.projections))
 W16 = replace(W15, switch_tick=LIFE_LEARN // 2)
-stage(Stage("1.6", "s1_6_reversal", "1.5", B16, W16, VISION_CH1, BODY_TASTE, lambda exp: learning_world(exp, reverse=True),
+stage(Stage("1.6", "s1_6_reversal", "1.5c", B16, W16, VISION_CH1, BODY_TASTE, lambda exp: learning_world(exp, reverse=True),
             row_extra=poison_metrics, plastic=True, generations=150, ticks=LIFE_LEARN,
             notes="reversal learning: learned weights decay toward w0; the novel types swap meaning mid-life"))
 

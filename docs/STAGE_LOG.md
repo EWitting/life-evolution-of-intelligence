@@ -1565,3 +1565,55 @@ run" buttons, run directories folded away; light and dark theme with Quarto's sw
 readable in dark mode; the zoomed-in world tile repaints when the theme is switched.
 `adapt_off.py` now also works for worlds without per-life looks.
 
+
+## v32 (2026-10-08, afternoon): the rerun starts; a dud bush gives habituation its job
+
+Chain as now defined in `stages.py`: 1.0 (scratch, 1000 ticks; then a settling run at 4000) -> 1.1 (4000 ticks, 50
+generations) -> 1.2h habituation -> 1.5 association on the habituation brain (plain learned synapses) -> 1.7
+drives. Side paths kept defined: 1.1l, 1.5c (the centred association of the old order), 1.5f, 1.6h. The user
+(2026-10-08): the old order is also acceptable if it ends up working much better; the order below is preferred.
+
+### Which world for habituation (one seed each, old lineage `s1_1_valence_long`, 40 generations of 4000 ticks)
+
+The user's idea: novel berry colours already in the habituation stage, to give the adaptation more to do. Tried
+with existing world code only (`berry_world(novel_looks=..., duds=...)`).
+
+| world | main, last 4 generations | control | adaptation off, % of intact |
+|---|---|---|---|
+| the 1.1 world (v31) | 1650 | 1710 | 84 |
+| good types 1-3 with a colour drawn per life | 1198 | 1402 | 72 |
+| all four good types so | 1177 | 1512 | 78 |
+| the 1.1 world + a dud bush type (colour per life, never a berry) | 1369 | 1103 | 34 |
+| good types 1-3 novel + the dud | 1070 | 1163 | 51 |
+
+- Novel colours on good food do not help: the adaptation is used a little more and main ends behind its control.
+- The 31-35% of the old order (v30) was mostly learning: there the learned synapses relied on the adapted look,
+  and no_plasticity alone was 40% of intact.
+- The dud (the world of the parked stage 1.4, density raised by 7.5/6.5 so the food stays the same) is the case
+  habituation is for. Adopted with the user's agreement: it shows why habituation works, and it makes the step to
+  association smaller.
+- Association is not disturbed at generation 0 (`lessons.py`, STAGE=1.5, learning off, 3 worlds): the population
+  from the dud world lives 668 ticks in the association world and has 5.2 later visits to a poison type that
+  already hurt; the one from the plain world 514 and 5.9. The association world is unchanged.
+
+### Seed 0 down the new chain
+
+- **1.0 from scratch** (`s1_0_steering/20261008-131127`, 400 generations of 1000 ticks): well-fed lifetime
+  530-555. **Settled** (`20261008-134551`, 60 generations of 4000 ticks, mutation 0.1): about 2100, lifetime
+  2600, 45% alive at the cap; moving 62% of ticks, freezes 11% of ticks, 96% of them on open ground with the
+  stomach 85% full at the start, 90% end with the animal moving on.
+- **1.1** (`s1_1_valence/20261008-140718`, 50 generations of 4000 ticks): main 280 -> 1550-1600; control (pain
+  blind) about 170, lifetime median 199, no avoidance by look. Lesions (4 worlds, % of intact): valence_av 9,
+  no_feed 18, ganglion_e 29, ganglion_i 31, grasp 89, valence_app 92, no_touch 102. Moving 68%, biting at
+  nothing 16%; freezes 12% of ticks, 86% at an empty bush, 97% end with the animal moving on.
+- **1.2h habituation, dud world** (`s1_2_habituation/20261008-142723`): by block of 4 generations main 477, 978,
+  1020, 1208, 1240, 1354, 1184, 1311, 1344, 1494; control 530, 1037, 819, 1170, 1237, 1450, 1082, 1273, 1304,
+  1069. `adapt_off.py` (3 worlds): 1365 -> 513, **38% of intact**. The control swings with the world (last three
+  generations 1642, 1458, 469; main 1501, 1472, 1478): when the dud's colour of that life is attractive the
+  animals without adaptation stay at it. Recorded last generation: biting at a dud on 26% of ticks (main) and
+  52% (control, its 469 generation). `forage.py` and the book's life table counted the dud as a full bush; fixed.
+- **1.5 association** (`s1_5_association/20261008-150424`): by block main 892, 696, 453, 994, 543, 512, 571, 363,
+  526, 680; control 622, 283, 306, 630, 492, 249, 412, 240, 352, 329. Main ahead from generation 0 in every
+  block. Lesions not measured yet.
+- Stopped by the machine running low on memory (not finished, to be started again): 1.7 drives seed 0 (at
+  generation 20 of 40: main 159, control 93), 1.1 seed 2 (seed 1 is finished), the lesions of 1.5.

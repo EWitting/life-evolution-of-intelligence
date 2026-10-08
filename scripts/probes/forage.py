@@ -18,7 +18,9 @@ for n in sys.argv[1:]:
     obj = np.where(inb, g[np.arange(T)[:, None], fc[..., 0], fc[..., 1]], -1)
     off = dict(zip(L["names"], zip(L["offsets"], L["sizes"])))
     m = lambda r: x[..., off[r][0]:off[r][0] + off[r][1]].astype(np.float32).mean(-1) if r in off else np.zeros((T, N), np.float32)
-    full = [i for i, s in enumerate(names) if s.endswith("Wild Gooseberry Bush") and "Empty" not in s]
+    # the seventh bush type (Black) exists only in worlds where it is the dud: it never carries a berry
+    dud = [i for i, s in enumerate(names) if s == "Black Wild Gooseberry Bush"]
+    full = [i for i, s in enumerate(names) if s.endswith("Wild Gooseberry Bush") and "Empty" not in s and i not in dud]
     empty = [i for i, s in enumerate(names) if "Empty" in s]
     facing = np.isin(obj, full)[:-1] & alive[:-1]; a = act[1:]
     idle = (a == 4) & alive[:-1] & ~np.isin(obj[:-1], full)
@@ -32,5 +34,6 @@ for n in sys.argv[1:]:
           f"grasp {m('grasp')[:-1][facing].mean():.2f}")
     al = alive[:-1]
     print(f"   moving on {(np.abs(np.diff(pos.astype(int), axis=0)).sum(-1) > 0)[al].mean():.0%} of ticks alive; grasping at nothing {idle.sum() / al.sum():.0%}; "
+          + (f"of which at a dud {((a == 4) & al & np.isin(obj[:-1], dud)).sum() / al.sum():.0%}; " if dud else "") +
           f"FWD {(a[al] == 1).mean():.2f}, turn {np.isin(a[al], [2, 3]).mean():.2f}, USE {(a[al] == 4).mean():.2f}; "
           f"bushes full at tick 0 / middle / end: " + " / ".join(f"{np.isin(g[t], full).sum() / max(1, np.isin(g[t], full + empty).sum()):.0%}" for t in (0, T // 2, T - 1)))

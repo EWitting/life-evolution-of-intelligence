@@ -40,7 +40,7 @@ EVOLUTION_KEYS = ("generations", "ticks_per_generation", "siblings", "crossover"
 EXTRAS: dict[str, list[Callable]] = {}
 # Stages whose change is in how the inputs work, not in a region: in the head-to-head test both halves run on the
 # new brain, so the control animals would get adapting inputs their synapses were never tuned to. Not shown.
-NO_HEAD_TO_HEAD = ("1.6h",)
+NO_HEAD_TO_HEAD = ("1.2h", "1.6h")
 
 
 def extra(key: str):
@@ -423,7 +423,8 @@ def _spent(run: Path) -> dict:
     inb = (front >= 0).all(-1) & (front[..., 0] < H) & (front[..., 1] < W)
     fc = np.clip(front, 0, [H - 1, W - 1])
     obj = np.where(inb, grid[np.arange(T)[:, None], fc[..., 0], fc[..., 1]], -1)
-    full = [i for i, n in enumerate(names) if n.endswith("Bush") and "Empty" not in n]
+    # the seventh bush type (Black) exists only in worlds where it is the dud, which never carries a berry
+    full = [i for i, n in enumerate(names) if n.endswith("Bush") and "Empty" not in n and n != "Black Wild Gooseberry Bush"]
     al = alive[:-1]
     idle = (act[1:] == 4) & al & ~np.isin(obj[:-1], full)
     moved = np.abs(np.diff(pos.astype(int), axis=0)).sum(-1) > 0
@@ -441,10 +442,11 @@ def life_spent(s, main: list[Path], control: list[Path]):
                           "caption": "From the recording of the last generation of every seed (a sample of 64 animals each)."}
 
 
-for _key in ("1.1", "1.5", "1.6h", "1.7"):
+for _key in ("1.1", "1.2h", "1.5", "1.6h", "1.7"):
     extra(_key)(life_spent)
 
 
+@extra("1.2h")
 @extra("1.6h")
 def adaptation_off(s, main: list[Path], control: list[Path]):
     """The lesion of the adaptation, measured by scripts/probes/adapt_off.py (it simulates, so it is run separately

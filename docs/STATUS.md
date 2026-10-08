@@ -71,7 +71,15 @@ in the previous stage's world as the previous population).
      adaptation off; standing still 8% vs 21%). Go ahead, judge over three seeds; the fallback is the order that
      already passed.
    - Hunger stays one inhibitory cell with its evolvable path onto feeding. Short lives are accepted; no tuning.
-   - Nothing is running. All work is committed and pushed; the book is published.
+   - **Progress (2026-10-08, afternoon; STAGE_LOG v32).** The chain is redefined in `stages.py` (1.0, 1.1 with
+     4000-tick lives, `1.2h` habituation, `1.5` association on the habituation brain, `1.7` drives; old order kept
+     as side stages `1.1l`, `1.5c`, `1.5f`, `1.6h`). The habituation world is the 1.1 world plus a dud bush type
+     (colour per life, never a berry), agreed with the user: adaptation off 38% of intact on seed 0 (84% without
+     the dud). Seed 0 is finished for 1.0, 1.1, 1.2h and 1.5; 1.1 seed 1 too.
+   - **To do next**: the lesions of 1.5 seed 0 and `learned.py`; 1.7 seed 0 (was stopped at generation 20); then
+     `stages replicate <key> --seeds 1,2` for 1.1 (seed 2 only), 1.2h, 1.5, 1.7; exports and the book. Runs were
+     stopped once because the machine ran low on memory: keep to two or three JAX processes at a time.
+   - The user accepts the old order (centred association, then habituation) if it ends up working much better.
 2. Rules of work (user, 2026-10-07): cheap trials first (one stage, one seed, generation 0 where possible), full
    chain and three seeds only when a design looks final; look inside a finished run before starting the next
    (`scripts/probes/README.md`, step 4); no new mechanisms without the user.

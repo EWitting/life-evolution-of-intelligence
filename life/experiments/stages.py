@@ -631,7 +631,21 @@ stage(Stage("1.5f", "s1_5_association_fwd", "1.1l", B15F, W15, VISION_CH1, BODY_
             notes="1.5 with only the eye pointing ahead learning (variant)"))
 
 
-# 1.7 drives (trial, v29): two need cells and a warmth mode, on the learning brain. The circuit is the one that won
+# 1.6h habituation by sensory adaptation (trial, v30; user's preference 2026-10-07): the look inputs themselves
+# adapt. Each look input passes on its input minus the slow average of that input, so everything downstream sees
+# what is unusual: the lesson of 1.5 is about what sets a food apart without a special rule (the learned synapses
+# are plain again), and a look that stays in view fades, so the pull of a bush that yields nothing wears off
+# (`freeze.py`: the 1.5 animals spend 45% of their life biting at an empty bush). One mechanism in the input
+# neuron for both. The inherited synapses were shaped on the raw look, so the population has to re-tune.
+# Control: the 1.5 brain (raw look, centred learning).
+ADAPT_TAU = 0.98      # the look inputs' average runs over about 50 ticks
+B16H = replace(_B15, in_adapt=CS_VIS, in_trace_tau=ADAPT_TAU, projections=_split_cs(_B15.projections, eta=ETA_15))
+stage(Stage("1.6h", "s1_6_habituation", "1.5", B16H, W15, VISION_CH1, BODY_TASTE,
+            lambda exp: learning_world(exp, berries=LEARN_BERRIES), **_S15,
+            notes="TRIAL: the look inputs adapt to their slow average (habituation and centred learning in one)"))
+
+
+# 1.7 drives (trial, v29; on the habituation brain from v30): two need cells and a warmth mode. The circuit is the one that won
 # the generation-0 probe (`scripts/probes/drives.py`, STAGE_LOG v23 and 2026-10-08):
 #   cold       fires while the skin is colder than about 0.47 (max(0, tanh(3.3 - 7 skin)));
 #   warm_seek  cold -> FORWARD: keep moving while it is cold (orthokinesis; no gradient, no sight of the spring);
@@ -643,7 +657,7 @@ stage(Stage("1.5f", "s1_5_association_fwd", "1.1l", B15F, W15, VISION_CH1, BODY_
 # hard-wired). The cell is inhibitory, so it can only release or hold back: for example release the bite block.
 # World: the 1.5 world made cold (ambient 0.25), with a few hot springs; the cold makes the body burn more.
 DRIVE_HYP = dict(alpha=0.5, evolve_bias=False, group="hypothalamus")
-B17 = extend(B15,
+B17 = extend(B16H,
              regions=(R("cold", 1, sign="exc", bias=3.3, **DRIVE_HYP),
                       R("warm_seek", 1, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, group="thermotaxis"),
                       R("rest", 1, sign="inh", bias=-3.3, **DRIVE_HYP),
@@ -658,24 +672,10 @@ B17 = extend(B15,
 BODY_17 = BodyConfig(taste=True, temperature=True, skin_change=True, skin=True)
 W17 = replace(W15, temperature=True, ambient_temp=0.25, heat_scale=0.15, heat_radius=4, temp_rate=0.03, temp_hunger=1.5)
 SPRINGS_17 = 0.1      # spawn weight of hot springs (a bush type: 1)
-stage(Stage("1.7", "s1_7_drives", "1.5", B17, W17, VISION_CH1, BODY_17,
+stage(Stage("1.7", "s1_7_drives", "1.6h", B17, W17, VISION_CH1, BODY_17,
             lambda exp: learning_world(exp, springs=SPRINGS_17, berries=LEARN_BERRIES), **_S15,
             notes="TRIAL: cold and hungry need cells, warmth by kinesis, hunger decides between foraging and warmth; "
                   "the 1.5 world made cold with hot springs"))
-
-
-# 1.6h habituation by sensory adaptation (trial, v30; user's preference 2026-10-07): the look inputs themselves
-# adapt. Each look input passes on its input minus the slow average of that input, so everything downstream sees
-# what is unusual: the lesson of 1.5 is about what sets a food apart without a special rule (the learned synapses
-# are plain again), and a look that stays in view fades, so the pull of a bush that yields nothing wears off
-# (`freeze.py`: the 1.5 animals spend 45% of their life biting at an empty bush). One mechanism in the input
-# neuron for both. The inherited synapses were shaped on the raw look, so the population has to re-tune.
-# Control: the 1.5 brain (raw look, centred learning).
-ADAPT_TAU = 0.98      # the look inputs' average runs over about 50 ticks
-B16H = replace(_B15, in_adapt=CS_VIS, in_trace_tau=ADAPT_TAU, projections=_split_cs(_B15.projections, eta=ETA_15))
-stage(Stage("1.6h", "s1_6_habituation", "1.5", B16H, W15, VISION_CH1, BODY_TASTE,
-            lambda exp: learning_world(exp, berries=LEARN_BERRIES), **_S15,
-            notes="TRIAL: the look inputs adapt to their slow average (habituation and centred learning in one)"))
 
 
 # 1.6 extinction and reversal: the learned weights now relax back toward their inherited values (a fast,

@@ -343,6 +343,8 @@
       else { if (cur >= n - 1) show(0); e.target.textContent = 'Pause'; timer = setInterval(() => { if (cur >= n - 1) { clearInterval(timer); timer = null; e.target.textContent = 'Play'; } else show(cur + 1); }, 700); }
     });
     show(cur);
+    // the world tile is a canvas painted with the theme's colours: paint it again when the theme is switched
+    new MutationObserver(() => show(cur)).observe(document.body, {attributes: true, attributeFilter: ['class']});
   }
 
   // ------------------------------------------------------------------ a small table from a stage's extras

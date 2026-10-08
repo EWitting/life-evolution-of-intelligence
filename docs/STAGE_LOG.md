@@ -1617,3 +1617,88 @@ with existing world code only (`berry_world(novel_looks=..., duds=...)`).
   block. Lesions not measured yet.
 - Stopped by the machine running low on memory (not finished, to be started again): 1.7 drives seed 0 (at
   generation 20 of 40: main 159, control 93), 1.1 seed 2 (seed 1 is finished), the lesions of 1.5.
+
+### Three seeds of the new chain (2026-10-08, evening; `python -m life.book export <key> --evaluate`, 8 worlds)
+
+Seeds 1 and 2 of every stage start from the seed-0 run of the parent stage. Percentages are fitness with the
+region silenced, % of intact, per seed.
+
+**1.1 valence** (seed 0: 50 generations; seeds 1 and 2: 100, because at 50 they were at 768 and 909 and still
+climbing while seed 0 had found the look -> aversive wiring by generation 10; the runs record what they continue
+in `continues.txt` and the book joins the curves).
+
+| | main | control |
+|---|---|---|
+| well-fed lifetime, last 50 generations | 1139 +-40 [1216 1124 1079] | 176 +-6 [166 185 176] |
+| re-evaluated | 1479 +-105 [1572 1594 1270] | 190 +-12 |
+| head to head | +1919 +-155 [2074 2074 1610] | |
+
+Lesions: valence_av 9 9 12; no_feed 17 10 13; ganglion_e 31 28 62; ganglion_i 29 90 53; grasp 90 71 88;
+valence_app 90 73 93; no_touch 99 91 73. Moving 67% of ticks, biting at nothing 15% (control 14% and 76%).
+**Passes.** No control found avoidance by look in 50-100 generations of long lives.
+
+**1.2h habituation, dud world.**
+
+| | main | control |
+|---|---|---|
+| well-fed lifetime, all 40 generations | 1139 +-15 [1161 1146 1111] | 1073 +-35 [1097 1119 1003] |
+| re-evaluated | 1361 +-56 [1463 1269 1350] | 1272 +-36 [1245 1227 1343] |
+| main - control, re-evaluated | +89 +-65 [218 42 8] | |
+
+`adapt_off.py` (4 worlds): 1392 -> 494, 1275 -> 698, 1326 -> 481: **36, 55, 36% of intact**. Lesions: valence_av
+9 11 9; no_feed 20 20 14; ganglion_e 16 12 28; ganglion_i 34 61 22; grasp 83 76 89; valence_app 85 78 89;
+no_touch 100 100 100. Recorded last generation: moving 57% vs 29%; biting at nothing (duds included) 28% vs 62%;
+lifetime 1901 vs 1174. **Passes**: used in every seed; main at or above control in every seed, by a small margin
+in two. No head to head for this stage (the change is in the inputs).
+
+**1.5 association** (on the habituation brain, plain learned synapses).
+
+| | main | control | old order (v29) |
+|---|---|---|---|
+| well-fed lifetime, 40 generations | 592 +-20 [623 599 555] | 354 +-19 [392 331 339] | 427 vs 320 |
+| re-evaluated | 721 +-68 [607 715 841] | 360 +-5 | 483 vs 308 |
+| main - control, re-evaluated | +361 +-66 | | +175 +-42 |
+| head to head | +520 +-120 [290 696 573] | | +71 +-50 |
+| poison share of meals | 0.13 0.13 0.15 | 0.23 0.24 0.24 | 0.19 vs 0.25 |
+
+Lesions: **no_plasticity 43 48 43; us_pain the same**; valence_av 13 18 12; no_feed 16 26 15; ganglion_e 40 47
+50; ganglion_i 33 81 48; valence_app 90 93 102; grasp 90 95 107; no_touch 92 95 98. Seed 0 inside (`learned.py`):
+the inherited learning rate rose from 0.3 to a mean of 0.60 (median 0.70; it fell to 0.24 in the old order);
+aversive activity facing a poison type 0.12 -> 0.39 and 0.04 -> 0.35 after the first bite, facing the good types
+0.05-0.12. Recorded last generation: moving 69% vs 59%, biting at nothing 13% vs 22%, lifetime 1168 vs 597.
+**Passes**, more clearly than in the old order.
+
+**Trim: nothing is removed.** `no_touch` is at 100 in habituation but at 73-99 in 1.1 and 92-98 in association;
+the appetitive cells and `grasp` are at 71-93 in 1.1 and 76-89 in habituation. Every cell is used somewhere on
+the chain.
+
+**Frozen** (user, 2026-10-08: a partial freeze, so that 1.0, 1.1 and 1.5 are not rerun again): 1.0, 1.1, 1.2h,
+1.5. `life/freeze.py`, `frozen/` (definitions and final populations of every seed), `tests/test_frozen.py`.
+The chapter exam is dropped as a criterion (user: later populations carry equipment for things earlier worlds do
+not contain, so some regression means nothing); a sanity check at most.
+
+**1.7 drives** (on the frozen 1.5; not frozen).
+
+| | main | control |
+|---|---|---|
+| well-fed lifetime, 40 generations | 386 +-14 [392 359 408] | 309 +-18 [325 329 273] |
+| re-evaluated | 401 +-2 [400 404 399] | 341 +-38 [276 409 337] |
+| main - control, re-evaluated | +60 +-37 [124 -4 62] | |
+| head to head | **-65 +-33** [-88 -108 0]: main half 444 402 432, control half 532 510 432 | |
+
+Lesions: hungry 26 27 18; rest 72 86 71; cold and warm_seek 89 94 86; no_plasticity and us_pain 71 66 76;
+valence_av 25 22 25; no_feed 27 24 27; grasp 80 75 69; valence_app 85 79 72; no_touch 89 91 90; ganglion_e 23 43
+26; ganglion_i 27 37 30. Recorded last generation: moving 45% of ticks vs 71%; biting at nothing 32% vs 12%;
+berries per life 32 vs 43; lifetime 600 vs 590; body temperature 0.39.
+`strengths.py`: rest -> out x1.09, x0.99, x0.98 of its designed strength; hungry -> rest x1.43, x1.15, x1.26;
+hungry -> warm_seek x1.10, x1.25, x1.64; warm_seek -> out x0.92, x0.56, x0.98.
+`density.py 1.7` (new; each population alone in the 8 head-to-head worlds, at full and at half the number of
+animals): main 519 -> 873, 401 -> 710, 490 -> 763; control 416 -> 746, 430 -> 666, 352 -> 598. Halving the
+animals raises fitness by 55-80%: food is a race in the first part of life.
+
+Reading: used (hungry and rest clearly, the warmth pair by about 10% in every seed) and ahead of the control when
+each lives among its own. In a shared world the control half does better than among its own (432-532 vs 352-430)
+and the main half slightly worse than among its own (402-444 vs 401-519): animals that rest when fed eat less
+(32 vs 43 berries) and leave the bushes to the roamers; what they gain is a warm body that burns less. Within
+main populations resting was not selected down. Not shown: whether a roamer could invade a population with
+drives. Left for the user: freeze as it is, or tune (a retune reruns drives only).

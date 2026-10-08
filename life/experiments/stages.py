@@ -906,8 +906,14 @@ def run_stage(key: str, generations: int | None = None, control: bool = False, i
             lay = make_layout(exp)
             init = init._replace(mask=jnp.where(((np.asarray(lay.rule) > 0) & (np.asarray(lay.allowed) > 0))[None], 1.0, init.mask))
     rs, rules_fn = s.build(exp)
-    return run_evolution(exp, rs, s.fitness or default_fitness, rules_for_generation=rules_fn, init_population=init,
-                         row_extra=s.row_extra(rs) if s.row_extra else None, dashboard=dashboard)
+    res = run_evolution(exp, rs, s.fitness or default_fitness, rules_for_generation=rules_fn, init_population=init,
+                        row_extra=s.row_extra(rs) if s.row_extra else None, dashboard=dashboard)
+    if init is not None:   # a run started from an earlier run of its own experiment continues it (book: one curve)
+        from pathlib import Path
+        src = Path(init_from).resolve()
+        if src.parent == Path(res["out_dir"]).resolve().parent:
+            (Path(res["out_dir"]) / "continues.txt").write_text(src.name)
+    return res
 
 
 def stage_of_run(run_dir) -> Stage:

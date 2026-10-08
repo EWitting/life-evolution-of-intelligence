@@ -87,6 +87,11 @@ poison if evolution happens to wire the look of the poison berries to turning aw
 
 <div data-life="curves" data-stage="1.1"></div>
 
+The three main curves do not rise at the same moment. Evolution has to find the wiring from the look of the two
+poison kinds to the aversive cells, and when it finds it is a matter of luck. One seed found it within a few
+generations. The two others were still climbing when the planned generations were over and were given as many
+again.
+
 <div data-life="summary" data-stage="1.1"></div>
 
 In principle the control can end up where main does. The poison looks the same in every generation, so pain tells
@@ -95,9 +100,9 @@ away" in its reflex wiring. So the gap between the curves does not say what pain
 easier the value cells make the solution to find: main has a ready path from the look of a berry to a cell that
 turns the animal away and stops the bite, and it starts out with a reaction to the pain itself.
 
-Whether a control finds the solution within the generations it is given is a matter of luck. Under an earlier
-food economy two of three controls did, late and suddenly, after dozens of generations without progress. If a
-grey curve above stays flat, that control had not found it yet.
+Whether a control finds the solution within the generations it is given is a matter of luck. In earlier runs, with
+short lives and many more generations, two of three controls did, late and suddenly, after dozens of generations
+without progress. If a grey curve above stays flat, that control had not found it yet.
 
 The three rows measure the same thing with less and less noise. The first is taken from the generations as they
 ran. The second gives every final population the same eight worlds. In the third, main and control animals live

@@ -1,7 +1,7 @@
 # Status
 
-One screen on where the project is. Plan: `docs/BRAIN_EVOLUTION.md`. **Next piece of work: `docs/RERUN_PLAN.md`.** Details, numbers and run directories:
-`docs/STAGE_LOG.md`. Newest decisions: `docs/DECISIONS.md` (ADR-017 to ADR-024). Last updated 2026-10-08.
+One screen on where the project is. Plan: `docs/BRAIN_EVOLUTION.md`. **Frozen stages: `frozen/README.md`.** Details, numbers and run directories:
+`docs/STAGE_LOG.md`. Newest decisions: `docs/DECISIONS.md` (ADR-017 to ADR-024). Last updated 2026-10-08 (evening).
 
 ## How a stage is judged
 
@@ -32,63 +32,48 @@ than control (user, 2026-10-01). One life is mostly luck, so a design is checked
 **Fitness = well-fed lifetime from the first meal** (ADR-024; v19-v22 used energy acquired). Cells that lesions
 show unused in every seed are removed.
 
-## Stages (v25, 2026-10-07)
+## Stages (rerun of 2026-10-08; STAGE_LOG v32)
 
-Chain: 1.0 -> 1.1 -> 1.1l (long lives) -> 1.5 -> 1.6h (habituation) -> 1.7 drives (trial) -> affect -> chapter 2.
-Footing v25 (born a quarter full, food as a flow, a bite cost) for 1.0 and 1.1; from 1.1l on lives are 4000
-ticks. Three seeds unless stated; lesion = fitness with the region silenced, % of intact, mean over seeds. Findings
-marked v21/v22 are from the energy-acquired fitness.
+Chain: 1.0 -> 1.1 -> 1.2h habituation -> 1.5 association -> 1.7 drives -> affect -> chapter 2. Lives are 4000
+ticks from the settling run of 1.0 on. Footing v25 (born a quarter full, food as a flow, a bite cost). Every stage
+starts from the seed-0 run of its parent. Three seeds unless stated; lesion = fitness with the region silenced, %
+of intact, per seed.
+
+**Frozen (2026-10-08, tag `chapter-1-partial`): 1.0, 1.1, 1.2h, 1.5.** Definitions and final populations are in
+`frozen/` (`frozen/README.md`, `life/freeze.py`); `tests/test_frozen.py` fails when a frozen definition changes.
+**Do not rerun these stages or their lineage** (user, 2026-10-08). A change that has to touch one is made by
+remapping the stored populations and freezing again.
 
 | stage | what it adds | status | finding |
 |---|---|---|---|
-| 1.0 steering | ganglion (exc + inh, lagging normalisation), evolved sensor -> motor reflexes; sees the outside world only; movement costs energy; the animal eats what it grasps | rerun v25 (1 seed) | Evolves from scratch: well-fed lifetime 608, 183 of 256 alive at the cap (ceiling). Supply steady: 18-25% of bushes full all life. |
-| 1.1 valence | appetitive and aversive value cells (taste and pain enter the brain only here) acting on a contact-gated grasp programme; aversion turns away and blocks the bite | **passes** (v25, three seeds) | Main 452 +-15 vs control 186 +-13, head to head +401 +-35. Lesions: aversive 40, no_feed 45, ganglion_e 63, ganglion_i 64, appetitive 90, grasp 89, no_touch 94. v24 (every bush full at birth): main 519 vs control 394; two of three controls evolved avoidance by look. |
-| 1.1l long lives | nothing new in the brain: the 1.1 animals under lives of 4000 ticks, an adaptation step | done (1 lineage) | Lifetime 1340 -> 2220 of 4000, alive at the cap 9 -> 97 of 256, freezes 29% -> 7% of ticks. In a life of 1000 ticks (1.25 stomachs) an animal that ate once and stood still reached the cap. |
-| 1.5 association | pain teaches the look -> aversive synapses what sets the bitten food apart (the look minus each look input's slow average); a world of only novel foods, half of them poison | **passes** (v29, three seeds) | Main 427 +-24 vs control 320 +-3; re-evaluated 483 vs 308 (+175 +-42); head to head +71 +-50. Lesions: no_plasticity 51, us_pain 51 (57 42 54), aversive 15, no_feed 16. Poison share 0.19 vs 0.25. No change over 40 generations in main or control. Lives are short (770 of 4000). |
-| 1.6h habituation | no new cells: every look input passes on its input minus its slow average (about 50 ticks), so what stays in view fades and what is unusual stands out; the learned synapses of 1.5 are plain again | **passes** (v30, three seeds) | Main 500 +-18 vs control 400 +-25; re-evaluated 597 vs 518 (+79 +-57). Adaptation switched off: 34, 31, 35% of intact. Learning: no_plasticity 40. Standing and biting at nothing 19% of ticks vs 36% in the control. Head to head not valid for this stage. |
-| 1.7 drives (old 1.2) | `cold` and `hungry` need cells; warmth by kinesis: `warm_seek` (run while the skin is cold), `rest` (stay where it is warm); `hungry` shuts the warmth mode; evolvable `hungry` -> feeding synapses. World: the 1.5 world made cold, hot springs (which no longer block) | **trial, one seed** | Main 407 vs control 332 (generations 30-39), body 0.40 vs 0.35. Lesions: hungry 26, plasticity 73, rest 86, cold 95, warm_seek 95. Cold costs 44% at generation 0. To do: decide how hunger acts on feeding, then three seeds. |
+| 1.0 steering | ganglion (exc + inh, lagging normalisation), evolved sensor -> motor reflexes; sees the outside world only; movement costs energy; the animal eats what it grasps | **frozen** (1 lineage) | From scratch at 1000 ticks (530-555), then settled at 4000 ticks: well-fed lifetime about 2100, 45% alive at the cap, moving 62% of ticks. |
+| 1.1 valence | appetitive and aversive value cells (taste and pain enter the brain only here) acting on a contact-gated grasp programme; aversion turns away and blocks the bite | **frozen**, passes | Main 1139 +-40 vs control 176 +-6; re-evaluated 1479 vs 190; head to head +1919 +-155. Lesions: aversive 9 9 12, no_feed 17 10 13, grasp 90 71 88, appetitive 90 73 93, no_touch 99 91 73. Seeds 1 and 2 needed 100 generations (seed 0: 50). No control found avoidance by look. |
+| 1.2h habituation | no new cells: every look input passes on its input minus its slow average (about 50 ticks), so what stays in view fades and what is unusual stands out. World: the 1.1 world plus a dud bush type (colour per life, never a berry) | **frozen**, passes | Main 1139 +-15 vs control 1073 +-35; re-evaluated 1361 vs 1272 (+89 +-65: 218, 42, 8). Adaptation switched off: 36, 55, 36% of intact. Biting at nothing 28% of ticks vs 62%. Without the dud the adaptation was used weakly (84%). No head to head (the change is in the inputs). |
+| 1.5 association | `us_pain` teaches the look -> aversive synapses (plain: the adapted look already carries what sets a food apart); a world of only novel foods, half of them poison | **frozen**, passes | Main 592 +-20 vs control 354 +-19; re-evaluated 721 vs 360 (+361 +-66); head to head +520 +-120. Lesions: no_plasticity and us_pain 43 48 43. Poison share 0.13-0.15 vs 0.23-0.24. Learning rate evolved up (0.3 -> 0.60 in seed 0). Clearer than the old order (+175, head to head +71). Lives are short (about 1170 of 4000 in the recorded generation). |
+| 1.7 drives | `cold` and `hungry` need cells; warmth by kinesis: `warm_seek` (run while the skin is cold), `rest` (stay where it is warm); `hungry` shuts the warmth mode; evolvable `hungry` -> feeding synapses. World: the 1.5 world made cold, hot springs (which do not block) | three seeds, **not frozen** | Main 386 +-14 vs control 309 +-18; re-evaluated 401 vs 341 (+60 +-37: 124, -4, 62). **Head to head -65 +-33** (-88, -108, 0): the control half does better next to main animals (432-532) than among its own (276-409). Lesions: hungry 26 27 18, rest 72 86 71, cold and warm_seek 89 94 86, plasticity 71 66 76. Main moves 45% of ticks vs 71%, bites at nothing 32% vs 12%. See next steps. |
 | affect (old 1.3) | serotonin (dwell) and PDF (roam) states | to redesign on drives | Unused in its last run (v13, old architecture). Kept if at all possible: later stages need the modulator systems. |
-| 1.6 reversal | learned weights relax toward inherited values; the novel types swap meaning mid-life | done, **left out** | v22: main 42.8 vs control 41.5, head to head -6.5 +-1.6. Plasticity 101, taste teacher 105, pain teacher 97. |
-| x.hands (side) | pick, hold, then eat: held-item value cells and an ingest programme on the 1.1 brain | done (2 runs) | v21: adapts in ~10 generations with the extension (energy 65-67, as with eat on grasp); the plain brain adapted in one of two runs. Lesions: ingest 0, gate 55. |
-| 2.1-2.5, x.td | tectum, pallium, basal ganglia, dopamine TD | defined, older design | To revisit: per-life pallium weights (ADR-017), holding before 2.6, delayed sickness and appetitive learning with the prediction error. |
+| side paths | 1.1l, 1.5c (centred association before habituation), 1.5f, 1.6h, 1.6 reversal, x.hands, x.td, old 1.2-1.4 | defined, not on the path | Listed with reasons in `frozen/README.md`. |
+| 2.1-2.5 | tectum, pallium, basal ganglia, dopamine TD | defined, older design | To revisit: per-life pallium weights (ADR-017), holding before 2.6, delayed sickness and appetitive learning with the prediction error. |
 | 2.6-2.10, 3.x-5.x | actor, curiosity, hippocampus, cerebellum; simulating, mentalizing, speaking | planned | |
 
-## Next steps: finalizing chapter 1 (plan agreed 2026-10-03)
+## Next steps
 
-Per stage, three seeds: **used** (silencing the new cells costs fitness in every seed), **not worse** (main at or
-above control within one standard error, summary and head to head), **no regression** (the population does as well
-in the previous stage's world as the previous population).
-
-1. **Resume here: the complete rerun of chapter 1, agreed with the user on 2026-10-08. The plan, the code changes
-   it needs, the order of work, the risks and the book work are in `docs/RERUN_PLAN.md`. Read that next.** In
-   short:
-   - Order: 1.0 -> 1.1 -> habituation -> association -> drives, three seeds each, one seed down the whole chain
-     first. Lives of 4000 ticks from the settling run of 1.0 on; stage 1.1l disappears.
-   - The stage table above describes the chain as it was *run* in session 5 (association before habituation, 1.1
-     with lives of 1000 ticks). Those results stand until the rerun replaces them.
-   - The one risk checked in advance (one seed, `s1_2_habituation`): habituation before association, in the
-     familiar world, ends level with its control (1610 vs 1681) and is used weakly (84% of intact with the
-     adaptation off; standing still 8% vs 21%). Go ahead, judge over three seeds; the fallback is the order that
-     already passed.
-   - Hunger stays one inhibitory cell with its evolvable path onto feeding. Short lives are accepted; no tuning.
-   - **Progress (2026-10-08, afternoon; STAGE_LOG v32).** The chain is redefined in `stages.py` (1.0, 1.1 with
-     4000-tick lives, `1.2h` habituation, `1.5` association on the habituation brain, `1.7` drives; old order kept
-     as side stages `1.1l`, `1.5c`, `1.5f`, `1.6h`). The habituation world is the 1.1 world plus a dud bush type
-     (colour per life, never a berry), agreed with the user: adaptation off 38% of intact on seed 0 (84% without
-     the dud). Seed 0 is finished for 1.0, 1.1, 1.2h and 1.5; 1.1 seed 1 too.
-   - **To do next**: the lesions of 1.5 seed 0 and `learned.py`; 1.7 seed 0 (was stopped at generation 20); then
-     `stages replicate <key> --seeds 1,2` for 1.1 (seed 2 only), 1.2h, 1.5, 1.7; exports and the book. Runs were
-     stopped once because the machine ran low on memory: keep to two or three JAX processes at a time.
-   - The user accepts the old order (centred association, then habituation) if it ends up working much better.
-2. Rules of work (user, 2026-10-07): cheap trials first (one stage, one seed, generation 0 where possible), full
-   chain and three seeds only when a design looks final; look inside a finished run before starting the next
-   (`scripts/probes/README.md`, step 4); no new mechanisms without the user.
-3. Affect, redesigned on the drives stage. An unused module stays out of the frozen brain unless later stages need
-   the brain to have developed with it.
-4. Whether hunger should come before the learning stage (it would let the 1.5 animals use a long life) is open.
-5. Final trim: the idle ganglion, designed strengths moved to where evolution put them.
-6. Chapter exam (every stage's population in every earlier world), then freeze: a configuration snapshot test per
-   stage, stored final populations, a git tag, one reference table, a list of known side paths. Then chapter 2.
+1. **Resume here: drives (1.7).** Three seeds are run and exported. It is used and ahead in its own worlds, but
+   loses the head-to-head test. Reading to check (`scripts/probes/density.py 1.7`: each population alone at full
+   and half density in the head-to-head worlds): animals that rest when fed leave food to roaming neighbours, so
+   the control half gains from sharing a world with them. `rest -> out` was not scaled down by evolution (x0.98 to
+   x1.09), the hunger gates were strengthened (x1.10 to x1.64). The user (2026-10-08): 90% of intact for the
+   warmth cells is fine if consistent, warmth need not dominate; a slightly colder world is allowed if needed.
+   Decide with the user whether drives is frozen as it is; a retune reruns drives only.
+2. **Affect**, redesigned on the drives brain: assay and generation 0 first, design choices with the user. It is
+   the last stage of the chapter, so it cannot disturb anything above it.
+3. Then freeze drives and affect (`python -m life.freeze 1.7 ...`), move the tag, chapter 2.
+4. Rules of work (user): cheap trials first (one stage, one seed, generation 0 where possible); look inside a
+   finished run before starting the next (`scripts/probes/README.md`, step 4); no new mechanisms without the
+   user; **no reruns of frozen stages**. The chapter exam (every population in every earlier world) is dropped as
+   a criterion: later populations carry equipment for things earlier worlds lack. A sanity check at most.
+5. Trim (2026-10-08): nothing is removed; every cell is used somewhere on the chain. `docs/RERUN_PLAN.md` is
+   carried out and kept for reference.
 
 ## Known issues and open points
 
@@ -105,14 +90,12 @@ in the previous stage's world as the previous population).
   A longer trace does not solve it. Any design with delay must show in `classify.py` and the assay that the blame
   lands on what was eaten (for example a trace of what was in the mouth, not of what is in view).
 - The well-fed lifetime has a ceiling at the life cap; in 1.0 most agents reach it at any cap (STAGE_LOG v23).
-- A stomach lasts 800 ticks at rest: stages 1.0 and 1.1 still have lives of 1000 ticks, in which standing still
-  after a meal reaches the cap; 1.1l removes that before any later stage.
 - The learning world is new every generation, so fitness swings between generations (sd about 290 in 1.5): read
   trends over blocks of generations with their standard error, not from single blocks.
 - Chapter 2 definitions are stale. The dashboard clips displayed weights at `w_max`.
 
 Practical notes: one process runs a non-plastic stage at about 4-5 s per generation of 1000 ticks and a stage with
-4000-tick lives at 15-40 s (an unrecorded simulation stops when every animal is dead); up to about five JAX processes in parallel (16 threads, ~300 MB each). A sleeping laptop pauses
+4000-tick lives at 15-40 s (an unrecorded simulation stops when every animal is dead); how many JAX processes fit in parallel depends on free memory, so on whether the laptop is in use for other things (five were killed for low memory on 2026-10-08 with VS Code and Chrome open; six or seven ran with them closed): check free memory and the size of one running process before starting a batch. A sleeping laptop pauses
 runs, and background commands are stopped after two hours, so run long batches in pieces.
 `scripts/probes/prune.py` keeps only the newest finished run per stage directory.
 
@@ -129,7 +112,7 @@ Evolution: one life per individual, siblings, elitism + tournament, recombinatio
 strength genes.
 Tools: stage runner and chain, replicate, summary, lesion(s), versus, respond, compare, dashboard (architecture
 view with hard-wired projections drawn dark; a 64-agent sample of large populations), probes (`scripts/probes/`).
-32 tests.
+43 tests.
 
 ## Future goals (beyond the current chapters)
 

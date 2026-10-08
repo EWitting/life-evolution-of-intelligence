@@ -15,8 +15,8 @@ book:
       chapters:
         - 1-0-steering.qmd
         - 1-1-valence.qmd
-        - 1-5-association.qmd
         - habituation.qmd
+        - 1-5-association.qmd
         - drives.qmd
         - affect.qmd
 

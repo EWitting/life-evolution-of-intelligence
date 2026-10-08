@@ -1,5 +1,8 @@
 # Plan: the complete rerun of chapter 1
 
+**Carried out on 2026-10-08** (results: `docs/STAGE_LOG.md` v32, `docs/STATUS.md`). Two things differ from the
+plan below: the habituation world has a dud bush type, and stages 1.0, 1.1, 1.2h and 1.5 are frozen (`frozen/`).
+
 Written 2026-10-08 at the end of session 5, for a fresh session. Read `docs/STATUS.md` first (one screen), then
 this file. Numbers and dead ends behind every statement here are in `docs/STAGE_LOG.md`, sections v24 to v31.
 

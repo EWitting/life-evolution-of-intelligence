@@ -20,10 +20,8 @@ A poison berry costs about what a good berry gives, and it hurts for one tick. H
 an animal that cannot learn pays that price on every second bush it tries, for as long as it lives. Leaving
 everything unknown alone is not an option either: there is nothing else to eat.
 
-Lives are four times longer than in the earlier stages, so that a lesson learned early can be used many times.
-Before this stage began, the animals of the previous stage were given a number of generations of this longer life
-in their own world, with no change to the brain. In a short life an animal that ate once and then stood still
-could reach the end; in a long one it cannot.
+There are no duds in this world. What the eyes learned to do in the previous stage stays, and this stage builds
+on it.
 
 <div data-life="settings" data-stage="1.5"></div>
 
@@ -66,13 +64,13 @@ of a berry excites them, the animal treats that berry as it treats the poison it
 ### What exactly gets blamed
 
 A bite hurts, and something has to take the blame. Getting this right turned out to be most of the work of this
-stage, and three things were needed.
+stage, and three things were needed, the first of which the animals already bring with them.
 
 **The lesson is about what sets the food apart.** All berry bushes look alike in most respects. If pain
-strengthened the synapses of the whole look, one bad red berry would make the animal wary of every berry. So each
-look input keeps a slow average of its own activity, of what it usually sees, and the synapse learns from the
-difference between the look right now and that average. What all bushes share cancels out. What is left is the
-colour.
+strengthened the synapses of the whole look, one bad red berry would make the animal wary of every berry. This is
+where the adapting eyes of the previous stage pay a second time: they pass on the difference between the look
+right now and what they usually see. What all bushes share cancels out before it reaches a synapse. What is left
+to take the blame is the colour.
 
 **The pain is brief.** While pain faded over several ticks, the teacher was still firing after the animal had
 turned away, and by then its eyes were on the next bush. The animal learned to distrust the neighbour of the
@@ -110,8 +108,8 @@ it.
 
 ### Is main worse than control?
 
-The control is the brain of the previous stage in this world: it feels pain and turns away from it, but it cannot
-change. It pays for every poison bush it tries, every time.
+The control is the brain of the previous stage in this world, adapting eyes included: it feels pain and turns away
+from it, but it cannot change. It pays for every poison bush it tries, every time.
 
 <div data-life="curves" data-stage="1.5"></div>
 
@@ -124,16 +122,12 @@ change. It pays for every poison bush it tries, every time.
 `no_plasticity` freezes every synapse at its inherited strength, and `us_pain` silences the teacher. If the
 animals do clearly worse without either, they depend on what they learn during their life.
 
-::: {.callout-note title="What still goes wrong: standing at an empty bush"}
-The animals of this stage spend a large part of their life standing in front of a bush that has no berries, biting
-at it. An empty bush has the colour of the full one, the appetitive cells respond to the colour, and the bite
-follows. Biting at nothing costs no energy, and nothing tells the animal that it is getting hungry. Few animals
-live out the long life this world offers.
+### How a life is spent
+
+Few animals live out the long life this world offers: half of what they try is poison, and nothing tells an
+animal that it is getting hungry.
 
 <div data-life="table" data-stage="1.5" data-example="life_spent"></div>
-
-The next stage, habituation, is meant for exactly this.
-:::
 
 ## The runs behind this page
 

@@ -1,5 +1,111 @@
-# Drives: hunger and cold {#sec-drives}
+# 1.7 Drives: hunger and cold {#sec-drives}
+
+<div data-life="status" data-stage="1.7"></div>
+
+Until now the brain has only looked outward. It sees, it tastes and it feels pain, but it has no idea how full its
+stomach is or how warm its body is. An animal that cannot feel its own state can do only one thing at a time, all
+the time: these animals forage whether they are starving or stuffed.
+
+This stage gives the body a second need, warmth, and gives the brain two cells that report on the body. With two
+needs there is, for the first time, something to decide: which one to look after now.
+
+## The world: cold, with warm places
+
+The world of the previous stage becomes cold. A cold body burns its food faster, so an animal that stays cold
+starves sooner. Scattered through the world are a few hot springs, each warming the ground around it. An animal
+warms up slowly when it is near one and cools down slowly when it leaves.
+
+The animal cannot see where it is warm. It feels the temperature of its own skin and nothing more.
+
+The food is as before: four kinds of berry bush, new in every life, half of them poison.
+
+<div data-life="settings" data-stage="1.7"></div>
+
+::: {.callout-note title="What did not work: a hot spring you could walk into but not through"}
+In the first versions of this world a hot spring was the only object that blocked the way; an animal can walk
+over a bush. The animals walked up to a spring and kept pushing against it: they spent a third of their life
+facing one. Most of what looked like the cost of the cold was this trap, and part of what the new circuit seemed to
+win back was only that it stopped the pushing. A spring is now a place an animal can stand in.
+:::
+
+## The biology: drives
+
+A drive is a signal from the body about something it needs: food, water, warmth, sleep. In vertebrates these
+signals are gathered in the *hypothalamus*, where small groups of neurons read the blood and the body and fire
+when a need is not met. They do not move a muscle themselves. They change what the rest of the brain does: which
+behaviour is switched on, and which is held back.
+
+The way the animals here find warmth is older still. A bacterium or a worm that is in a bad place does not know
+where the good place is. It moves, and when things are good it stops moving. This is *kinesis*: no map and no
+sense of direction, only a rule about when to keep going. It is enough to end up, most of the time, where it is
+good.
+
+## The circuit
+
+Four new cells.
+
+- **`cold`** fires while the skin is cold.
+- **`warm_seek`** is driven by `cold` and pushes the animal forward: keep moving while it is cold.
+- **`rest`** is an inhibitory cell that fires while the skin is warm and holds the forward step back: stay where
+  it is warm.
+- **`hungry`** is an inhibitory cell that fires when the stomach is less than about two thirds full. It shuts both
+  `warm_seek` and `rest`. A hungry animal forgets about warmth and forages as it did before; a fed animal looks
+  after its temperature.
+
+All of these connections are designed, and evolution may tune their strength. One set is left to evolution
+entirely: synapses from `hungry` onto the cells that feed (the grasp programme, the cell that blocks the bite, the
+appetitive cells and the ganglion). They start at zero. If it pays to bite less on a full stomach, this is where
+evolution can build it.
+
+<div data-life="brain" data-stage="1.7"></div>
+
+## Results
+
+### Is main worse than control?
+
+The control is the brain of the previous stage in this cold world. It gets cold and pays for it, and can do
+nothing about it, because it cannot feel it.
+
+<div data-life="curves" data-stage="1.7"></div>
+
+<div data-life="summary" data-stage="1.7"></div>
+
+The rows of this table do not agree, and the reason says something about what this circuit does. Living among
+their own kind, the animals with drives do better than the control. Sharing a world with control animals, they do
+not: there it is the control animals that gain.
+
+The animals with drives do not get more food. They eat less than the control and move less. What they gain is that
+a warm body burns its food more slowly. A fed animal resting in a warm place leaves the bushes around it to
+whoever is still walking, and in a shared world that is the control animals. Food is scarce enough for this to
+matter: either population, alone in a world with half as many animals, does far better than at full numbers.
+
+So the head-to-head row here measures who wins the race for berries, and resting is a poor way to win a race. It
+does not show that resting is a mistake for the animal that does it. Inside the populations that have the circuit,
+where every animal competes with others that also rest, evolution left the strength of `rest` where it was
+designed and made the hunger gate stronger.
 
 ::: {.callout-note}
-This stage is still being designed. Its page will be written when the stage is frozen.
+This stage is not frozen yet. Whether the result above is a reason to change the circuit or the world is still
+open.
 :::
+
+### Is the circuit used?
+
+<div data-life="lesions" data-stage="1.7"></div>
+
+Silencing `hungry` does not make the animal less hungry. It removes the one signal that tells the warmth cells to
+stand down, so the animal rests where it is warm while its stomach empties. That is why this lesion costs the
+most: of the four cells, `hungry` is the one that decides.
+
+`cold` and `warm_seek` form one chain, so silencing either gives the same result.
+
+### How a life is spent
+
+<div data-life="table" data-stage="1.7" data-example="life_spent"></div>
+
+The animals of this stage move less than their control. That is `rest` at work: a fed animal in a warm place
+stays there.
+
+## The runs behind this page
+
+<div data-life="runs" data-stage="1.7"></div>

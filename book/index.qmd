@@ -17,7 +17,7 @@ The animals live on a grid. Each has a stomach that empties a little every tick 
 behaviour) and faster when it moves. An animal whose stomach is empty dies.
 
 Food grows on bushes. A bush carries a few berries, and once the last one is eaten it stays empty for a long time,
-about as long as a life, and then has all its berries back at once. Waiting beside an empty bush costs more than
+longer than a full stomach lasts, and then has all its berries back at once. Waiting beside an empty bush costs more than
 the bush will give, so an animal has to keep moving. At the start of a life most bushes are empty and somewhere
 along their regrowth, as in a world that has been grazed for a while. Through a life, food therefore comes at a
 steady rate: a small share of the bushes carries berries at any moment. A bite costs a little energy.
@@ -48,6 +48,10 @@ have children, each from two parents, with a few mutations. That is one generati
 
 **Fitness** is what selection rewards. Here it is the *well-fed lifetime*: how long the animal lived, counted
 from its first meal, with each tick weighted by how full its stomach was. An animal that never eats scores zero.
+
+A life lasts at most 4000 ticks, several times what a full stomach lasts, so an animal cannot reach the end of
+its life on one good meal. Only the very first run, in which a brain evolves from nothing and nearly every animal
+dies young, uses shorter lives.
 
 ## How a stage is judged
 

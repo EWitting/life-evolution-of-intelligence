@@ -29,6 +29,12 @@ stomach yet.
 
 ## Results
 
+The curve has two parts. The brain first evolves from random wiring in short lives, because at the start nearly
+every animal dies young and longer lives would only cost computing time. Then the population is given lives four
+times as long, and the curve jumps: the same animals can now collect four times as much well-fed lifetime. In a
+short life an animal that ate once and then stood still could reach the end. In a long life it cannot, and over
+the generations that follow the standing still is selected away. Every later stage has these long lives.
+
 <div data-life="curves" data-stage="1.0"></div>
 
 <div data-life="summary" data-stage="1.0"></div>

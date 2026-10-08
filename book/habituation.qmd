@@ -1,12 +1,34 @@
-# 1.6 Habituation: getting used to what is always there {#sec-habituation}
+# 1.2 Habituation: getting used to what is always there {#sec-habituation}
 
-<div data-life="status" data-stage="1.6h"></div>
+<div data-life="status" data-stage="1.2h"></div>
 
-The animals of the previous stage learn which berries are bad. They also spend a large part of their life
-standing in front of a bush that has no berries, biting at it. Nothing new is needed in the world to see what is
-missing: an animal should stop responding to something that stays the same and keeps giving nothing.
+The animals of the previous stage know good from bad, and they respond to a look in the same way every time they
+see it. A bush that has just been emptied still has the colour of a full one, so the animal stands in front of it
+and bites at nothing. What is missing is simple to say: an animal should stop responding to something that stays
+the same and keeps giving nothing.
 
 This stage changes one thing, in the eyes.
+
+## The world: a bush that never has berries
+
+The world of the previous stage gets one more kind of bush, a *dud*. It looks like a berry bush and never carries
+a berry. Its colour is drawn anew for every life, so nothing an ancestor knew about colours can tell an animal to
+leave it alone. In some lives the dud happens to have a colour the animal finds attractive, and then an animal
+that responds to a look in the same way every time will stand at it and bite for as long as it lives.
+
+There are as many bushes with berries as before; the duds come on top.
+
+<div data-life="settings" data-stage="1.2h"></div>
+
+::: {.callout-note title="What did not work: making the food unfamiliar"}
+Without the dud, in the world of the previous stage, the change of this stage was used only a little. The long
+lives had already selected most of the standing still away, and evolution can learn the look of an empty bush of
+every kind it has always known.
+
+Giving the good berries a new colour in every life did not change that. The animals with adapting eyes did
+slightly worse than those without. What makes adaptation worth having is something that looks like food and
+gives nothing, whatever colour it has.
+:::
 
 ## The biology: adaptation and habituation
 
@@ -30,26 +52,23 @@ look:
   appetitive cells, driven by that look, fall silent, and with them the urge to bite. The animal moves on.
 - **What is unusual stands out.** All berry bushes look alike in most respects, and that shared part is nearly
   always in view, so it is nearly always in the average. What passes through is the part that differs: the colour
-  of this bush. The previous stage needed a special rule so that a lesson about a poison berry would attach to its
-  colour and not to berries in general. Here that rule is gone. The synapses learn from what the eyes pass on, and
-  the eyes already pass on the difference.
+  of this bush. Nothing uses this yet. It becomes important in the next stage, where the animal learns from a
+  single bite which colour is bad.
 
-<div data-life="brain" data-stage="1.6h"></div>
-
-The world is the one of the previous stage, unchanged.
-
-<div data-life="settings" data-stage="1.6h"></div>
+<div data-life="brain" data-stage="1.2h"></div>
 
 ## Results
 
-The control is the brain of the previous stage, with eyes that do not adapt, in the same world.
+The control is the brain of the previous stage, with eyes that do not adapt, in the same world. Its fitness swings
+from one generation to the next: every generation draws a new colour for the dud, and how well these animals do
+depends on whether they happen to like it.
 
 The first generations of main are a step back. Every synapse the animals inherit was shaped by eyes that reported
 the whole look, and now reports only the difference. The population has to re-tune before the change can pay.
 
-<div data-life="curves" data-stage="1.6h"></div>
+<div data-life="curves" data-stage="1.2h"></div>
 
-<div data-life="summary" data-stage="1.6h"></div>
+<div data-life="summary" data-stage="1.2h"></div>
 
 The test in which main and control animals share a world is left out for this stage. In that test both halves
 run on the same brain, and here the difference *is* the brain's inputs: the control animals would be given
@@ -57,20 +76,19 @@ adapting eyes that none of their synapses were tuned to.
 
 ### How a life is spent
 
-<div data-life="table" data-stage="1.6h" data-example="life_spent"></div>
+<div data-life="table" data-stage="1.2h" data-example="life_spent"></div>
 
 ### Is it used?
 
 There is no group of neurons to silence here, since the change is in how the inputs work. The matching test is to
 switch the adaptation off in the final population and let the same animals live in the same worlds again.
 
-<div data-life="table" data-stage="1.6h" data-example="adaptation_off"></div>
+<div data-life="table" data-stage="1.2h" data-example="adaptation_off"></div>
 
-The lesions of the regions are shown for completeness. `no_plasticity` and `us_pain` tell whether learning is
-still used now that it has no special rule.
+The lesions of the regions are shown for completeness.
 
-<div data-life="lesions" data-stage="1.6h"></div>
+<div data-life="lesions" data-stage="1.2h"></div>
 
 ## The runs behind this page
 
-<div data-life="runs" data-stage="1.6h"></div>
+<div data-life="runs" data-stage="1.2h"></div>

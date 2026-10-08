@@ -38,7 +38,10 @@
 .lb-newkey { height: 10px; width: 14px; background: none; border: 2px solid var(--lb-new); border-radius: 3px; }
 
 .lb-controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; font-size: 0.85rem; margin-bottom: 0.4rem; color: var(--lb-ink2); }
-.lb-controls select, .lb-controls button { font: inherit; padding: 1px 8px; }
+.lb-controls select, .lb-controls button { font: inherit; padding: 1px 8px; color: var(--lb-ink); background: var(--lb-surface);
+                                           border: 1px solid var(--lb-axis); border-radius: 4px; }
+.lb-controls select option { color: var(--lb-ink); background: var(--lb-surface); }
+.lb-controls button:hover, .lb-controls select:hover { border-color: var(--lb-ink2); }
 .lb-controls input[type=range] { flex: 1; min-width: 120px; }
 .lb-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.82rem; color: var(--lb-ink2); }
 .lb-brainlegend { margin-top: 0.45rem; }
@@ -112,3 +115,9 @@
 .lb-watch { display: inline-block; padding: 0.6rem 1.1rem; border-radius: 8px; background: #1f5fbf; color: #fff !important;
             text-decoration: none; font-weight: 600; }
 .lb-watch:hover { opacity: 0.85; }
+
+/* the theme switch: Quarto puts it next to the book title in the sidebar, as a bare toggle icon. Say what it is. */
+.quarto-color-scheme-toggle { text-decoration: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 0.3rem;
+                              font-size: 0.8rem; color: var(--lb-ink2); }
+.quarto-color-scheme-toggle::before { content: "³E  Dark"; }
+.quarto-dark .quarto-color-scheme-toggle::before { content: "°0  Light"; }

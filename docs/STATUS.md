@@ -59,17 +59,27 @@ Per stage, three seeds: **used** (silencing the new cells costs fitness in every
 above control within one standard error, summary and head to head), **no regression** (the population does as well
 in the previous stage's world as the previous population).
 
-1. **Resume here.** Stages 1.5 and 1.6h pass over three seeds (v29, v30) and are in the book. Open, for the user:
-   - **Is 1.6h accepted as the habituation stage, in this place?** It was run as a trial on top of 1.5 (the cheap
-     order). The alternative the user raised is adaptation from the start of the chain; that changes what 1.0 and
-     1.1 see and needs a chain from 1.0.
-   - **Drives (1.7)**: the circuit works on one seed, mostly through `hungry` and `rest`. How should hunger act on
-     feeding? `hungry` is an inhibitory cell with evolvable synapses onto the grasp programme, the bite block, the
-     appetitive cells and the ganglion; whether evolution uses them was not established. A satiety signal of the
-     other sign would let a fed animal stop biting directly. Then three seeds, lesions, the book page.
-   - **Lives are still short** (about 900 of 4000 ticks in 1.6h), and seed 2 of 1.6h still stands still on 35% of
-     its ticks.
-   - Whether hunger should come before the learning stage.
+1. **Resume here: a complete rerun of chapter 1 is agreed** (user, 2026-10-08), all stages, three seeds, as the
+   milestone that closes the learning work, provided the findings carry over to a new lineage. Decided:
+   - **Order: habituation before association is allowed**, so 1.0 -> 1.1 -> habituation (adapting look inputs;
+     control the 1.1 brain) -> association (plain learned synapses on adapted inputs; control the habituation
+     brain) -> drives. A one-seed check of habituation on the 1.1 brain in the 1.1 world was started
+     (`stages chain 1.2h 1.2h`, runs/s1_2_habituation): read it first. The risk it tests: in the familiar world
+     long lives alone already cut the standing still to 7% of ticks, so habituation may have little left to win
+     there and could fail "used" before the novel-food world.
+   - **1.1l is not meant to stay a stage.** It exists because 1.0 and 1.1 were evolved with lives of 1000 ticks.
+     In the rerun, long lives start earlier: 1.0 from scratch at 1000 ticks (nearly everything dies young at
+     first), its settling run at 4000 ticks, and 4000 from then on. Check with `freeze.py` and `supply.py` that
+     the settled 1.0 population uses a long life before going on.
+   - **Hunger** stays one inhibitory cell with the evolvable path onto feeding; no second pathway (user: with the
+     path present, low hunger is close enough to "stop biting when fed", and the results are good).
+   - **Drives over three seeds** is part of the rerun.
+   - **Short lives** (about 900 of 4000 ticks) are accepted as long as there is time to learn and fitness tells
+     animals apart. No tuning now. If it is tuned later: first find out why they starve; born full is acceptable
+     when a stomach is a quarter of a life or less (user: a full stomach was only a problem when it lasted a
+     lifetime).
+   - Before the rerun, list what could stop working with a new lineage and check the cheap ones at generation 0;
+     run the chain one seed first, then the other seeds, then the evaluations and the book.
 2. Rules of work (user, 2026-10-07): cheap trials first (one stage, one seed, generation 0 where possible), full
    chain and three seeds only when a design looks final; look inside a finished run before starting the next
    (`scripts/probes/README.md`, step 4); no new mechanisms without the user.

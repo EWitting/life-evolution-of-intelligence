@@ -310,17 +310,17 @@ ul.task-list li input[type="checkbox"] {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="./habituation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">1.2 Habituation: getting used to what is always there</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="./1-5-association.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">1.5 Association: learning what is bad</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./habituation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">1.6 Habituation: getting used to what is always there</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./drives.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Drives: hunger and cold</span></a>
+  <a href="./drives.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">1.7 Drives: hunger and cold</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -384,10 +384,12 @@ ul.task-list li input[type="checkbox"] {
 <h1 class="unnumbered">Introduction</h1>
 <p>This book follows one experiment: growing a brain in a simulation, one piece at a time, in roughly the order in which brains are thought to have evolved.</p>
 <p>Each stage adds a small circuit to the brain of the previous stage and changes the world so that the new circuit has something to be good for. Evolution then gets a number of generations to put the circuit to use. A page of this book is the report of one stage: what was added and why, the biology it is modelled on, and what happened.</p>
+<p>The concept of explaining cognition in steps following evolution is heavily inspired by the book <em>A Brief History Of Intelligence</em> by Max Bennett. However, the individual stages do not match one-to-one with the experiments mentioned in the book, and (while I do recommended it) it is not necessary to have read Bennet’s work to be able to follow along.</p>
+<p>Disclaimer: this work is not guaranteed to be scientifically accurate and match exactly with real brains. It is a unique blend between staying close to nature, but also just “going for it” and building up to something advanced based on what works, not restricted by having every choice requiring a citation. I personally think that, while not scientific enough to be applicable to medicine, and not optimized enough to replace machine learning algorithms, understanding these experiments builds intuition about intelligence that could seriously prove usefull in either domain.</p>
 <section id="the-animals-and-their-world" class="level2">
 <h2 class="anchored" data-anchor-id="the-animals-and-their-world">The animals and their world</h2>
 <p>The animals live on a grid. Each has a stomach that empties a little every tick (one tick is about a second of behaviour) and faster when it moves. An animal whose stomach is empty dies.</p>
-<p>Food grows on bushes. A bush carries a few berries, and once the last one is eaten it stays empty for a long time, about as long as a life, and then has all its berries back at once. Waiting beside an empty bush costs more than the bush will give, so an animal has to keep moving. At the start of a life most bushes are empty and somewhere along their regrowth, as in a world that has been grazed for a while. Through a life, food therefore comes at a steady rate: a small share of the bushes carries berries at any moment. A bite costs a little energy.</p>
+<p>Food grows on bushes. A bush carries a few berries, and once the last one is eaten it stays empty for a long time, longer than a full stomach lasts, and then has all its berries back at once. Waiting beside an empty bush costs more than the bush will give, so an animal has to keep moving. At the start of a life most bushes are empty and somewhere along their regrowth, as in a world that has been grazed for a while. Through a life, food therefore comes at a steady rate: a small share of the bushes carries berries at any moment. A bite costs a little energy.</p>
 <p>The objects, their names and their pictures come from the game <em>One Hour One Life</em>. The simulation uses a small slice of the game’s rules at each stage and a larger one as the brain grows.</p>
 <p>An animal senses the world through a few coarse “eyes”: a handful of directions, in each of which it sees whether something is there, how near it is, and what it looks like. What something looks like is a short list of numbers, its <em>appearance</em>. It can step forward, turn left or right, and grasp what is in front of it.</p>
 </section>
@@ -400,6 +402,7 @@ ul.task-list li input[type="checkbox"] {
 <h2 class="anchored" data-anchor-id="how-evolution-runs">How evolution runs</h2>
 <p>A population is 64 genomes. Each genome lives as four siblings in a shared world, once. The genomes that did best have children, each from two parents, with a few mutations. That is one generation.</p>
 <p><strong>Fitness</strong> is what selection rewards. Here it is the <em>well-fed lifetime</em>: how long the animal lived, counted from its first meal, with each tick weighted by how full its stomach was. An animal that never eats scores zero.</p>
+<p>A life lasts at most 4000 ticks, several times what a full stomach lasts, so an animal cannot reach the end of its life on one good meal. Only the very first run, in which a brain evolves from nothing and nearly every animal dies young, uses shorter lives.</p>
 </section>
 <section id="how-a-stage-is-judged" class="level2">
 <h2 class="anchored" data-anchor-id="how-a-stage-is-judged">How a stage is judged</h2>

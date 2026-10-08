@@ -1,5 +1,72 @@
-# Habituation {#sec-habituation}
+# 1.6 Habituation: getting used to what is always there {#sec-habituation}
 
-::: {.callout-note}
-This stage is still being designed. Its page will be written when the stage is frozen.
-:::
+<div data-life="status" data-stage="1.6h"></div>
+
+The animals of the previous stage learn which berries are bad. They also spend a large part of their life
+standing in front of a bush that has no berries, biting at it. Nothing new is needed in the world to see what is
+missing: an animal should stop responding to something that stays the same and keeps giving nothing.
+
+This stage changes one thing, in the eyes.
+
+## The biology: adaptation and habituation
+
+Step into a room with a strong smell and after a few minutes it is gone. The smell is still there; the receptors
+have stopped reporting it. Sensory neurons respond to *change*: to what differs from the recent past. A steady
+input is the background, and the background carries no news. This is *sensory adaptation*.
+
+*Habituation* is the same thing seen in behaviour. A snail that is touched pulls in its horns. Touch it again and
+again and it stops bothering. It is the simplest kind of learning there is, older than learning by association,
+and found in every animal that has been tested, including ones with a few hundred neurons.
+
+## The circuit
+
+No new cells. Each of the eyes' **look** inputs now keeps a slow average of what it has been seeing, over
+roughly the last fifty ticks, and passes on the difference between what it sees now and that average.
+
+Two things follow, both for the whole brain, because every neuron downstream of the eyes now gets the adapted
+look:
+
+- **What stays in view fades.** An animal that stands in front of a bush sees its look sink into the average. The
+  appetitive cells, driven by that look, fall silent, and with them the urge to bite. The animal moves on.
+- **What is unusual stands out.** All berry bushes look alike in most respects, and that shared part is nearly
+  always in view, so it is nearly always in the average. What passes through is the part that differs: the colour
+  of this bush. The previous stage needed a special rule so that a lesson about a poison berry would attach to its
+  colour and not to berries in general. Here that rule is gone. The synapses learn from what the eyes pass on, and
+  the eyes already pass on the difference.
+
+<div data-life="brain" data-stage="1.6h"></div>
+
+The world is the one of the previous stage, unchanged.
+
+<div data-life="settings" data-stage="1.6h"></div>
+
+## Results
+
+The control is the brain of the previous stage, with eyes that do not adapt, in the same world.
+
+The first generations of main are a step back. Every synapse the animals inherit was shaped by eyes that reported
+the whole look, and now reports only the difference. The population has to re-tune before the change can pay.
+
+<div data-life="curves" data-stage="1.6h"></div>
+
+<div data-life="summary" data-stage="1.6h"></div>
+
+### How a life is spent
+
+<div data-life="table" data-stage="1.6h" data-example="life_spent"></div>
+
+### Is it used?
+
+There is no group of neurons to silence here, since the change is in how the inputs work. The matching test is to
+switch the adaptation off in the final population and let the same animals live in the same worlds again.
+
+<div data-life="table" data-stage="1.6h" data-example="adaptation_off"></div>
+
+The lesions of the regions are shown for completeness. `no_plasticity` and `us_pain` tell whether learning is
+still used now that it has no special rule.
+
+<div data-life="lesions" data-stage="1.6h"></div>
+
+## The runs behind this page
+
+<div data-life="runs" data-stage="1.6h"></div>

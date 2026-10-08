@@ -130,8 +130,9 @@ at it. An empty bush has the colour of the full one, the appetitive cells respon
 follows. Biting at nothing costs no energy, and nothing tells the animal that it is getting hungry. Few animals
 live out the long life this world offers.
 
-Two later stages are meant for exactly this: a sense of hunger, and habituation to things that keep yielding
-nothing.
+<div data-life="table" data-stage="1.5" data-example="life_spent"></div>
+
+The next stage, habituation, is meant for exactly this.
 :::
 
 ## The runs behind this page

@@ -399,6 +399,49 @@ def lesson_again(s, main: list[Path], control: list[Path]):
     return "lesson_again", _lesson(main)[1]
 
 
+def _spent(run: Path) -> dict:
+    """How the animals of a run's recording spend their life (as scripts/probes/forage.py): share of the ticks alive
+    spent moving, and standing and biting with no full bush in front; berries eaten per life; mean lifetime."""
+    rec = np.load(run / "recording.npz")
+    names = json.loads((run / "ruleset.json").read_text())["names"]
+    grid, pos, dr, act, alive, ate = (rec[k] for k in ("grid", "pos", "dir", "action", "alive", "ate"))
+    alive = alive.astype(bool)
+    T, N = act.shape
+    H, W = grid.shape[1:]
+    front = pos.astype(int) + np.array([[-1, 0], [0, 1], [1, 0], [0, -1]])[dr.astype(int) % 4]
+    inb = (front >= 0).all(-1) & (front[..., 0] < H) & (front[..., 1] < W)
+    fc = np.clip(front, 0, [H - 1, W - 1])
+    obj = np.where(inb, grid[np.arange(T)[:, None], fc[..., 0], fc[..., 1]], -1)
+    full = [i for i, n in enumerate(names) if n.endswith("Bush") and "Empty" not in n]
+    al = alive[:-1]
+    idle = (act[1:] == 4) & al & ~np.isin(obj[:-1], full)
+    moved = np.abs(np.diff(pos.astype(int), axis=0)).sum(-1) > 0
+    return {"moving": 100.0 * float(moved[al].mean()), "idle": 100.0 * float(idle.sum() / max(1, al.sum())),
+            "berries": float((ate > 0).sum() / N), "lifetime": float(alive.sum() / N)}
+
+
+def life_spent(s, main: list[Path], control: list[Path]):
+    """A small table for the page: how a life is spent in main and in control, mean over the seeds."""
+    m, c = [_spent(r) for r in main], [_spent(r) for r in control]
+    rows = [("Moving, % of the ticks alive", "moving"), ("Standing and biting at nothing, % of the ticks alive", "idle"),
+            ("Berries eaten per life", "berries"), ("Lifetime, ticks", "lifetime")]
+    return "life_spent", {"columns": ["In the recorded last generation", "main"] + (["control"] if c else []),
+                          "rows": [[label, _stat([x[k] for x in m])] + ([_stat([x[k] for x in c])] if c else []) for label, k in rows],
+                          "caption": "From the recording of the last generation of every seed (a sample of 64 animals each)."}
+
+
+for _key in ("1.1", "1.5", "1.6h", "1.7"):
+    extra(_key)(life_spent)
+
+
+@extra("1.6h")
+def adaptation_off(s, main: list[Path], control: list[Path]):
+    """The lesion of the adaptation, measured by scripts/probes/adapt_off.py (it simulates, so it is run separately
+    and leaves its result next to the data files)."""
+    f = BOOK_DIR / "data" / f"adapt_off_{s.key}.json"
+    return "adaptation_off", json.loads(f.read_text()) if f.exists() else None
+
+
 # ------------------------------------------------------------------ export
 
 def export(key: str, do_evaluate: bool = False, worlds: int = 8) -> Path:

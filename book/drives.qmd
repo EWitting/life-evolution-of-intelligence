@@ -1,4 +1,4 @@
-# 1.7 Drives: hunger and cold {#sec-drives}
+# Drives: hunger and cold {#sec-drives}
 
 <div data-life="status" data-stage="1.7"></div>
 

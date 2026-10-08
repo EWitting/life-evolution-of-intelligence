@@ -1,4 +1,4 @@
-# 1.5 Association: learning what is bad {#sec-association}
+# Association: learning what is bad {#sec-association}
 
 <div data-life="status" data-stage="1.5"></div>
 

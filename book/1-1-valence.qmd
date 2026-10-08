@@ -1,4 +1,4 @@
-# 1.1 Valence: good and bad {#sec-valence}
+# Valence: good and bad {#sec-valence}
 
 <div data-life="status" data-stage="1.1"></div>
 
@@ -82,7 +82,7 @@ often is the evolved input from the eyes, which acts before the bite.
 
 ### Is main worse than control?
 
-The control is the brain of stage 1.0 in this world. It cannot feel pain or taste at all, so it can only avoid
+The control is the brain of the previous stage in this world. It cannot feel pain or taste at all, so it can only avoid
 poison if evolution happens to wire the look of the poison berries to turning away.
 
 <div data-life="curves" data-stage="1.1"></div>

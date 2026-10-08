@@ -1,4 +1,4 @@
-# 1.0 Steering {#sec-steering}
+# Steering {#sec-steering}
 
 <div data-life="status" data-stage="1.0"></div>
 

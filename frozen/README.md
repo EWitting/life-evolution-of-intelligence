@@ -15,6 +15,11 @@ made by remapping the stored populations onto the new layout and freezing again,
 
 ## Chapter 1 (frozen 2026-10-08, git tag `chapter-1-drives`; 1.0 to 1.5 also as `chapter-1-partial`)
 
+**Order of the chain: 1.0 -> 1.1 -> 1.2h -> 1.5 -> 1.7.** The keys are historical names, not positions (1.5 and
+1.7 keep the numbers they had in an earlier order); they stay because run directories, data files and the stage
+log use them. The book shows the stages by name only, in this order: Steering, Valence, Habituation, Association,
+Drives.
+
 The lineage is one chain: every stage starts from the seed-0 run of its parent. Seeds 1 and 2 of a stage start
 from that same parent run.
 

@@ -34,7 +34,8 @@ show unused in every seed are removed.
 
 ## Stages (rerun of 2026-10-08; STAGE_LOG v32)
 
-Chain: 1.0 -> 1.1 -> 1.2h habituation -> 1.5 association -> 1.7 drives -> affect -> chapter 2. Lives are 4000
+Chain: 1.0 -> 1.1 -> 1.2h habituation -> 1.5 association -> 1.7 drives -> affect -> chapter 2. The keys are
+historical names, not positions; the book shows the stages by name only (no stage numbers, user 2026-10-08). Lives are 4000
 ticks from the settling run of 1.0 on. Footing v25 (born a quarter full, food as a flow, a bite cost). Every stage
 starts from the seed-0 run of its parent. Three seeds unless stated; lesion = fitness with the region silenced, %
 of intact, per seed.

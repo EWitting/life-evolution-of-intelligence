@@ -1,4 +1,4 @@
-# 1.2 Habituation: getting used to what is always there {#sec-habituation}
+# Habituation: getting used to what is always there {#sec-habituation}
 
 <div data-life="status" data-stage="1.2h"></div>
 

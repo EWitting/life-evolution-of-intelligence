@@ -130,4 +130,9 @@ view with hard-wired projections drawn dark; a 64-agent sample of large populati
 - Sound uses an N x N distance matrix; fine below ~5k agents.
 - World generation ignores biomes: `map_chance` is used as a flat spawn weight; temperature has one ambient value.
 - Object appearance is a hash (ADR-006) except for designed look-alikes; no sprite-derived appearance yet.
+- A berry type's "colour" is not one shared look: `lookalike_appearance` and the per-life looks add the same
+  coefficients in a different basis for the bush, the berry and the empty bush, so a full bush and its own empty
+  bush are no more alike than chance (cosine -0.6 to +0.8 between types, found 2026-10-08 while proofreading the
+  book). Part of the frozen worlds, so it stays for chapter 1; the animals bite at empty bushes because empty
+  bushes as a class look enough like food. Worth fixing in a chapter 2 world if a stage needs "same colour".
 - Rates are updated synchronously once per tick; one tick is behavioural time (~1 s), so "STDP" is BTSP-like.

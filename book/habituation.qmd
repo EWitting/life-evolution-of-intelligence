@@ -3,9 +3,10 @@
 <div data-life="status" data-stage="1.2h"></div>
 
 The animals of the previous stage know good from bad, and they respond to a look in the same way every time they
-see it. A bush that has just been emptied still has the colour of a full one, so the animal stands in front of it
-and bites at nothing. What is missing is simple to say: an animal should stop responding to something that stays
-the same and keeps giving nothing.
+see it. To them a bush that has been emptied still looks enough like food to bite at, and the look does not
+change however often the bite gives nothing. So an animal can stand in front of an empty bush for a long time,
+biting. What is missing is simple to say: an animal should stop responding to something that stays the same and
+keeps giving nothing.
 
 This stage changes one thing, in the eyes.
 
@@ -20,7 +21,7 @@ There are as many bushes with berries as before; the duds come on top.
 
 <div data-life="settings" data-stage="1.2h"></div>
 
-::: {.callout-note title="What did not work: making the food unfamiliar"}
+::: {.callout-note collapse="true" title="What did not work: making the food unfamiliar"}
 Without the dud, in the world of the previous stage, the change of this stage was used only a little. The long
 lives had already selected most of the standing still away, and evolution can learn the look of an empty bush of
 every kind it has always known.
@@ -56,6 +57,22 @@ look:
   single bite which colour is bad.
 
 <div data-life="brain" data-stage="1.2h"></div>
+
+## Watching it work
+
+One animal from the last generation, at a dud. The two rows marked `vis+0` are two of the look inputs of the eye
+that points straight ahead, the two that respond most strongly to this dud.
+
+The animal walks up and bites. Step through the ticks and watch the two look inputs: the dud does not change, and
+yet what the eye reports sinks a little with every tick, because the eye is getting used to it. The appetitive
+cells and `grasp` do not fade as smoothly. They hold for a while and then drop out, and the biting stops.
+
+Then the animal turns away, and the look inputs go *below* zero. Nothing is in front of the eye now, but the eye
+is still used to the dud, and what it reports is the difference: less of that look than usual.
+
+<div data-life="strip" data-stage="1.2h" data-example="dud_visit"></div>
+
+Not every visit to a dud goes like this. Most are over within a few ticks, and some last far longer.
 
 ## Results
 

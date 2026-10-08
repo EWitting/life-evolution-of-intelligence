@@ -21,13 +21,6 @@ The food is as before: four kinds of berry bush, new in every life, half of them
 
 <div data-life="settings" data-stage="1.7"></div>
 
-::: {.callout-note title="What did not work: a hot spring you could walk into but not through"}
-In the first versions of this world a hot spring was the only object that blocked the way; an animal can walk
-over a bush. The animals walked up to a spring and kept pushing against it: they spent a third of their life
-facing one. Most of what looked like the cost of the cold was this trap, and part of what the new circuit seemed to
-win back was only that it stopped the pushing. A spring is now a place an animal can stand in.
-:::
-
 ## The biology: drives
 
 A drive is a signal from the body about something it needs: food, water, warmth, sleep. In vertebrates these
@@ -61,7 +54,7 @@ evolution can build it.
 
 ## Results
 
-### Is main worse than control?
+### Main against control
 
 The control is the brain of the previous stage in this cold world. It gets cold and pays for it, and can do
 nothing about it, because it cannot feel it.

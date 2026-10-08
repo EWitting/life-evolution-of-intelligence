@@ -25,7 +25,7 @@ on it.
 
 <div data-life="settings" data-stage="1.5"></div>
 
-::: {.callout-note title="What did not work: a world where learning was hardly worth it"}
+::: {.callout-note collapse="true" title="What did not work: a world where learning was hardly worth it"}
 The first versions of this world kept a familiar, safe kind of berry as half of all bushes, so that an animal that
 learned nothing would still get by. It got by very well: it ate about eleven good berries for every poison one. A
 perfect learner would have gained less than a tenth of its food. With so little to win, a lesson had to be nearly
@@ -79,7 +79,7 @@ poison as much as the poison.
 **Every learned synapse exists.** The look synapses were sparse, as evolution had left them, and a synapse that is
 not there cannot learn. In this stage all of them are present, the new ones starting at zero.
 
-::: {.callout-note title="What did not work: unlearning by tasting again"}
+::: {.callout-note collapse="true" title="What did not work: unlearning by tasting again"}
 An earlier design had a second cell that lowered the aversion whenever something the animal distrusted turned out
 to taste fine. It worked when meals were fed to the brain in a test. In a living animal it never fired: aversion
 blocks the bite, so food that is distrusted is never tasted again, and the mistake cannot be found out.
@@ -106,7 +106,7 @@ it.
 
 ## Results
 
-### Is main worse than control?
+### Main against control
 
 The control is the brain of the previous stage in this world, adapting eyes included: it feels pain and turns away
 from it, but it cannot change. It pays for every poison bush it tries, every time.

@@ -80,7 +80,7 @@ often is the evolved input from the eyes, which acts before the bite.
 
 ## Results
 
-### Is main worse than control?
+### Main against control
 
 The control is the brain of the previous stage in this world. It cannot feel pain or taste at all, so it can only avoid
 poison if evolution happens to wire the look of the poison berries to turning away.
@@ -102,7 +102,7 @@ turns the animal away and stops the bite, and it starts out with a reaction to t
 
 Whether a control finds the solution within the generations it is given is a matter of luck. In earlier runs, with
 short lives and many more generations, two of three controls did, late and suddenly, after dozens of generations
-without progress. If a grey curve above stays flat, that control had not found it yet.
+without progress. If a control's curve above stays flat, that control had not found it yet.
 
 The three rows measure the same thing with less and less noise. The first is taken from the generations as they
 ran. The second gives every final population the same eight worlds. In the third, main and control animals live
@@ -120,7 +120,7 @@ The two halves of the circuit are not used equally. The aversive side, `valence_
 animals depend on. The appetitive side, `valence_app` and `grasp`, matters much less: the reflexes of the previous
 stage already bring the animal to food and make it bite.
 
-::: {.callout-note title="What did not work: appetite on a full stomach"}
+::: {.callout-note collapse="true" title="What did not work: appetite on a full stomach"}
 In the first runs of this stage the animals were born with a full stomach, and the appetitive side was not used
 at all: silencing `valence_app`, `no_touch` or `grasp` left them as well off as before. A full stomach lasted for
 most of a life, so there was little to gain from eating well. Born a quarter full, the animals depend on the

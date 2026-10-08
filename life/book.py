@@ -323,9 +323,11 @@ def bad_berry(s, main: list[Path], control: list[Path]):
     the next 20 ticks, eats a good one. Chosen automatically, so a rerun yields a new example of the same kind."""
     run = main[0]
     rec = np.load(run / "recording.npz")
-    ate, food, alive, act = rec["ate"], rec["food"], rec["alive"], rec["action"]
+    ate, food, alive, act, pain = rec["ate"], rec["food"], rec["alive"], rec["action"], rec["pain"]
     T, N = ate.shape
-    hurts = np.asarray(json.loads((run / "ruleset.json").read_text())["pain_value"]) > 0
+    hurts = np.zeros(len(json.loads((run / "ruleset.json").read_text())["names"]), bool)
+    for o in np.unique(ate[ate > 0]):           # the poison is set per world, not in ruleset.json
+        hurts[o] = np.mean(pain[ate == o] > 0.5) > 0.5
     bad, good = (ate > 0) & hurts[ate], (ate > 0) & ~hurts[ate]   # not by the stomach: a bite when full gains nothing
     before, after = 8, 22
     best = None
@@ -346,6 +348,88 @@ def bad_berry(s, main: list[Path], control: list[Path]):
                        inputs=("taste", "pain"))
     strip["event_tick"] = t
     return "bad_berry", strip
+
+
+def _front(rec) -> np.ndarray:
+    """[T, N] the object directly in front of every recorded animal (-1 beyond the edge of the world)."""
+    grid, pos, dr = rec["grid"], rec["pos"], rec["dir"]
+    T = grid.shape[0]; H, W = grid.shape[1:]
+    front = pos.astype(int) + DIRS[dr.astype(int) % 4]
+    inb = (front >= 0).all(-1) & (front[..., 0] < H) & (front[..., 1] < W)
+    fc = np.clip(front, 0, [H - 1, W - 1])
+    return np.where(inb, grid[np.arange(T)[:, None], fc[..., 0], fc[..., 1]], -1)
+
+
+@extra("1.0")
+def to_a_bush(s, main: list[Path], control: list[Path]):
+    """Steering by reflex: one animal of the lineage run that walks up to a bush and eats, after a stretch without
+    food. Chosen automatically."""
+    run = main[0]
+    rec = np.load(run / "recording.npz")
+    ate, alive, act, pos = rec["ate"], rec["alive"], rec["action"], rec["pos"].astype(int)
+    T, N = ate.shape
+    before, after = 16, 8
+    best = None
+    for i in range(N):
+        meals = np.nonzero(ate[:, i] > 0)[0]
+        for t in meals:
+            if t - before < 1 or t + after > T or not alive[t + after - 1, i] or (ate[t - before:t, i] > 0).any():
+                continue
+            walked = int((np.abs(np.diff(pos[t - before:t, i], axis=0)).sum(-1) > 0).sum())
+            turned = int(np.isin(act[t - before:t, i], (2, 3)).sum())
+            score = walked + 2.0 * min(turned, 3) + 2.0 * (ate[t + 1:t + after, i] > 0).sum()
+            if best is None or score > best[0]:
+                best = (score, i, int(t))
+    if best is None:
+        return "to_a_bush", None
+    _, agent, t = best
+    strip = life_strip(run, agent, t - before, t + after, regions=("ganglion_e", "ganglion_i"))
+    strip["event_tick"] = t
+    return "to_a_bush", strip
+
+
+@extra("1.2h")
+def dud_visit(s, main: list[Path], control: list[Path]):
+    """Habituation: one animal of the lineage run that walks up to a dud, bites at it while the look fades from
+    its eyes, and leaves. Chosen automatically: a visit of 12 to 35 ticks with the largest fall in appetite."""
+    run = main[0]
+    rec = np.load(run / "recording.npz")
+    names = json.loads((run / "ruleset.json").read_text())["names"]
+    layout = json.loads((run / "layout.json").read_text())
+    if "Black Wild Gooseberry Bush" not in names:
+        return "dud_visit", None
+    dud = names.index("Black Wild Gooseberry Bush")
+    alive, x = rec["alive"].astype(bool), rec["x"]
+    T, N = alive.shape
+    off = dict(zip(layout["names"], zip(layout["offsets"], layout["sizes"])))
+    app = x[..., off["valence_app"][0]:off["valence_app"][0] + off["valence_app"][1]].astype(np.float32).mean(-1)
+    facing = (_front(rec) == dud) & alive
+    before, after = 6, 6
+    best = None
+    for i in range(N):
+        t = before + 1
+        while t < T - after:
+            if facing[t, i] and not facing[t - 1, i]:
+                e = t
+                while e < T - after and facing[e, i]:
+                    e += 1
+                if 12 <= e - t <= 35 and alive[e + after - 1, i]:
+                    score = float(app[t + 1:t + 4, i].mean() - app[e - 3:e, i].mean())
+                    if best is None or score > best[0]:
+                        best = (score, i, t, e)
+                t = e + 1
+            else:
+                t += 1
+    if best is None:
+        return "dud_visit", None
+    _, agent, t, e = best
+    look = [n for n in layout["in_names"] if n.startswith("vis+0.app")]
+    idx = [layout["in_names"].index(n) for n in look]
+    strongest = [look[j] for j in np.argsort(-np.abs(x[t + 1, agent, idx].astype(np.float32)))[:2]]
+    strip = life_strip(run, agent, t - before, e + after, regions=("valence_app", "valence_av", "no_touch", "grasp"),
+                       inputs=tuple(strongest))
+    strip["event_tick"] = t
+    return "dud_visit", strip
 
 
 _LESSON: dict = {}

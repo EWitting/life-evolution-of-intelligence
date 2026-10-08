@@ -2,30 +2,54 @@
 
 <div data-life="status" data-stage="1.0"></div>
 
-::: {.callout-note}
-The text of this page will be written when the stage is frozen. The figures below are drawn from the newest runs.
-:::
+The first animal has no memory, no hunger and no idea of good or bad. It can do one thing: turn what it sees into
+movement. This stage evolves a brain that does that, from random wiring, until the animal finds food and eats it.
 
-A ganglion of excitatory and inhibitory interneurons between the senses and the motor neurons, and direct reflex
-arcs from senses to motor neurons. Every synapse is evolved. The animal sees the outside world only.
+Everything after this stage is added to this brain.
+
+## The world: berries and onions
+
+The world holds four kinds of berry bush and wild onions. All of it is food and nothing is dangerous. An animal
+that stands still starves, and so does one that walks without getting anywhere, because moving costs energy. The
+only way to live is to get to a bush that carries berries, bite, and go on to the next one.
+
+The animal eats what it grasps. Picking something up and carrying it comes much later.
 
 <div data-life="settings" data-stage="1.0"></div>
 
-::: {.callout-note title="What did not work: all the food at once"}
-In earlier runs every bush was full when the animals were born. The animals filled their stomachs within the
-first tenth of their life and kept eating, the bushes were stripped by the middle of it, and since a bush needs
-about a lifetime to regrow, most animals then starved together. Whatever an animal might have done better later
-in life could not show, and holding back could not pay: whoever waited found nothing left.
+## The biology: steering
 
-Starting most bushes empty, each at a random point of its regrowth, turned that stock into a steady flow. The
-share of bushes carrying berries now stays about the same from the first tenth of a life to its end, and so does
-the average stomach. The animals still bite when their stomach is full; nothing in this brain can feel the
-stomach yet.
-:::
+The oldest animals with a front and a back were small worms, and what set them apart from jellyfish and sponges
+was that they could go somewhere. A body with a front end, sense organs on it, and a clump of neurons behind them
+can do something a net of nerves spread through the body cannot: turn towards what is good and away from what is
+bad. In *A Brief History of Intelligence* this is the first of the breakthroughs, *steering*.
 
-## The brain
+The circuit for it is small. In the worm *C. elegans*, with 302 neurons, sensory neurons connect to a few layers
+of interneurons, and those to the motor neurons, with some sensory neurons wired to motor neurons directly. A
+direct connection is a reflex. The interneurons in between let several senses be weighed against each other
+before the muscles move.
+
+## The circuit
+
+- A **ganglion** of sixteen excitatory and eight inhibitory interneurons. The eyes connect to it, its neurons
+  connect to each other, and it connects to the motor neurons.
+- **Reflex arcs**: direct connections from the eyes to the motor neurons.
+
+Every synapse in this brain is evolved: which ones exist, and how strong they are. Nothing is designed and nothing
+changes during a life.
+
+The brain sees the outside world only. It does not feel its stomach, and it does not notice whether a bite gave
+it anything. Those senses enter the brain in later stages, through cells made for them.
 
 <div data-life="brain" data-stage="1.0"></div>
+
+## Watching it work
+
+One animal from the last generation, walking up to a bush and eating. The rows below the picture are the neurons
+of the ganglion; there is nothing in them to read, and that is the point. No neuron here stands for anything. The
+behaviour is spread over all of them, wherever evolution happened to put it.
+
+<div data-life="strip" data-stage="1.0" data-example="to_a_bush"></div>
 
 ## Results
 
@@ -39,7 +63,22 @@ the generations that follow the standing still is selected away. Every later sta
 
 <div data-life="summary" data-stage="1.0"></div>
 
+This stage has no control: there is no earlier brain to compare it with. The lesions show the only thing they can
+here, that the animal depends on its ganglion. The direct reflex arcs alone are far from enough.
+
 <div data-life="lesions" data-stage="1.0"></div>
+
+::: {.callout-note collapse="true" title="What did not work: all the food at once"}
+In earlier runs every bush was full when the animals were born. The animals filled their stomachs within the
+first tenth of their life and kept eating, the bushes were stripped by the middle of it, and since a bush takes
+long to regrow, most animals then starved together. Whatever an animal might have done better later in life could
+not show, and holding back could not pay: whoever waited found nothing left.
+
+Starting most bushes empty, each at a random point of its regrowth, turned that stock into a steady flow. The
+share of bushes carrying berries now stays about the same from the first tenth of a life to its end, and so does
+the average stomach. The animals still bite when their stomach is full; nothing in this brain can feel the
+stomach yet.
+:::
 
 ## The runs behind this page
 

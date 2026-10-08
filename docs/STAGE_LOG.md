@@ -1476,3 +1476,67 @@ inhibitory cell, so it can release the bite block but cannot stop a fed animal b
 the short run is the reason is open. Grasping at nothing is still 43% of ticks; median lifetime 408.
 Learning matters little here (95% without it): lives of 400-600 ticks leave few repeats.
 
+## v30 (2026-10-08, early morning): habituation by adapting look inputs; hot springs were a trap
+
+### 1.6h habituation, three seeds (40 generations of 4000 ticks; parent 1.5; control = the 1.5 brain)
+
+The user's preferred form of the centred lesson (2026-10-07), moved into the input neuron: every look input
+(`vis*.app*`) passes on its input minus its slow average (`BrainConfig.in_adapt`, `in_trace_tau` 0.98, about 50
+ticks). Everything downstream sees the adapted look; the learned synapses are plain again (no `centred`). The
+world is the 1.5 world. Generation 0 (`repeat.py`): the 1.5 population drops from 528 to 264 with adapting inputs
+(its synapses were shaped on the raw look); between worlds a genome's fitness correlates r = 0.40.
+
+| | main | control |
+|---|---|---|
+| well-fed lifetime, all 40 generations | 500 +-18 [520 515 465] | 400 +-25 [449 374 376] |
+| re-evaluated in 8 shared worlds | 597 +-52 [493 651 647] | 518 +-5 [528 512 513] |
+| poison share of meals | 0.16 | 0.20 |
+| main - control | +100 +-21 (runs), +79 +-57 (re-evaluated; seed 0 -36) | |
+
+Seed 0 by block of generations: main 374, 436, 562, 512, 602; control 460, 417, 502, 402, 455: main starts behind
+and overtakes, the first run in the learning world that improves over the generations.
+
+**The lesion of the adaptation** (`adapt_off.py`: the final populations with the adaptation switched off, same
+animals, same 4 worlds): 593 -> 203, 721 -> 224, 638 -> 223: **34, 31, 35% of intact**.
+Region lesions (% of intact): no_plasticity 39 41 39 (40); us_pain the same; valence_av 11 9 11 (10); no_feed 12;
+ganglion_e 30; ganglion_i 63; valence_app 72; grasp 73; no_touch 85. Learning is used more than in 1.5 (51).
+
+How a life is spent (recordings of the last generation, per seed; main vs control): moving 64% [71 71 49] vs 51%;
+standing and biting at nothing 19% [11 11 35] vs 36% [40 25 42]; berries per life 62 vs 39; lifetime 910 vs 851.
+(For 1.5's final runs the same measure gives 31% +-6 for main and 46% for its control; the 45% quoted earlier was
+from a trial run.) `freeze.py`, seed 0: freezes of 50+ ticks take 7% of the ticks alive.
+`learned.py`, seed 0: aversive response facing a poison type 0.06 -> 0.23 and 0.00 -> 0.27 after the first bite;
+facing the good types 0.04 and 0.10 throughout.
+
+- **Passes**: used in every seed; main above control in the runs in every seed and in the re-evaluation in two of
+  three.
+- The head-to-head test is not valid here: both halves run on the new brain, so the control animals get adapting
+  inputs their synapses were never tuned to (main half 975, control half 317). It is left out of the book page
+  (`life.book.NO_HEAD_TO_HEAD`).
+- Seed 2 keeps more standing still (35%). Median lifetime is below the mean (364 vs 906 in seed 0): more animals
+  die early and the others do much better.
+
+### Hot springs were a trap
+
+The drives probe gave the habituation population 247 in the drives world with the cold switched off, against 733
+in its own world. Separated: the extra body senses change nothing (733); hot springs at spawn weight 0.1 (2% of
+objects) give 277, with the animals facing a spring on 33% of their ticks and biting at it on 13%. A hot spring
+was the only object that blocks movement (bushes do not): the animals walked into it and stayed. This was in both
+earlier drives trials and in the probe of 2026-10-03: most of "the cost of cold" was the trap, and part of what
+the circuit won back was `rest` stopping the pushing. Fix: a spring does not block (`berry_world`).
+
+Generation 0 with that fix (`drives.py`, habituation population, 4 worlds): world not cold 571; cold, not sensed
+317 (-44%, body 0.34); circuit with the hunger gate 382 (body 0.40); without the gate 63. At ambient 0.35: 401 and
+462.
+
+### 1.7 drives, trial on the habituation brain with non-blocking springs (one seed, 40 generations)
+
+`s1_7_drives/20261008-044432` and control (the habituation brain). By block of generations: main 373, 382, 327,
+407; control 245, 314, 231, 332; body temperature 0.40 vs 0.35. Lesions of main (intact 358): hungry 94 (26%);
+no_plasticity and us_pain 261 (73%); rest 308 (86%); cold and warm_seek 338 (95%). Main stands still on 35% of
+ticks (control 12%): `rest` holds it where it is warm.
+On one seed: `hungry` and `rest` are used, `cold` and `warm_seek` marginally. Not replicated: how hunger should
+act on feeding is open (the evolvable `hungry` -> feeding synapses were not looked at again in this run).
+(The two earlier drives trials, on the 1.5 brain and on the habituation brain with blocking springs, gave main 309
+vs control 186 and 307 vs 187; superseded.)
+

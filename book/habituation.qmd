@@ -51,6 +51,10 @@ the whole look, and now reports only the difference. The population has to re-tu
 
 <div data-life="summary" data-stage="1.6h"></div>
 
+The test in which main and control animals share a world is left out for this stage. In that test both halves
+run on the same brain, and here the difference *is* the brain's inputs: the control animals would be given
+adapting eyes that none of their synapses were tuned to.
+
 ### How a life is spent
 
 <div data-life="table" data-stage="1.6h" data-example="life_spent"></div>

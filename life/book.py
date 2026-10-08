@@ -38,6 +38,9 @@ EVOLUTION_KEYS = ("generations", "ticks_per_generation", "siblings", "crossover"
                   "mutation_std", "elite_frac", "tournament", "plastic")
 
 EXTRAS: dict[str, list[Callable]] = {}
+# Stages whose change is in how the inputs work, not in a region: in the head-to-head test both halves run on the
+# new brain, so the control animals would get adapting inputs their synapses were never tuned to. Not shown.
+NO_HEAD_TO_HEAD = ("1.6h",)
 
 
 def extra(key: str):
@@ -469,6 +472,8 @@ def export(key: str, do_evaluate: bool = False, worlds: int = 8) -> Path:
         data["evaluation"] = old["evaluation"]
     if data.get("evaluation"):
         data["evaluation"]["stale"] = data["evaluation"]["runs"] != runs_now
+        if key in NO_HEAD_TO_HEAD:
+            data["evaluation"]["versus"] = None
     for label in ("main", "control"):                       # links to the light dashboards that exist
         for info in data["runs"][label]:
             name = info["dir"].split("/")[0] + ".html"

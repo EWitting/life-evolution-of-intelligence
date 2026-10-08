@@ -34,10 +34,10 @@ show unused in every seed are removed.
 
 ## Stages (v25, 2026-10-07)
 
-Chain: 1.0 -> 1.1 -> 1.1l (long lives) -> 1.5 -> drives (1.7, trial) -> affect -> habituation -> chapter 2. Footing
-v25 (born a quarter full, food as a flow, a bite cost) for 1.0 and 1.1; from 1.1l on lives are 4000 ticks. Three
-seeds unless stated; lesion = fitness with the region silenced, % of intact, mean over seeds. Findings marked
-v21/v22 are from the energy-acquired fitness.
+Chain: 1.0 -> 1.1 -> 1.1l (long lives) -> 1.5 -> 1.6h (habituation) -> 1.7 drives (trial) -> affect -> chapter 2.
+Footing v25 (born a quarter full, food as a flow, a bite cost) for 1.0 and 1.1; from 1.1l on lives are 4000
+ticks. Three seeds unless stated; lesion = fitness with the region silenced, % of intact, mean over seeds. Findings
+marked v21/v22 are from the energy-acquired fitness.
 
 | stage | what it adds | status | finding |
 |---|---|---|---|
@@ -45,9 +45,9 @@ v21/v22 are from the energy-acquired fitness.
 | 1.1 valence | appetitive and aversive value cells (taste and pain enter the brain only here) acting on a contact-gated grasp programme; aversion turns away and blocks the bite | **passes** (v25, three seeds) | Main 452 +-15 vs control 186 +-13, head to head +401 +-35. Lesions: aversive 40, no_feed 45, ganglion_e 63, ganglion_i 64, appetitive 90, grasp 89, no_touch 94. v24 (every bush full at birth): main 519 vs control 394; two of three controls evolved avoidance by look. |
 | 1.1l long lives | nothing new in the brain: the 1.1 animals under lives of 4000 ticks, an adaptation step | done (1 lineage) | Lifetime 1340 -> 2220 of 4000, alive at the cap 9 -> 97 of 256, freezes 29% -> 7% of ticks. In a life of 1000 ticks (1.25 stomachs) an animal that ate once and stood still reached the cap. |
 | 1.5 association | pain teaches the look -> aversive synapses what sets the bitten food apart (the look minus each look input's slow average); a world of only novel foods, half of them poison | **passes** (v29, three seeds) | Main 427 +-24 vs control 320 +-3; re-evaluated 483 vs 308 (+175 +-42); head to head +71 +-50. Lesions: no_plasticity 51, us_pain 51 (57 42 54), aversive 15, no_feed 16. Poison share 0.19 vs 0.25. No change over 40 generations in main or control. Lives are short (770 of 4000). |
-| 1.7 drives (old 1.2) | `cold` and `hungry` need cells; warmth by kinesis: `warm_seek` (run while the skin is cold), `rest` (stay where it is warm); `hungry` shuts the warmth mode; evolvable `hungry` -> feeding synapses. World: the 1.5 world made cold, hot springs | **trial, one seed** | Main 309 vs control 186, body 0.42 vs 0.36. Lesions: hungry 27, rest 58, cold 88, warm_seek 88, plasticity 95. The evolvable hunger -> feeding synapses are unused so far. To do: three seeds if the design stays; decide the sign of the hunger signal for feeding. |
+| 1.6h habituation | no new cells: every look input passes on its input minus its slow average (about 50 ticks), so what stays in view fades and what is unusual stands out; the learned synapses of 1.5 are plain again | **passes** (v30, three seeds) | Main 500 +-18 vs control 400 +-25; re-evaluated 597 vs 518 (+79 +-57). Adaptation switched off: 34, 31, 35% of intact. Learning: no_plasticity 40. Standing and biting at nothing 19% of ticks vs 36% in the control. Head to head not valid for this stage. |
+| 1.7 drives (old 1.2) | `cold` and `hungry` need cells; warmth by kinesis: `warm_seek` (run while the skin is cold), `rest` (stay where it is warm); `hungry` shuts the warmth mode; evolvable `hungry` -> feeding synapses. World: the 1.5 world made cold, hot springs (which no longer block) | **trial, one seed** | Main 407 vs control 332 (generations 30-39), body 0.40 vs 0.35. Lesions: hungry 26, plasticity 73, rest 86, cold 95, warm_seek 95. Cold costs 44% at generation 0. To do: decide how hunger acts on feeding, then three seeds. |
 | affect (old 1.3) | serotonin (dwell) and PDF (roam) states | to redesign on drives | Unused in its last run (v13, old architecture). Kept if at all possible: later stages need the modulator systems. |
-| habituation (old 1.4) | depression on the identity -> appetitive synapses; dud bushes | one design pass | Unused in its last run (v13). |
 | 1.6 reversal | learned weights relax toward inherited values; the novel types swap meaning mid-life | done, **left out** | v22: main 42.8 vs control 41.5, head to head -6.5 +-1.6. Plasticity 101, taste teacher 105, pain teacher 97. |
 | x.hands (side) | pick, hold, then eat: held-item value cells and an ingest programme on the 1.1 brain | done (2 runs) | v21: adapts in ~10 generations with the extension (energy 65-67, as with eat on grasp); the plain brain adapted in one of two runs. Lesions: ingest 0, gate 55. |
 | 2.1-2.5, x.td | tectum, pallium, basal ganglia, dopamine TD | defined, older design | To revisit: per-life pallium weights (ADR-017), holding before 2.6, delayed sickness and appetitive learning with the prediction error. |
@@ -59,17 +59,17 @@ Per stage, three seeds: **used** (silencing the new cells costs fitness in every
 above control within one standard error, summary and head to head), **no regression** (the population does as well
 in the previous stage's world as the previous population).
 
-1. **Resume here.** Stage 1.5 passes over three seeds (v29) and is in the book. Open, in this order:
-   - **Standing at an empty bush** (`freeze.py`): 45% of the ticks alive in 1.5, 43% in the drives trial. An empty
-     bush carries the colour of the full one, the appetitive cells answer, the grasp programme bites, and biting
-     at nothing is free. Lives stay short (770 of 4000 in 1.5). The two planned remedies: hunger gating feeding,
-     and habituation. In the drives trial evolution did not use the evolvable `hungry` -> feeding synapses in 40
-     generations; `hungry` is inhibitory, so "stop biting when fed" is not directly reachable. For the user: a
-     satiety signal of the other sign, or habituation first.
-   - **Habituation with the input average** (user's preference, 2026-10-07): the look inputs themselves adapt to
-     their slow average, so everything downstream sees what is unusual. It changes what 1.0 and 1.1 see, so it
-     needs its own chain from 1.0. Not started.
-   - **Drives, three seeds**, once the hunger question is settled.
+1. **Resume here.** Stages 1.5 and 1.6h pass over three seeds (v29, v30) and are in the book. Open, for the user:
+   - **Is 1.6h accepted as the habituation stage, in this place?** It was run as a trial on top of 1.5 (the cheap
+     order). The alternative the user raised is adaptation from the start of the chain; that changes what 1.0 and
+     1.1 see and needs a chain from 1.0.
+   - **Drives (1.7)**: the circuit works on one seed, mostly through `hungry` and `rest`. How should hunger act on
+     feeding? `hungry` is an inhibitory cell with evolvable synapses onto the grasp programme, the bite block, the
+     appetitive cells and the ganglion; whether evolution uses them was not established. A satiety signal of the
+     other sign would let a fed animal stop biting directly. Then three seeds, lesions, the book page.
+   - **Lives are still short** (about 900 of 4000 ticks in 1.6h), and seed 2 of 1.6h still stands still on 35% of
+     its ticks.
+   - Whether hunger should come before the learning stage.
 2. Rules of work (user, 2026-10-07): cheap trials first (one stage, one seed, generation 0 where possible), full
    chain and three seeds only when a design looks final; look inside a finished run before starting the next
    (`scripts/probes/README.md`, step 4); no new mechanisms without the user.

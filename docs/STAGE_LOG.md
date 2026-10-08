@@ -1418,3 +1418,61 @@ before the learning stage; not decided (the user's decision, STATUS).
 1.0 -> 1.1 (v25, unchanged; 1.1 three seeds) -> **1.1l** (new: the 1.1 brain and world under lives of 4000 ticks,
 60 generations, no control: an adaptation step) -> 1.5 (40 generations, three seeds, control = the 1.1 brain).
 
+## v29 (2026-10-08): long lives as a stage, stage 1.5 over three seeds, a drives trial
+
+### 1.1l long lives (`s1_1_valence_long/20261008-010357`, 60 generations from the 1.1 lineage run)
+
+The 1.1 brain in the 1.1 world, 4000 ticks. Well-fed lifetime 838 -> 1600, lifetime 1340 -> 2220, alive at the cap
+9 -> 97 of 256. `forage.py`: moving on 74% of ticks, grasping at nothing 12%, 110 berries per life; `freeze.py`:
+freezes 7% of ticks alive (29% in 1.1), 96% end with the animal moving on. In a familiar world long lives select
+the standing still away. No new circuit, no control: an adaptation step, the parent of every long-lived stage.
+
+### 1.5 association, three seeds (40 generations of 4000 ticks; `python -m life.book export 1.5 --evaluate`)
+
+World: four novel types only (new look and meaning per life, two poison), NOVEL_SIM 0.8, 6-berry bushes, poison
+bite -3, pain one tick, born half full, density 0.19. Brain: pain teaches the centred look -> aversive synapses,
+all eyes, every learned synapse present, rate from 0.3 (cap 1.0). Control: the 1.1 brain.
+
+| | main | control |
+|---|---|---|
+| well-fed lifetime, last 50 generations window | 427 +-24 [474 395 412] | 320 +-3 [321 314 324] |
+| re-evaluated in 8 shared worlds | 483 +-38 [431 558 460] | 308 +-18 [281 300 343] |
+| lifetime of 4000 | 770 +-29 | 619 +-3 |
+| poison share of meals | 0.19 [0.19 0.19 0.20] | 0.25 [0.25 0.25 0.26] |
+| main - control | +107 +-23 (runs), +175 +-42 (re-evaluated), head to head +71 +-50 [-29 +126 +115] | |
+
+Lesions (% of intact, per seed, mean): **no_plasticity 57 42 54 (51); us_pain 57 42 54 (51)**; valence_av 18 12 16
+(15); no_feed 18 13 17 (16); ganglion_e 30 41 44 (38); no_touch 41 50 45 (45); ganglion_i 66 63 61 (63);
+valence_app 67 73 80 (73); grasp 66 75 81 (74).
+
+- **Passes.** Used: without learning the animals lose half their fitness, in every seed. Not worse: main is ahead
+  of control in the runs and in the re-evaluation in every seed; head to head in two of three.
+- Neither main nor control changes detectably over the 40 generations. Fitness swings between generations with a
+  standard deviation of about 290 (new worlds and looks each generation), so a block of ten generations has a
+  standard error of about 90; an apparent decline in seed 0 (652 in generations 0-4, 469 in 30-39) is inside
+  that. Main is ahead from generation 0: the rule works as designed, evolution did not have to find it.
+- How much of fitness is the genome (`repeat.py`, a genome's fitness, mean of four siblings, between four
+  worlds): r = 0.17 in the 1.5 world, 0.18 in the 1.1l world; per single animal r = 0.01 (`evo_check.py`). Born
+  full (0.06), density 0.3 (0.20) or both (0.21) do not change it beyond the noise of the measurement.
+- Lives are short (770 of 4000) and 45% of the ticks alive are spent biting at an empty bush (above).
+- Learned rates at the end, seed 0: mean 0.24 (start 0.3).
+
+### 1.7 drives, trial (one seed, 40 generations; `s1_7_drives/20261008-015359` and control)
+
+Circuit from the generation-0 probe (cold, warm_seek, rest reading the skin with weight 9, hungry at 0.67 shutting
+warm_seek and rest) on the 1.5 brain, plus evolvable synapses from `hungry`, starting at zero, onto grasp, no_feed,
+valence_app and the ganglion. World: the 1.5 world made cold (ambient 0.25), hot springs at spawn weight 0.1.
+Generation 0 on the 1.5 seed-0 population (`drives.py`, 4 worlds): world not cold 287; cold, not sensed 172; the
+circuit 209 (body 0.43); the circuit without the hunger gate 81.
+
+Generations 30-39: main 309 vs control 186; lifetime 572 vs 397; body temperature 0.42 vs 0.36; poison share 0.22
+vs 0.23. Main rises a little (209 in generations 0-4).
+Lesions of main (8 worlds; intact 270): **hungry 74 (27%)**; rest 156 (58%); cold 236 and warm_seek 236 (88%);
+no_plasticity 256 and us_pain 256 (95%).
+Inside: hungry active on 46% of ticks alive, rest 52%, cold 28%, warm_seek 11%. `hungry -> warm_seek` was scaled
+by evolution from the designed 6 to a mean of 10. The evolvable `hungry` -> feeding synapses are at 0.06-0.16
+(what mutation alone gives from zero in 40 generations): hunger does not gate feeding yet. `hungry` is an
+inhibitory cell, so it can release the bite block but cannot stop a fed animal biting directly; whether that or
+the short run is the reason is open. Grasping at nothing is still 43% of ticks; median lifetime 408.
+Learning matters little here (95% without it): lives of 400-600 ticks leave few repeats.
+

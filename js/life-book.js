@@ -47,7 +47,9 @@
   function status(root, D) {
     const ev = D.evaluation, n = D.runs.main.length, notes = [];
     if (D.provisional && D.provisional.length) notes.push(`<b>Provisional.</b> These runs were made with settings that differ from the stage as it is defined now (${D.provisional.map(esc).join('; ')}). The numbers will change when the stage is rerun.`);
-    if (n < 3) notes.push(`<b>${n} seed${n === 1 ? '' : 's'}.</b> A single run is not evidence: a stage is judged over three seeds.`);
+    const founder = !(D.runs.control && D.runs.control.length);
+    if (n < 3 && founder) notes.push('<b>One lineage.</b> This stage is where the lineage begins: it has no control and was run once. Every later stage starts from this population and is judged over three seeds.');
+    else if (n < 3) notes.push(`<b>${n} seed${n === 1 ? '' : 's'}.</b> A single run is not evidence: a stage is judged over three seeds.`);
     if (!ev) notes.push('Lesions, head to head and the re-evaluation have not been exported for these runs yet.');
     else if (ev.stale) notes.push('Lesions, head to head and the re-evaluation below were measured on earlier runs than the curves.');
     root.innerHTML = notes.length ? `<div class="lb-note">${notes.map(t => `<p>${t}</p>`).join('')}</div>` : '';
@@ -270,10 +272,11 @@
     X.inputs.forEach((name, k) => rows.push({label: name, sub: 'sense', get: s => s.inputs[k]}));
     X.regions.forEach((name, r) => steps[0].cells[r].forEach((_, j, a) => rows.push({label: name + (a.length > 1 ? ' ' + (j + 1) : ''), sub: '', get: s => s.cells[r][j]})));
     let cur = Math.max(0, steps.findIndex(s => s.tick === X.event_tick) - 2), timer = null;
+    const anyNeg = () => rows.some(r => steps.some(s => r.get(s) < 0));
     root.innerHTML = `<div class="lb-strip"><div class="lb-stripworld"><canvas width="${size * CELL}" height="${size * CELL}"></canvas></div>`
       + `<div class="lb-stripside"><div class="lb-controls"><button data-a="play">Play</button><button data-a="prev" aria-label="previous tick">‹</button><button data-a="next" aria-label="next tick">›</button><input type="range" min="0" max="${n - 1}" value="${cur}" aria-label="tick"><span class="lb-tickno"></span></div>`
       + `<div class="lb-stripcaption"></div><div class="lb-striplegend"></div></div></div><div class="lb-heat"></div>`
-      + `<div class="lb-caption">One animal of the recorded last generation (run ${esc(X.run)}, agent ${X.agent}). Top: the world around it before it acts, the animal in the middle. Below: one column per tick, one row per sense or neuron, darker = more active. The action row shows ↑ a step, ↶ ↷ a turn, ● a good berry eaten, ✕ a poison berry eaten; the last row is the stomach. Click a column or drag the slider.</div>`;
+      + `<div class="lb-caption">One animal of the recorded last generation (run ${esc(X.run)}, agent ${X.agent}). Top: the world around it before it acts, the animal in the middle. Below: one column per tick, one row per sense or neuron, darker = more active${anyNeg() ? ' (orange: below zero, less than the sense is used to)' : ''}. The action row shows ↑ a step, ↶ ↷ a turn, ● a good berry eaten, ✕ a poison berry eaten; the last row is the stomach. Click a column or drag the slider.</div>`;
     const cv = root.querySelector('canvas'), ctx = cv.getContext('2d'), heat = root.querySelector('.lb-heat');
     const col = o => { const c = X.objects[o].colour; return `rgb(${c.map(v => Math.round(v * 255)).join(',')})`; };
     const css = name => getComputedStyle(root).getPropertyValue(name).trim();
@@ -283,7 +286,7 @@
     let h = `<svg viewBox="0 0 ${HW} ${HH}" class="lb-svg" role="img" aria-label="activity per tick">`;
     rows.forEach((r, i) => {
       h += `<text class="lb-rowlabel" x="${L - 8}" y="${i * RH + 14}" text-anchor="end">${esc(r.label)}</text>`;
-      steps.forEach((s, t) => { const v = Math.max(0, Math.min(1, r.get(s))); h += `<rect class="lb-cell" data-t="${t}" data-i="${i}" x="${L + t * CW}" y="${i * RH}" width="${CW - 2}" height="${RH - 2}" rx="2" style="fill:color-mix(in srgb, var(--lb-seq) ${Math.round(v * 100)}%, var(--lb-cell0))"/>`; });
+      steps.forEach((s, t) => { const raw = r.get(s), v = Math.max(0, Math.min(1, Math.abs(raw))); h += `<rect class="lb-cell" data-t="${t}" data-i="${i}" x="${L + t * CW}" y="${i * RH}" width="${CW - 2}" height="${RH - 2}" rx="2" style="fill:color-mix(in srgb, var(${raw < 0 ? '--lb-s2' : '--lb-seq'}) ${Math.round(v * 100)}%, var(--lb-cell0))"/>`; });
     });
     const ya = rows.length * RH, yf = ya + RH;
     h += `<text class="lb-rowlabel" x="${L - 8}" y="${ya + 14}" text-anchor="end">action</text><text class="lb-rowlabel" x="${L - 8}" y="${yf + 14}" text-anchor="end">stomach</text>`;

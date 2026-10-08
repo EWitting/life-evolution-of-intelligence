@@ -343,6 +343,7 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#the-world-a-bush-that-never-has-berries" id="toc-the-world-a-bush-that-never-has-berries" class="nav-link active" data-scroll-target="#the-world-a-bush-that-never-has-berries">The world: a bush that never has berries</a></li>
   <li><a href="#the-biology-adaptation-and-habituation" id="toc-the-biology-adaptation-and-habituation" class="nav-link" data-scroll-target="#the-biology-adaptation-and-habituation">The biology: adaptation and habituation</a></li>
   <li><a href="#the-circuit" id="toc-the-circuit" class="nav-link" data-scroll-target="#the-circuit">The circuit</a></li>
+  <li><a href="#watching-it-work" id="toc-watching-it-work" class="nav-link" data-scroll-target="#watching-it-work">Watching it work</a></li>
   <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">Results</a>
   <ul class="collapse">
   <li><a href="#how-a-life-is-spent" id="toc-how-a-life-is-spent" class="nav-link" data-scroll-target="#how-a-life-is-spent">How a life is spent</a></li>
@@ -378,7 +379,7 @@ ul.task-list li input[type="checkbox"] {
 <div data-life="status" data-stage="1.2h">
 
 </div>
-<p>The animals of the previous stage know good from bad, and they respond to a look in the same way every time they see it. A bush that has just been emptied still has the colour of a full one, so the animal stands in front of it and bites at nothing. What is missing is simple to say: an animal should stop responding to something that stays the same and keeps giving nothing.</p>
+<p>The animals of the previous stage know good from bad, and they respond to a look in the same way every time they see it. To them a bush that has been emptied still looks enough like food to bite at, and the look does not change however often the bite gives nothing. So an animal can stand in front of an empty bush for a long time, biting. What is missing is simple to say: an animal should stop responding to something that stays the same and keeps giving nothing.</p>
 <p>This stage changes one thing, in the eyes.</p>
 <section id="the-world-a-bush-that-never-has-berries" class="level2">
 <h2 class="anchored" data-anchor-id="the-world-a-bush-that-never-has-berries">The world: a bush that never has berries</h2>
@@ -388,17 +389,20 @@ ul.task-list li input[type="checkbox"] {
 
 </div>
 <div class="callout callout-style-default callout-note callout-titled" title="What did not work: making the food unfamiliar">
-<div class="callout-header d-flex align-content-center">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
 <span class="screen-reader-only">Note</span>What did not work: making the food unfamiliar
 </div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
 </div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
 <p>Without the dud, in the world of the previous stage, the change of this stage was used only a little. The long lives had already selected most of the standing still away, and evolution can learn the look of an empty bush of every kind it has always known.</p>
 <p>Giving the good berries a new colour in every life did not change that. The animals with adapting eyes did slightly worse than those without. What makes adaptation worth having is something that looks like food and gives nothing, whatever colour it has.</p>
+</div>
 </div>
 </div>
 </section>
@@ -418,6 +422,16 @@ ul.task-list li input[type="checkbox"] {
 <div data-life="brain" data-stage="1.2h">
 
 </div>
+</section>
+<section id="watching-it-work" class="level2">
+<h2 class="anchored" data-anchor-id="watching-it-work">Watching it work</h2>
+<p>One animal from the last generation, at a dud. The two rows marked <code>vis+0</code> are two of the look inputs of the eye that points straight ahead, the two that respond most strongly to this dud.</p>
+<p>The animal walks up and bites. Step through the ticks and watch the two look inputs: the dud does not change, and yet what the eye reports sinks a little with every tick, because the eye is getting used to it. The appetitive cells and <code>grasp</code> do not fade as smoothly. They hold for a while and then drop out, and the biting stops.</p>
+<p>Then the animal turns away, and the look inputs go <em>below</em> zero. Nothing is in front of the eye now, but the eye is still used to the dud, and what it reports is the difference: less of that look than usual.</p>
+<div data-life="strip" data-stage="1.2h" data-example="dud_visit">
+
+</div>
+<p>Not every visit to a dud goes like this. Most are over within a few ticks, and some last far longer.</p>
 </section>
 <section id="results" class="level2">
 <h2 class="anchored" data-anchor-id="results">Results</h2>

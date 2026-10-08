@@ -7,6 +7,10 @@ Each stage adds a small circuit to the brain of the previous stage and changes t
 has something to be good for. Evolution then gets a number of generations to put the circuit to use. A page of
 this book is the report of one stage: what was added and why, the biology it is modelled on, and what happened.
 
+The concept of explaining cognition in steps following evolution is heavily inspired by the book *A Brief History Of Intelligence* by Max Bennett. However, the individual stages do not match one-to-one with the experiments mentioned in the book, and (while I do recommended it) it is not necessary to have read Bennet's work to be able to follow along. 
+
+Disclaimer: this work is not guaranteed to be scientifically accurate and match exactly with real brains. It is a unique blend between staying close to nature, but also just "going for it" and building up to something advanced based on what works, not restricted by having every choice requiring a citation. I personally think that, while not scientific enough to be applicable to medicine, and not optimized enough to replace machine learning algorithms, understanding these experiments builds intuition about intelligence that could seriously prove usefull in either domain.
+
 ## The animals and their world
 
 The animals live on a grid. Each has a stomach that empties a little every tick (one tick is about a second of

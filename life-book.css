@@ -115,9 +115,3 @@
 .lb-watch { display: inline-block; padding: 0.6rem 1.1rem; border-radius: 8px; background: #1f5fbf; color: #fff !important;
             text-decoration: none; font-weight: 600; }
 .lb-watch:hover { opacity: 0.85; }
-
-/* the theme switch: Quarto puts it next to the book title in the sidebar, as a bare toggle icon. Say what it is. */
-.quarto-color-scheme-toggle { text-decoration: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 0.3rem;
-                              font-size: 0.8rem; color: var(--lb-ink2); }
-.quarto-color-scheme-toggle::before { content: "\263E\A0 Dark"; }
-.quarto-dark .quarto-color-scheme-toggle::before { content: "\2600\A0 Light"; }

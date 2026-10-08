@@ -173,7 +173,11 @@ class BrainConfig:
     out_alpha: float = 0.5           # leak of the output region
     in_trace_tau: float = 0.8        # decay per step of the input neurons' activity trace (RegionSpec.trace_tau of
                                      # 'in'); near 1 = a slow average of what each input usually carries, for
-                                     # ProjectionSpec.centred
+                                     # ProjectionSpec.centred and in_adapt
+    in_adapt: tuple = ()             # input-feature name patterns (fnmatch, e.g. 'vis*.app*') of adapting inputs: the
+                                     # input neuron passes on its input minus the slow average of that input
+                                     # (sensory adaptation). Everything downstream, transmission and learning, sees
+                                     # what is unusual; a look that stays in view fades (habituation)
     out_phase: int = 0               # RegionSpec.phase of the output region (set above every other phase so the
                                      # action uses this tick's activity)
     w_max: float = 4.0               # plastic weights are clipped to [-w_max, w_max] (inherited, non-plastic
@@ -248,7 +252,7 @@ class ExperimentConfig:
         b["regions"] = tuple(mk(RegionSpec, r) for r in b.get("regions", [])) if "regions" in b else DEFAULT_REGIONS
         b["projections"] = tuple(mk(ProjectionSpec, p) for p in b["projections"]) if "projections" in b else DEFAULT_PROJECTIONS
         b["modulators"] = tuple(mk(ModulatorSpec, m) for m in b.get("modulators", []))
-        brain = BrainConfig(**{k: v for k, v in b.items() if k in {f.name for f in fields(BrainConfig)}})
+        brain = BrainConfig(**{k: tup(v) for k, v in b.items() if k in {f.name for f in fields(BrainConfig)}})
         return ExperimentConfig(name=d.get("name", "unnamed"), world=mk(WorldConfig, d.get("world")),
                                 vision=mk(VisionConfig, d.get("vision")), body=mk(BodyConfig, d.get("body")),
                                 brain=brain, evolution=mk(EvolutionConfig, d.get("evolution")))

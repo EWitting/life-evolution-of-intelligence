@@ -86,6 +86,8 @@ class Layout(NamedTuple):
     eta_init: jnp.ndarray   # [N, N]
     abcd_init: jnp.ndarray  # [4, N, N]
     centred: jnp.ndarray    # [N, N] 1 where the rule's presynaptic term is activity minus the neuron's slow average
+    in_adapt: jnp.ndarray   # [n_in] 1 for adapting inputs (BrainConfig.in_adapt)
+    has_adapt: bool
     has_gain: bool
     has_elig: bool
     has_dep: bool
@@ -248,6 +250,8 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
                   mod_idx=j(mod_idx), elig=j(elig), gain=j(gain), evolve_w=j(evolve_w), tune=j(tune * allowed), w_init=j(w_init),
                   dep_U=j(dep_U), dep_rec=j(dep_rec), decay=j(decay), teacher=j(teacher), eta_init=j(eta_init), abcd_init=j(abcd),
                   centred=j(centred),
+                  in_adapt=j(np.array([float(any(fnmatch.fnmatch(nm, pat) for pat in cfg.in_adapt)) for nm in in_names], np.float32)),
+                  has_adapt=bool(cfg.in_adapt),
                   has_gain=bool(gain.any()), has_elig=bool((elig > 0).any()), has_dep=bool((dep_U > 0).any()),
                   has_decay=bool((decay > 0).any()), groups=tuple(r.group for r in regions),
                   rec_gain=j(rec_gain), rec_bias=j(rec_bias), has_receptors=bool(rec_gain.any() or rec_bias.any()))
@@ -345,8 +349,11 @@ def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, ob
     """One world tick of brain activity. `obs` is the flattened observation [n_in]; `world_sig` the vector of
     world signals (WORLD_SIGNALS) of the last tick, used only by 'world:*' modulators. Returns (state, action)."""
     n_in, n_out = layout.n_in, layout.n_out
-    x = state.x.at[:n_in].set(obs)
     w, tr, e, u, mod, g = state.w, state.tr, state.e, state.u, state.mod, state.g
+    raw = obs
+    if layout.has_adapt:   # adapting inputs pass on the input minus its slow average (tr holds the average of the raw input)
+        obs = obs - layout.in_adapt * tr[:n_in]
+    x = state.x.at[:n_in].set(obs)
     plastic = bool(layout.pl_rows)
     if plastic:   # everything that changes within a life sits in the block [R, C] (usually a small part of w)
         R, C = np.asarray(layout.pl_rows), np.asarray(layout.pl_cols)
@@ -412,7 +419,7 @@ def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, ob
             if layout.has_dep:
                 ub = u[ix]
                 u = u.at[ix].set(jnp.clip(ub + b_deprec * (1.0 - ub) - b_depU * ub * jnp.maximum(x[R], 0.0)[:, None], 0.0, 1.0))
-        tr = layout.trace_tau * tr + (1.0 - layout.trace_tau) * x_new
+        tr = layout.trace_tau * tr + (1.0 - layout.trace_tau) * (x_new.at[:n_in].set(raw) if layout.has_adapt else x_new)
         x = x_new
     mod = compute_modulators(layout, x, world_sig, mod)
     logits = h[-n_out:] * cfg.logit_gain

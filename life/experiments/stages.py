@@ -664,6 +664,20 @@ stage(Stage("1.7", "s1_7_drives", "1.5", B17, W17, VISION_CH1, BODY_17,
                   "the 1.5 world made cold with hot springs"))
 
 
+# 1.6h habituation by sensory adaptation (trial, v30; user's preference 2026-10-07): the look inputs themselves
+# adapt. Each look input passes on its input minus the slow average of that input, so everything downstream sees
+# what is unusual: the lesson of 1.5 is about what sets a food apart without a special rule (the learned synapses
+# are plain again), and a look that stays in view fades, so the pull of a bush that yields nothing wears off
+# (`freeze.py`: the 1.5 animals spend 45% of their life biting at an empty bush). One mechanism in the input
+# neuron for both. The inherited synapses were shaped on the raw look, so the population has to re-tune.
+# Control: the 1.5 brain (raw look, centred learning).
+ADAPT_TAU = 0.98      # the look inputs' average runs over about 50 ticks
+B16H = replace(_B15, in_adapt=CS_VIS, in_trace_tau=ADAPT_TAU, projections=_split_cs(_B15.projections, eta=ETA_15))
+stage(Stage("1.6h", "s1_6_habituation", "1.5", B16H, W15, VISION_CH1, BODY_TASTE,
+            lambda exp: learning_world(exp, berries=LEARN_BERRIES), **_S15,
+            notes="TRIAL: the look inputs adapt to their slow average (habituation and centred learning in one)"))
+
+
 # 1.6 extinction and reversal: the learned weights now relax back toward their inherited values (a fast,
 # forgetting component), so an association that stops being renewed fades and a new one can take over. World: the
 # novel types swap their meaning halfway through life.

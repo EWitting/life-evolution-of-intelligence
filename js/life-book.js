@@ -238,9 +238,14 @@
 
   // ------------------------------------------------------------------ runs and settings
   function runs(root, D) {
-    let h = '<table class="lb-table"><thead><tr><th></th><th>seed</th><th>run directory</th><th>generations</th><th>finished</th><th>dashboard</th></tr></thead><tbody>';
+    const first = g => (D.runs[g] || []).find(r => r.dashboard);
+    const btn = (g, label) => first(g) ? `<a class="lb-watch" href="${esc(first(g).dashboard)}" target="_blank">&#9654; ${label}</a>` : '';
+    const watch = btn('main', 'Watch a main run') + btn('control', 'Watch a control run');
+    let h = (watch ? `<div class="lb-watchrow">${watch}</div>` : '<div class="lb-caption">No run of this stage is published yet.</div>')
+      + '<div class="lb-caption">A dashboard replays the last generation of a run: all animals in their world, and the brain of a few of them, tick by tick. It is a large page and opens in a new tab.</div>'
+      + '<details class="lb-details"><summary>Run directories and dates</summary><table class="lb-table"><thead><tr><th></th><th>seed</th><th>run directory</th><th>generations</th><th>finished</th><th>dashboard</th></tr></thead><tbody>';
     for (const g of ['main', 'control']) for (const r of D.runs[g]) h += `<tr><td>${g}</td><td>${r.seed}</td><td><code>runs/${esc(r.dir)}</code></td><td>${r.generations}</td><td>${esc(r.finished.replace('T', ' '))}</td><td>${r.dashboard ? `<a href="${esc(r.dashboard)}">open</a>` : '<span class="lb-muted">not published</span>'}</td></tr>`;
-    root.innerHTML = h + `</tbody></table><div class="lb-caption">A dashboard replays the last generation of a run: all agents in their world, and the brain of a few of them, tick by tick. Data exported ${esc(D.exported.replace('T', ' '))}.</div>`;
+    root.innerHTML = h + `</tbody></table><div class="lb-caption">One dashboard per stage is published (seed 0 of main and of control); the other seeds are in the run directories. Data exported ${esc(D.exported.replace('T', ' '))}.</div></details>`;
   }
   function settings(root, D) {
     const S = D.settings, w = S.world, e = S.evolution;

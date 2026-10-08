@@ -218,7 +218,7 @@
     "href": "1-5-association.html#results",
     "title": "1.5 Association: learning what is bad",
     "section": "Results",
-    "text": "Results\n\nIs main worse than control?\nThe control is the brain of the previous stage in this world: it feels pain and turns away from it, but it cannot change. It pays for every poison bush it tries, every time.\n\n\n\n\n\n\n\n\nIs the circuit used?\n\n\n\nno_plasticity freezes every synapse at its inherited strength, and us_pain silences the teacher. If the animals do clearly worse without either, they depend on what they learn during their life.\n\n\n\n\n\n\nNoteWhat still goes wrong: standing at an empty bush\n\n\n\nThe animals of this stage spend a large part of their life standing in front of a bush that has no berries, biting at it. An empty bush has the colour of the full one, the appetitive cells respond to the colour, and the bite follows. Biting at nothing costs no energy, and nothing tells the animal that it is getting hungry. Few animals live out the long life this world offers.\nTwo later stages are meant for exactly this: a sense of hunger, and habituation to things that keep yielding nothing.",
+    "text": "Results\n\nIs main worse than control?\nThe control is the brain of the previous stage in this world: it feels pain and turns away from it, but it cannot change. It pays for every poison bush it tries, every time.\n\n\n\n\n\n\n\n\nIs the circuit used?\n\n\n\nno_plasticity freezes every synapse at its inherited strength, and us_pain silences the teacher. If the animals do clearly worse without either, they depend on what they learn during their life.\n\n\n\n\n\n\nNoteWhat still goes wrong: standing at an empty bush\n\n\n\nThe animals of this stage spend a large part of their life standing in front of a bush that has no berries, biting at it. An empty bush has the colour of the full one, the appetitive cells respond to the colour, and the bite follows. Biting at nothing costs no energy, and nothing tells the animal that it is getting hungry. Few animals live out the long life this world offers.\n\n\n\nThe next stage, habituation, is meant for exactly this.",
     "crumbs": [
       "Chapter 1: steering",
       "<span class='chapter-number'>3</span>  <span class='chapter-title'>1.5 Association: learning what is bad</span>"
@@ -236,6 +236,50 @@
     ]
   },
   {
+    "objectID": "habituation.html",
+    "href": "habituation.html",
+    "title": "1.6 Habituation: getting used to what is always there",
+    "section": "",
+    "text": "The biology: adaptation and habituation\nThe animals of the previous stage learn which berries are bad. They also spend a large part of their life standing in front of a bush that has no berries, biting at it. Nothing new is needed in the world to see what is missing: an animal should stop responding to something that stays the same and keeps giving nothing.\nThis stage changes one thing, in the eyes.\nStep into a room with a strong smell and after a few minutes it is gone. The smell is still there; the receptors have stopped reporting it. Sensory neurons respond to change: to what differs from the recent past. A steady input is the background, and the background carries no news. This is sensory adaptation.\nHabituation is the same thing seen in behaviour. A snail that is touched pulls in its horns. Touch it again and again and it stops bothering. It is the simplest kind of learning there is, older than learning by association, and found in every animal that has been tested, including ones with a few hundred neurons.",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>1.6 Habituation: getting used to what is always there</span>"
+    ]
+  },
+  {
+    "objectID": "habituation.html#the-circuit",
+    "href": "habituation.html#the-circuit",
+    "title": "1.6 Habituation: getting used to what is always there",
+    "section": "The circuit",
+    "text": "The circuit\nNo new cells. Each of the eyes’ look inputs now keeps a slow average of what it has been seeing, over roughly the last fifty ticks, and passes on the difference between what it sees now and that average.\nTwo things follow, both for the whole brain, because every neuron downstream of the eyes now gets the adapted look:\n\nWhat stays in view fades. An animal that stands in front of a bush sees its look sink into the average. The appetitive cells, driven by that look, fall silent, and with them the urge to bite. The animal moves on.\nWhat is unusual stands out. All berry bushes look alike in most respects, and that shared part is nearly always in view, so it is nearly always in the average. What passes through is the part that differs: the colour of this bush. The previous stage needed a special rule so that a lesson about a poison berry would attach to its colour and not to berries in general. Here that rule is gone. The synapses learn from what the eyes pass on, and the eyes already pass on the difference.\n\n\n\n\nThe world is the one of the previous stage, unchanged.",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>1.6 Habituation: getting used to what is always there</span>"
+    ]
+  },
+  {
+    "objectID": "habituation.html#results",
+    "href": "habituation.html#results",
+    "title": "1.6 Habituation: getting used to what is always there",
+    "section": "Results",
+    "text": "Results\nThe control is the brain of the previous stage, with eyes that do not adapt, in the same world.\nThe first generations of main are a step back. Every synapse the animals inherit was shaped by eyes that reported the whole look, and now reports only the difference. The population has to re-tune before the change can pay.\n\n\n\n\n\n\nThe test in which main and control animals share a world is left out for this stage. In that test both halves run on the same brain, and here the difference is the brain’s inputs: the control animals would be given adapting eyes that none of their synapses were tuned to.\n\nHow a life is spent\n\n\n\n\n\nIs it used?\nThere is no group of neurons to silence here, since the change is in how the inputs work. The matching test is to switch the adaptation off in the final population and let the same animals live in the same worlds again.\n\n\n\nThe lesions of the regions are shown for completeness. no_plasticity and us_pain tell whether learning is still used now that it has no special rule.",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>1.6 Habituation: getting used to what is always there</span>"
+    ]
+  },
+  {
+    "objectID": "habituation.html#the-runs-behind-this-page",
+    "href": "habituation.html#the-runs-behind-this-page",
+    "title": "1.6 Habituation: getting used to what is always there",
+    "section": "The runs behind this page",
+    "text": "The runs behind this page",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>1.6 Habituation: getting used to what is always there</span>"
+    ]
+  },
+  {
     "objectID": "drives.html",
     "href": "drives.html",
     "title": "Drives: hunger and cold",
@@ -243,7 +287,7 @@
     "text": "Note\n\n\n\nThis stage is still being designed. Its page will be written when the stage is frozen.",
     "crumbs": [
       "Chapter 1: steering",
-      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Drives: hunger and cold</span>"
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Drives: hunger and cold</span>"
     ]
   },
   {
@@ -254,18 +298,7 @@
     "text": "Note\n\n\n\nThis stage is still being designed. Its page will be written when the stage is frozen.",
     "crumbs": [
       "Chapter 1: steering",
-      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Affect: dwelling and roaming</span>"
-    ]
-  },
-  {
-    "objectID": "habituation.html",
-    "href": "habituation.html",
-    "title": "Habituation",
-    "section": "",
-    "text": "Note\n\n\n\nThis stage is still being designed. Its page will be written when the stage is frozen.",
-    "crumbs": [
-      "Chapter 1: steering",
-      "<span class='chapter-number'>6</span>  <span class='chapter-title'>Habituation</span>"
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>Affect: dwelling and roaming</span>"
     ]
   }
 ]

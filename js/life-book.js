@@ -340,7 +340,17 @@
     show(cur);
   }
 
-  const COMPONENTS = {status, summary, curves, lesions, brain, runs, settings, strip};
+  // ------------------------------------------------------------------ a small table from a stage's extras
+  function table(root, D) {
+    const X = (D.extras || {})[root.dataset.example];
+    if (!X) { root.innerHTML = '<div class="lb-caption">Not measured yet.</div>'; return; }
+    const cell = v => (v && typeof v === 'object') ? pm(v) + seeds(v) : (v == null ? '' : v);
+    let h = `<table class="lb-table"><thead><tr>${X.columns.map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>`;
+    for (const r of X.rows) h += `<tr>${r.map((v, i) => `<td>${i ? cell(v) : v}</td>`).join('')}</tr>`;
+    root.innerHTML = h + `</tbody></table>` + (X.caption ? `<div class="lb-caption">${X.caption}</div>` : '');
+  }
+
+  const COMPONENTS = {status, summary, curves, lesions, brain, runs, settings, strip, table};
   function init() {
     document.querySelectorAll('[data-life]').forEach(root => {
       const fn = COMPONENTS[root.dataset.life];

@@ -1536,7 +1536,9 @@ Generation 0 with that fix (`drives.py`, habituation population, 4 worlds): worl
 no_plasticity and us_pain 261 (73%); rest 308 (86%); cold and warm_seek 338 (95%). Main stands still on 35% of
 ticks (control 12%): `rest` holds it where it is warm.
 On one seed: `hungry` and `rest` are used, `cold` and `warm_seek` marginally. Not replicated: how hunger should
-act on feeding is open (the evolvable `hungry` -> feeding synapses were not looked at again in this run).
+act on feeding is open. The evolvable `hungry` -> feeding synapses are at a mean size of 0.04-0.17 after 40
+generations (grasp 0.17, valence_app 0.11, ganglion 0.07, no_feed 0.04), about what mutation alone gives from zero:
+no sign that evolution uses them.
 (The two earlier drives trials, on the 1.5 brain and on the habituation brain with blocking springs, gave main 309
 vs control 186 and 307 vs 187; superseded.)
 

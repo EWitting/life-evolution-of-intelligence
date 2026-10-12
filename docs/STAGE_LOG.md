@@ -1811,3 +1811,8 @@ Inside the run: the fade times stayed close to the design (alarm 0.879, about 8 
 ticks). Strengths: `flee` -> out 3.0 -> 3.5, `settle` -> `rest` 3.0 (unchanged), `rest` -> out 9 -> 7.3,
 `warm_seek` -> out 3 -> 2.3. Both populations move little in the last generation (16% and 14% of ticks) and both
 have `rest` on for over 60% of ticks: the control found its own way to stay put.
+
+Lesions, seed 0 (4 worlds, % of intact 967): `flee` 84, `fed` and `settle` 64 (one chain), `rest` 40, `hungry` 43,
+`cold` 102, plasticity off 105. Both new states are used. In this seed the warmth-seeking pair and the learned
+aversion no longer add anything in the patch world: staying in a good patch replaces both. To check over the three
+seeds.

@@ -1804,8 +1804,8 @@ existed load with the designed decay; 45 tests pass, the drives brain gives the 
 Generation 0 of the stage as defined: +250 +-35 over the drives brain (4 shared worlds; 644 vs 394).
 
 Seed 0, 40 generations, fitness in blocks of ten generations: main 766, 777, 809, 983; control 451, 486, 512, 659.
-Poison share of the berries eaten: main 0.056 -> 0.046, control 0.115 -> 0.077. About 400 s per generation with
-two processes (the lives are long: nothing ends a simulation early).
+Poison share of the berries eaten: main 0.056 -> 0.046, control 0.115 -> 0.077. About 23 s per generation with
+two processes.
 
 Inside the run: the fade times stayed close to the design (alarm 0.879, about 8 ticks; serotonin 0.988, about 84
 ticks). Strengths: `flee` -> out 3.0 -> 3.5, `settle` -> `rest` 3.0 (unchanged), `rest` -> out 9 -> 7.3,
@@ -1816,3 +1816,38 @@ Lesions, seed 0 (4 worlds, % of intact 967): `flee` 84, `fed` and `settle` 64 (o
 `cold` 102, plasticity off 105. Both new states are used. In this seed the warmth-seeking pair and the learned
 aversion no longer add anything in the patch world: staying in a good patch replaces both. To check over the three
 seeds.
+
+### Stage 1.8 affect over three seeds; chapter 1 frozen (2026-10-12)
+
+Seeds 1 and 2 from the same drives population (seed-0 run). 40 generations each, about 20 s per generation.
+`book/data/1.8.json` (export with evaluation: 8 shared worlds per seed).
+
+| | seed 0 | seed 1 | seed 2 | mean |
+|---|---|---|---|---|
+| main, last 10 generations | 983 | 906 | 941 | |
+| control, last 10 generations | 659 | 681 | 538 | |
+| main, whole run | 834 | 727 | 747 | 769 +-33 |
+| control, whole run | 527 | 519 | 409 | 485 +-38 |
+| re-evaluated, main | 956 | 876 | 925 | 919 +-23 |
+| re-evaluated, control | 660 | 591 | 624 | 625 +-20 |
+| re-evaluated, difference | +297 | +285 | +301 | +294 +-5 |
+| head to head, main half - control half | +604 | +258 | +583 | +482 +-112 |
+
+Lesions, % of intact, per seed: `fed` 63 54 66, `settle` 63 54 64, `flee` 81 86 89, `rest` 41 36 37, `hungry`
+41 54 41, `us_pain` 79 77 81, `valence_av` 76 68 68, `no_feed` 82 76 81, `valence_app` 92 87 90, `grasp` 92 89 89,
+`no_touch` 97 95 95, `ganglion_e` 16 24 17, `ganglion_i` 10 32 52. **Not used in this world: `cold` and
+`warm_seek` 101 105 107, plasticity off 99 95 99.**
+
+After a bite (recordings of the last generation, mean of three seeds, main / control): steps in the 20 ticks after
+a poison bite 15.3 / 11.2; after the last bite of a good meal 1.5 / 5.1; the next bush after a poison bite is poison
+again in 58 / 64%; after a good meal in 11 / 11%.
+
+Reading: passes clearly, in every row and every seed (the first stage since valence where the head to head agrees
+with the rest). Serotonin does most of the work; the alarm adds less. Staying in a good patch replaces two things
+the lineage had: walking for warmth when fed, and knowing a poison by its look. The cells stay (frozen stages);
+the consequence is for the world of chapter 2, where learning needs poison standing between good bushes.
+
+Frozen as `frozen/1.8` (user, 2026-10-12: complete and freeze chapter 1), tag `chapter-1`. 47 tests pass.
+
+Tools changed on the way: `life.book` evaluates in parallel processes (`--jobs`, default 5) and prints a line per
+finished task; a single process took about four times as long and showed nothing until the end.

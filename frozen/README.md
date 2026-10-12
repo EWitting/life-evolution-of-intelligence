@@ -13,12 +13,12 @@ A later change that has to touch a frozen stage (removing a cell that lesions sh
 made by remapping the stored populations onto the new layout and freezing again, with the reason in
 `docs/STAGE_LOG.md`. Results and criteria per stage: `docs/STATUS.md` and the book.
 
-## Chapter 1 (frozen 2026-10-08, git tag `chapter-1-drives`; 1.0 to 1.5 also as `chapter-1-partial`)
+## Chapter 1 (frozen 2026-10-08, git tag `chapter-1-drives`; 1.0 to 1.5 also as `chapter-1-partial`; affect 2026-10-12, tag `chapter-1`)
 
-**Order of the chain: 1.0 -> 1.1 -> 1.2h -> 1.5 -> 1.7.** The keys are historical names, not positions (1.5 and
+**Order of the chain: 1.0 -> 1.1 -> 1.2h -> 1.5 -> 1.7 -> 1.8.** The keys are historical names, not positions (1.5 and
 1.7 keep the numbers they had in an earlier order); they stay because run directories, data files and the stage
 log use them. The book shows the stages by name only, in this order: Steering, Valence, Habituation, Association,
-Drives.
+Drives, Affect.
 
 The lineage is one chain: every stage starts from the seed-0 run of its parent. Seeds 1 and 2 of a stage start
 from that same parent run.
@@ -30,9 +30,11 @@ from that same parent run.
 | 1.2h | habituation: the look inputs adapt to their slow average; world with a dud bush type | 1.1 | 4000 | 3 |
 | 1.5 | association: pain teaches the look -> aversive synapses; only novel foods, half poison | 1.2h | 4000 | 3 |
 | 1.7 | drives: `cold`, `warm_seek`, `rest`, `hungry`; the 1.5 world made cold, with hot springs | 1.5 | 4000 | 3 |
+| 1.8 | affect: `alarm` -> `flee`, `serotonin` (`fed`) -> `settle` -> `rest`; the 1.7 world with one berry type per patch | 1.7 | 4000 | 3 |
 
-Not frozen yet: affect (to be designed on drives). It sits at the end of the chain, so finishing it cannot change
-anything above.
+Chapter 1 is complete. A stored population written before a gene existed (the modulator fade times, `Genome.clear`,
+2026-10-12) loads with the designed value, and a stored configuration is read with options added since at their
+defaults (`freeze.with_defaults`).
 
 ## Side paths (defined in `stages.py`, not part of the lineage)
 

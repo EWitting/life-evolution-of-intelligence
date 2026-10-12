@@ -1,7 +1,7 @@
 # Status
 
 One screen on where the project is. Plan: `docs/BRAIN_EVOLUTION.md`. **Frozen stages: `frozen/README.md`.** Details, numbers and run directories:
-`docs/STAGE_LOG.md`. Newest decisions: `docs/DECISIONS.md` (ADR-017 to ADR-025). Last updated 2026-10-12.
+`docs/STAGE_LOG.md`. Newest decisions: `docs/DECISIONS.md` (ADR-017 to ADR-025). Last updated 2026-10-12 (chapter 1 frozen).
 
 ## How a stage is judged
 
@@ -32,15 +32,15 @@ than control (user, 2026-10-01). One life is mostly luck, so a design is checked
 **Fitness = well-fed lifetime from the first meal** (ADR-024; v19-v22 used energy acquired). Cells that lesions
 show unused in every seed are removed.
 
-## Stages (rerun of 2026-10-08; STAGE_LOG v32)
+## Stages (rerun of 2026-10-08, affect 2026-10-12; STAGE_LOG v32, v33)
 
-Chain: 1.0 -> 1.1 -> 1.2h habituation -> 1.5 association -> 1.7 drives -> affect -> chapter 2. The keys are
+Chain: 1.0 -> 1.1 -> 1.2h habituation -> 1.5 association -> 1.7 drives -> 1.8 affect -> chapter 2. The keys are
 historical names, not positions; the book shows the stages by name only (no stage numbers, user 2026-10-08). Lives are 4000
 ticks from the settling run of 1.0 on. Footing v25 (born a quarter full, food as a flow, a bite cost). Every stage
 starts from the seed-0 run of its parent. Three seeds unless stated; lesion = fitness with the region silenced, %
 of intact, per seed.
 
-**Frozen (2026-10-08, tag `chapter-1-drives`): 1.0, 1.1, 1.2h, 1.5, 1.7.** Definitions and final populations are in
+**Chapter 1 is frozen: 1.0, 1.1, 1.2h, 1.5, 1.7 (2026-10-08, tag `chapter-1-drives`) and 1.8 (2026-10-12, tag `chapter-1`).** Definitions and final populations are in
 `frozen/` (`frozen/README.md`, `life/freeze.py`); `tests/test_frozen.py` fails when a frozen definition changes.
 **Do not rerun these stages or their lineage** (user, 2026-10-08). A change that has to touch one is made by
 remapping the stored populations and freezing again.
@@ -52,23 +52,22 @@ remapping the stored populations and freezing again.
 | 1.2h habituation | no new cells: every look input passes on its input minus its slow average (about 50 ticks), so what stays in view fades and what is unusual stands out. World: the 1.1 world plus a dud bush type (colour per life, never a berry) | **frozen**, passes | Main 1139 +-15 vs control 1073 +-35; re-evaluated 1361 vs 1272 (+89 +-65: 218, 42, 8). Adaptation switched off: 36, 55, 36% of intact. Biting at nothing 28% of ticks vs 62%. Without the dud the adaptation was used weakly (84%). No head to head (the change is in the inputs). |
 | 1.5 association | `us_pain` teaches the look -> aversive synapses (plain: the adapted look already carries what sets a food apart); a world of only novel foods, half of them poison | **frozen**, passes | Main 592 +-20 vs control 354 +-19; re-evaluated 721 vs 360 (+361 +-66); head to head +520 +-120. Lesions: no_plasticity and us_pain 43 48 43. Poison share 0.13-0.15 vs 0.23-0.24. Learning rate evolved up (0.3 -> 0.60 in seed 0). Clearer than the old order (+175, head to head +71). Lives are short (about 1170 of 4000 in the recorded generation). |
 | 1.7 drives | `cold` and `hungry` need cells; warmth by kinesis: `warm_seek` (run while the skin is cold), `rest` (stay where it is warm); `hungry` shuts the warmth mode; evolvable `hungry` -> feeding synapses. World: the 1.5 world made cold, hot springs (which do not block) | **frozen**, passes (user's decision on the head to head) | Main 386 +-14 vs control 309 +-18; re-evaluated 401 vs 341 (+60 +-37: 124, -4, 62). **Head to head -65 +-33** (-88, -108, 0): the control half does better next to main animals (432-532) than among its own (276-409). Lesions: hungry 26 27 18, rest 72 86 71, cold and warm_seek 89 94 86, plasticity 71 66 76. Main moves 45% of ticks vs 71%, bites at nothing 32% vs 12%. Either population alone at half density does 55-80% better (`density.py`): food is a race, resting animals leave food to roamers and gain by burning less. |
-| affect (old 1.3) | serotonin (dwell) and PDF (roam) states | to redesign on drives | Unused in its last run (v13, old architecture). Kept if at all possible: later stages need the modulator systems. |
+| 1.8 affect | two states that outlast their trigger, each a modulator released at once and cleared slowly: pain -> `alarm` -> `flee` -> forward; taste -> `fed` -> `serotonin` -> `settle` -> `rest`. Fade times are genes (`Genome.clear`). World: the drives world with every berry type in its own patches (`patch_types`) | **frozen**, passes | Main 769 +-33 vs control 485 +-38 (last 50 generations of 40: the whole run); re-evaluated 919 vs 625 (+294 +-5: 297, 285, 301); head to head +482 +-112 (604, 258, 583). Lesions: fed 63 54 66, settle 63 54 64, flee 81 86 89, rest 41 36 37, hungry 41 54 41. **No longer used in this world: cold and warm_seek 101 105 107, plasticity 99 95 99.** Fade times stayed near the design (seed 0: alarm 8 ticks, serotonin 84). Both populations were still rising at generation 40. |
 | side paths | 1.1l, 1.5c (centred association before habituation), 1.5f, 1.6h, 1.6 reversal, x.hands, x.td, old 1.2-1.4 | defined, not on the path | Listed with reasons in `frozen/README.md`. |
 | chapter 2 | eyes + tectum -> pallium -> dopamine critic -> hands -> basal ganglia with actor -> curiosity | plan revised 2026-10-12 (ADR-025; `BRAIN_EVOLUTION.md`, "Revised plan for the chapter") | The definitions 2.1-2.5 and `x.td` in `stages.py` are the old design on the reversal brain: each stage is defined again on the affect brain when its turn comes. A few dozen generations per stage; lab experiments for the learning stages; dopamine as a circuit. |
 | later, 3.x-5.x | pallium clustering, hippocampus, cerebellum, uncertainty modulators; simulating, mentalizing, speaking | planned | |
 
 ## Next steps
 
-1. **Resume here: affect**, redesigned on the frozen drives brain: assay and generation 0 first, design choices
-   with the user. Frame agreed 2026-10-12: a second page of the same system as drives (modes become states that
-   last and that events can set); serotonin names the "fed, stay" state, dopamine is kept for chapter 2, no roam
-   nucleus. World (user, 2026-10-12): every berry type in its own patches (`patch_types`, draft stage 1.8), no
-   cliff. Generation 0 (`scripts/probes/affect.py`, STAGE_LOG v33): a short `alarm` after pain (-> `flee` -> forward)
-   +46 +-8, a long `serotonin` after a meal (-> `rest`) +200 +-62, both +252 +-29 over the drives brain. **Open,
-   for the user: adopt these two as the stage's circuit, what is left to evolution, then one seed of evolution.** It is the last stage of the chapter, so it cannot disturb anything above it. Drives is frozen as
-   it is (user, 2026-10-08): it is fine that the greedy control wins the head-to-head food race while the animals
-   with drives are the more efficient ones among their own.
-2. Then freeze affect (`python -m life.freeze <key>`), tag, chapter 2.
+1. **Resume here: chapter 2.** Its definitions are stale (2.1-2.5 predate the rerun). Start from the frozen 1.8
+   population. Points to settle first, with the user: the chapter-2 world (the patch world makes warmth seeking
+   and learned aversion nearly useless, see the affect row: a world for learning needs poison standing between good
+   bushes again); dopamine is reserved for the prediction error and must stay sharp in time (persistence at the
+   receiving cell, not in the modulator); the user's notes in `docs/BRAIN_EVOLUTION.md` (visual resolution, hands,
+   what evolution may hard-code).
+2. Cheaper evaluations for expensive stages (user, 2026-10-12): the export runs its simulations in parallel
+   (`--jobs`) and prints a line per finished task; still to add: lesions of the new cells and the parent's only,
+   four worlds for a routine check, seed 0 first.
 3. Optional, out of curiosity: the frozen populations in earlier worlds (a sanity check, not a criterion).
 4. Rules of work (user): cheap trials first (one stage, one seed, generation 0 where possible); look inside a
    finished run before starting the next (`scripts/probes/README.md`, step 4); no new mechanisms without the

@@ -71,17 +71,47 @@ but nothing of either stays with it.
 
 <div data-life="summary" data-stage="1.8"></div>
 
+The animals with the two states do better than the control in every seed, and by about the same amount in each.
+Unlike in the previous stage, the rows of the table agree. Sharing a world with control animals, the animals of
+this stage also come out ahead: staying in a good patch keeps an animal next to its next meal, and that helps in a
+race for berries as much as it does among its own kind.
+
+Both populations were still improving when the runs ended. The control improves too: without any lasting state,
+evolution makes it rest more, which keeps some of the animals near where they ate.
+
 ### Is the circuit used?
 
 <div data-life="lesions" data-stage="1.8"></div>
+
+Both new states are used. Silencing `fed` or `settle` gives nearly the same result, because they form one chain:
+without either, a meal leaves no serotonin behind and the animal no longer stays. Silencing `flee` costs less.
+The alarm is short and acts only after a poison bite, which is a small part of a life.
+
+Two things from earlier stages have lost their use in this world.
+
+- Silencing `cold` or `warm_seek` no longer costs anything. In the previous stage a fed animal walked while it was
+  cold, until it found warmth. Here that walk takes it out of a good patch, and staying where the food is turns
+  out to be worth more than being warm.
+- Switching the learning off costs little. In a patch of one kind, the first bite tells the animal what it needs
+  to know about all the bushes around it, and the alarm carries it away from them. Knowing a poison by its look
+  matters less when poison no longer stands between the good bushes.
+
+Neither was removed. The cells are part of the previous stages as they were frozen, and a later world may need
+them again.
 
 ### After a bite
 
 <div data-life="table" data-stage="1.8" data-example="after_a_bite"></div>
 
+The two states can be seen in what the animals do in the twenty ticks after a bite. After a poison bite the
+animals of this stage take more steps than the control. After a good meal they take almost none.
+
 ### How a life is spent
 
 <div data-life="table" data-stage="1.8" data-example="life_spent"></div>
+
+Both populations stand still for most of their life. Much of that time they bite at nothing: an animal that is held
+in place by `rest` still has its grasp programme, and a bite costs little.
 
 ## The runs behind this page
 

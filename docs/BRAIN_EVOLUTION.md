@@ -249,7 +249,8 @@ out. Fitness is the well-fed lifetime from the first meal: survival, weighted by
   mode lasts minutes, long after the stimulus is gone. Bennett's "affect" is exactly this: a global,
   persistent state along valence and arousal that biases every reflex at once. (Escape and stress modes are
   left for later.)
-- **Adds.** `raphe` (serotonin, slow, driven by taste) broadcasting `5ht` onto receptors of `dwell` (-> turns);
+- **As built (2026-10-12, stage 1.8, STAGE_LOG v33).** Pain -> modulator `alarm` -> `flee` -> forward; taste -> `fed` -> modulator `serotonin` -> `settle` -> `rest`. World: one berry type per patch. The roam nucleus below was dropped (`hungry` does that job).
+- **First design (v3-v13, unused).** `raphe` (serotonin, slow, driven by taste) broadcasting `5ht` onto receptors of `dwell` (-> turns);
   `pdf` (slow, driven by hunger) broadcasting `pdf` onto receptors of `roam` (-> forward). The two nuclei
   inhibit each other through hard-wired inhibitory receptors (v5); evolved input from valence.
 - **World.** Food in 10 dense patches (calibrated so foraging still pays).

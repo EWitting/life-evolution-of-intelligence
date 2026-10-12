@@ -36,7 +36,7 @@ introduces the biology and builds intuition. Per stage:
   examples, probes or metrics. Design the export so a stage can add its own extras later without changing the
   standard part (a per-stage hook, extra named series in the same file).
 - **Timing.** Build the pipeline and one pilot page now. Write each stage's narrative when that stage is frozen
-  (STATUS, next steps, point 6). Do not write pages for drives, affect or habituation yet: their wiring will change.
+  (STATUS, next steps, point 6). All pages of chapter 1 are written (affect 2026-10-12).
 - **Pilot stage: 1.1 valence.** It has the most settled mechanism. Its numbers are being rerun (v24, born a quarter
   full), so treat every number as provisional and never copy numbers into prose.
 

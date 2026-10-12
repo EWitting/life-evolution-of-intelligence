@@ -228,7 +228,18 @@ def provisional(s, runs: list[Path]) -> list[str]:
     return out
 
 
-def evaluate(key: str, worlds: int = 8) -> dict:
+def _lesion_task(task) -> dict:
+    from .experiments import stages as S
+    _, _, run, worlds, only = task
+    return S.lesion(run, worlds=worlds, only=only)
+
+
+def _versus_task(key: str, worlds: int) -> list:
+    from .experiments import stages as S
+    return [float(d) for d in S.versus(key, worlds)]
+
+
+def evaluate(key: str, worlds: int = 8, jobs: int = 5) -> dict:
     """The three measurements that need simulation, over every seed: the final populations re-evaluated in
     `worlds` shared worlds, with each region silenced (lesions), and main against control in the same worlds."""
     from .experiments import stages as S
@@ -236,18 +247,49 @@ def evaluate(key: str, worlds: int = 8) -> dict:
     main, control = S.seed_runs(s), S.seed_runs(s, control=True)
     out = {"worlds": worlds, "runs": [_rel(r) for r in main + control],
            "when": datetime.now().isoformat(timespec="minutes")}
-    les = [S.lesion(str(r), worlds=worlds) for r in main]
+    # every simulation is independent and one JAX process uses few cores, so the work is cut into tasks (a few
+    # lesions of one seed each) for `jobs` processes. The worlds depend only on the seed of `lesion`, so the cut
+    # does not change a number.
+    from concurrent.futures import ProcessPoolExecutor
+    tasks = []
+    for i, r in enumerate(main):
+        names = json.loads((r / "layout.json").read_text())["names"]
+        labels = ["intact", "no_plasticity", "no_depression"] + [n for n in names if n not in ("in", "out")]
+        tasks += [("main", i, str(r), worlds, tuple(labels[k:k + 3])) for k in range(0, len(labels), 3)]
+    tasks += [("control", i, str(r), worlds, ("intact",)) for i, r in enumerate(control)]
+    import time
+    from concurrent.futures import as_completed
+    t0 = time.time()
+    print(f"evaluate {key}: {len(tasks) + bool(control)} tasks in {jobs} processes, {worlds} worlds each", flush=True)
+    with ProcessPoolExecutor(max_workers=jobs) as pool:
+        futures = {pool.submit(_lesion_task, t): f"{t[0]} seed {t[1]}: {', '.join(t[4])}" for t in tasks}
+        versus = pool.submit(_versus_task, key, worlds) if control else None
+        if versus:
+            futures[versus] = "head to head"
+        for n, f in enumerate(as_completed(futures), 1):   # one line per finished task: the progress of the export
+            print(f"  {n}/{len(futures)} after {(time.time() - t0) / 60:.0f} min: {futures[f]}", flush=True)
+        done = [f.result() for f in list(futures)[:len(tasks)]]
+        versus = versus.result() if versus else None
+    les = [{} for _ in main]
+    ctrl_fit = [None] * len(control)
+    for (kind, i, *_), res in zip(tasks, done):
+        if kind == "main":
+            les[i].update(res)
+        else:
+            ctrl_fit[i] = res["intact"]["fitness"]
+    order = [l for l in ["intact", "no_plasticity", "no_depression"] + [n for n in names if n not in ("in", "out")] if l in les[0]]
+    les = [{l: d[l] for l in order} for d in les]
     out["reevaluated"] = {"main": _stat([l["intact"]["fitness"] for l in les])}
     out["lesions"] = {label: {"percent": _stat([100.0 * l[label]["fitness"] / l["intact"]["fitness"] for l in les]),
                               "fitness": [l[label]["fitness"] for l in les]}
                       for label in les[0] if label != "intact"}
     out["intact"] = {k: [l["intact"][k] for l in les] for k in les[0]["intact"]}
     if control:
-        ctrl = [S.lesion(str(r), worlds=worlds, only=("intact",))["intact"]["fitness"] for r in control]
+        ctrl = ctrl_fit
         out["reevaluated"]["control"] = _stat(ctrl)
         if len(ctrl) == len(les):
             out["reevaluated"]["difference"] = _stat([l["intact"]["fitness"] - c for l, c in zip(les, ctrl)])
-        out["versus"] = _stat([float(d) for d in S.versus(key, worlds)])
+        out["versus"] = _stat([float(d) for d in versus])
     return out
 
 
@@ -543,7 +585,7 @@ def adaptation_off(s, main: list[Path], control: list[Path]):
 
 # ------------------------------------------------------------------ export
 
-def export(key: str, do_evaluate: bool = False, worlds: int = 8) -> Path:
+def export(key: str, do_evaluate: bool = False, worlds: int = 8, jobs: int = 5) -> Path:
     from .experiments import stages as S
     s = S.STAGES[key]
     main, control = S.seed_runs(s), S.seed_runs(s, control=True)
@@ -563,7 +605,7 @@ def export(key: str, do_evaluate: bool = False, worlds: int = 8) -> Path:
     }
     runs_now = [_rel(r) for r in main + control]
     if do_evaluate:
-        data["evaluation"] = evaluate(key, worlds)
+        data["evaluation"] = evaluate(key, worlds, jobs)
     elif old.get("evaluation"):
         data["evaluation"] = old["evaluation"]
     if data.get("evaluation"):
@@ -603,20 +645,18 @@ def main(argv=None):
     e.add_argument("keys", nargs="+")
     e.add_argument("--evaluate", action="store_true", help="also simulate: re-evaluation, head to head, lesions")
     e.add_argument("--worlds", type=int, default=8)
+    e.add_argument("--jobs", type=int, default=5, help="parallel processes for --evaluate (about 1 GB each)")
     d = sub.add_parser("dashboards", help="write light dashboards to book/dashboards/")
     d.add_argument("keys", nargs="+")
     a = ap.parse_args(argv)
     for key in a.keys:
         if a.cmd == "export":
-            p = export(key, a.evaluate, a.worlds)
+            p = export(key, a.evaluate, a.worlds, a.jobs)
             print(f"wrote {p} ({p.stat().st_size / 1024:.0f} kB)")
         else:
             for p in dashboards(key):
                 print(f"wrote {p} ({p.stat().st_size / 1e6:.1f} MB)")
 
-
-if __name__ == "__main__":
-    main()
 
 
 def _after_bite(run: Path) -> dict:
@@ -658,3 +698,6 @@ def after_a_bite(s, main: list[Path], control: list[Path]):
     return "after_a_bite", {"columns": ["In the recorded last generation", "main"] + (["control"] if c else []),
                             "rows": [[label, _stat([x[k] for x in m])] + ([_stat([x[k] for x in c])] if c else []) for label, k in rows],
                             "caption": "From the recording of the last generation of every seed (a sample of 64 animals each)."}
+
+if __name__ == "__main__":
+    main()

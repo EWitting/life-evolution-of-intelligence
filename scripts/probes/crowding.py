@@ -1,0 +1,40 @@
+"""Is a stage's world crowded? The stage's starting population (the parent's frozen seed 0, with the stage's
+`adapt_init`) and its newest evolved population, in the stage's world at several sizes with the same number of
+animals and the same density of bushes. If animals take food from each other, both do better in a larger world, and
+a population that forages better can look worse over the generations of a run. Worlds as in `stages.lesion`.
+
+    uv run python scripts/probes/crowding.py <stage key> [size ...]     sizes in cells per side (default: the stage's)
+    WORLDS=<n> (default 4)"""
+import os, sys, time
+from dataclasses import replace
+import jax, numpy as np
+from life.experiments import stages as S
+from life.freeze import load_frozen
+from life.run import load_population, latest_run, make_layout, make_simulate
+
+s0 = S.STAGES[sys.argv[1]]
+WORLDS = int(os.environ.get("WORLDS", 4))
+for size in [int(a) for a in sys.argv[2:]] or [s0.world.height]:
+    s = replace(s0, world=replace(s0.world, height=size, width=size))
+    exp = S.make_exp(s, s.brain, "crowding_probe", 1, 0)
+    lay = make_layout(exp)
+    start = load_frozen(s.parent, 0, exp)
+    if s.adapt_init:
+        start = s.adapt_init(start, lay)
+    rs, fn = s.build(exp)
+    sim = make_simulate(exp, record=False)
+    extra = S.poison_metrics(rs)
+    for label, pop in (("start", start), ("evolved", load_population(latest_run(s.name), exp, seed=0))):
+        acc, t0 = [], time.time()
+        for k in jax.random.split(jax.random.PRNGKey(123), WORLDS):
+            kr, ks = jax.random.split(k)
+            rules = jax.tree_util.tree_map(lambda a: a[0], fn(0, kr))
+            st, _ = sim(rules, pop, ks)
+            e = extra(st, None)
+            life = np.asarray(st["alive_ticks"])
+            acc.append([float(st["fed_meal"].mean()), life.mean(), np.median(life), float(e["berries"]), float(e["poison_frac"]),
+                        float((life >= exp.evolution.ticks_per_generation).mean())])
+        acc = np.array(acc); m = acc.mean(0)
+        print(f"[{s.key} {size}x{size}] {label:8s} well-fed lifetime {m[0]:5.0f} +-{acc[:, 0].std(ddof=1) / np.sqrt(WORLDS):.0f}  lifetime mean {m[1]:5.0f} "
+              f"median {m[2]:5.0f}  alive at the cap {m[5]:.0%}  berries {m[3]:5.1f}  poison share {m[4]:.3f}  "
+              f"({(time.time() - t0) / WORLDS:.0f} s per world)", flush=True)

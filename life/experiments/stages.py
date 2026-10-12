@@ -928,7 +928,12 @@ stage(Stage("x.td", "sx_td_test", "1.6", BXTD, W16, VISION_CH1, BODY_TASTE, STAG
 # warmth seeking little (user, 2026-10-12: no patches). The looks stay as in chapter 1. One colour shared by a type's
 # bush, berry and empty bush (`shared_colour`) was tried and dropped: a full bush then looks more like its own empty
 # bush (cosine 0.55 against 0.22) and the adapted population lost 42% at generation 0 (1144 -> 661, eight worlds).
-W20 = replace(W17, spawn_density=0.3)
+# Twice the area for the same 256 animals (181 x 181; user, 2026-10-12): at 128 x 128 the animals took food from each
+# other in the first few hundred ticks, when all are alive and 70% of the bushes are still regrowing, and the more
+# so the better they foraged: the evolved camera-eyes population scored 788 at 128, 1247 at 181 and 1722 at 256,
+# its starting population 487, 676 and 765 (`scripts/probes/crowding.py`). A stage that forages better must not
+# look worse for it. At 256 a simulation takes about twice as long and 37% reach the life cap.
+W20 = replace(W17, spawn_density=0.3, height=181, width=181)
 
 
 def world_ch2(exp, shared_colour: bool = False):

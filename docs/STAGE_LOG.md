@@ -1851,3 +1851,46 @@ Frozen as `frozen/1.8` (user, 2026-10-12: complete and freeze chapter 1), tag `c
 
 Tools changed on the way: `life.book` evaluates in parallel processes (`--jobs`, default 5) and prints a line per
 finished task; a single process took about four times as long and showed nothing until the end.
+
+## v34 (2026-10-12, evening): chapter 2 begins; which world gives learning a job again?
+
+New: `WorldConfig.patch_purity` (the chance that an object in a typed patch is the patch's own type; 1 = the 1.8
+world, unchanged) and `scripts/probes/world2.py` (a frozen population in a variant of the 1.8 world, intact and with
+one circuit silenced). Seed 0, four worlds (eight where stated), well-fed lifetime, % of intact.
+
+The affect population (1.8):
+
+| world | intact | plasticity off | cold | rest | hungry | flee | fed | poison share (intact / plasticity off) |
+|---|---|---|---|---|---|---|---|---|
+| one type per patch (the 1.8 world) | 993 | 101 | 102 | 39 | 42 | 85 | 61 | 0.034 / 0.042 |
+| patches 80% own type | 645 | 105 | 99 | 38 | 43 | 94 | 61 | 0.091 / 0.099 |
+| patches 60% own type | 428 | 106 | 107 | 41 | 47 | 106 | 71 | 0.151 / 0.165 |
+| patches, types fully mixed | 276 | 97 | 101 | | | 83 | 78 | 0.219 / 0.247 |
+| no patches (the drives world), 8 worlds | 263 | 116 | 108 | | | 96 | 93 | 0.233 / 0.237 |
+| no patches, twice the food (density 0.3) | 408 | 109 | | | | | | 0.210 / 0.228 |
+| patches 60%, density 0.3 | 622 | 104 | | | | | | 0.133 / 0.151 |
+
+The drives population (1.7) in the same worlds:
+
+| world | intact | plasticity off | poison share (intact / plasticity off) | berries (intact / plasticity off) |
+|---|---|---|---|---|
+| patches 60% own type | 234 | 101 | 0.205 / 0.244 | 19.5 / 24.6 |
+| no patches, density 0.3 | 544 | 77 | 0.191 / 0.247 | 47.4 / 46.2 |
+
+Room for learning (`lessons.py`, the affect population with learning off, two worlds): a perfect learner would save
+7% of intake in the 80% patches, 11% in the 60% patches, 16% without patches (the association world was designed
+at 23%). Per life about 14 bush visits, 5 to 7 of them to poison at 1.1 bites each; an animal is hurt by 1.6 of
+the two poison types and comes back to a type that already hurt it 3.5 to 5.5 times.
+
+Reading (one seed, few worlds: a direction, not a result):
+
+- Mixing poison back into the patches does not bring learning back for the affect population, in any world tried,
+  also not with twice the food (lives 40% longer). With learning on it eats fewer berries and hardly less poison.
+- The drives population still gains from learning where food is plentiful and evenly mixed (77% without it, poison
+  share 0.19 against 0.25, the same number of berries). So the affect lineage lost the good use of learning in its
+  40 generations in a world where learning was neutral; the rule and the learning rates (0.45) are still there.
+- In patches the room is small anyway (7 to 11%): a mistake costs one bite, because the pain reflex ends the visit.
+- Life length is not the main limit: the first bite of each poison type is the only one a longer life cannot save
+  (1.6 of 6 to 8 poison bites).
+- Worlds differ a lot (lifetime 320 to 900 over eight worlds of one setting): compare within the same worlds only.
+  A recorded and an unrecorded simulation of the same life give the same numbers (checked).

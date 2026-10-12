@@ -71,8 +71,13 @@ def init_world(cfg: WorldConfig, rules: RuleArrays, key: jax.Array) -> WorldStat
         cdf = jnp.cumsum(wc) / jnp.maximum(wc.sum(), 1e-9)
         patch_type = jnp.searchsorted(cdf, (jnp.arange(cfg.patches) + 0.5) / cfg.patches)
         nearest = ((yy[None] - cen[:, 0, None, None]) ** 2 + (xx[None] - cen[:, 1, None, None]) ** 2).argmin(axis=0)
+        own = patch_type[nearest]
+        if cfg.patch_purity < 1.0:   # mostly one kind: the rest of a patch is drawn from all types
+            k10, k11 = jax.random.split(jax.random.fold_in(key, 10))
+            other = jax.random.choice(k11, w.shape[0], (H, W), p=wc / jnp.maximum(wc.sum(), 1e-9))
+            own = jnp.where(jax.random.uniform(k10, (H, W)) < cfg.patch_purity, own, other)
         grid = jnp.where(place & (jax.random.uniform(k8, (H, W)) < wc.sum() / jnp.maximum(total, 1e-9)),
-                         patch_type[nearest], EMPTY).astype(jnp.int32)
+                         own, EMPTY).astype(jnp.int32)
         even = jax.random.uniform(k9, (H, W)) < cfg.spawn_density * we.sum() / jnp.maximum(total, 1e-9)
         heat_obj = jax.random.choice(jax.random.fold_in(key, 9), w.shape[0], (H, W),
                                      p=jnp.where(we.sum() > 0, we / jnp.maximum(we.sum(), 1e-9), p))

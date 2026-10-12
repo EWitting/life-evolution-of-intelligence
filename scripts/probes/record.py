@@ -1,8 +1,10 @@
 """Record one life of a population on a brain variant, at generation 0 (no evolution), as a run directory that
 learned.py, events.py and the dashboard can read: runs/_probe_<variant>/<stage>/.
 
-    STAGE=1.5 RUN=<population run dir> uv run python scripts/probes/record.py <variant> [agents]
-variant: see variants.py. agents: size of the recorded world's population (default 64, the world shrinks to match)."""
+    STAGE=1.5 RUN=<population run dir> uv run python scripts/probes/record.py <variant> [agents] [field=value ...]
+variant: see variants.py. agents: size of the recorded world's population (default 64, the world shrinks to match).
+field=value: WorldConfig fields of the full-size world (e.g. patches=40 patch_radius=6); they are added to the
+directory name."""
 import os, sys
 from dataclasses import replace
 import jax, numpy as np
@@ -10,10 +12,15 @@ from life.experiments import stages as S
 from life.run import load_population, latest_run, make_simulate, make_layout, save_recording, RUNS_DIR
 from variants import variant
 
-V = sys.argv[1]; NA = int(sys.argv[2]) if len(sys.argv) > 2 else 64
+FIELDS = [a for a in sys.argv[2:] if "=" in a]; _n = [a for a in sys.argv[2:] if "=" not in a]
+V = sys.argv[1]; NA = int(_n[0]) if _n else 64
 s = S.STAGES[os.environ.get("STAGE", "1.5")]
+for a in FIELDS:
+    k_, v_ = a.split("=")
+    s = replace(s, world=replace(s.world, **{k_: type(getattr(s.world, k_))(float(v_))}))
 f = NA / s.world.num_agents
-world = replace(s.world, num_agents=NA, height=round(s.world.height * f ** 0.5), width=round(s.world.width * f ** 0.5))
+world = replace(s.world, num_agents=NA, height=round(s.world.height * f ** 0.5), width=round(s.world.width * f ** 0.5),
+                patches=round(s.world.patches * f))
 exp = S.make_exp(replace(s, world=world), variant(s.brain, V), "probe", 1, 0)
 exp = replace(exp, evolution=replace(exp.evolution, siblings=1))
 pop = load_population(os.environ.get("RUN") or latest_run(S.STAGES[s.parent].name), exp, seed=0)
@@ -26,7 +33,7 @@ rs, fn = s.build(exp)
 kr, ks = jax.random.split(jax.random.PRNGKey(31))
 rules = jax.tree_util.tree_map(lambda a: a[0], fn(0, kr))
 st, recs = make_simulate(exp, record=True)(rules, pop, ks)
-out = RUNS_DIR / (f"_probe_{V}" + ("_dense" if os.environ.get("DENSE") else "")) / s.key
+out = RUNS_DIR / (f"_probe_{V}" + ("_dense" if os.environ.get("DENSE") else "") + "".join("_" + a.replace("=", "") for a in FIELDS)) / s.key
 out.mkdir(parents=True, exist_ok=True)
 app = rules.appearance if rules.appearance.ndim == 2 else rules.appearance[0]
 save_recording(out, exp, rs, make_layout(exp), pop, recs, 0, [], dashboard=False, appearance=app)

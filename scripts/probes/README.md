@@ -43,6 +43,7 @@ and three seeds only when a design looks final.
 | `supply.py` | Edible bushes carrying berries, animals alive and mean stomach over a life (stock or flow?). |
 | `forage.py` | How a life is spent: moving, facing a bush, grasping at nothing, berries per life. |
 | `freeze.py` | Episodes of standing and grasping at nothing: what is in front, what started them, what the cells do. |
+| `dwell.py` | What could a lasting state after a meal or a poison bite be worth: how visits end, the wait for the next meal, whether food or poison is clumped. |
 | `record.py` | Record one generation-0 life of a population on a brain variant, readable by `learned.py` and the dashboard. |
 | `prune.py` | Delete superseded runs: keep the newest finished run of every stage directory. |
 

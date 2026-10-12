@@ -1705,3 +1705,48 @@ drives. Left for the user: freeze as it is, or tune (a retune reruns drives only
 
 **Drives frozen as it is** (user, 2026-10-08, evening): the control wins the head-to-head by being greedy in a food
 race; the animals with drives are the more efficient ones among their own. `frozen/1.7`, tag `chapter-1-drives`.
+
+## v33 (2026-10-12): affect, before any design: what could a lasting state be worth?
+
+Design frame agreed with the user: affect is built on the frozen drives brain as a second page of the same system
+(a need selects a mode; then modes become states that last and that events can set). Names: serotonin for a
+"fed, stay" state; dopamine is kept for the learning signal of chapter 2; plain names otherwise (`hungry`, `cold`).
+The hunger-driven roam nucleus of the old stage 1.3 is dropped: `hungry` does that job.
+
+New probe `scripts/probes/dwell.py` (from a recording: how visits end, the wait for the next meal, clumping).
+`record.py` takes world overrides. No evolution was run.
+
+Last generation of drives, main seeds 0 / 1 / 2 (control seed 0 in brackets):
+
+| | main | control |
+|---|---|---|
+| bites per visit to a good bush (a bush holds 6) | 5.5 / 5.6 / 5.4 | (5.6) |
+| visits that leave berries behind | 12% / 9% / 12% | (5%) |
+| stomach after such a visit | 81% / 73% / 96% full | (74%) |
+| an emptied bush stays empty (median) | 960 ticks | |
+| good bushes with berries within 3 cells of a meal, vs the whole map | 0.038 vs 0.075, 0.048 vs 0.069, 0.046 vs 0.066 | (0.035 vs 0.071) |
+| next visit is to poison, after a poison bite / after a good meal | 67 / 59%, 60 / 52%, 62 / 51% | (63 / 49%) |
+| wait after a poison bite (median) | 17 / 19 / 13 ticks | (22) |
+
+- **Staying at food is already done**: the grasp programme empties a bush in one visit, one bite per tick.
+- **One bush is a full stomach**, so after a meal the animal is not looking for food; `hungry` going silent already
+  hands over to the warmth mode. A "fed, stay" state would repeat that.
+- **Nothing to search for nearby**: food is spread evenly, the spot just eaten is poorer than average, and the bush
+  is empty for 960 ticks.
+- **Nothing to flee from**: poison is not clumped either, and the animals already leave a poison bush within about
+  20 ticks. (The slightly higher poison share after a poison bite is probably early life, before the lesson.)
+
+So in the drives world neither a "search here" nor a "get away" state can pay, whatever the circuit.
+
+One generation-0 life of the drives population (seed 0, 64 animals, one world each, so the fitness is a rough
+figure) with the existing `patches` option, which puts all objects, hot springs included, into discs of radius 6:
+
+| world | well-fed lifetime | good bushes within 3 cells of a meal vs whole map | next bush (median) | warm_seek on |
+|---|---|---|---|---|
+| drives world | 717 | 0.054 vs 0.062 | 14 cells | 15% |
+| 80 patches | 572 | 0.100 vs 0.071 | 8 cells | 11% |
+| 30 patches | 298 | 0.197 vs 0.076 | 3 cells | 5% |
+
+Patches make "food here means food nearby" true (up to 2.6 times the map average) but poison is mixed in just as
+much (poison around a poison bite 0.213 vs 0.082 at 30 patches), so a meal and a poison bite say the same thing
+about the place. Open, for the user: what the affect world is (see STATUS).

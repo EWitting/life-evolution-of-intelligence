@@ -1,7 +1,7 @@
 # Status
 
 One screen on where the project is. Plan: `docs/BRAIN_EVOLUTION.md`. **Frozen stages: `frozen/README.md`.** Details, numbers and run directories:
-`docs/STAGE_LOG.md`. Newest decisions: `docs/DECISIONS.md` (ADR-017 to ADR-024). Last updated 2026-10-08 (evening).
+`docs/STAGE_LOG.md`. Newest decisions: `docs/DECISIONS.md` (ADR-017 to ADR-024). Last updated 2026-10-12.
 
 ## How a stage is judged
 
@@ -60,7 +60,11 @@ remapping the stored populations and freezing again.
 ## Next steps
 
 1. **Resume here: affect**, redesigned on the frozen drives brain: assay and generation 0 first, design choices
-   with the user. It is the last stage of the chapter, so it cannot disturb anything above it. Drives is frozen as
+   with the user. Frame agreed 2026-10-12: a second page of the same system as drives (modes become states that
+   last and that events can set); serotonin names the "fed, stay" state, dopamine is kept for chapter 2, no roam
+   nucleus. **Open: the world.** In the drives world no lasting state can pay (STAGE_LOG v33,
+   `scripts/probes/dwell.py`): a bush is emptied in one visit and fills the stomach, food and poison are spread
+   evenly. The existing `patches` option clumps food and poison alike. It is the last stage of the chapter, so it cannot disturb anything above it. Drives is frozen as
    it is (user, 2026-10-08): it is fine that the greedy control wins the head-to-head food race while the animals
    with drives are the more efficient ones among their own.
 2. Then freeze affect (`python -m life.freeze <key>`), tag, chapter 2.

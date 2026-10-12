@@ -4,8 +4,8 @@ animals and the same density of bushes. If animals take food from each other, bo
 a population that forages better can look worse over the generations of a run. Worlds as in `stages.lesion`.
 
     uv run python scripts/probes/crowding.py <stage key> [size ...]     sizes in cells per side (default: the stage's)
-    WORLDS=<n> (default 4)"""
-import os, sys, time
+    WORLDS=<n> (default 4), BOOK=1: also write the table book/data/crowding_<key>.json for the stage's page"""
+import json, os, sys, time
 from dataclasses import replace
 import jax, numpy as np
 from life.experiments import stages as S
@@ -14,7 +14,9 @@ from life.run import load_population, latest_run, make_layout, make_simulate
 
 s0 = S.STAGES[sys.argv[1]]
 WORLDS = int(os.environ.get("WORLDS", 4))
+table = []
 for size in [int(a) for a in sys.argv[2:]] or [s0.world.height]:
+    table.append([f"{size} x {size}" + (" (this stage)" if size == s0.world.height else "")])
     s = replace(s0, world=replace(s0.world, height=size, width=size))
     exp = S.make_exp(s, s.brain, "crowding_probe", 1, 0)
     lay = make_layout(exp)
@@ -35,6 +37,15 @@ for size in [int(a) for a in sys.argv[2:]] or [s0.world.height]:
             acc.append([float(st["fed_meal"].mean()), life.mean(), np.median(life), float(e["berries"]), float(e["poison_frac"]),
                         float((life >= exp.evolution.ticks_per_generation).mean())])
         acc = np.array(acc); m = acc.mean(0)
+        table[-1] += [round(float(m[0])), f"{m[5]:.0%}"]
         print(f"[{s.key} {size}x{size}] {label:8s} well-fed lifetime {m[0]:5.0f} +-{acc[:, 0].std(ddof=1) / np.sqrt(WORLDS):.0f}  lifetime mean {m[1]:5.0f} "
               f"median {m[2]:5.0f}  alive at the cap {m[5]:.0%}  berries {m[3]:5.1f}  poison share {m[4]:.3f}  "
               f"({(time.time() - t0) / WORLDS:.0f} s per world)", flush=True)
+if os.environ.get("BOOK"):
+    out = {"columns": ["World, cells per side", "starting population", "reaching the end of life", "after evolution (seed 0)",
+                       "reaching the end of life"], "rows": table,
+           "caption": f"Well-fed lifetime, mean of {WORLDS} worlds, the same {s0.world.num_agents} animals and the same density "
+                      "of bushes in every size. The starting population is the population of the previous stage with the "
+                      "new eye columns filled in."}
+    with open(os.path.join("book", "data", f"crowding_{s0.key}.json"), "w", encoding="utf-8") as f:
+        json.dump(out, f)

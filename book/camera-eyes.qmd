@@ -1,0 +1,119 @@
+# Camera eyes {#sec-camera-eyes}
+
+<div data-life="status" data-stage="2.1"></div>
+
+Chapter 1 ended with an animal that steers, avoids what hurts, learns which food to distrust, looks after two
+needs and carries a mood for a while. It did all of that with five coarse eyes. This chapter builds the brain of
+an early fish on top of it, and a fish sees far better than a worm. So the first step of the chapter is not a new
+part of the brain. It is better eyes, and a world to use them in.
+
+## The world of this chapter
+
+The last stage of chapter 1 grew every kind of bush in its own patches. That gave the two lasting states their
+job, and it took the job away from learning: in a patch of one kind, the first bite says everything about the
+neighbours. The stages of this chapter are about learning, so they need a world in which learning pays.
+
+Several worlds were tried with the animals of chapter 1. Patches that were mostly one kind, with some poison
+standing between the good bushes, did not bring learning back, however the kinds were mixed. Only a world without
+patches did, where good and poison bushes stand side by side everywhere. That is the world of this chapter. It is
+the cold world of the drives stage, with more bushes and more room.
+
+The price is that the two lasting states of the previous stage have less to do here. That is accepted. Not every
+part of a brain matters equally in every place.
+
+The food is as before: four kinds of berry bush, new in every life, half of them poison.
+
+<div data-life="settings" data-stage="2.1"></div>
+
+## The biology: an eye that forms an image
+
+The eyes of early bilaterians were little more than light-sensitive spots that told bright from dark and one side
+from the other. Vertebrates have camera eyes: a lens throws an image onto a sheet of receptors, and the brain
+receives many small views side by side. With the image came a part of the midbrain that holds a map of it, the
+*optic tectum*. In a fish or a frog the tectum picks out something small and moving, turns the eyes and body to
+it, and starts the escape from something large that grows quickly.
+
+This stage gives the animal the sharper eyes and leaves the tectum out. In this world nothing moves and nothing
+hunts, so the quick, inborn reactions that the tectum is known for have nothing to react to. A first design, a map
+that picked the nearest thing in view and steered to it, was tried before any evolution and did not help: the
+animal already steers to bushes with the reflexes it evolved in chapter 1, and "the nearest thing" is as often an
+empty bush or a poison one. The other thing a tectum does, letting what the animal has learned choose where to
+turn, needs the parts of the brain that this chapter adds later.
+
+## The change
+
+The animal now looks in nine directions where it had five, and sees one step further.
+
+No cells are added. Every part of the brain that listened to the five old eyes now listens to all nine, and every
+connection from every eye is its own: there is no copy of a circuit per eye, and nothing forces two eyes to mean
+the same. What a look is worth, and in which direction it counts, is for evolution and for the animal's own
+learning to settle, eye by eye.
+
+The four new eyes sit between the old ones. They do not start silent. Each new connection starts as the average
+of the same connection from the two neighbouring eyes, so that the animal makes sense of what the new eyes see
+from its first tick. Nine eyes send nearly twice as much as five, which would overwhelm the cells that listen, so
+all connections from the eyes are made weaker by the same factor.
+
+<div data-life="brain" data-stage="2.1"></div>
+
+## Results
+
+### The run
+
+This stage has no control. Its question is not whether a new circuit earns its place, but whether the animals of
+chapter 1 settle into the new world with their new eyes. The comparison is with the population they started from.
+
+<div data-life="curves" data-stage="2.1"></div>
+
+<div data-life="summary" data-stage="2.1"></div>
+
+The curve of a run is hard to read here, because every generation lives in a new world and the worlds differ a
+great deal. The fair comparison puts the starting population and the evolved one in the same worlds. That is the
+table below, in the row for this stage's world: the evolved animals do clearly better than the ones they
+descend from.
+
+<div data-life="table" data-stage="2.1" data-example="crowding"></div>
+
+### Room
+
+The same table shows why the world was made larger. With the same animals and the same density of bushes, both
+populations do better when there is more room, and the better population gains the most.
+
+The reason is in what is left standing. A good bush is emptied in a few bites. A poison bush loses one berry and
+keeps the rest. Where many animals forage close together, the bushes that still carry berries are more and more
+the poison ones, and the good ones run out nearby although the world as a whole grows plenty. A population that
+forages better does this to itself faster. In a small world that hides part of an improvement, so the world of
+this chapter has twice the area of the worlds of chapter 1.
+
+### Is learning used again?
+
+<div data-life="lesions" data-stage="2.1"></div>
+
+Yes, and more than at any point in chapter 1. With learning switched off, the animals lose about half of their
+fitness and eat far more poison. In the patches of the previous stage the same switch cost nothing.
+
+The new eyes have a part in that. The lesson of a poison bite is written into the connections from every eye, so
+nine eyes carry it where five did, and the animal recognises the poison from more directions.
+
+The two lasting states of the previous stage, `flee` and the chain from `fed` to `settle`, matter little in this
+world, as expected without patches. They stay in the brain.
+
+When the four new eyes started silent instead, the animals did worse after the same number of generations, and
+the new eyes were still weak at the end. Evolution alone needs a long time to give dozens of new connections per
+cell a meaning; copying the neighbours gives it something to adjust.
+
+### How a life is spent
+
+<div data-life="table" data-stage="2.1" data-example="life_spent"></div>
+
+These animals find food almost at once, and most of them still die young. What kills them is not hunger but
+poison: an animal bites the same kinds of poison bush again and again, far more often than it would need to find
+out which ones they are, and a few bites cost as much as the stomach it was born with. When it does eat well, it
+keeps biting on a full stomach, which gains nothing and strips the good bushes around it.
+
+Both are failures of learning, and they set the task for the stages that follow: to tell apart things that look
+alike, to remember what was learned about each, and to learn what is worth wanting and not only what to avoid.
+
+## The runs behind this page
+
+<div data-life="runs" data-stage="2.1"></div>

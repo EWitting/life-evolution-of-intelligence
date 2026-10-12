@@ -250,11 +250,16 @@ def _versus_task(key: str, worlds: int) -> list:
     return [float(d) for d in S.versus(key, worlds)]
 
 
-def evaluate(key: str, worlds: int = 8, jobs: int = 5) -> dict:
+def evaluate(key: str, worlds: int = 8, jobs: int = 5, lesions: str = "recent") -> dict:
     """The three measurements that need simulation, over every seed: the final populations re-evaluated in
-    `worlds` shared worlds, with each region silenced (lesions), and main against control in the same worlds."""
+    `worlds` shared worlds, with each region silenced (lesions), and main against control in the same worlds.
+    lesions 'recent': only the regions that this stage or its parent added (and plasticity); 'all': every region,
+    which for a late stage is most of the cost (user, 2026-10-12: the full sweep only when it is needed)."""
     from .experiments import stages as S
     s = S.STAGES[key]
+    older = set()
+    if lesions == "recent" and s.parent and S.STAGES[s.parent].parent:
+        older = {r.name for r in S.STAGES[S.STAGES[s.parent].parent].brain.regions}
     main, control = S.seed_runs(s), S.seed_runs(s, control=True)
     out = {"worlds": worlds, "runs": [_rel(r) for r in main + control],
            "when": datetime.now().isoformat(timespec="minutes")}
@@ -265,7 +270,7 @@ def evaluate(key: str, worlds: int = 8, jobs: int = 5) -> dict:
     tasks = []
     for i, r in enumerate(main):
         names = json.loads((r / "layout.json").read_text())["names"]
-        labels = ["intact", "no_plasticity", "no_depression"] + [n for n in names if n not in ("in", "out")]
+        labels = ["intact", "no_plasticity", "no_depression"] + [n for n in names if n not in ("in", "out") and n not in older]
         tasks += [("main", i, str(r), worlds, tuple(labels[k:k + 3])) for k in range(0, len(labels), 3)]
     tasks += [("control", i, str(r), worlds, ("intact",)) for i, r in enumerate(control)]
     import time
@@ -581,8 +586,16 @@ def life_spent(s, main: list[Path], control: list[Path]):
                           "caption": "From the recording of the last generation of every seed (a sample of 64 animals each)."}
 
 
-for _key in ("1.1", "1.2h", "1.5", "1.6h", "1.7", "1.8"):
+for _key in ("1.1", "1.2h", "1.5", "1.6h", "1.7", "1.8", "2.1"):
     extra(_key)(life_spent)
+
+
+@extra("2.1")
+def crowding(s, main: list[Path], control: list[Path]):
+    """The stage's starting and evolved populations in worlds of several sizes, measured by
+    scripts/probes/crowding.py (it simulates, so it is run separately and leaves its result next to the data files)."""
+    f = BOOK_DIR / "data" / f"crowding_{s.key}.json"
+    return "crowding", json.loads(f.read_text()) if f.exists() else None
 
 
 @extra("1.2h")
@@ -596,7 +609,7 @@ def adaptation_off(s, main: list[Path], control: list[Path]):
 
 # ------------------------------------------------------------------ export
 
-def export(key: str, do_evaluate: bool = False, worlds: int = 8, jobs: int = 5) -> Path:
+def export(key: str, do_evaluate: bool = False, worlds: int = 8, jobs: int = 5, lesions: str = "recent") -> Path:
     from .experiments import stages as S
     s = S.STAGES[key]
     main, control = S.seed_runs(s), S.seed_runs(s, control=True)
@@ -616,7 +629,7 @@ def export(key: str, do_evaluate: bool = False, worlds: int = 8, jobs: int = 5) 
     }
     runs_now = [_rel(r) for r in main + control]
     if do_evaluate:
-        data["evaluation"] = evaluate(key, worlds, jobs)
+        data["evaluation"] = evaluate(key, worlds, jobs, lesions)
     elif old.get("evaluation"):
         data["evaluation"] = old["evaluation"]
     if data.get("evaluation"):
@@ -657,12 +670,14 @@ def main(argv=None):
     e.add_argument("--evaluate", action="store_true", help="also simulate: re-evaluation, head to head, lesions")
     e.add_argument("--worlds", type=int, default=8)
     e.add_argument("--jobs", type=int, default=5, help="parallel processes for --evaluate (about 1 GB each)")
+    e.add_argument("--lesions", choices=("recent", "all"), default="recent",
+                   help="regions to silence: those this stage or its parent added (default), or every region")
     d = sub.add_parser("dashboards", help="write light dashboards to book/dashboards/")
     d.add_argument("keys", nargs="+")
     a = ap.parse_args(argv)
     for key in a.keys:
         if a.cmd == "export":
-            p = export(key, a.evaluate, a.worlds, a.jobs)
+            p = export(key, a.evaluate, a.worlds, a.jobs, a.lesions)
             print(f"wrote {p} ({p.stat().st_size / 1024:.0f} kB)")
         else:
             for p in dashboards(key):

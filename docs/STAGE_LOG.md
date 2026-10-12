@@ -2032,3 +2032,29 @@ The starting population scores 676 in the same worlds (seed 0). Frozen as `froze
 adaptation step without control; the comparison is the silent-start trial at 128 (v36). The first three-seed run
 was stopped by the low-memory reaper when all three wrote their results at once (about 2 GB each at the end of a
 run, 0.4 GB before); a run now writes its 150 MB dashboard only with `--dashboard`.
+
+## v38 (2026-10-12, night): what the crowding is; no lottery of inborn taste; the book page of 2.1
+
+**The crowding is good bushes running out near the animals** (`scripts/probes/early.py`, the frozen 2.1 seed 0, the
+first 400 ticks, two worlds; user's idea). A good bush is emptied in six bites, a poison bush loses one berry and
+stays full. At tick 400, at 128 / 181 / 256 cells per side: share of the bushes carrying berries that is poison
+0.75 / 0.66 / 0.59 (0.51 at tick 0); full good bushes within 5 cells of an animal 3.2 / 5.1 / 6.6; alive 49 /
+65 / 77%; good bites per animal 21 / 30 / 40; poison bites 5.8 / 6.1 / 6.1. So the sizes differ in good bites,
+not in poison bites. The food budget of v37 assumed perfect harvesting; in the first 400 ticks at 128 the animals
+eat about half of all good berries there are, twice what they need (bites on a full stomach).
+
+**No lottery of inborn taste** (`scripts/probes/luck.py`, 64 genomes, eight worlds; user's question: does a
+generation select the genomes whose inherited look weights happen to dislike that world's poison?). Correlation of
+that inborn dislike with fitness within a world: -0.03 with learning, 0.00 without. A genome's fitness in one
+world and in another: +0.16 (+0.09 without learning). The best quarter of a world scores +109% above the mean
+there and +12% in another world (+101%, +9%). Selection is noisy from the luck of a life, not from a taste that
+fits one world. The measure of inborn taste is crude (look weights averaged over the eyes).
+
+**Book**: page `book/camera-eyes.qmd` (first page of chapter 2), data `book/data/2.1.json` (lesions in four worlds)
+and `crowding_2.1.json` (the frozen population at three sizes: start 487 / 676 / 765, evolved 567 / 1015 / 1569; the
+population evolved at 128 had scored 788 there). `life.book export` now silences only the regions that the stage or
+its parent added (`--lesions recent`, the default; `all` for the full sweep): 6 tasks instead of 18, 13 minutes.
+
+Ideas noted, not run (user): born with a fuller stomach against early deaths (measure with `luck.py`); more bushes
+or fewer animals instead of more area; the temperature field is convolved over the whole map every tick though
+hot springs never move (likely why world size costs time); compacting the arrays to the living animals.

@@ -61,14 +61,15 @@ remapping the stored populations and freezing again.
 
 ## Next steps
 
-1. **Resume here: the pallium** (ADR-025). Stage 2.1 (camera eyes) is frozen; its book page is still to be written
-   (`life.book export 2.1 --evaluate`; there is no control). First probe for the pallium: the assay of the
-   association stage with the learned synapses reading the pallium. What it has to fix is measured (STAGE_LOG v37):
-   the animals find food at once and die of repeated poison bites (30 in a full life; a perfect learner takes 2).
-   Open: what the crowding is (not food; test with other animals neither seen nor blocking).
-2. Cheaper evaluations for expensive stages (user, 2026-10-12): the export runs its simulations in parallel
-   (`--jobs`) and prints a line per finished task; still to add: lesions of the new cells and the parent's only,
-   four worlds for a routine check, seed 0 first.
+1. **Resume here: the pallium** (ADR-025). Stage 2.1 (camera eyes) is frozen and has its book page. First probe
+   for the pallium: the assay of the association stage with the learned synapses reading the pallium. What it has
+   to fix is measured (STAGE_LOG v37, v38): the animals find food at once and die of repeated poison bites (30 in a
+   full life; a perfect learner takes 2), and they strip the good bushes near them by biting on a full stomach.
+   Small things first, if wanted (user's ideas, v38): the temperature field computed once per life (speed), a
+   fuller stomach at birth (`luck.py` measures what selection keeps), compacting to the living animals.
+2. Cheaper evaluations (user, 2026-10-12): the export runs in parallel (`--jobs`), prints a line per finished
+   task and silences only the regions of the stage and its parent (`--lesions recent`, default); four worlds for a
+   routine check (`--worlds 4`), seed 0 first. A stage run writes its 150 MB dashboard only with `--dashboard`.
 3. Optional, out of curiosity: the frozen populations in earlier worlds (a sanity check, not a criterion).
 4. Rules of work (user): cheap trials first (one stage, one seed, generation 0 where possible); look inside a
    finished run before starting the next (`scripts/probes/README.md`, step 4); no new mechanisms without the

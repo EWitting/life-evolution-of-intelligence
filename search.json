@@ -34,7 +34,7 @@
     "href": "index.html#how-evolution-runs",
     "title": "Evolving a brain, stage by stage",
     "section": "How evolution runs",
-    "text": "How evolution runs\nA population is 64 genomes. Each genome lives as four siblings in a shared world, once. The genomes that did best have children, each from two parents, with a few mutations. That is one generation.\nFitness is what selection rewards. Here it is the well-fed lifetime: how long the animal lived, counted from its first meal, with each tick weighted by how full its stomach was. An animal that never eats scores zero.\nA life lasts at most 4000 ticks, several times what a full stomach lasts, so an animal cannot reach the end of its life on one good meal. Only the very first run, in which a brain evolves from nothing and nearly every animal dies young, uses shorter lives.",
+    "text": "How evolution runs\nA population is a set of genomes, each describing evolved synapse strengths and neuromodulator properties. Each genome lives as multiple siblings in a shared world. The genomes that did best have children, each from two parents, with a few mutations. That is one generation.\nFitness is what selection rewards. Here it is the well-fed lifetime: how long the animal lived, counted from its first meal, with each tick weighted by how full its stomach was. An animal that never eats scores zero.\nEvolved genomes are carried over to following stages, instead of starting from scratch any time a new module is added.",
     "crumbs": [
       "Introduction"
     ]
@@ -44,7 +44,7 @@
     "href": "index.html#how-a-stage-is-judged",
     "title": "Evolving a brain, stage by stage",
     "section": "How a stage is judged",
-    "text": "How a stage is judged\nOne life is mostly luck, and one evolution run can end almost anywhere. So every stage is run three times with different random seeds, and every result is given as a mean with its standard error over those seeds.\nEach stage has a main run, with the new circuit, and a control: the brain of the previous stage in the same new world, starting from the same population. The new circuit is then the only difference between them.\nA stage succeeds when two things hold:\n\nThe circuit is used. The final population is put back in its world with the new neurons silenced. If the animals do clearly worse without them, in every seed, they were using them. This is called a lesion test.\nMain is not worse than control. It does not have to be better. The point of a stage is a circuit that later stages can build on.\n\nA circuit that is not used is left out of the brain, and the page says so.",
+    "text": "How a stage is judged\nOne life is mostly luck, and one evolution run can end almost anywhere. So every stage is run three times with different random seeds, and every result is given as a mean with its standard error over those seeds.\nEach stage has a main run, with the new circuit, and a control: the brain of the previous stage in the same new world, starting from the same population. The new circuit is then the only difference between them.\nA stage succeeds when two things hold:\n\nThe circuit is used. The final population is put back in its world with the new neurons silenced. If the animals do clearly worse without them, in every seed, they were using them. This is called a lesion test.\nMain is not worse than control. It does not have to be better. The point of some stages is a circuit that later stages can build on.\n\nA circuit that is not used is left out of the brain, and the page says so.",
     "crumbs": [
       "Introduction"
     ]
@@ -57,6 +57,66 @@
     "text": "How to read a stage page\nEvery page has the same parts: the idea and its biology, the circuit as a diagram, the results, and the list of runs behind them, with a link to a dashboard that replays the last generation of a run. Where it helps, a page zooms in on one animal over a few dozen ticks, so that you can watch the circuit work.\nThe numbers, graphs and diagrams are drawn from data files that are written when a stage is run. Only the text is written by hand.",
     "crumbs": [
       "Introduction"
+    ]
+  },
+  {
+    "objectID": "roadmap.html",
+    "href": "roadmap.html",
+    "title": "Roadmap",
+    "section": "",
+    "text": "Chapter 1: steering\nThis page says where the book is going. Only the first chapter is written. Everything after it is a plan, and the plan changes as the experiments come in: stages have already been moved, merged and left out, and that will happen again.\nThe order follows the five breakthroughs of A Brief History of Intelligence. Each is one chapter, each belongs to a group of animals, and each builds on the brain of the chapter before it.\nThe brain of a small worm. It turns what it sees into movement (Steering), sorts the world into good and bad (Valence: good and bad), stops reacting to what is always there (Habituation: getting used to what is always there), learns in one life which new foods hurt (Association: learning what is bad), looks after hunger and cold (Drives: hunger and cold), and stays in a state for a while after a meal or a poison bite (Affect: states that last).\nThis animal learns one thing: what to stay away from. It cannot learn what is worth going to, and it cannot learn what to do.",
+    "crumbs": [
+      "Roadmap"
+    ]
+  },
+  {
+    "objectID": "roadmap.html#chapter-2-reinforcing",
+    "href": "roadmap.html#chapter-2-reinforcing",
+    "title": "Roadmap",
+    "section": "Chapter 2: reinforcing",
+    "text": "Chapter 2: reinforcing\nThe brain of an early fish. The first vertebrates hunted in open water, and nearly all the parts of the vertebrate brain were already there. This chapter adds them in the following order.\n\nEyes and the tectum. The animal gets sharper eyes, and a map of what it sees in which the things in view compete, so that it goes for one target and does not end up between two.\nThe pallium. The first region whose wiring is not inherited at all. It spreads the look of a thing out over many cells, so that things that look alike can still be told apart. In chapter 1, what the animal learned about one food spread to the foods that resembled it.\nDopamine. A cell that fires when things turn out better than expected, and falls silent when they turn out worse. With it the animal learns what predicts food, and what predicts the thing that predicts food. It also learns to like, which chapter 1 could not do.\nHands. Until here the animal eats what it grasps. Now it can pick something up, hold it and eat it later, so that there is something to choose between.\nThe basal ganglia. The same dopamine signal teaches which action to take. This is learning by trial and error, as in a rat that learns to press a lever.\nCuriosity. New things become a little rewarding in themselves, so that the animal tries what it does not know yet.\n\nParked until these work: a map of places and the routes between them (the hippocampus), precise timing (the cerebellum), and modulators that set how fast the animal learns when its world is steady or changing.\nTwo things change in how the stages are done. The circuits are designed and tested before any evolution, and evolution then tunes them, in fewer generations than in chapter 1. And the learning stages get lab experiments: one animal in a scripted situation, as in an animal lab, to see whether it learns the way real animals do.",
+    "crumbs": [
+      "Roadmap"
+    ]
+  },
+  {
+    "objectID": "roadmap.html#chapter-3-simulating",
+    "href": "roadmap.html#chapter-3-simulating",
+    "title": "Roadmap",
+    "section": "Chapter 3: simulating",
+    "text": "Chapter 3: simulating\nThe brain of an early mammal, and its new part, the neocortex. The cortex learns to predict what the animal will sense next. Once it can do that, it can be run without the world: the animal stops at a choice, plays out each option, and picks the one that ends best.\nThe planned stages: a cortex that predicts, trying actions in the head at a choice point, replaying experience during rest and sleep, holding a goal through distractions, and remembering a single event.\nThe tests are the classic ones from the rat lab. An animal that explored a maze without reward goes straight to food that appears there later. An animal whose path is blocked takes a detour. An animal that has had enough of one food stops working for it at once.",
+    "crumbs": [
+      "Roadmap"
+    ]
+  },
+  {
+    "objectID": "roadmap.html#chapter-4-mentalizing",
+    "href": "roadmap.html#chapter-4-mentalizing",
+    "title": "Roadmap",
+    "section": "Chapter 4: mentalizing",
+    "text": "Chapter 4: mentalizing\nThe brain of a primate, living in a group in which the others matter. The brain first gets a model of itself: what it knows, and how sure it is. Applied to another animal, the same model says what that animal wants and what it has seen.\nThe planned stages: knowing when it does not know, reading the goals of others, learning a skill by watching, and preparing for a need it does not feel yet, such as storing food before the winter.",
+    "crumbs": [
+      "Roadmap"
+    ]
+  },
+  {
+    "objectID": "roadmap.html#chapter-5-speaking",
+    "href": "roadmap.html#chapter-5-speaking",
+    "title": "Roadmap",
+    "section": "Chapter 5: speaking",
+    "text": "Chapter 5: speaking\nThe human step. Calls with a fixed meaning come first, then signals whose meaning is agreed on within a group, then naming what two animals are both looking at. The aim at the end is knowledge that no single life could find again and that still grows from one generation to the next.\nThis chapter is the least certain, both in what is known about evolution and in whether a small grid world can carry it.",
+    "crumbs": [
+      "Roadmap"
+    ]
+  },
+  {
+    "objectID": "roadmap.html#the-world-grows-too",
+    "href": "roadmap.html#the-world-grows-too",
+    "title": "Roadmap",
+    "section": "The world grows too",
+    "text": "The world grows too\nA brain can only be tested on what its world asks of it, so the world grows with the brain. It takes more and more of the rules of One Hour One Life: tools, fire and cooking, and chains of steps that are too long to find by accident. Animals that move by themselves come in as prey and as predators.\nFor the last two chapters, the way lives are run has to change as well. A generation now starts and ends together. Animals that watch, imitate and teach each other need parents, children and lives that overlap.",
+    "crumbs": [
+      "Roadmap"
     ]
   },
   {

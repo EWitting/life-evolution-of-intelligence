@@ -37,7 +37,7 @@ ul.task-list li input[type="checkbox"] {
 <script src="site_libs/quarto-search/fuse.min.js"></script>
 <script src="site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="./">
-<link href="./1-0-steering.html" rel="next">
+<link href="./roadmap.html" rel="next">
 <script src="site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
@@ -289,6 +289,12 @@ ul.task-list li input[type="checkbox"] {
  <span class="menu-text">Introduction</span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./roadmap.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Roadmap</span></a>
+  </div>
+</li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
@@ -400,9 +406,9 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="how-evolution-runs" class="level2">
 <h2 class="anchored" data-anchor-id="how-evolution-runs">How evolution runs</h2>
-<p>A population is 64 genomes. Each genome lives as four siblings in a shared world, once. The genomes that did best have children, each from two parents, with a few mutations. That is one generation.</p>
+<p>A population is a set of genomes, each describing evolved synapse strengths and neuromodulator properties. Each genome lives as multiple siblings in a shared world. The genomes that did best have children, each from two parents, with a few mutations. That is one generation.</p>
 <p><strong>Fitness</strong> is what selection rewards. Here it is the <em>well-fed lifetime</em>: how long the animal lived, counted from its first meal, with each tick weighted by how full its stomach was. An animal that never eats scores zero.</p>
-<p>A life lasts at most 4000 ticks, several times what a full stomach lasts, so an animal cannot reach the end of its life on one good meal. Only the very first run, in which a brain evolves from nothing and nearly every animal dies young, uses shorter lives.</p>
+<p>Evolved genomes are carried over to following stages, instead of starting from scratch any time a new module is added.</p>
 </section>
 <section id="how-a-stage-is-judged" class="level2">
 <h2 class="anchored" data-anchor-id="how-a-stage-is-judged">How a stage is judged</h2>
@@ -411,7 +417,7 @@ ul.task-list li input[type="checkbox"] {
 <p>A stage succeeds when two things hold:</p>
 <ol type="1">
 <li><strong>The circuit is used.</strong> The final population is put back in its world with the new neurons silenced. If the animals do clearly worse without them, in every seed, they were using them. This is called a <em>lesion</em> test.</li>
-<li><strong>Main is not worse than control.</strong> It does not have to be better. The point of a stage is a circuit that later stages can build on.</li>
+<li><strong>Main is not worse than control.</strong> It does not have to be better. The point of some stages is a circuit that later stages can build on.</li>
 </ol>
 <p>A circuit that is not used is left out of the brain, and the page says so.</p>
 </section>
@@ -842,8 +848,8 @@ ul.task-list li input[type="checkbox"] {
   <div class="nav-page nav-page-previous">
   </div>
   <div class="nav-page nav-page-next">
-      <a href="./1-0-steering.html" class="pagination-link" aria-label="Steering">
-        <span class="nav-page-text"><span class="chapter-title">Steering</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="./roadmap.html" class="pagination-link" aria-label="Roadmap">
+        <span class="nav-page-text">Roadmap</span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

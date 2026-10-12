@@ -123,7 +123,8 @@ def berry_world(exp: ExperimentConfig, n_types: int = 4, poison: tuple = (), per
                 per_life_k: int = 1, onions: bool = True, springs: float = 0.0, poison_food: float = -1.0,
                 poison_pain: float = 1.0, reverse: bool = False, per_life_sets: tuple = (),
                 appearance_mode: str = "lookalike", novel_looks: tuple = (), novel_sim: float | None = None,
-                weights: dict | None = None, duds: tuple = (), berries: int | None = None):
+                weights: dict | None = None, duds: tuple = (), berries: int | None = None,
+                shared_colour: bool = False):
     """Several berry-bush types (the OHOL gooseberry and colour look-alikes; all behave like the gooseberry:
     6 berries, then empty, regrowing after regrow_ticks(exp)), optional wild onions and hot springs.
     poison: types whose berries always drain food and hurt (an inheritable fact). per_life_pool/per_life_k:
@@ -139,7 +140,10 @@ def berry_world(exp: ExperimentConfig, n_types: int = 4, poison: tuple = (), per
     duds: types whose bush looks like a bush but yields nothing (USE does nothing): a meaningless stimulus. With a
     look drawn per life (novel_looks) evolution cannot learn to ignore it by inheritance.
     berries: berries per bush (default BUSH_BERRIES); the regrowth time scales with it, so the food per bush and
-    tick stays the same and a smaller bush only means more, smaller visits."""
+    tick stays the same and a smaller bush only means more, smaller visits.
+    shared_colour (chapter 2): a novel type's colour is one vector, the same for its bush, berry and empty bush
+    (drawn in the directions that none of the three original looks uses). Without it the three get the same
+    coefficients in three different bases, so a bush and its own empty bush are no more alike than chance."""
     berries = int(BUSH_BERRIES if berries is None else berries)
     data = ohol.load()
     ids = [BUSH, BERRY, EMPTY_BUSH] + ([ONION_PLANT, ONION] if onions else []) + ([HOT_SPRING] if springs else [])
@@ -192,9 +196,13 @@ def berry_world(exp: ExperimentConfig, n_types: int = 4, poison: tuple = (), per
     novel_ids = np.array([[rs.local(variant(v)[o]) for o in objs] for v in novel_looks], np.int32).reshape(-1, 3)
     nsim = LOOKALIKE_SIMILARITY if novel_sim is None else novel_sim
 
+    shared = jnp.asarray(np.linalg.qr(np.column_stack([b for b, _ in basis] + [np.eye(K)]))[0][:, 3:K].T)   # [K-3, K]
+
     def novel_appearance(key):   # [E, types, 3 objects, K]
-        u = jax.random.normal(key, (E, len(novel_looks), K - 1))
+        u = jax.random.normal(key, (E, len(novel_looks), K - 3 if shared_colour else K - 1))
         u = u / jnp.linalg.norm(u, axis=-1, keepdims=True)
+        if shared_colour:
+            return nsim * bases[None, None] + np.sqrt(1 - nsim ** 2) * (u @ shared)[:, :, None, :]
         return nsim * bases[None, None] + np.sqrt(1 - nsim ** 2) * jnp.einsum("enc,ock->enok", u, comps)
 
     def rules_fn(gen, key):
@@ -651,14 +659,15 @@ STAPLE_WEIGHT = 0.0   # spawn weight of the ancestral good type (0: no familiar 
 ANC_POISON_WEIGHT = 0.0   # spawn weight of the ancestral poison type (0: none)
 
 
-def learning_world(exp, reverse: bool = False, springs: float = 0.0, berries: int | None = None):
+def learning_world(exp, reverse: bool = False, springs: float = 0.0, berries: int | None = None,
+                   shared_colour: bool = False):
     """Four novel berry types (two of them poison, drawn per life, with a look drawn per life), one ancestral good
     and one ancestral poison type, no onions. NOVEL_WEIGHT sets how much of the supply is novel: familiar food
     should keep a non-learner alive, novel food should be worth trying."""
     return berry_world(exp, 6, poison=(4,), per_life_pool=NOVEL, per_life_k=2, springs=springs, reverse=reverse,
                        novel_looks=NOVEL, novel_sim=NOVEL_SIM, poison_food=POISON_FOOD, onions=False,
                        weights={0: STAPLE_WEIGHT, 4: ANC_POISON_WEIGHT, **{v: NOVEL_WEIGHT for v in NOVEL}},
-                       berries=berries)
+                       berries=berries, shared_colour=shared_colour)
 
 
 _S15 = dict(row_extra=poison_metrics, plastic=True, generations=40, ticks=LIFE_15, eta_max=1.0, dense_plastic=True)
@@ -769,7 +778,8 @@ stage(Stage("1.6", "s1_6_reversal", "1.5c", B16, W16, VISION_CH1, BODY_TASTE, la
             notes="reversal learning: learned weights decay toward w0; the novel types swap meaning mid-life"))
 
 
-# Chapter 2 (older design; plan revised 2026-10-12, ADR-025: to be defined again on the affect brain) is written for a brain with both teachers: the taste teacher that chapter 1
+# Chapter 2, the first design (2026-09; keys old2.x, not on the path): replaced stage by stage by the definitions
+# under "chapter 2 as built" below (plan revised 2026-10-12, ADR-025). It is written for a brain with both teachers: the taste teacher that chapter 1
 # dropped is added back here, on the reversal brain.
 B16_TASTE = extend(B16, regions=(R("us_taste", 1, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, group="us"),),
                    projections=(P("in", "us_taste", src_select=("taste",), density=1.0, w_init=2.0, evolve=False),),
@@ -791,7 +801,7 @@ B21 = extend(B16_TASTE,
              projections=(P("in", "tectum", src_select=("vis*",), topology="topographic", groups=9, density=1.0),
                           P("tectum", "tectum_i", density=1.0), P("tectum_i", "tectum", density=1.0),
                           P("tectum", "out", density=1.0), P("tectum", "ganglion_e")))
-stage(Stage("2.1", "s2_1_tectum", "1.6", B21, W16, VISION_CH2, BODY_TASTE, lambda exp: learning_world(exp, reverse=True),
+stage(Stage("old2.1", "old_s2_1_tectum", "1.6", B21, W16, VISION_CH2, BODY_TASTE, lambda exp: learning_world(exp, reverse=True),
             row_extra=poison_metrics, plastic=True, generations=200, ticks=LIFE_LEARN,
             notes="retinotopic target selection with lateral inhibition; camera eyes (9 columns)"))
 
@@ -820,7 +830,7 @@ def xor_world(exp):
                        reverse=True)
 
 
-stage(Stage("2.2", "s2_2_pallium_expansion", "2.1", B22, W22, VISION_CH2, BODY_TASTE, xor_world,
+stage(Stage("old2.2", "old_s2_2_pallium_expansion", "old2.1", B22, W22, VISION_CH2, BODY_TASTE, xor_world,
             row_extra=poison_metrics, plastic=True, generations=200, ticks=LIFE_LEARN,
             notes="sparse random expansion (k-WTA) before US-gated learning; XOR poison rule per life"))
 
@@ -832,7 +842,7 @@ B23 = replace(B22, projections=tuple(
     for p in B22.projections) + (P("pallium", "pallium", rule="hebb", eta_init=0.005, decay=0.01,
                                    abcd=(1.0, 0.0, 0.0, 0.0)),))
 VISION_23 = replace(VISION_CH2, appearance_noise=0.3)
-stage(Stage("2.3", "s2_3_pallium_clustering", "2.2", B23, W22, VISION_23, BODY_TASTE, xor_world,
+stage(Stage("old2.3", "old_s2_3_pallium_clustering", "old2.2", B23, W22, VISION_23, BODY_TASTE, xor_world,
             row_extra=poison_metrics, plastic=True, generations=200, ticks=LIFE_LEARN,
             notes="unsupervised Oja input + recurrent Hebb in pallium; noisy appearance"))
 
@@ -844,7 +854,7 @@ B24 = extend(B23,
              projections=(*(P(s, "striatum") for s in ("pallium", "tectum", "valence_app", "valence_av", "ganglion_e")),
                           P("striatum", "gpi", topology="one_to_one", w_init=2.0, evolve=False),
                           P("gpi", "out", topology="one_to_one", w_init=2.0, evolve=False)))
-stage(Stage("2.4", "s2_4_basal_ganglia", "2.3", B24, W22, VISION_23, BODY_TASTE, xor_world,
+stage(Stage("old2.4", "old_s2_4_basal_ganglia", "old2.3", B24, W22, VISION_23, BODY_TASTE, xor_world,
             row_extra=poison_metrics, plastic=True, generations=200, ticks=LIFE_LEARN,
             notes="action selection by disinhibition (striatum -| GPi -| motor), fixed"))
 
@@ -885,7 +895,7 @@ B25 = extend(B24,
              modulators=(Mod("da", terms=(("us_taste", 1.0), ("us_pain", -1.0), ("value_app", GAMMA),
                                           ("value_av", -GAMMA), ("value_app_prev", -1.0), ("value_av_prev", 1.0))),))
 B25 = replace(B25, projections=to_dopamine(B25.projections))
-stage(Stage("2.5", "s2_5_dopamine_td", "2.4", B25, W22, VISION_23, BODY_TASTE, xor_world,
+stage(Stage("old2.5", "old_s2_5_dopamine_td", "old2.4", B25, W22, VISION_23, BODY_TASTE, xor_world,
             row_extra=poison_metrics, plastic=True, generations=200, ticks=LIFE_LEARN,
             notes="TD critic (opponent value populations) and dopamine teaching instead of the raw US"))
 
@@ -906,6 +916,84 @@ BXTD = replace(BXTD, projections=to_dopamine(BXTD.projections))
 stage(Stage("x.td", "sx_td_test", "1.6", BXTD, W16, VISION_CH1, BODY_TASTE, STAGES["1.6"].build,
             row_extra=poison_metrics, plastic=True, generations=200, ticks=LIFE_LEARN,
             notes="side test: 1.6 + TD critic, dopamine teaches instead of the raw US"))
+
+
+# ================================================================== chapter 2 as built (ADR-025)
+
+# The world of chapter 2 (STAGE_LOG v34): the drives world without patches and with more food. Of the worlds tried,
+# only this one gave learning a job again (plasticity off 87% of intact after 40 generations, trial `x.weven`);
+# every world with patches left it neutral. The stay-after-a-meal state keeps a smaller job here, the alarm and
+# warmth seeking little (user, 2026-10-12: no patches). A type's bush, berry and empty bush share one colour.
+W20 = replace(W17, spawn_density=0.3)
+
+
+def world_ch2(exp, shared_colour: bool = True):
+    return learning_world(exp, springs=SPRINGS_17, berries=LEARN_BERRIES, shared_colour=shared_colour)
+
+
+def camera_eyes(brain: BrainConfig) -> BrainConfig:
+    """The adjacent-ahead gate of the grasp programme, set again for the longer range of the camera eyes
+    (near = 1 - d / 6): shut from two cells on, open at one, as before."""
+    return replace(brain,
+                   regions=tuple(replace(r, bias=13.5) if r.name == "no_touch" else r for r in brain.regions),
+                   projections=tuple(replace(p, w_init=-18.0) if p.dst == "no_touch" and p.src == "in" else p
+                                     for p in brain.projections))
+
+
+B20 = camera_eyes(B18)   # the control of the tectum stage: the affect brain with the new eyes
+
+# 2.1 optic tectum: a map of the visual field, one cell per eye column, that picks one target and turns the body to
+# it. Fixed meaning (ADR-016), acting on programmes (ADR-020):
+#   tectum     9 cells. Cell c is driven by what column c sees: something is there, more so the nearer it is; walls
+#              and other animals do not count. Evolved synapses from the column's look (starting at zero) let
+#              evolution make some looks stand out more than others. Only the most active cell stays active
+#              (lateral inhibition: one target at a time);
+#   orient_l / orient_r   a target in the two outermost columns of a side (45 and 60 degrees) -> turn to that side;
+#   approach   a target in the five middle columns (within 30 degrees) -> FORWARD; shut on contact by the gate cell
+#              `touch` (something adjacent ahead: there the grasp programme takes over).
+# Aversion shuts all three (`no_feed`), so the tectum does not steer back to what the value cells turn away from.
+# On a grid with quarter turns this walks the staircase to the target: forward while it is ahead, a turn when it
+# has moved out to the side.
+TECT_HIT, TECT_NEAR, TECT_OTHER, TECT_OUT = 0.5, 1.5, -3.0, 1.5
+TECTUM = dict(sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, group="midbrain/tectum")
+TPROG = {**PROG, "group": "midbrain/tectum"}
+
+
+def with_tectum(brain: BrainConfig, out: float = TECT_OUT, parts: str = "orient+approach") -> BrainConfig:
+    """parts (probes): which programmes the tectum drives."""
+    topo = dict(topology="topographic", groups=9, density=1.0)
+    brain = extend(brain,
+                   regions=(R("tectum", 9, kwta=1, **TECTUM),),
+                   projections=(P("in", "tectum", src_select=("vis*.hit",), w_init=TECT_HIT, evolve=False, **topo),
+                                P("in", "tectum", src_select=("vis*.near",), w_init=TECT_NEAR, evolve=False, **topo),
+                                P("in", "tectum", src_select=("vis*.agent", "vis*.wall"), w_init=TECT_OTHER,
+                                  evolve=False, **topo),
+                                P("in", "tectum", src_select=CS_VIS, w_init=0.0, **topo)))
+    if "orient" in parts:
+        brain = extend(brain,
+                       regions=(R("orient_l", 1, **TPROG), R("orient_r", 1, **TPROG)),
+                       projections=(fixed("tectum", "orient_l", 3.0, src_range=(0, 2)),
+                                    fixed("tectum", "orient_r", 3.0, src_range=(7, 9)),
+                                    *(fixed("no_feed", g, VALENCE_MOTOR_W) for g in ("orient_l", "orient_r")),
+                                    fixed("orient_l", "out", out, dst_range=(2, 3)),
+                                    fixed("orient_r", "out", out, dst_range=(3, 4))))
+    if "approach" in parts:
+        brain = extend(brain,
+                       regions=(R("touch", 1, bias=-13.5, **GATE), R("approach", 1, **TPROG)),
+                       projections=(P("in", "touch", src_select=("vis+0.near",), density=1.0, w_init=18.0, evolve=False),
+                                    fixed("tectum", "approach", 3.0, src_range=(2, 7)),
+                                    fixed("touch", "approach", GATE_W),
+                                    fixed("no_feed", "approach", VALENCE_MOTOR_W),
+                                    fixed("approach", "out", out, dst_range=FWD)))
+    return brain
+
+
+B21 = with_tectum(B20)
+_S2 = dict(row_extra=poison_metrics, plastic=True, generations=30, ticks=LIFE_15, eta_max=1.0, dense_plastic=True)
+stage(Stage("2.0", "s2_0_eyes", "1.8", B20, W20, VISION_CH2, BODY_17, world_ch2, **_S2,
+            notes="the affect brain with camera eyes (9 columns, range 6) in the world of chapter 2"))
+stage(Stage("2.1", "s2_1_tectum", "1.8", B21, W20, VISION_CH2, BODY_17, world_ch2, **_S2,
+            notes="optic tectum: a map of the visual field picks one target; orient and approach programmes"))
 
 
 # ------------------------------------------------------------------ running

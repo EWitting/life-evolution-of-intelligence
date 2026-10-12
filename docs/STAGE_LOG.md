@@ -1927,3 +1927,34 @@ Summary of the four candidates after evolution (seed 0; % of intact): `x.weven` 
 97; `x.w60` 102, 65, 90; `x.w30` 108, 93, 90; `x.w30f` 98, 81, 90. Only the world without patches gives learning a
 job; every world with patches gives the lasting states one and leaves learning neutral, at any mix tried. In
 patches the lineage turns the learning rate down until a lesson no longer changes what is eaten.
+
+## v35 (2026-10-12, evening): chapter 2, first stage defined: camera eyes and the tectum; generation 0
+
+World of chapter 2 (user: no patches): `W20` = the drives world at density 0.3, `world_ch2` (a novel type's bush,
+berry and empty bush share one colour, `berry_world(shared_colour=True)`). Stages `2.0` (the affect brain with
+camera eyes, `B20`: the control) and `2.1` (`with_tectum`: a 9-cell map with one winner, `orient_l`, `orient_r`
+and `approach` programmes, a `touch` gate, aversion shuts all three). The first design of chapter 2 keeps its
+definitions under the keys `old2.1`-`old2.5`.
+
+Generation 0 (`scripts/probes/tectum.py`): the population of trial `x.weven` (the affect population after 40
+generations in this world), four worlds, well-fed lifetime:
+
+| variant | well-fed lifetime | berries | poison share | per world |
+|---|---|---|---|---|
+| old eyes, old colours (as it evolved) | 961 | 78.0 | 0.147 | 572 1399 497 1375 |
+| old eyes, shared colour | 532 | 45.4 | 0.204 | 502 290 697 637 |
+| camera eyes, shared colour (control of 2.1) | 572 | 43.6 | 0.170 | 566 458 671 593 |
+| tectum as defined | 410 | 31.6 | 0.195 | 338 216 558 527 |
+| tectum, orienting only | 562 | 43.8 | 0.171 | 502 420 748 576 |
+| tectum, approach only | (not finished) | | | |
+| tectum, programmes at half strength | 539 | 42.2 | 0.176 | 554 321 708 572 |
+| tectum, programmes at double strength | 156 | 11.8 | 0.253 | 103 74 248 200 |
+
+Reading: the camera eyes cost nothing. The shared colour costs a great deal in two of four worlds (the looks are
+drawn differently, so the worlds are not the same worlds; to be repeated with more). Orienting is neutral; the
+approach programme hurts, more the stronger it is.
+
+How the `x.weven` animals spend a life (`forage.py`, `freeze.py`, recorded generation): median lifetime 393 of
+4000 while 92% of the bushes are full by mid-life; facing a full bush on 12% of ticks, and then USE 0.48, FORWARD
+0.37, turn 0.15; a third of all ticks is spent in stands of 50+ ticks grasping at nothing, which begin with a
+stomach at 89% and end at 71% (the fed animal staying where it ate, `settle` and `rest` at 0.63).

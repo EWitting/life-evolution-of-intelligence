@@ -373,6 +373,11 @@ step by step like the chapter 1 stages (assay, generation 0, then evolution).
   (acquisition curves, omission and extinction, blocking, discrimination of look-alikes, later devaluation),
   grown out of `scripts/probes/assay.py`, with results stored in the book's data files. They take the place of
   the assay step for these stages and are shown in the book next to the world results.
+- **New world mechanics come from OHOL where possible** (user). When a stage needs something new in the world
+  (first the chained cues of the critic: a cue that predicts food some steps later), look first for OHOL objects
+  and transitions that give it and widen the slice toward the full OHOL set; a mechanism of our own only when
+  OHOL has nothing that fits. The marker stone and the "USE twice with a delay" source of 2.5 below are
+  placeholders until that search is done.
 - **Merged or dropped.** The fixed basal ganglia has no stage of its own (`hungry` already settles the conflict
   between drives; little to gain alone). Thorn hazards and a second nutrient are gone (no OHOL counterpart; the
   second need is warmth). Curiosity takes novelty from the adapted look inputs of the habituation stage, not from
@@ -487,9 +492,14 @@ dopamine replace the raw US as the teacher of the valence synapses.
     seconds: Yagishita et al. 2014). Persistence as built (`decay`: the larger of the new value and the faded old
     one) suits a state such as serotonin and would erase pauses; a slowly cleared signed dopamine would need its
     own form and is not planned;
-  - differences from the formula, to check in the lab experiments: the error is a smoothed change of value and
-    not exact TD, and bursts and pauses are not symmetric. Expected to matter little; blocking, omission and the
-    move of the response from reward to cue are the tests.
+  - differences from the formula, to check in the lab experiments. (1) The formula compares the value now with
+    the value exactly one tick ago; the slow cell holds a fading average of the last few ticks, so a jump in
+    value gives a burst with a short tail instead of a one-tick pulse. Values at rest come out the same; only
+    the transients are blurred, like a slightly longer eligibility trace. With `alpha` = 1 the slow cell is the
+    one-tick copy and the formula is exact, so exact TD is one end of the range evolution tunes over. (2) Pauses
+    are capped at the tonic rate, bursts are not. Real dopamine has both properties: it follows TD closely in
+    kind (response moves to the cue, pause at an omitted reward, blocking) and deviates in the same two ways.
+    Blocking, omission and the move of the response from reward to cue are the tests.
 - **Experiment: chained cues.** A reward requires a short causal chain: e.g. a berry is only available at
   bushes next to a marker object (a stone), or a food source must be USEd twice with a delay. The marker
   identity is randomised per life. Reward comes 5–20 ticks after the first cue.

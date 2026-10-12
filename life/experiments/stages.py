@@ -1387,6 +1387,9 @@ def main(argv=None):
     p.add_argument("--mutation-prob", type=float, default=None, help="per-synapse chance that a weight mutates")
     p.add_argument("--suffix", default="", help="appended to the run's experiment name (variants)")
     p.add_argument("--ticks", type=int, default=None, help="ticks per life, instead of the stage's own (trials)")
+    p.add_argument("--dashboard", action="store_true",
+                   help="also write the run's full dashboard.html (about 150 MB and a peak in memory at the end of the "
+                        "run; the book's light dashboards are made from the recording: `python -m life.book dashboards`)")
     a = p.parse_args(argv)
     if a.stage == "list":
         for s in STAGES.values():
@@ -1394,7 +1397,8 @@ def main(argv=None):
         return
     if a.mutation_prob is not None:
         EVOLUTION_OVERRIDES["weight_mutation_prob"] = a.mutation_prob
-    return run_stage(a.stage, a.generations, a.control, a.init_from, a.seed, suffix=a.suffix, ticks=a.ticks)
+    return run_stage(a.stage, a.generations, a.control, a.init_from, a.seed, suffix=a.suffix, ticks=a.ticks,
+                     dashboard=a.dashboard)
 
 
 if __name__ == "__main__":

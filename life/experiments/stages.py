@@ -715,14 +715,35 @@ stage(Stage("1.7", "s1_7_drives", "1.5", B17, W17, VISION_CH1, BODY_17,
                   "the 1.5 world made cold with hot springs"))
 
 
-# 1.8 affect (DRAFT, 2026-10-12: the world only; the brain is still the drives brain). For a lasting state to have a
-# job, what just happened must say something about what is near (STAGE_LOG v33): every berry type grows in its own
-# patches, so a good meal means more good bushes close by and a poison bite means the neighbours are poison too.
-# Hot springs stay spread evenly.
+# 1.8 affect (2026-10-12): two states that outlast what set them off. The drives stage lets a need that is sensed
+# now select a mode; here an event leaves a modulator behind that is released at once and cleared slowly
+# (ModulatorSpec.decay), and that pushes the animal's existing modes for a while:
+#   alarm      pain (the `us_pain` cell of the association stage) -> the modulator `alarm` (about 10 ticks) -> a
+#              `flee` cell -> FORWARD: after a poison bite, keep going. Short: a long alarm runs the animal out of
+#              the good patches as well (-30 at about 30 ticks, generation 0);
+#   serotonin  taste -> a `fed` cell -> the modulator `serotonin` (about 100 ticks) -> a `settle` cell -> `rest`:
+#              after a meal the animal stays where it ate, also where it is cold. `hungry` still shuts `rest`.
+# Neither modulator teaches anything (dopamine, the learning signal, is chapter 2). Evolution tunes every strength
+# (the hard-wired projections) and both fade times (Genome.clear). The roam nucleus of the old stage 1.3 is gone:
+# `hungry` does that job. Generation 0 (`scripts/probes/affect.py`, STAGE_LOG v33): +46 and +200, together +252.
+# World: for a lasting state to have a job, what just happened must say something about what is near. Every berry
+# type grows in its own patches, so a good meal means more good bushes close by and a poison bite means the
+# neighbours are poison too. Hot springs stay spread evenly. In the drives world a bush is emptied in one visit,
+# fills the stomach, and food and poison are spread evenly: nothing to stay for or to flee from.
+AFFECT = dict(sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, group="affect")
+B18 = extend(B17,
+             regions=(R("flee", 1, receptors=(("alarm", "bias", 3.0),), **AFFECT),
+                      R("fed", 1, **AFFECT),
+                      R("settle", 1, receptors=(("serotonin", "bias", 2.0),), **AFFECT)),
+             projections=(fixed("flee", "out", 3.0, dst_range=FWD),
+                          fixed("in", "fed", 2.0, src_select=("taste",)),
+                          fixed("settle", "rest", 3.0)),
+             modulators=(Mod("alarm", pos="us_pain", decay=0.9), Mod("serotonin", pos="fed", decay=0.99)))
 W18 = replace(W17, patches=80, patch_radius=6, patch_types=True)
-stage(Stage("1.8", "s1_8_affect", "1.7", B17, W18, VISION_CH1, BODY_17,
+stage(Stage("1.8", "s1_8_affect", "1.7", B18, W18, VISION_CH1, BODY_17,
             lambda exp: learning_world(exp, springs=SPRINGS_17, berries=LEARN_BERRIES), **_S15,
-            notes="DRAFT: the drives world with every berry type in its own patches; brain to be designed"))
+            notes="two lasting states: alarm after pain (keep going), serotonin after a meal (stay); "
+                  "the drives world with every berry type in its own patches"))
 
 
 # 1.6 extinction and reversal: the learned weights now relax back toward their inherited values (a fast,

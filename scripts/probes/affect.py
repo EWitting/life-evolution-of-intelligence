@@ -1,6 +1,7 @@
 """Generation-0 test for the affect stage: can a hard-wired lasting state help the drives population in the world
 where every berry type grows in its own patches? The parent population (drives, seed 0), unchanged, on the drives
-brain ('base') and on variants, in the same worlds. A variant is a '+'-joined list of parts:
+brain ('base') and on variants, in the same worlds. 'stage' is the brain of stage 1.8 as defined. Any other variant
+is a '+'-joined list of parts on top of the drives brain:
 
     alarm<d>[w<s>]   pain -> the modulator 'alarm', cleared by the factor d per tick (alarm0.9: about 20 ticks) ->
                      a `flee` cell -> FORWARD (strength s, default 3): after a poison bite, keep going
@@ -23,7 +24,8 @@ for a in sys.argv[1:]:
         k_, v_ = a.split("=")
         s = replace(s, world=replace(s.world, **{k_: type(getattr(s.world, k_))(float(v_))}))
 VARIANTS = [a for a in sys.argv[1:] if "=" not in a]
-DEFAULT = ["alarm0.9", "alarm0.97", "stay0.97", "stay0.99", "alarm0.9+stay0.97"]
+DEFAULT = ["stage"]
+DRIVES = S.STAGES[s.parent].brain
 PART = re.compile(r"(alarm|stay)([0-9.]+)(?:w([0-9.]+))?$")
 
 
@@ -68,8 +70,8 @@ def measure(label, brain):
 
 
 print(f"world: {s.world.patches} patches of radius {s.world.patch_radius}, one type each; {WORLDS} worlds", flush=True)
-base = measure("base (drives brain)", s.brain)
+base = measure("base (drives brain)", DRIVES)
 for v in VARIANTS or DEFAULT:
-    f = measure(v, affect(s.brain, v))
+    f = measure(v, s.brain if v == "stage" else affect(DRIVES, v))
     d = f - base
     print(f"{'':22s} paired difference to base {d.mean():+.0f} +-{d.std(ddof=1) / np.sqrt(WORLDS):.0f}", flush=True)

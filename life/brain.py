@@ -31,6 +31,7 @@ class Genome(NamedTuple):
     B: jnp.ndarray
     C: jnp.ndarray
     D: jnp.ndarray
+    clear: jnp.ndarray  # [M] per modulator: the fraction of it left after a tick (ModulatorSpec.decay; evolvable when > 0)
 
 
 class BrainState(NamedTuple):
@@ -55,6 +56,7 @@ class Layout(NamedTuple):
     proj_names: tuple       # "src->dst" per projection, index = proj_id
     mod_names: tuple        # modulator names, index = modulator id
     mod_specs: tuple        # static: (kind, terms, unused, baseline, scale, decay) per modulator
+    mod_decay: tuple        # static: the designed decay per modulator (the genome carries the evolved one, Genome.clear)
     kwta: tuple             # static: (offset, size, k, phase) per region with k-WTA
     norm: tuple             # static: (offset, size, strength, lag, phase) per region with divisive normalisation
     phases: tuple           # static: per update phase, the indices of its (non-input) neurons; one entry = synchronous
@@ -243,7 +245,8 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
             (rec_gain if effect == "gain" else rec_bias)[mod_names.index(mname), sl[r.name]] += sens
     j = jnp.asarray
     return Layout(n=n, n_in=n_in, n_out=n_out, names=names, offsets=offsets, sizes=sizes, in_names=tuple(in_names),
-                  proj_names=tuple(proj_names), mod_names=mod_names, mod_specs=tuple(mod_specs), kwta=kwta, norm=norm, phases=phases,
+                  proj_names=tuple(proj_names), mod_names=mod_names, mod_specs=tuple(mod_specs),
+                  mod_decay=tuple(float(m.decay) for m in mods) or (0.0,), kwta=kwta, norm=norm, phases=phases,
                   pl_rows=pl_rows, pl_cols=pl_cols,
                   alpha=j(alpha), trace_tau=j(tau), sign=j(sign), bias_init=j(bias_init), evolve_b=j(evolve_b),
                   allowed=j(allowed), density=j(density), one_to_one=j(o2o), proj_id=j(proj_id), rule=j(rule),
@@ -279,7 +282,16 @@ def init_genome(key: jax.Array, layout: Layout) -> Genome:
     w0 = jnp.where(jnp.isnan(layout.w_init), w_rand, jnp.nan_to_num(layout.w_init)) * mask
     b = jnp.where(jnp.isnan(layout.bias_init), 0.1 * jax.random.normal(k3, (n,)), jnp.nan_to_num(layout.bias_init))
     return Genome(w0=w0, mask=mask, b=b, eta=layout.eta_init * layout.allowed, A=layout.abcd_init[0],
-                  B=layout.abcd_init[1], C=layout.abcd_init[2], D=layout.abcd_init[3])
+                  B=layout.abcd_init[1], C=layout.abcd_init[2], D=layout.abcd_init[3],
+                  clear=jnp.asarray(layout.mod_decay, jnp.float32))
+
+
+def genome_from_npz(f, layout: Layout) -> Genome:
+    """A stored population. Files written before Genome.clear existed get the designed decay of every modulator."""
+    g = {k: jnp.asarray(f[k]) for k in Genome._fields if k in f}
+    if "clear" not in g:
+        g["clear"] = jnp.tile(jnp.asarray(layout.mod_decay, jnp.float32), (g["b"].shape[0], 1))
+    return Genome(**g)
 
 
 def init_state(genome: Genome, layout: Layout | None = None, w_max: float = 4.0) -> BrainState:
@@ -309,7 +321,8 @@ def plasticity_rule(rule, A, B, C, D, w, x_pre, x_post, tr_pre, tr_post, target,
     return out
 
 
-def compute_modulators(layout: Layout, x: jnp.ndarray, world_sig: jnp.ndarray, prev: jnp.ndarray) -> jnp.ndarray:
+def compute_modulators(layout: Layout, x: jnp.ndarray, world_sig: jnp.ndarray, prev: jnp.ndarray,
+                       clear: jnp.ndarray) -> jnp.ndarray:
     out = []
     for i, (kind, terms, _, base, scale, decay) in enumerate(layout.mod_specs):
         if kind == "region":
@@ -317,7 +330,7 @@ def compute_modulators(layout: Layout, x: jnp.ndarray, world_sig: jnp.ndarray, p
         else:
             v = world_sig[WORLD_SIGNALS.index(kind)]
         v = scale * (v - base)
-        out.append(jnp.maximum(v, decay * prev[i]) if decay > 0 else v)
+        out.append(jnp.maximum(v, clear[i] * prev[i]) if decay > 0 else v)
     return jnp.stack(out) if out else jnp.zeros(1, jnp.float32)
 
 
@@ -421,7 +434,7 @@ def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, ob
                 u = u.at[ix].set(jnp.clip(ub + b_deprec * (1.0 - ub) - b_depU * ub * jnp.maximum(x[R], 0.0)[:, None], 0.0, 1.0))
         tr = layout.trace_tau * tr + (1.0 - layout.trace_tau) * (x_new.at[:n_in].set(raw) if layout.has_adapt else x_new)
         x = x_new
-    mod = compute_modulators(layout, x, world_sig, mod)
+    mod = compute_modulators(layout, x, world_sig, mod, genome.clear)
     logits = h[-n_out:] * cfg.logit_gain
     if cfg.action_temperature > 0:
         action = jax.random.categorical(key, logits / cfg.action_temperature)
@@ -482,4 +495,9 @@ def remap_genomes(pop: Genome, old: Layout, new: Layout, key: jax.Array) -> Geno
     b = np.array(fresh.b)
     keep_b = np.asarray(new.evolve_b)[inn] > 0
     b[:, inn[keep_b]] = np.asarray(pop.b)[:, io[keep_b]]
-    return Genome(w0=jnp.asarray(w0 * mask), mask=jnp.asarray(mask), b=jnp.asarray(b), **{k: jnp.asarray(v) for k, v in genes.items()})
+    clear = np.array(fresh.clear)   # an evolved decay carries over for a modulator that persists in both layouts
+    for i, m in enumerate(new.mod_names):
+        if m in old.mod_names and new.mod_decay[i] > 0 and old.mod_decay[old.mod_names.index(m)] > 0:
+            clear[:, i] = np.asarray(pop.clear)[:, old.mod_names.index(m)]
+    return Genome(w0=jnp.asarray(w0 * mask), mask=jnp.asarray(mask), b=jnp.asarray(b), clear=jnp.asarray(clear),
+                  **{k: jnp.asarray(v) for k, v in genes.items()})

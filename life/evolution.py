@@ -34,15 +34,22 @@ def mutate(key: jax.Array, g: Genome, cfg: EvolutionConfig, layout: Layout) -> G
     k3a, k3b = jax.random.split(k[3])
     hitb = jax.random.uniform(k3b, (n,)) < cfg.weight_mutation_prob
     b = jnp.where((layout.evolve_b > 0) & hitb, g.b + cfg.mutation_std * jax.random.normal(k3a, (n,)), g.b)
+    # a persistent modulator's time constant 1 / (1 - decay) mutates like a tunable strength, within the same range
+    kc1, kc2 = jax.random.split(jax.random.fold_in(key, 9))
+    design = jnp.asarray(layout.mod_decay, jnp.float32)
+    hit_c = jax.random.uniform(kc1, design.shape) < cfg.tune_prob
+    tau0 = 1.0 / jnp.maximum(1.0 - design, 1e-6)
+    tau = 1.0 / jnp.maximum(1.0 - g.clear, 1e-6) * jnp.exp(hit_c * cfg.tune_std * jax.random.normal(kc2, design.shape))
+    clear = jnp.where(design > 0, 1.0 - 1.0 / jnp.clip(tau, jnp.maximum(tau0 / cfg.tune_range, 1.0), tau0 * cfg.tune_range), g.clear)
     if not cfg.plastic:
-        return g._replace(w0=w0, mask=mask, b=b)
+        return g._replace(w0=w0, mask=mask, b=b, clear=clear)
     plastic = (layout.rule > 0) & (layout.proj_id >= 0)
     hit = jax.random.uniform(k[4], (P,)) < cfg.eta_mutation_prob
     per = lambda kk, std: jnp.where(plastic, (hit * std * jax.random.normal(kk, (P,)))[pid], 0.0)
     eta = jnp.clip(g.eta + per(k[5], 0.3 * cfg.eta_max), 0.0, cfg.eta_max) * plastic
     ka, kb, kc, kd = jax.random.split(k[6], 4)
     return Genome(w0=w0, mask=mask, b=b, eta=eta, A=g.A + per(ka, cfg.mutation_std), B=g.B + per(kb, cfg.mutation_std),
-                  C=g.C + per(kc, cfg.mutation_std), D=g.D + per(kd, 0.1 * cfg.mutation_std))
+                  C=g.C + per(kc, cfg.mutation_std), D=g.D + per(kd, 0.1 * cfg.mutation_std), clear=clear)
 
 
 def crossover(key: jax.Array, a: Genome, b: Genome, layout: Layout, blend: bool = False) -> Genome:
@@ -53,9 +60,11 @@ def crossover(key: jax.Array, a: Genome, b: Genome, layout: Layout, blend: bool 
     if blend:   # mid-parent values; a synapse present in one parent only is inherited at half strength
         half = lambda x, y: 0.5 * (x + y)
         return Genome(w0=half(a.w0 * a.mask, b.w0 * b.mask), mask=jnp.maximum(a.mask, b.mask), b=half(a.b, b.b),
-                      eta=half(a.eta, b.eta), A=half(a.A, b.A), B=half(a.B, b.B), C=half(a.C, b.C), D=half(a.D, b.D))
+                      eta=half(a.eta, b.eta), A=half(a.A, b.A), B=half(a.B, b.B), C=half(a.C, b.C), D=half(a.D, b.D),
+                      clear=half(a.clear, b.clear))
     n = a.b.shape[0]
     k1, k2 = jax.random.split(key)
+    clear_a = jax.random.bernoulli(jax.random.fold_in(key, 9), 0.5, a.clear.shape)
     from_a = jax.random.bernoulli(k1, 0.5, (n,))
     P = max(1, len(layout.proj_names))
     pid = jnp.where(layout.proj_id >= 0, layout.proj_id, 0)
@@ -64,7 +73,8 @@ def crossover(key: jax.Array, a: Genome, b: Genome, layout: Layout, blend: bool 
     per_proj = lambda x, y: jnp.where(proj_a, x, y)
     return Genome(w0=jnp.where(layout.tune > 0, per_proj(a.w0, b.w0), jnp.where(col, a.w0, b.w0)),
                   mask=jnp.where(col, a.mask, b.mask), b=jnp.where(from_a, a.b, b.b), eta=per_proj(a.eta, b.eta),
-                  A=per_proj(a.A, b.A), B=per_proj(a.B, b.B), C=per_proj(a.C, b.C), D=per_proj(a.D, b.D))
+                  A=per_proj(a.A, b.A), B=per_proj(a.B, b.B), C=per_proj(a.C, b.C), D=per_proj(a.D, b.D),
+                  clear=jnp.where(clear_a, a.clear, b.clear))
 
 
 def next_generation(key: jax.Array, pop: Genome, fitness: jnp.ndarray, cfg: EvolutionConfig, layout: Layout) -> Genome:

@@ -90,11 +90,11 @@ def load_frozen(key: str, seed: int = 0, exp=None):
     from . import brain
     from .config import ExperimentConfig
     from .run import make_layout
+    old = make_layout(ExperimentConfig.from_json((FROZEN / key / f"seed{seed}.json").read_text()))
     with np.load(FROZEN / key / f"seed{seed}.npz") as f:
-        pop = brain.Genome(**{k: jnp.asarray(f[k]) for k in brain.Genome._fields})
+        pop = brain.genome_from_npz(f, old)
     if exp is None:
         return pop
-    old = make_layout(ExperimentConfig.from_json((FROZEN / key / f"seed{seed}.json").read_text()))
     return brain.remap_genomes(pop, old, make_layout(exp), jax.random.PRNGKey(seed))
 
 

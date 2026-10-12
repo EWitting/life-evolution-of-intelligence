@@ -161,12 +161,12 @@ def load_population(run_dir: Path | str, exp: ExperimentConfig | None = None, se
     layout by region and input-feature names (brain.remap_genomes): new regions/projections start silent.
     If the population size differs from exp.world.num_agents it is tiled or truncated."""
     run_dir = Path(run_dir)
+    old = make_layout(ExperimentConfig.from_json((run_dir / "config.json").read_text()))
     with np.load(run_dir / "population.npz") as f:
-        pop = brain.Genome(**{k: jnp.asarray(f[k]) for k in brain.Genome._fields})
+        pop = brain.genome_from_npz(f, old)
     if exp is None:
         return pop
-    old_exp = ExperimentConfig.from_json((run_dir / "config.json").read_text())
-    old, new = make_layout(old_exp), make_layout(exp)
+    new = make_layout(exp)
     P, want = pop.b.shape[0], exp.world.num_agents // max(1, exp.evolution.siblings)
     if P != want:
         idx = jnp.arange(want) % P

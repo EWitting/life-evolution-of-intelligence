@@ -314,6 +314,11 @@ Suggested region names from here on: `tectum`, `pallium`, `striatum`, `gpi`, `sn
 `hippocampus` (medial pallium), `cerebellum`, `brainstem` (motor programs; the old `hidden` can be renamed
 to this).
 
+unprocessed notes:
+- increase visual resolution for this stage?
+- add back the hands and multistep grab eat and drop actions?
+- a lot about in-generation learning, can we keep guaranteeing that behaviours to learn cannot be hardcoded by evolution? to which extent do we still use evolution
+
 #### 2.1 Optic tectum: topographic target selection
 - **Biology.** The tectum (superior colliculus in mammals) is a retinotopic map. It picks *one* target by
   lateral inhibition and drives orienting and approach toward it (or escape from a looming object).
@@ -321,7 +326,7 @@ to this).
   `in(vision col c)→tectum(c)` projections. Fixed negative projections `tectum→tectum` (lateral
   inhibition, M5). `tectum→out(turn left/right/forward)` topographic.
 - **Rule.** None new.
-- **Experiment.** Dense food with several targets in view simultaneously, and a few hazards next to food.
+- **Experiment.** Dense food with several targets in view simultaneously, and a few hazards next to food. (increase visual resolution?)
 - **Control.** 1.x architecture (distributed hidden region).
 - **Metric.** Ticks from "food in view" to "reaching it"; oscillation (left-right dithering count).
 - **Expected.** Fewer Buridan's-ass failures (averaging between two targets and walking between them).

@@ -1791,3 +1791,23 @@ where it is cold; `hungry` still shuts `rest`.
   fed spends less on moving); the rest is.
 - Modulator persistence (`ModulatorSpec.decay`: released at once, cleared slowly) gives the fast rise and slow
   fade that the old `raphe` cell lacked. Neither modulator teaches anything.
+
+### Stage 1.8 affect as defined; seed 0 (2026-10-12)
+
+Definition (user, 2026-10-12): pain (`us_pain`) -> modulator `alarm` (decay 0.9) -> `flee` -> FORWARD; taste ->
+`fed` -> modulator `serotonin` (decay 0.99) -> `settle` -> `rest`. Control: the drives brain in the patch world.
+Evolution may tune everything (user): the strengths are tunable hard-wired projections, and the fade time of a
+persistent modulator is now a gene (`Genome.clear`, one value per modulator; the time constant 1 / (1 - decay)
+mutates like a tunable strength, within `tune_range` of the designed value). Populations stored before the gene
+existed load with the designed decay; 45 tests pass, the drives brain gives the same numbers as before the change.
+
+Generation 0 of the stage as defined: +250 +-35 over the drives brain (4 shared worlds; 644 vs 394).
+
+Seed 0, 40 generations, fitness in blocks of ten generations: main 766, 777, 809, 983; control 451, 486, 512, 659.
+Poison share of the berries eaten: main 0.056 -> 0.046, control 0.115 -> 0.077. About 400 s per generation with
+two processes (the lives are long: nothing ends a simulation early).
+
+Inside the run: the fade times stayed close to the design (alarm 0.879, about 8 ticks; serotonin 0.988, about 84
+ticks). Strengths: `flee` -> out 3.0 -> 3.5, `settle` -> `rest` 3.0 (unchanged), `rest` -> out 9 -> 7.3,
+`warm_seek` -> out 3 -> 2.3. Both populations move little in the last generation (16% and 14% of ticks) and both
+have `rest` on for over 60% of ticks: the control found its own way to stay put.

@@ -528,7 +528,7 @@ def life_spent(s, main: list[Path], control: list[Path]):
                           "caption": "From the recording of the last generation of every seed (a sample of 64 animals each)."}
 
 
-for _key in ("1.1", "1.2h", "1.5", "1.6h", "1.7"):
+for _key in ("1.1", "1.2h", "1.5", "1.6h", "1.7", "1.8"):
     extra(_key)(life_spent)
 
 
@@ -617,3 +617,44 @@ def main(argv=None):
 
 if __name__ == "__main__":
     main()
+
+
+def _after_bite(run: Path) -> dict:
+    """What follows a bite, from a run's recording (as scripts/probes/dwell.py). A visit is a run of bites at one
+    bush. Poison types are drawn per life: a type is poison when its bites hurt."""
+    rec = np.load(run / "recording.npz")
+    pos, dr, alive, ate, pain = (rec[k] for k in ("pos", "dir", "alive", "ate", "pain"))
+    T, N = ate.shape
+    bad = {int(o) for o in np.unique(ate[ate > 0]) if pain[ate == o].mean() > 0.5}
+    front = pos.astype(int) + np.array([[-1, 0], [0, 1], [1, 0], [0, -1]])[dr.astype(int) % 4]
+    moved = np.abs(np.diff(pos.astype(int), axis=0)).sum(-1) > 0
+    nxt = {True: [], False: []}; walk = {True: [], False: []}
+    for i in range(N):
+        ts = np.nonzero(ate[:, i] > 0)[0]
+        visits = []                                   # [type, last tick, bush cell]
+        for t in ts:
+            if visits and visits[-1][0] == int(ate[t, i]) and (front[t, i] == visits[-1][2]).all():
+                visits[-1][1] = t
+            else:
+                visits.append([int(ate[t, i]), t, front[t, i].copy()])
+        for (o, t1, _), (o2, _, _) in zip(visits, visits[1:]):
+            nxt[o in bad].append(o2 in bad)
+        for o, t1, _ in visits:
+            if t1 + 20 < T and alive[t1 + 20, i]:
+                walk[o in bad].append(moved[t1:t1 + 20, i].sum())
+    mean = lambda v: float(np.mean(v)) if len(v) else float("nan")
+    return {"poison_after_poison": 100.0 * mean(nxt[True]), "poison_after_good": 100.0 * mean(nxt[False]),
+            "steps_after_poison": mean(walk[True]), "steps_after_good": mean(walk[False])}
+
+
+@extra("1.8")
+def after_a_bite(s, main: list[Path], control: list[Path]):
+    """A table for the page: what the animals do after a poison bite and after a good meal, main and control."""
+    m, c = [_after_bite(r) for r in main], [_after_bite(r) for r in control]
+    rows = [("Steps taken in the 20 ticks after a poison bite", "steps_after_poison"),
+            ("Steps taken in the 20 ticks after the last bite of a good meal", "steps_after_good"),
+            ("After a poison bite, the next bush bitten is poison again, %", "poison_after_poison"),
+            ("After a good meal, the next bush bitten is poison, %", "poison_after_good")]
+    return "after_a_bite", {"columns": ["In the recorded last generation", "main"] + (["control"] if c else []),
+                            "rows": [[label, _stat([x[k] for x in m])] + ([_stat([x[k] for x in c])] if c else []) for label, k in rows],
+                            "caption": "From the recording of the last generation of every seed (a sample of 64 animals each)."}

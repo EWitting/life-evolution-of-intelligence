@@ -1,5 +1,88 @@
-# Affect: dwelling and roaming {#sec-affect}
+# Affect: states that last {#sec-affect}
 
-::: {.callout-note}
-This stage is still being designed. Its page will be written when the stage is frozen.
-:::
+<div data-life="status" data-stage="1.8"></div>
+
+Everything this brain does so far, it does about the present. A bush is in front of it, so it bites. The skin is
+cold, so it walks. The stomach is empty, so it forages. When the cause is gone, the behaviour is gone in the same
+moment.
+
+But some events say something about the minutes that follow. An animal that has just eaten well is probably
+standing in a good place. An animal that has just been hurt is probably standing in a bad one. To use that, the
+brain has to keep something of the event after it is over. This stage adds two such states.
+
+## The world: every kind of bush in its own patches
+
+In the world of the previous stage the bushes of every kind were spread evenly. There, a meal says nothing about
+the place: the bush that was just emptied stays empty for a long time, and what grows next to it is as likely to
+be poison as anywhere else. A state that lasts has nothing to work with.
+
+So the bushes now grow in patches, and every patch holds one kind. After a good meal, the neighbouring bushes are
+most likely good as well. After a poison bite, the neighbours are most likely poison too. What just happened says
+what is near.
+
+The rest is as before: the world is cold, the hot springs are spread evenly, and the four kinds of berry bush are
+new in every life, half of them poison.
+
+<div data-life="settings" data-stage="1.8"></div>
+
+## The biology: affect
+
+A drive, as in the previous stage, follows the body: the hunger cell fires for as long as the stomach is empty and
+stops when it is full. An *affective state* is different in one respect. Something sets it off, and then it stays
+for a while by itself, after its cause has gone.
+
+In small animals such states are carried by *neuromodulators*: substances that a few cells release and that reach
+many cells at once. They are released quickly and cleared slowly, and that slowness is the memory. The roundworm
+*C. elegans* slows down and stays where it is for minutes after it has found food, under the influence of
+serotonin. After a harmful touch it speeds away, and keeps going well after the touch has ended.
+
+Such a state has two sides. It is good or bad, and it makes the animal more active or less. An animal that is
+alarmed is in a bad and active state. An animal that is content is in a good and quiet one.
+
+## The circuit
+
+Two modulators, each released by one event and cleared slowly, and three new cells.
+
+- **Alarm.** Pain releases the modulator `alarm`. It drives a new cell, **`flee`**, which pushes the animal
+  forward. After a poison bite the animal keeps going for a short while, out of the patch of poison.
+- **Serotonin.** A new cell, **`fed`**, fires when the animal tastes food, and releases the modulator `serotonin`.
+  It drives a new cell, **`settle`**, which switches on `rest`, the cell of the previous stage that holds the
+  forward step back. After a meal the animal stays where it ate, also where it is cold.
+
+`hungry` still shuts `rest`, as before. So a fed animal stays in the good patch until it is hungry again, and then
+it forages, with good bushes close by.
+
+The two states are not a second system next to the drives. They act on the same cells: the drives decide what the
+animal does from what the body needs now, and the two modulators push those same modes for a while after an event.
+
+The wiring is designed. Evolution may tune every strength, and also how fast each modulator is cleared, which
+sets how long each state lasts.
+
+<div data-life="brain" data-stage="1.8"></div>
+
+## Results
+
+### Main against control
+
+The control is the brain of the previous stage in this world of patches. It feels pain and tastes food as before,
+but nothing of either stays with it.
+
+<div data-life="curves" data-stage="1.8"></div>
+
+<div data-life="summary" data-stage="1.8"></div>
+
+### Is the circuit used?
+
+<div data-life="lesions" data-stage="1.8"></div>
+
+### After a bite
+
+<div data-life="table" data-stage="1.8" data-example="after_a_bite"></div>
+
+### How a life is spent
+
+<div data-life="table" data-stage="1.8" data-example="life_spent"></div>
+
+## The runs behind this page
+
+<div data-life="runs" data-stage="1.8"></div>

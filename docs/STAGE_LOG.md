@@ -1994,3 +1994,41 @@ Housekeeping: `runs/` from 17.5 GB to 1.3 GB (user): superseded runs, archives, 
 and all `dashboard.html` files are deleted. Kept: the 36 runs behind the frozen stages and the book (population,
 recording, curve, configuration) and the chapter 2 runs. Side-path stages are still defined; their populations are
 gone.
+
+## v37 (2026-10-12, late): the world at twice the area; stage 2.1 (camera eyes) frozen with three seeds
+
+**Crowding** (`scripts/probes/crowding.py`, the 128-size run of 2.1, four worlds, well-fed lifetime; same 256
+animals and bush density): start population 487 / 676 / 765 and evolved population 788 / 1247 / 1722 at 128 / 181 /
+256 cells per side; 14 / 25 / 37% of the evolved animals reach the life cap; 25 / 31-37 / 40-65 s per simulation.
+The better population gains more from space, so crowding compresses a stage's gain. The world of chapter 2 is
+181 x 181 (user). The falling fitness within a run was not a real decline (every generation has a new world;
+in the same worlds evolved beats start).
+
+It is not a shortage of food. Budget: good bushes on 14.6% of cells, 10.8 net food units per bush per 960 ticks;
+an animal burns about 0.044 units per tick (0.025 x 1.36 for the cold x 1.30 for moving). Supported at perfect
+harvest: 610 / 1220 / 2440 animals at the three sizes; 256 animals use 42 / 21 / 10% of the flow. At birth the
+smallest world holds 720 full good bushes (one per 23 cells). What does scale with animals per cell is open
+(animals as obstacles and sights, local depletion, empty bushes left by others).
+
+**How the animals die** (recorded generation of seed 0 in the 181 world, 64 animals). An ideal animal would reach
+a full bush in 5-10 ticks (nearest full bush about 2 cells away, nearest full good one about 3), last 167 ticks
+sprinting on the stomach it is born with, and never die. The real ones find their first good berry at tick 11
+(median) and then die of poison: the 26 that die before tick 400 ate 6 good berries and took 4 poison bites
+(quartiles 3-8; 8.8 of the 10 food units they are born with), losing 0.069 units per tick alive to poison, more than
+to moving and the cold. 11 of 64 never eat anything good. The 10 that reach the cap took 30 poison bites (a perfect
+learner: 2). A good bite adds 0.6 units on average instead of 1.8 (bites on a full stomach).
+
+**Stage 2.1, three seeds** (40 generations from the frozen affect population, lesions in four worlds):
+
+| | seed 0 | seed 1 | seed 2 |
+|---|---|---|---|
+| intact | 1085 | 1109 | 1154 |
+| plasticity off | 53% | 44% | 41% |
+| flee off | 83% | 96% | 99% |
+| fed off | 93% | 100% | 100% |
+| poison share, intact / plasticity off | 0.10 / 0.18 | 0.07 / 0.18 | 0.08 / 0.20 |
+
+The starting population scores 676 in the same worlds (seed 0). Frozen as `frozen/2.1` (user, 2026-10-12), an
+adaptation step without control; the comparison is the silent-start trial at 128 (v36). The first three-seed run
+was stopped by the low-memory reaper when all three wrote their results at once (about 2 GB each at the end of a
+run, 0.4 GB before); a run now writes its 150 MB dashboard only with `--dashboard`.

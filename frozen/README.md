@@ -36,6 +36,15 @@ Chapter 1 is complete. A stored population written before a gene existed (the mo
 2026-10-12) loads with the designed value, and a stored configuration is read with options added since at their
 defaults (`freeze.with_defaults`).
 
+## Chapter 2
+
+| stage | what it is | parent | life | seeds |
+|---|---|---|---|---|
+| 2.1 | camera eyes: 9 eye columns, range 6, no new cells; the world of chapter 2 (no patches, density 0.3, 181 x 181) | 1.8 | 4000 | 3 |
+
+2.1 (frozen 2026-10-12) is an adaptation step without control. Its starting population is the frozen 1.8 seed 0
+with the new eye columns interpolated (`stages.interpolate_eyes`, not part of the stored definition).
+
 ## Side paths (defined in `stages.py`, not part of the lineage)
 
 The runs of the side paths were deleted on 2026-10-12 (disk space; findings are in `docs/STAGE_LOG.md`). A stage

@@ -1,7 +1,7 @@
 # Status
 
 One screen on where the project is. Plan: `docs/BRAIN_EVOLUTION.md`. **Frozen stages: `frozen/README.md`.** Details, numbers and run directories:
-`docs/STAGE_LOG.md`. Newest decisions: `docs/DECISIONS.md` (ADR-017 to ADR-025). Last updated 2026-10-12 (chapter 2 started: world chosen, camera eyes seed 0).
+`docs/STAGE_LOG.md`. Newest decisions: `docs/DECISIONS.md` (ADR-017 to ADR-025). Last updated 2026-10-12 (chapter 2: world chosen, camera eyes frozen).
 
 ## How a stage is judged
 
@@ -40,7 +40,7 @@ ticks from the settling run of 1.0 on. Footing v25 (born a quarter full, food as
 starts from the seed-0 run of its parent. Three seeds unless stated; lesion = fitness with the region silenced, %
 of intact, per seed.
 
-**Chapter 1 is frozen: 1.0, 1.1, 1.2h, 1.5, 1.7 (2026-10-08, tag `chapter-1-drives`) and 1.8 (2026-10-12, tag `chapter-1`).** Definitions and final populations are in
+**Stage 2.1 is frozen (2026-10-12).** **Chapter 1 is frozen: 1.0, 1.1, 1.2h, 1.5, 1.7 (2026-10-08, tag `chapter-1-drives`) and 1.8 (2026-10-12, tag `chapter-1`).** Definitions and final populations are in
 `frozen/` (`frozen/README.md`, `life/freeze.py`); `tests/test_frozen.py` fails when a frozen definition changes.
 **Do not rerun these stages or their lineage** (user, 2026-10-08). A change that has to touch one is made by
 remapping the stored populations and freezing again.
@@ -54,18 +54,18 @@ remapping the stored populations and freezing again.
 | 1.7 drives | `cold` and `hungry` need cells; warmth by kinesis: `warm_seek` (run while the skin is cold), `rest` (stay where it is warm); `hungry` shuts the warmth mode; evolvable `hungry` -> feeding synapses. World: the 1.5 world made cold, hot springs (which do not block) | **frozen**, passes (user's decision on the head to head) | Main 386 +-14 vs control 309 +-18; re-evaluated 401 vs 341 (+60 +-37: 124, -4, 62). **Head to head -65 +-33** (-88, -108, 0): the control half does better next to main animals (432-532) than among its own (276-409). Lesions: hungry 26 27 18, rest 72 86 71, cold and warm_seek 89 94 86, plasticity 71 66 76. Main moves 45% of ticks vs 71%, bites at nothing 32% vs 12%. Either population alone at half density does 55-80% better (`density.py`): food is a race, resting animals leave food to roamers and gain by burning less. |
 | 1.8 affect | two states that outlast their trigger, each a modulator released at once and cleared slowly: pain -> `alarm` -> `flee` -> forward; taste -> `fed` -> `serotonin` -> `settle` -> `rest`. Fade times are genes (`Genome.clear`). World: the drives world with every berry type in its own patches (`patch_types`) | **frozen**, passes | Main 769 +-33 vs control 485 +-38 (last 50 generations of 40: the whole run); re-evaluated 919 vs 625 (+294 +-5: 297, 285, 301); head to head +482 +-112 (604, 258, 583). Lesions: fed 63 54 66, settle 63 54 64, flee 81 86 89, rest 41 36 37, hungry 41 54 41. **No longer used in this world: cold and warm_seek 101 105 107, plasticity 99 95 99.** Fade times stayed near the design (seed 0: alarm 8 ticks, serotonin 84). Both populations were still rising at generation 40. |
 | side paths | 1.1l, 1.5c (centred association before habituation), 1.5f, 1.6h, 1.6 reversal, x.hands, x.td, old 1.2-1.4 | defined, not on the path | Listed with reasons in `frozen/README.md`. |
-| chapter 2 world | the drives world without patches, more food (density 0.3); looks as in chapter 1 | chosen (user, 2026-10-12) | Of five worlds tried only this one gives learning a job again; every world with patches leaves it neutral (STAGE_LOG v34). A shared colour for a type's bush and empty bush cost 42% and is dropped. |
-| 2.1 camera eyes | 9 eye columns, range 6; no new cells; the new columns start as the mean of their neighbours, all eye synapses times 5/9 | seed 0 run, 40 generations; **not frozen** | Re-evaluated 791; plasticity off 51%, flee 93, fed 92; poison share 0.09 against 0.22 without learning. With the new columns starting silent: 492, plasticity off 68%. The tectum has no stage (user): STAGE_LOG v35, v36. |
+| chapter 2 world | the drives world without patches, more food (density 0.3), twice the area (181 x 181); looks as in chapter 1 | chosen (user, 2026-10-12) | Of five worlds tried only this one gives learning a job again (STAGE_LOG v34). Twice the area because crowding compressed gains (evolved 788 at 128, 1247 at 181, 1722 at 256); it is not a shortage of food (v37). A shared colour for a type's bush and empty bush cost 42% and is dropped. |
+| 2.1 camera eyes | 9 eye columns, range 6; no new cells; the new columns start as the mean of their neighbours, all eye synapses times 5/9 | **frozen** (three seeds, no control) | Re-evaluated 1085 1109 1154 (start population 676); plasticity off 53 44 41%, flee 83 96 99, fed 93 100 100; poison share 0.07-0.10 against 0.18-0.20 without learning. The tectum has no stage (user): STAGE_LOG v35, v36. |
 | chapter 2, next | pallium -> dopamine critic -> hands -> basal ganglia with actor -> curiosity | planned (ADR-025) | The definitions `old2.1`-`old2.5` and `x.td` in `stages.py` are the first design on the reversal brain; each stage is defined again when its turn comes. |
 | later, 3.x-5.x | pallium clustering, hippocampus, cerebellum, uncertainty modulators; simulating, mentalizing, speaking | planned | |
 
 ## Next steps
 
-1. **Resume here: stage 2.1 (camera eyes) has one seed.** Decide with the user whether it gets two more seeds and
-   is frozen as it is (an adaptation step without control; the silent-start trial `x.eyes0` is the comparison), then
-   the book page. To look at first: fitness falls within the run while berries rise (supply?). After that the
-   pallium (ADR-025): first probe is the assay of the association stage with the learned synapses reading the
-   pallium. Dopamine stays reserved for the prediction error and sharp in time.
+1. **Resume here: the pallium** (ADR-025). Stage 2.1 (camera eyes) is frozen; its book page is still to be written
+   (`life.book export 2.1 --evaluate`; there is no control). First probe for the pallium: the assay of the
+   association stage with the learned synapses reading the pallium. What it has to fix is measured (STAGE_LOG v37):
+   the animals find food at once and die of repeated poison bites (30 in a full life; a perfect learner takes 2).
+   Open: what the crowding is (not food; test with other animals neither seen nor blocking).
 2. Cheaper evaluations for expensive stages (user, 2026-10-12): the export runs its simulations in parallel
    (`--jobs`) and prints a line per finished task; still to add: lesions of the new cells and the parent's only,
    four worlds for a routine check, seed 0 first.

@@ -130,6 +130,21 @@ def local_temperature(cfg: WorldConfig, rules: RuleArrays, grid: jnp.ndarray) ->
     return jnp.clip(cfg.ambient_temp + field, 0.0, 1.0)
 
 
+def temperature_at(cfg: WorldConfig, rules: RuleArrays, grid: jnp.ndarray, pos: jnp.ndarray) -> jnp.ndarray:
+    """[N] temperature of the cells at pos [N, 2]: the values of `local_temperature` there, computed from the
+    (2r+1) x (2r+1) cells around each position only. The whole field costs a kernel per cell of the map on every
+    tick, which at 256 x 256 came close to the cost of all the brains."""
+    r = cfg.heat_radius
+    off = jnp.arange(-r, r + 1)
+    d = jnp.abs(off)
+    kern = jnp.clip(1.0 - jnp.maximum(d[:, None], d[None, :]) / (r + 1.0), 0.0, 1.0)
+    ys, xs = pos[:, 0, None] + off[None, :], pos[:, 1, None] + off[None, :]                    # [N, k]
+    inside = ((ys >= 0) & (ys < cfg.height))[:, :, None] & ((xs >= 0) & (xs < cfg.width))[:, None, :]
+    obj = grid[jnp.clip(ys, 0, cfg.height - 1)[:, :, None], jnp.clip(xs, 0, cfg.width - 1)[:, None, :]]
+    heat = jnp.where(inside, rules.heat_value[obj] * cfg.heat_scale, 0.0)
+    return jnp.clip(cfg.ambient_temp + (heat * kern[None]).sum(axis=(1, 2)), 0.0, 1.0)
+
+
 def step_world(cfg: WorldConfig, rules: RuleArrays, state: WorldState, actions: jnp.ndarray, key: jax.Array,
                effort: jnp.ndarray | None = None):
     """One tick. Returns (new_state, events) with events = {"gained": [N] food units gained by eating,
@@ -163,11 +178,19 @@ def step_world(cfg: WorldConfig, rules: RuleArrays, state: WorldState, actions: 
     fc = jnp.clip(front, 0, bounds)
 
     # --- USE on the faced cell (sequential over agents, ADR-003) ---
+    # The agents act in order of their index, and one that faces the same cell as an earlier one sees what that
+    # one left. The loop carries the faced cells only (one slot per cell: the slot of the first agent facing it),
+    # not the map: with the three maps in the carry every agent's turn copied them, which made a tick cost
+    # agents x cells and was most of the simulation time at 256 animals.
+    cell = fc[:, 0] * W + fc[:, 1]
+    slot = jnp.argmax(cell[None, :] == cell[:, None], axis=1)
+    fy, fx = fc[:, 0], fc[:, 1]
+
     def use_one(carry, i):
-        grid, uses, timer, held = carry
-        y, x = fc[i, 0], fc[i, 1]
+        cobj, cuses, ctimer, held = carry
+        s = slot[i]
         do = (actions[i] == A.USE) & inb[i]
-        h, t, u = held[i], grid[y, x], uses[y, x]
+        h, t, u = held[i], cobj[s], cuses[s]
         ti = rules.use_table[h, t]
         li = rules.last_use_table[h, t]
         has = ti >= 0
@@ -184,15 +207,19 @@ def step_world(cfg: WorldConfig, rules: RuleArrays, state: WorldState, actions: 
         nt = jnp.where(has, nt, jnp.where(pickup, EMPTY, jnp.where(drop, h, t)))
         changed = nt != t
         new_uses = jnp.where(changed, rules.num_uses[nt], u_after)
-        new_timer = jnp.where(changed, rules.decay_ticks[nt], timer[y, x])
+        new_timer = jnp.where(changed, rules.decay_ticks[nt], ctimer[s])
         na = jnp.where(do, na, h)
         nt = jnp.where(do, nt, t)
         new_uses = jnp.where(do, new_uses, u)
-        new_timer = jnp.where(do, new_timer, timer[y, x])
-        return (grid.at[y, x].set(nt), uses.at[y, x].set(new_uses), timer.at[y, x].set(new_timer),
-                held.at[i].set(na)), None
+        new_timer = jnp.where(do, new_timer, ctimer[s])
+        return (cobj.at[s].set(nt), cuses.at[s].set(new_uses), ctimer.at[s].set(new_timer), held.at[i].set(na)), None
 
-    (grid, uses, timer, held), _ = lax.scan(use_one, (grid0, uses0, timer, state.held), jnp.arange(N))
+    (cobj, cuses, ctimer, held), _ = lax.scan(
+        use_one, (grid0[fy, fx], uses0[fy, fx], timer[fy, fx], state.held), jnp.arange(N))
+    # every agent writes its cell's final state back (agents sharing a cell write the same values)
+    grid = grid0.at[fy, fx].set(cobj[slot])
+    uses = uses0.at[fy, fx].set(cuses[slot])
+    timer = timer.at[fy, fx].set(ctimer[slot])
 
     # --- EAT ---
     eat = (actions == A.EAT) & rules.edible[held]
@@ -225,7 +252,7 @@ def step_world(cfg: WorldConfig, rules: RuleArrays, state: WorldState, actions: 
     skin = state.skin
     hunger = cfg.hunger_per_tick
     if cfg.temperature:
-        local = local_temperature(cfg, rules, grid)[pos[:, 0], pos[:, 1]]
+        local = temperature_at(cfg, rules, grid, pos)
         temp = temp + cfg.temp_rate * (local - temp)
         skin = local
         hunger = hunger * (1.0 + cfg.temp_hunger * 2.0 * jnp.abs(temp - 0.5))

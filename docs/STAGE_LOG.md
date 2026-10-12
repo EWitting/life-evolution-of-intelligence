@@ -2058,3 +2058,37 @@ its parent added (`--lesions recent`, the default; `all` for the full sweep): 6 
 Ideas noted, not run (user): born with a fuller stomach against early deaths (measure with `luck.py`); more bushes
 or fewer animals instead of more area; the temperature field is convolved over the whole map every tick though
 hot springs never move (likely why world size costs time); compacting the arrays to the living animals.
+
+## v39 (2026-10-12, midnight): the simulation no longer costs agents x cells; a fuller stomach changes little
+
+**Speed.** World size cost time because of the loop in which the animals USE the cell they face one after the
+other (`world.step_world`): it carried the three maps (object, uses, timer), and every animal's turn copied them,
+so a tick cost agents x cells. Profile of the world step alone, 256 animals: 3.1 ms per tick at 128 x 128 and
+11.7 ms at 256 x 256 (64 animals: 0.7 and 3.7). The loop now carries the faced cells only (one slot per cell, the
+slot of the first animal facing it) and writes them back once: 1.15 and 1.19 ms. Whole simulations
+(`crowding.py`, seconds per world of 4000 ticks, before -> after): 128: 18 -> 13; 181: 24 -> 15-18; 256: 37-38 ->
+14-16. Every number is unchanged (487 / 567, 676 / 1015, 765 / 1569), 49 tests pass. The first guess, the
+temperature field convolved over the whole map every tick, was wrong: computing it only around each animal
+(`world.temperature_at`, identical values) changed no timing. It stays (it follows heat sources that change).
+
+**A fuller stomach at birth** (`luck.py 2.1 start_food=...`, the frozen seed 0, eight worlds, learning on):
+
+| born | mean fitness | dead before tick 400 | at the cap | fitness in one world and another | best quarter in another world |
+|---|---|---|---|---|---|
+| half full (as frozen) | 1027 | about 35% | | +0.16 | +12% |
+| three quarters | 1108 | 34% | 21% | +0.17 | +17% |
+| full | 1126 | 30% | 21% | +0.15 | +14% |
+
+Little changes: the early deaths are postponed, not prevented (these animals lose food on balance, whatever they
+start with), and what selection keeps from one world to the next is the same within the noise.
+
+**Compacting to the living animals** (estimate from the survival curve of the recorded generation: alive 77% at
+tick 200, 59% at 400, 42% at 800, 25% at 1600, 16% at the end): brains updated per tick as a share of the
+population, with a check every 100 ticks: never 1.00; halving at 1/2, 1/4, 1/8: 0.43; also at 3/4 and 3/8: 0.39;
+exact: 0.33. Not built.
+
+**Book**: the page of 2.1 is now "A wider world and sharper eyes" (`book/wider-world.qmd`): preparing the ground
+for the chapter; the tectum is not mentioned (user).
+
+To try (user): is there a patch purity at which both the lasting states and learning pay? (v34 tried 1.0, 0.8,
+0.6, 0.3 and 0 with the affect population, before the learning rate had come down and before the larger world.)

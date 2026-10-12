@@ -65,8 +65,10 @@ remapping the stored populations and freezing again.
    for the pallium: the assay of the association stage with the learned synapses reading the pallium. What it has
    to fix is measured (STAGE_LOG v37, v38): the animals find food at once and die of repeated poison bites (30 in a
    full life; a perfect learner takes 2), and they strip the good bushes near them by biting on a full stomach.
-   Small things first, if wanted (user's ideas, v38): the temperature field computed once per life (speed), a
-   fuller stomach at birth (`luck.py` measures what selection keeps), compacting to the living animals.
+   To try first (user, v39): a patch purity at which both the lasting states and learning pay, now with the
+   frozen 2.1 population. Done: the simulation no longer costs agents x cells (a 256 x 256 world runs as fast as
+   128 x 128). Measured and left: a fuller stomach at birth (little change). Not built: compacting the arrays
+   to the living animals (estimated 0.43 of the brain updates with halving at 1/2, 1/4, 1/8).
 2. Cheaper evaluations (user, 2026-10-12): the export runs in parallel (`--jobs`), prints a line per finished
    task and silences only the regions of the stage and its parent (`--lesions recent`, default); four worlds for a
    routine check (`--worlds 4`), seed 0 first. A stage run writes its 150 MB dashboard only with `--dashboard`.

@@ -1,11 +1,14 @@
-# Camera eyes {#sec-camera-eyes}
+# A wider world and sharper eyes {#sec-wider-world}
 
 <div data-life="status" data-stage="2.1"></div>
 
 Chapter 1 ended with an animal that steers, avoids what hurts, learns which food to distrust, looks after two
-needs and carries a mood for a while. It did all of that with five coarse eyes. This chapter builds the brain of
-an early fish on top of it, and a fish sees far better than a worm. So the first step of the chapter is not a new
-part of the brain. It is better eyes, and a world to use them in.
+needs and carries a mood for a while. This chapter builds the brain of an early fish on top of it, and most of
+what it adds is about learning.
+
+Before anything is added, the ground is prepared. This stage puts no new part into the brain. It moves the animals
+of chapter 1 into the world that the rest of the chapter will use, and gives them eyes that see more of it. The
+question is only whether they settle in.
 
 ## The world of this chapter
 
@@ -29,18 +32,10 @@ The food is as before: four kinds of berry bush, new in every life, half of them
 
 The eyes of early bilaterians were little more than light-sensitive spots that told bright from dark and one side
 from the other. Vertebrates have camera eyes: a lens throws an image onto a sheet of receptors, and the brain
-receives many small views side by side. With the image came a part of the midbrain that holds a map of it, the
-*optic tectum*. In a fish or a frog the tectum picks out something small and moving, turns the eyes and body to
-it, and starts the escape from something large that grows quickly.
+receives many small views side by side. The animals here get a modest step in that direction: more directions to
+look in, and a longer reach.
 
-This stage gives the animal the sharper eyes and leaves the tectum out. In this world nothing moves and nothing
-hunts, so the quick, inborn reactions that the tectum is known for have nothing to react to. A first design, a map
-that picked the nearest thing in view and steered to it, was tried before any evolution and did not help: the
-animal already steers to bushes with the reflexes it evolved in chapter 1, and "the nearest thing" is as often an
-empty bush or a poison one. The other thing a tectum does, letting what the animal has learned choose where to
-turn, needs the parts of the brain that this chapter adds later.
-
-## The change
+## Sharper eyes
 
 The animal now looks in nine directions where it had five, and sees one step further.
 
@@ -60,7 +55,7 @@ all connections from the eyes are made weaker by the same factor.
 
 ### The run
 
-This stage has no control. Its question is not whether a new circuit earns its place, but whether the animals of
+This stage has no control, because there is no new circuit to test. Its question is whether the animals of
 chapter 1 settle into the new world with their new eyes. The comparison is with the population they started from.
 
 <div data-life="curves" data-stage="2.1"></div>

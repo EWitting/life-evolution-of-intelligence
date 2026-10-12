@@ -22,7 +22,7 @@ book:
         - affect.qmd
     - part: "Chapter 2: reinforcing"
       chapters:
-        - camera-eyes.qmd
+        - wider-world.qmd
 
 format:
   html:

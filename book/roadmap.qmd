@@ -30,9 +30,9 @@ what to do.
 The brain of an early fish. The first vertebrates hunted in open water, and nearly all the parts of the vertebrate
 brain were already there. This chapter adds them in the following order.
 
-- **Sharper eyes.** The animal sees in more directions and further, in a world where good and poison bushes stand
-  side by side again. The map of the visual field that vertebrates have, the tectum, is left out for now: it
-  answers to things that move, and nothing in this world does. It returns when something can choose where to turn.
+- **A wider world and sharper eyes.** No new part of the brain yet. The animals of chapter 1 move into the world
+  of this chapter, where good and poison bushes stand side by side again and there is more room, and they see in
+  more directions and further.
 - **The pallium.** The first region whose wiring is not inherited at all. It spreads the look of a thing out over
   many cells, so that things that look alike can still be told apart. In chapter 1, what the animal learned about
   one food spread to the foods that resembled it.

@@ -1750,3 +1750,44 @@ figure) with the existing `patches` option, which puts all objects, hot springs 
 Patches make "food here means food nearby" true (up to 2.6 times the map average) but poison is mixed in just as
 much (poison around a poison bite 0.213 vs 0.082 at 30 patches), so a meal and a poison bite say the same thing
 about the place. Open, for the user: what the affect world is (see STATUS).
+
+### The affect world: one berry type per patch (user, 2026-10-12)
+
+New world option `patch_types` (`life/world.py`): the patches are shared out over the object types by spawn weight
+and a cell belongs to the nearest patch centre; heat sources stay spread evenly. Draft stage 1.8 (`s1_8_affect`):
+the drives world with 80 patches of radius 6, brain still the drives brain. `tests/test_frozen.py` and
+`life.freeze` now read a stored configuration with options added since at their defaults
+(`freeze.with_defaults`): a new option that is switched off does not change a frozen stage. The rules digests of
+the frozen stages are unchanged (10 tests pass).
+
+No cliff (`calib.py 1.8`, drives population seed 0, 4 worlds): own world 326; 80 patches of radius 6: 292; 40 of
+radius 8: 276; 160 of radius 4: 299; 240 of radius 3: 305.
+
+What a bite says about the place (`dwell.py`, one generation-0 life, 80 patches of radius 6): bushes with berries
+within 3 cells, good / poison: around a good meal 0.165 / 0.009, around a poison bite 0.013 / 0.201, whole map
+0.062 / 0.093. The next visit is to poison after 76% of poison bites and after 10% of good meals.
+
+### Generation 0: two hard-wired lasting states (`scripts/probes/affect.py`)
+
+Drives population (seed 0), unchanged, 4 shared worlds, paired difference in well-fed lifetime to the drives brain.
+`alarm<d>`: pain -> modulator `alarm` (cleared by the factor d per tick) -> `flee` cell -> FORWARD.
+`stay<d>`: taste -> `fed` cell -> modulator `serotonin` -> receptor on `rest`, which then holds FORWARD back also
+where it is cold; `hungry` still shuts `rest`.
+
+| variant | patch world (base 394) | poison share (base 0.110) | world without patches (base 470) |
+|---|---|---|---|
+| alarm0.9 (about 20 ticks) | +46 +-8 | 0.091 | +9 +-21 |
+| alarm0.97 (about 70 ticks) | -30 +-22 | 0.098 | |
+| stay0.97 | +73 +-44 | 0.089 | |
+| stay0.99 (about 200 ticks) | +200 +-62 | 0.087 | +75 +-44 |
+| alarm0.9 + stay0.97 | +117 +-23 | 0.077 | |
+| alarm0.9 + stay0.99 | +252 +-29 | 0.069 | |
+
+- Both states pay before any evolution, and together more than apart. Four worlds: sizes are rough, the signs of
+  the paired differences are the same in every world for alarm0.9, stay0.99 and the combinations.
+- The alarm is about the place (nothing without patches) and must be short: at 70 ticks it runs the animal out of
+  the good patches as well.
+- About a third of what staying wins is not about the place (+75 without patches: an animal that sits still when
+  fed spends less on moving); the rest is.
+- Modulator persistence (`ModulatorSpec.decay`: released at once, cleared slowly) gives the fast rise and slow
+  fade that the old `raphe` cell lacked. Neither modulator teaches anything.

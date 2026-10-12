@@ -62,9 +62,10 @@ remapping the stored populations and freezing again.
 1. **Resume here: affect**, redesigned on the frozen drives brain: assay and generation 0 first, design choices
    with the user. Frame agreed 2026-10-12: a second page of the same system as drives (modes become states that
    last and that events can set); serotonin names the "fed, stay" state, dopamine is kept for chapter 2, no roam
-   nucleus. **Open: the world.** In the drives world no lasting state can pay (STAGE_LOG v33,
-   `scripts/probes/dwell.py`): a bush is emptied in one visit and fills the stomach, food and poison are spread
-   evenly. The existing `patches` option clumps food and poison alike. It is the last stage of the chapter, so it cannot disturb anything above it. Drives is frozen as
+   nucleus. World (user, 2026-10-12): every berry type in its own patches (`patch_types`, draft stage 1.8), no
+   cliff. Generation 0 (`scripts/probes/affect.py`, STAGE_LOG v33): a short `alarm` after pain (-> `flee` -> forward)
+   +46 +-8, a long `serotonin` after a meal (-> `rest`) +200 +-62, both +252 +-29 over the drives brain. **Open,
+   for the user: adopt these two as the stage's circuit, what is left to evolution, then one seed of evolution.** It is the last stage of the chapter, so it cannot disturb anything above it. Drives is frozen as
    it is (user, 2026-10-08): it is fine that the greedy control wins the head-to-head food race while the animals
    with drives are the more efficient ones among their own.
 2. Then freeze affect (`python -m life.freeze <key>`), tag, chapter 2.

@@ -1,7 +1,7 @@
 # Status
 
 One screen on where the project is. Plan: `docs/BRAIN_EVOLUTION.md`. **Frozen stages: `frozen/README.md`.** Details, numbers and run directories:
-`docs/STAGE_LOG.md`. Newest decisions: `docs/DECISIONS.md` (ADR-017 to ADR-024). Last updated 2026-10-12.
+`docs/STAGE_LOG.md`. Newest decisions: `docs/DECISIONS.md` (ADR-017 to ADR-025). Last updated 2026-10-12.
 
 ## How a stage is judged
 
@@ -54,8 +54,8 @@ remapping the stored populations and freezing again.
 | 1.7 drives | `cold` and `hungry` need cells; warmth by kinesis: `warm_seek` (run while the skin is cold), `rest` (stay where it is warm); `hungry` shuts the warmth mode; evolvable `hungry` -> feeding synapses. World: the 1.5 world made cold, hot springs (which do not block) | **frozen**, passes (user's decision on the head to head) | Main 386 +-14 vs control 309 +-18; re-evaluated 401 vs 341 (+60 +-37: 124, -4, 62). **Head to head -65 +-33** (-88, -108, 0): the control half does better next to main animals (432-532) than among its own (276-409). Lesions: hungry 26 27 18, rest 72 86 71, cold and warm_seek 89 94 86, plasticity 71 66 76. Main moves 45% of ticks vs 71%, bites at nothing 32% vs 12%. Either population alone at half density does 55-80% better (`density.py`): food is a race, resting animals leave food to roamers and gain by burning less. |
 | affect (old 1.3) | serotonin (dwell) and PDF (roam) states | to redesign on drives | Unused in its last run (v13, old architecture). Kept if at all possible: later stages need the modulator systems. |
 | side paths | 1.1l, 1.5c (centred association before habituation), 1.5f, 1.6h, 1.6 reversal, x.hands, x.td, old 1.2-1.4 | defined, not on the path | Listed with reasons in `frozen/README.md`. |
-| 2.1-2.5 | tectum, pallium, basal ganglia, dopamine TD | defined, older design | To revisit: per-life pallium weights (ADR-017), holding before 2.6, delayed sickness and appetitive learning with the prediction error. |
-| 2.6-2.10, 3.x-5.x | actor, curiosity, hippocampus, cerebellum; simulating, mentalizing, speaking | planned | |
+| chapter 2 | eyes + tectum -> pallium -> dopamine critic -> hands -> basal ganglia with actor -> curiosity | plan revised 2026-10-12 (ADR-025; `BRAIN_EVOLUTION.md`, "Revised plan for the chapter") | The definitions 2.1-2.5 and `x.td` in `stages.py` are the old design on the reversal brain: each stage is defined again on the affect brain when its turn comes. A few dozen generations per stage; lab experiments for the learning stages; dopamine as a circuit. |
+| later, 3.x-5.x | pallium clustering, hippocampus, cerebellum, uncertainty modulators; simulating, mentalizing, speaking | planned | |
 
 ## Next steps
 
@@ -94,7 +94,7 @@ remapping the stored populations and freezing again.
 - The well-fed lifetime has a ceiling at the life cap; in 1.0 most agents reach it at any cap (STAGE_LOG v23).
 - The learning world is new every generation, so fitness swings between generations (sd about 290 in 1.5): read
   trends over blocks of generations with their standard error, not from single blocks.
-- Chapter 2 definitions are stale. The dashboard clips displayed weights at `w_max`.
+- Chapter 2 definitions in `stages.py` are stale (plan revised, ADR-025). The dashboard clips displayed weights at `w_max`.
 
 Practical notes: one process runs a non-plastic stage at about 4-5 s per generation of 1000 ticks and a stage with
 4000-tick lives at 15-40 s (an unrecorded simulation stops when every animal is dead); how many JAX processes fit in parallel depends on free memory, so on whether the laptop is in use for other things (five were killed for low memory on 2026-10-08 with VS Code and Chrome open; six or seven ran with them closed): check free memory and the size of one running process before starting a batch. A sleeping laptop pauses

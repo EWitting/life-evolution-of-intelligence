@@ -314,10 +314,70 @@ Suggested region names from here on: `tectum`, `pallium`, `striatum`, `gpi`, `sn
 `hippocampus` (medial pallium), `cerebellum`, `brainstem` (motor programs; the old `hidden` can be renamed
 to this).
 
-unprocessed notes:
-- increase visual resolution for this stage?
-- add back the hands and multistep grab eat and drop actions?
-- a lot about in-generation learning, can we keep guaranteeing that behaviours to learn cannot be hardcoded by evolution? to which extent do we still use evolution
+#### Revised plan for the chapter (2026-10-12, ADR-025)
+
+Reviewed with the user after chapter 1. The stage sections below are the first plan (2026-09); where they differ
+from this block, this block holds. The definitions in `stages.py` (2.1-2.5, `x.td`) are still the old ones, built
+on the reversal brain; every stage is defined again on the frozen affect brain when its turn comes, and probed
+step by step like the chapter 1 stages (assay, generation 0, then evolution).
+
+**Order.**
+
+| step | what | kind |
+|---|---|---|
+| 1 | camera eyes (9 columns, range 6) and the **tectum** | innate; the control gets the same eyes |
+| 2 | **pallium**: sparse expansion of the look, weights drawn per life; the pain rule of the association stage reads it | first learned region |
+| 3 | **dopamine critic**, complete: taste and pain as rewards, opponent value cells, dopamine as the teacher | learning; lab experiments |
+| 4 | **hands**: pick, hold, eat | short adaptation step, no controlled experiment |
+| 5 | **basal ganglia with the actor** (old 2.4 and 2.6 as one stage) | learning; lab experiments |
+| 6 | **curiosity** | learning |
+| later | pallium clustering (old 2.3) when a world with noisy looks needs it; hippocampus, sequences, cerebellum, uncertainty modulators; delayed sickness | parked until 1-6 work |
+
+**Decisions.**
+
+- **Evolution is for tuning.** A new module is designed, hard-wired where it has a fixed meaning, and tested at
+  generation 0; evolution then tunes it and the rest of the brain to each other in a few dozen generations (the
+  affect stage: +250 at generation 0, fade times and strengths stayed near the design). Three seeds and the
+  lesions remain the test that a circuit is used. Exception: an architectural change after which something has to
+  be learned again from scratch gets a full run. The networks are cheap; long lives with a handful of agents on a
+  GPU are not needed yet.
+- **What is learned must not be inheritable** (ADR-017, to be built with the pallium). Two guards, plus a check:
+  1. the weights of a learned region are drawn at each birth; the genome holds their statistics and rule genes;
+  2. the looks and meanings of what has to be learned are drawn per life. Default: per life for the things a
+     stage's learner is about (berry variants, markers, tools); ancestral things (a staple food, hot springs,
+     walls, other animals) keep a fixed look, so that the innate compartment has something to be innate about.
+     Decided per stage;
+  3. the lesion with plasticity switched off, and a control without the learner. To keep in mind (user): this
+     only says something when the behaviour is one a non-learning network could have acquired by evolution, so a
+     stage should show that its control had the means and still does not get there.
+- **Pallium before the critic** (user): the networks that prepare the input are in place before the circuits that
+  learn from them, so that learning works on sparse, separated codes and not on the dense look. Its job is already
+  known from chapter 1: what is learned about one food spreads to foods that look like it (the staple and the
+  poison that looks 80% like it; ADR-021). The XOR world of the first plan is not needed as the driver. First
+  probe: the assay of the association stage with the learned synapses reading the pallium, look-alikes at several
+  similarities. The look has 8 features per eye column, so the expansion may gain little on the plain look that
+  habituation already centres; the probe decides the size and sparseness.
+- **The critic is built complete** (user): both teachers, the prediction error, opponent values, as in the
+  vertebrate circuit. That the taste teacher was unused in chapter 1 (six seeds) and that `x.td` was a tie are not
+  held against it: both were on a different brain, and raw taste teaching has no predicted reward to compare with,
+  which is what made it unstable. Parts are removed only when experiments on the finished circuit show them unused.
+- **Dopamine as a circuit, not as a formula.** See 2.5 below.
+- **Eyes with the tectum.** `VISION_CH2` keeps the names of the five old columns, so inherited weights carry over
+  and the four new columns start silent. Main and control both get the new eyes; the stage tests the tectum. The
+  bush, its berry and its empty bush get one shared colour from this world on (STATUS, known simplifications).
+- **Hands mid-chapter**, just before the actor: with eat-on-grasp there is no action to choose. A small
+  evolution step from the critic population into a pick-hold-eat world (`with_hands`; in `x.hands` the lineage
+  adapted in about ten generations), with a check that it has not lost much against eat-on-grasp. How this reads
+  in the book is open.
+- **Lab experiments** for the learning stages: single-animal, scripted situations as in an animal lab
+  (acquisition curves, omission and extinction, blocking, discrimination of look-alikes, later devaluation),
+  grown out of `scripts/probes/assay.py`, with results stored in the book's data files. They take the place of
+  the assay step for these stages and are shown in the book next to the world results.
+- **Merged or dropped.** The fixed basal ganglia has no stage of its own (`hungry` already settles the conflict
+  between drives; little to gain alone). Thorn hazards and a second nutrient are gone (no OHOL counterpart; the
+  second need is warmth). Curiosity takes novelty from the adapted look inputs of the habituation stage, not from
+  synaptic depression. The tectum, striatum and value cells get fixed meanings (ADR-016) and act on programmes and
+  modes, not on the motor neurons directly (ADR-020).
 
 #### 2.1 Optic tectum: topographic target selection
 - **Biology.** The tectum (superior colliculus in mammals) is a retinotopic map. It picks *one* target by
@@ -408,6 +468,28 @@ dopamine replace the raw US as the teacher of the valence synapses.
   error. Identity features and the pallium -> value synapses learn by TD(lambda) (`dW = eta * da * trace`); the
   value populations feed valence (incentive salience); every `us`-gated projection switches to `da`.
 - **Rule.** TD(lambda) as a three-factor rule with eligibility traces.
+- **Revised (2026-10-12): the error is computed by cells.** The old definition writes the formula into the
+  modulator (`terms`, with copy regions as a one-step delay). The circuit it stands for, to be built instead:
+  - a dopamine cell `snc` with a **tonic rate** (a positive bias). The modulator is its rate minus that baseline
+    (`ModulatorSpec.baseline`): a burst is a positive error, a pause a negative one. A rate cannot go below
+    zero, so negative errors are capped at the tonic rate, as in real dopamine cells (Bayer & Glimcher 2005);
+  - **the subtraction is inhibition, the delay is a slow pathway.** Value reaches the dopamine cell twice: fast
+    and exciting (disinhibition through the pallidum), slow and inhibiting (striosomes directly onto the cell).
+    Fast minus slow is the change of value, which is the `gamma V(t) - V(t-1)` part (Houk, Adams & Barto 1995;
+    dopamine as the derivative of value: Kim et al. 2020). In the framework: a leaky inhibitory cell
+    (`alpha` < 1) in place of the copy regions. The discount and the time span then follow from two strengths
+    and one time constant, which evolution can tune;
+  - **bad news arrives through the habenula**: expected-bad value and pain excite a `habenula` cell that
+    inhibits the dopamine cell. This pathway is described in the lamprey (Stephenson-Jones et al. 2013), so it
+    fits the animal of this chapter. Taste excites the dopamine cell directly;
+  - **the chemical is short-lived.** Dopamine is taken up again within about a second, less than one tick, so
+    the modulator does not persist; the memory of what was active sits in the synapse (eligibility trace, a few
+    seconds: Yagishita et al. 2014). Persistence as built (`decay`: the larger of the new value and the faded old
+    one) suits a state such as serotonin and would erase pauses; a slowly cleared signed dopamine would need its
+    own form and is not planned;
+  - differences from the formula, to check in the lab experiments: the error is a smoothed change of value and
+    not exact TD, and bursts and pauses are not symmetric. Expected to matter little; blocking, omission and the
+    move of the response from reward to cue are the tests.
 - **Experiment: chained cues.** A reward requires a short causal chain: e.g. a berry is only available at
   bushes next to a marker object (a stone), or a food source must be USEd twice with a delay. The marker
   identity is randomised per life. Reward comes 5–20 ticks after the first cue.

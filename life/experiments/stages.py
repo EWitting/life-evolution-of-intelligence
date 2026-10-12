@@ -756,7 +756,7 @@ stage(Stage("1.6", "s1_6_reversal", "1.5c", B16, W16, VISION_CH1, BODY_TASTE, la
             notes="reversal learning: learned weights decay toward w0; the novel types swap meaning mid-life"))
 
 
-# Chapter 2 (older design, to be reviewed) is written for a brain with both teachers: the taste teacher that chapter 1
+# Chapter 2 (older design; plan revised 2026-10-12, ADR-025: to be defined again on the affect brain) is written for a brain with both teachers: the taste teacher that chapter 1
 # dropped is added back here, on the reversal brain.
 B16_TASTE = extend(B16, regions=(R("us_taste", 1, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, group="us"),),
                    projections=(P("in", "us_taste", src_select=("taste",), density=1.0, w_init=2.0, evolve=False),),

@@ -305,3 +305,29 @@ override them freely; when one does, add or amend an entry so the record stays c
   (`BodyConfig.skin`); the slow body temperature is what the cold costs.
 - **Freezing rule** (user): a module that lesions show unused stays out of the frozen brain unless later stages
   need the brain to have developed with it (the need state, the modulator systems).
+
+## ADR-025 Chapter 2: order, the role of evolution, lab experiments, dopamine as a circuit (2026-10-12)
+
+- Decided with the user in a review of the chapter 2 plan before starting it. Full text:
+  `docs/BRAIN_EVOLUTION.md`, "Revised plan for the chapter".
+- **Order**: camera eyes + tectum -> pallium (expansion, weights per life) -> complete dopamine critic -> hands ->
+  basal ganglia with the actor -> curiosity. Parked until these work: pallium clustering, hippocampus, sequences,
+  cerebellum, uncertainty modulators, delayed sickness.
+- **Evolution tunes; it is not the test of a design.** A few dozen generations per stage, three seeds, lesions as
+  the test of use. A full run only when an architectural change means relearning from scratch. No move to long
+  lives with few agents on a GPU yet: the networks are cheap.
+- **ADR-017 is built with the pallium** (weights of learned regions drawn at birth). Looks are drawn per life for
+  what a stage's learner is about, fixed for ancestral things; decided per stage. A learning stage shows that its
+  non-learning control had the means to acquire the behaviour by evolution.
+- **Pallium before the critic**: input-preparing networks first, learners on top of them. Driver: learned value
+  spreading between look-alikes, not the XOR world.
+- **The critic is complete** (taste and pain, opponent values, prediction error) unless experiments on it show a
+  part unused. The unused taste teacher of chapter 1 and the `x.td` tie do not count against it.
+- **Dopamine is a circuit**: a tonically active dopamine cell (modulator = rate minus baseline), value arriving
+  fast-exciting and slow-inhibiting (a leaky inhibitory cell instead of copy regions), bad news through a habenula
+  cell, no persistence of the chemical. Replaces the formula in the modulator's `terms`.
+- **Hands** return as a short adaptation step before the actor, checked against eat-on-grasp, without the usual
+  main-versus-control experiment.
+- **Lab experiments** (tracked single-animal tests, results in the book data) for the learning stages, in place of
+  the assay step.
+- **The fixed basal ganglia is merged into the actor stage.**

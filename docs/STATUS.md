@@ -65,8 +65,13 @@ remapping the stored populations and freezing again.
    for the pallium: the assay of the association stage with the learned synapses reading the pallium. What it has
    to fix is measured (STAGE_LOG v37, v38): the animals find food at once and die of repeated poison bites (30 in a
    full life; a perfect learner takes 2), and they strip the good bushes near them by biting on a full stomach.
-   To try first (user, v39): a patch purity at which both the lasting states and learning pay, now with the
-   frozen 2.1 population. Done: the simulation no longer costs agents x cells (a 256 x 256 world runs as fast as
+   To try first (user, v39): (a) a larger world for the chapter, four or eight times the area of chapter 1
+   (256 x 256, 362 x 362) instead of the two times of the frozen 2.1, now that size costs no time:
+   `crowding.py 2.1 181 256 362` shows what is left of the crowding; against it, more animals reach the life cap
+   (33% at 256), where well-fed lifetime cannot grow, so a longer life may have to come with it. If a larger world
+   is taken, 2.1 is run and frozen again in it (the user's decision; about 15 minutes a seed) and its book page
+   exported again. (b) A patch purity at which both the lasting states and learning pay, now with the frozen 2.1
+   population. Done: the simulation no longer costs agents x cells (a 256 x 256 world runs as fast as
    128 x 128). Measured and left: a fuller stomach at birth (little change). Not built: compacting the arrays
    to the living animals (estimated 0.43 of the brain updates with halving at 1/2, 1/4, 1/8).
 2. Cheaper evaluations (user, 2026-10-12): the export runs in parallel (`--jobs`), prints a line per finished

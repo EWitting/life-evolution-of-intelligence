@@ -750,6 +750,8 @@ stage(Stage("1.8", "s1_8_affect", "1.7", B18, W18, VISION_CH1, BODY_17,
 # where the world pays for it? Not stages of the chain.
 for _key, _name, _world, _note in (
         ("x.w60", "x_world_p60", replace(W18, patch_purity=0.6), "patches 60% their own type"),
+        ("x.w30", "x_world_p30", replace(W18, patch_purity=0.3), "patches with a third poison in a good patch"),
+        ("x.w30f", "x_world_p30_food", replace(W18, patch_purity=0.3, spawn_density=0.3), "the same, with more food"),
         ("x.weven", "x_world_even", replace(W17, spawn_density=0.3), "no patches, more food (the drives population "
                                                                      "gains from learning here)")):
     stage(Stage(_key, _name, "1.8", B18, _world, VISION_CH1, BODY_17,

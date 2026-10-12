@@ -1912,3 +1912,18 @@ to 87%, and learning no longer costs berries), and the way back was a lower lear
 had drifted up in the affect stage (0.33 after drives), where nothing held it; at 0.45 a lesson spread to good
 food. Restoring the learned synapses that had gone missing (87% present) changes nothing. In the 60% patches
 learning stays neutral: the rate came down too, the room is small (11%). One seed.
+
+**In between (`x.w30`: a third poison in a good patch, density 0.19; 30 generations, lesions in four worlds).**
+Before: intact 312, plasticity off 104%, flee 97, fed 88. After: intact 334, plasticity off 108%, flee 90, fed 93;
+learning rate 0.45 -> 0.15; poison share 0.216 with learning, 0.211 without. Worse than both earlier candidates:
+learning is not picked up and the lasting states matter little. Lives are short (about 570 of 4000 ticks, against
+about 1020 in `x.weven`, which had density 0.3). 15 minutes for the whole check.
+
+**The same with more food (`x.w30f`: density 0.3).** Before: intact 462, plasticity off 106%, flee 74, fed 86.
+After: intact 498, plasticity off 98%, flee 90, fed 81; learning rate 0.19; poison share 0.209 with learning,
+0.212 without. More food and longer lives (about 750 ticks) do not bring learning back in patches either.
+
+Summary of the four candidates after evolution (seed 0; % of intact): `x.weven` plasticity off 87, fed 84, flee
+97; `x.w60` 102, 65, 90; `x.w30` 108, 93, 90; `x.w30f` 98, 81, 90. Only the world without patches gives learning a
+job; every world with patches gives the lasting states one and leaves learning neutral, at any mix tried. In
+patches the lineage turns the learning rate down until a lesson no longer changes what is eaten.

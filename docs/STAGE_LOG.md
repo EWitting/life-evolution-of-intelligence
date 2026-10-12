@@ -1946,7 +1946,7 @@ generations in this world), four worlds, well-fed lifetime:
 | camera eyes, shared colour (control of 2.1) | 572 | 43.6 | 0.170 | 566 458 671 593 |
 | tectum as defined | 410 | 31.6 | 0.195 | 338 216 558 527 |
 | tectum, orienting only | 562 | 43.8 | 0.171 | 502 420 748 576 |
-| tectum, approach only | (not finished) | | | |
+| tectum, approach only | 405 | 31.0 | 0.193 | 325 215 590 491 |
 | tectum, programmes at half strength | 539 | 42.2 | 0.176 | 554 321 708 572 |
 | tectum, programmes at double strength | 156 | 11.8 | 0.253 | 103 74 248 200 |
 

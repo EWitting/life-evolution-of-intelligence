@@ -5,7 +5,7 @@
   --lb-s1: #2a78d6;            /* main */
   --lb-s2: #eb6834;            /* control */
   --lb-seq: #1c5cab; --lb-cell0: #eef2f8;   /* activity: one hue, light to dark */
-  --lb-hard: #2e2e2e; --lb-evolved: #a9a8a2; --lb-new: #1baf7a; --lb-learned: #4a3aa7;
+  --lb-hard: #2e2e2e; --lb-evolved: #a9a8a2; --lb-new: #1baf7a; --lb-learned: #4a3aa7; --lb-mod: #b8327f;
   --lb-exc: #f1f8f1; --lb-inh: #fbf0ef; --lb-io: #ffffff;
   --lb-ground: #eef0e6; --lb-wall: #c3c2b7; --lb-animal: #0b0b0b; --lb-other: #898781;
   --lb-good: #006300; --lb-bad: #d03b3b; --lb-note: #fff8e6; --lb-noteline: #eda100;
@@ -15,7 +15,7 @@
   --lb-gridline: #2c2c2a; --lb-axis: #383835; --lb-border: rgba(255, 255, 255, 0.10);
   --lb-s1: #3987e5; --lb-s2: #d95926;
   --lb-seq: #6da7ec; --lb-cell0: #232a33;
-  --lb-hard: #e8e8e4; --lb-evolved: #6d6c67; --lb-new: #199e70; --lb-learned: #9085e9;
+  --lb-hard: #e8e8e4; --lb-evolved: #6d6c67; --lb-new: #199e70; --lb-learned: #9085e9; --lb-mod: #e377b6;
   --lb-exc: #1f2a20; --lb-inh: #2e2020; --lb-io: #232322;
   --lb-ground: #23261f; --lb-wall: #383835; --lb-animal: #ffffff; --lb-other: #898781;
   --lb-good: #0ca30c; --lb-bad: #e66767; --lb-note: #2b2616; --lb-noteline: #c98500;
@@ -88,6 +88,10 @@
 .lb-hard { stroke: var(--lb-hard); } .lb-hard-fill { fill: var(--lb-hard); }
 .lb-evolved { stroke: var(--lb-evolved); } .lb-evolved-fill { fill: var(--lb-evolved); }
 .lb-learned { stroke: var(--lb-learned); } .lb-learned-fill { fill: var(--lb-learned); }
+.lb-modline { stroke: var(--lb-mod); stroke-width: 2; stroke-dasharray: 5 4; } .lb-modend { fill: var(--lb-mod); }
+.lb-modlabel { font-size: 10.5px; font-style: italic; fill: var(--lb-mod); paint-order: stroke; stroke: var(--lb-surface); stroke-width: 5px; }
+.lb-modkey { background: repeating-linear-gradient(90deg, var(--lb-mod) 0 4px, transparent 4px 7px); }
+.lb-mod { cursor: default; } .lb-mod:hover .lb-modline { stroke-width: 3; }
 .lb-edge { cursor: default; } .lb-edge:hover path:first-child { stroke: var(--lb-s1); }
 
 /* zoomed-in example */

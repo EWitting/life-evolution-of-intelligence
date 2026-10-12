@@ -206,6 +206,35 @@
       s += `<rect class="lb-group" x="${f1(x0)}" y="${f1(y0)}" width="${f1(x1 - x0)}" height="${f1(y1 - y0)}" rx="9"/>`;
       labels += `<text class="lb-grouplabel" x="${f1(x0 + 7)}" y="${f1(y0 + 12)}">${esc(gp.split('/').pop())}</text>`;
     });
+    // modulators: a dashed line from the cell that releases one to every cell with a receptor for it, and to every
+    // projection whose learning it gates (the line ends on the middle of that projection)
+    const mid = {}, MODS = [];
+    PROJ.forEach((p, i) => { const m = /^M([-\d.]+),([-\d.]+) Q([-\d.]+),([-\d.]+) ([-\d.]+),([-\d.]+)$/.exec(geom(p).d); if (m) mid[i] = [(+m[1] + 2 * +m[3] + +m[5]) / 4, (+m[2] + 2 * +m[4] + +m[6]) / 4]; });
+    for (const m of D.brain.modulators || []) {
+      if (!pos[m.pos]) continue;
+      for (const r of REG) for (const rc of r.receptors || []) if (rc[0] === m.name) MODS.push({m, src: m.pos, to: pos[r.name], dst: r.name, how: rc[1], sens: rc[2]});
+      PROJ.forEach((p, i) => { if (p.modulator === m.name && mid[i]) MODS.push({m, src: m.pos, to: mid[i], proj: p}); });
+    }
+    function modGeom(l) {
+      const [x1, y1] = pos[l.src], [x2, y2] = l.to, dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy) || 1, nx = -dy / len, ny = dx / len;
+      if (l.dst && Math.abs(dx) < 1 && Math.abs(dy) < 2.5 * BH) {   // neighbours in one column: a loop around their right side
+        const x = x1 + BW / 2, b = 44;
+        return {d: `M${f1(x)},${f1(y1)} C${f1(x + b)},${f1(y1)} ${f1(x + b)},${f1(y2)} ${f1(x + 5)},${f1(y2)}`, end: [x + 5, y2], mid: [x + b * 0.75 + 4, (y1 + y2) / 2], anchor: 'start'};
+      }
+      const base = l.dst && PROJ.some(o => (o.src === l.src && o.dst === l.dst) || (o.src === l.dst && o.dst === l.src)) ? 24 : 0;
+      const hits = b => REG.some(r => r.name !== l.src && r.name !== l.dst && [0.2, 0.35, 0.5, 0.65, 0.8].some(f => inBox(x1 + dx * f + nx * 4 * f * (1 - f) * b, y1 + dy * f + ny * 4 * f * (1 - f) * b, r.name)));
+      let bend = base;
+      for (let k = 1; k <= 10 && hits(bend); k++) { const sg = base ? Math.sign(base) : (k % 2 ? 1 : -1); bend = base + sg * Math.ceil(k / (base ? 1 : 2)) * 0.4 * BH; }
+      const cx = (x1 + x2) / 2 + nx * 2 * bend, cy = (y1 + y2) / 2 + ny * 2 * bend;
+      const [sx, sy] = clip(x1, y1, cx - x1, cy - y1), [ex, ey] = l.dst ? clip(x2, y2, cx - x2, cy - y2) : [x2, y2];
+      return {d: `M${f1(sx)},${f1(sy)} Q${f1(cx)},${f1(cy)} ${f1(ex)},${f1(ey)}`, end: [ex, ey], mid: [(sx + 2 * cx + ex) / 4, (sy + 2 * cy + ey) / 4]};
+    }
+    let modsvg = '';
+    MODS.forEach((l, i) => {
+      const g = modGeom(l);
+      modsvg += `<g class="lb-mod" data-m="${i}"><path class="lb-modline" fill="none" d="${g.d}"/><circle class="lb-modend" cx="${f1(g.end[0])}" cy="${f1(g.end[1])}" r="4"/>`
+        + `<text class="lb-modlabel" text-anchor="${g.anchor || 'middle'}" x="${f1(g.mid[0])}" y="${f1(g.mid[1] + 3.5)}">${esc(l.m.name)}</text><path d="${g.d}" fill="none" stroke="transparent" stroke-width="14"/></g>`;
+    });
     PROJ.forEach((p, i) => {
       const g = geom(p), w = 1 + 4 * Math.sqrt(p.drive / maxDrive), cls = p.rule !== 'fixed' ? 'lb-learned' : p.hard ? 'lb-hard' : 'lb-evolved', [ex, ey] = g.end, [ux, uy] = g.dir;
       // excitatory synapses end in an arrowhead, inhibitory ones in a bar; sensory projections (mixed signs) in a dot
@@ -215,7 +244,7 @@
         : `<path class="${cls}-fill" d="M${f1(ex)},${f1(ey)} L${f1(ex - ux * a * 1.5 - uy * a * 0.6)},${f1(ey - uy * a * 1.5 + ux * a * 0.6)} L${f1(ex - ux * a * 1.5 + uy * a * 0.6)},${f1(ey - uy * a * 1.5 - ux * a * 0.6)} z"/>`;
       s += `<g class="lb-edge${p.new ? ' lb-isnew' : ''}" data-p="${i}"><path class="${cls}" fill="none" stroke-width="${f1(w)}" d="${g.d}"/>${head}<path d="${g.d}" fill="none" stroke="transparent" stroke-width="14"/></g>`;
     });
-    s += labels;
+    s += modsvg + labels;
     for (const r of REG) {
       const [x, y] = pos[r.name];
       s += `<g class="lb-reg${r.new ? ' lb-isnew' : ''}" data-r="${esc(r.name)}" transform="translate(${f1(x - BW / 2)},${f1(y - BH / 2)})"><rect width="${BW}" height="${BH}" rx="6" class="${r.sign > 0 ? 'lb-exc' : r.sign < 0 ? 'lb-inh' : 'lb-io'}"/>`
@@ -223,7 +252,7 @@
     }
     s += '</svg>';
     const anyNew = REG.some(r => r.new);
-    root.innerHTML = s + `<div class="lb-legend lb-brainlegend"><span><i class="lb-key lb-hardkey"></i>hard-wired (designed; evolution tunes only the strength)</span><span><i class="lb-key lb-evokey"></i>evolved</span>${PROJ.some(p => p.rule !== 'fixed') ? '<span><i class="lb-key lb-learnkey"></i>learned within a life</span>' : ''}<span>▸ excites</span><span>⊣ inhibits</span><span>● senses, mixed signs</span>${anyNew ? '<span><i class="lb-key lb-newkey"></i>added in this stage</span>' : ''}<span class="lb-muted">line width = total synaptic strength arriving at one target neuron, mean of the final population</span></div>`;
+    root.innerHTML = s + `<div class="lb-legend lb-brainlegend"><span><i class="lb-key lb-hardkey"></i>hard-wired (designed; evolution tunes only the strength)</span><span><i class="lb-key lb-evokey"></i>evolved</span>${PROJ.some(p => p.rule !== 'fixed') ? '<span><i class="lb-key lb-learnkey"></i>learned within a life</span>' : ''}<span>▸ excites</span><span>⊣ inhibits</span><span>● senses, mixed signs</span>${MODS.length ? '<span><i class="lb-key lb-modkey"></i>modulator: released by one cell, acts on a cell or on the learning of a projection</span>' : ''}${anyNew ? '<span><i class="lb-key lb-newkey"></i>added in this stage</span>' : ''}<span class="lb-muted">line width = total synaptic strength arriving at one target neuron, mean of the final population</span></div>`;
     const sel = p => p.src_select.length ? ` [${p.src_select.join(', ')}]` : '';
     root.querySelectorAll('.lb-edge').forEach(g => {
       const p = PROJ[+g.dataset.p];
@@ -231,9 +260,17 @@
       g.addEventListener('mousemove', e => showTip(e, `<b>${esc(p.src + sel(p))} → ${esc(p.dst)}${esc(range)}</b><div>${p.rule !== 'fixed' ? `learned within a life (rule: ${esc(p.rule)}${p.modulator ? ', gated by ' + esc(p.modulator) : ''})` : p.hard ? 'hard-wired' : 'evolved'}, ${p.src === 'in' && !p.hard ? 'mixed signs' : p.sign < 0 ? 'inhibitory' : 'excitatory'}${p.new ? ', added in this stage' : ''}</div><div>${fmt(p.synapses, p.synapses < 10 ? 0 : 0)} synapses, mean strength ${fmt(p.mean_abs)}${p.designed !== null && p.designed !== undefined ? ` (designed at ${fmt(Math.abs(p.designed))})` : ''}</div>`));
       g.addEventListener('mouseleave', hideTip);
     });
+    const lasts = m => m.lasts ? `Released at once and cleared slowly: it stays for about ${fmt(m.lasts, 0)} ticks (designed at ${fmt(m.lasts_designed, 0)}).` : 'Follows the cell that releases it, without delay.';
+    root.querySelectorAll('.lb-mod').forEach(g => {
+      const l = MODS[+g.dataset.m];
+      const acts = l.proj ? `gates the learning of ${esc(l.proj.src + sel(l.proj))} → ${esc(l.proj.dst)}` : `acts on ${esc(l.dst)} (${l.how === 'gain' ? 'scales its response' : 'adds to its drive'}, sensitivity ${fmt(l.sens)})`;
+      g.addEventListener('mousemove', e => showTip(e, `<b>${esc(l.m.name)}</b> modulator${l.m.new ? ', added in this stage' : ''}<div>released by ${esc(l.src)}, ${acts}</div><div class="lb-muted">${lasts(l.m)}</div>`));
+      g.addEventListener('mouseleave', hideTip);
+    });
     root.querySelectorAll('.lb-reg').forEach(g => {
       const r = REG.find(o => o.name === g.dataset.r), ins = PROJ.filter(p => p.dst === r.name), outs = PROJ.filter(p => p.src === r.name);
-      g.addEventListener('mousemove', e => showTip(e, `<b>${esc(r.name)}</b> ${r.size} neuron${r.size === 1 ? '' : 's'}${r.new ? ', added in this stage' : ''}<div class="lb-muted">from: ${esc([...new Set(ins.map(p => p.src))].join(', ') || '–')}</div><div class="lb-muted">to: ${esc([...new Set(outs.map(p => p.dst))].join(', ') || '–')}</div>`));
+      const rel = (D.brain.modulators || []).filter(m => m.pos === r.name).map(m => m.name), rec = (r.receptors || []).map(rc => rc[0]);
+      g.addEventListener('mousemove', e => showTip(e, `<b>${esc(r.name)}</b> ${r.size} neuron${r.size === 1 ? '' : 's'}${r.new ? ', added in this stage' : ''}<div class="lb-muted">from: ${esc([...new Set(ins.map(p => p.src))].join(', ') || '–')}</div><div class="lb-muted">to: ${esc([...new Set(outs.map(p => p.dst))].join(', ') || '–')}</div>${rel.length ? `<div class="lb-muted">releases: ${esc(rel.join(', '))}</div>` : ''}${rec.length ? `<div class="lb-muted">receptors for: ${esc(rec.join(', '))}</div>` : ''}`));
       g.addEventListener('mouseleave', hideTip);
     });
   }

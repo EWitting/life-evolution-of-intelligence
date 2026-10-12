@@ -203,8 +203,19 @@ def brain_view(s, run: Path) -> dict:
             "sign": int(sign), "synapses": n, "mean_abs": mean_abs,
             "drive": float(np.abs(w).sum(axis=1).mean())})        # summed |w| arriving at one target neuron
     from . import actions as A
+    # modulators: which are new, and for a lasting one how long it stays (ticks), as designed and as evolved
+    old_mods = {m.name for m in parent.modulators} if parent else set()
+    with np.load(run / "population.npz") as f:
+        clear = f["clear"].astype(np.float64) if "clear" in f.files else None
+    modulators = []
+    for i, m in enumerate(brain.get("modulators", [])):
+        m = dict(m, new=bool(parent) and m["name"] not in old_mods)
+        if m.get("decay", 0.0) > 0:
+            m["lasts_designed"] = 1.0 / (1.0 - m["decay"])
+            m["lasts"] = float((1.0 / (1.0 - clear[:, i])).mean()) if clear is not None else m["lasts_designed"]
+        modulators.append(m)
     return {"run": _rel(run), "neurons": layout["n"], "regions": regions, "projections": projections,
-            "modulators": brain.get("modulators", []), "actions": list(A.NAMES)}
+            "modulators": modulators, "actions": list(A.NAMES)}
 
 
 def settings(s, run: Path) -> dict:

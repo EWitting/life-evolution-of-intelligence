@@ -38,6 +38,9 @@ defaults (`freeze.with_defaults`).
 
 ## Side paths (defined in `stages.py`, not part of the lineage)
 
+The runs of the side paths were deleted on 2026-10-12 (disk space; findings are in `docs/STAGE_LOG.md`). A stage
+that starts from one needs that parent rerun first.
+
 | key | what it was | why it is not on the path |
 |---|---|---|
 | 1.1l | the 1.1 brain given long lives as a separate step | 1.1 itself now has long lives |

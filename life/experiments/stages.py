@@ -77,6 +77,8 @@ class Stage:
     eta_max: float = 0.5          # evolution clips learning rates to [0, eta_max]
     dense_plastic: bool = False   # warm start: every synapse of a learned projection exists (the inherited ones keep
                                   # their weight, the others start at 0); an absent synapse could not learn
+    adapt_init: Callable | None = None   # (population, layout) -> population: a change to the warm-start population
+                                  # after it is remapped onto this stage's layout (e.g. interpolate_eyes)
     notes: str = ""
 
 
@@ -923,11 +925,13 @@ stage(Stage("x.td", "sx_td_test", "1.6", BXTD, W16, VISION_CH1, BODY_TASTE, STAG
 # The world of chapter 2 (STAGE_LOG v34): the drives world without patches and with more food. Of the worlds tried,
 # only this one gave learning a job again (plasticity off 87% of intact after 40 generations, trial `x.weven`);
 # every world with patches left it neutral. The stay-after-a-meal state keeps a smaller job here, the alarm and
-# warmth seeking little (user, 2026-10-12: no patches). A type's bush, berry and empty bush share one colour.
+# warmth seeking little (user, 2026-10-12: no patches). The looks stay as in chapter 1. One colour shared by a type's
+# bush, berry and empty bush (`shared_colour`) was tried and dropped: a full bush then looks more like its own empty
+# bush (cosine 0.55 against 0.22) and the adapted population lost 42% at generation 0 (1144 -> 661, eight worlds).
 W20 = replace(W17, spawn_density=0.3)
 
 
-def world_ch2(exp, shared_colour: bool = True):
+def world_ch2(exp, shared_colour: bool = False):
     return learning_world(exp, springs=SPRINGS_17, berries=LEARN_BERRIES, shared_colour=shared_colour)
 
 
@@ -940,61 +944,56 @@ def camera_eyes(brain: BrainConfig) -> BrainConfig:
                                      for p in brain.projections))
 
 
-B20 = camera_eyes(B18)   # the control of the tectum stage: the affect brain with the new eyes
-
-# 2.1 optic tectum: a map of the visual field, one cell per eye column, that picks one target and turns the body to
-# it. Fixed meaning (ADR-016), acting on programmes (ADR-020):
-#   tectum     9 cells. Cell c is driven by what column c sees: something is there, more so the nearer it is; walls
-#              and other animals do not count. Evolved synapses from the column's look (starting at zero) let
-#              evolution make some looks stand out more than others. Only the most active cell stays active
-#              (lateral inhibition: one target at a time);
-#   orient_l / orient_r   a target in the two outermost columns of a side (45 and 60 degrees) -> turn to that side;
-#   approach   a target in the five middle columns (within 30 degrees) -> FORWARD; shut on contact by the gate cell
-#              `touch` (something adjacent ahead: there the grasp programme takes over).
-# Aversion shuts all three (`no_feed`), so the tectum does not steer back to what the value cells turn away from.
-# On a grid with quarter turns this walks the staircase to the target: forward while it is ahead, a turn when it
-# has moved out to the side.
-TECT_HIT, TECT_NEAR, TECT_OTHER, TECT_OUT = 0.5, 1.5, -3.0, 1.5
-TECTUM = dict(sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, group="midbrain/tectum")
-TPROG = {**PROG, "group": "midbrain/tectum"}
-
-
-def with_tectum(brain: BrainConfig, out: float = TECT_OUT, parts: str = "orient+approach") -> BrainConfig:
-    """parts (probes): which programmes the tectum drives."""
-    topo = dict(topology="topographic", groups=9, density=1.0)
-    brain = extend(brain,
-                   regions=(R("tectum", 9, kwta=1, **TECTUM),),
-                   projections=(P("in", "tectum", src_select=("vis*.hit",), w_init=TECT_HIT, evolve=False, **topo),
-                                P("in", "tectum", src_select=("vis*.near",), w_init=TECT_NEAR, evolve=False, **topo),
-                                P("in", "tectum", src_select=("vis*.agent", "vis*.wall"), w_init=TECT_OTHER,
-                                  evolve=False, **topo),
-                                P("in", "tectum", src_select=CS_VIS, w_init=0.0, **topo)))
-    if "orient" in parts:
-        brain = extend(brain,
-                       regions=(R("orient_l", 1, **TPROG), R("orient_r", 1, **TPROG)),
-                       projections=(fixed("tectum", "orient_l", 3.0, src_range=(0, 2)),
-                                    fixed("tectum", "orient_r", 3.0, src_range=(7, 9)),
-                                    *(fixed("no_feed", g, VALENCE_MOTOR_W) for g in ("orient_l", "orient_r")),
-                                    fixed("orient_l", "out", out, dst_range=(2, 3)),
-                                    fixed("orient_r", "out", out, dst_range=(3, 4))))
-    if "approach" in parts:
-        brain = extend(brain,
-                       regions=(R("touch", 1, bias=-13.5, **GATE), R("approach", 1, **TPROG)),
-                       projections=(P("in", "touch", src_select=("vis+0.near",), density=1.0, w_init=18.0, evolve=False),
-                                    fixed("tectum", "approach", 3.0, src_range=(2, 7)),
-                                    fixed("touch", "approach", GATE_W),
-                                    fixed("no_feed", "approach", VALENCE_MOTOR_W),
-                                    fixed("approach", "out", out, dst_range=FWD)))
-    return brain
+def interpolate_eyes(pop, layout, old: VisionConfig = VISION_CH1, scale: float = 1.0):
+    """A head start for eyes of higher resolution (user, 2026-10-12): every evolved or learned synapse from a new eye
+    column starts as the mean of the same synapse from its two neighbours among the old columns, instead of silent.
+    scale: all synapses from the eyes are multiplied by this afterwards (more columns = more input in total).
+    Hard-wired synapses are left as designed."""
+    from life.sensors import column_angles
+    names = list(layout.in_names)
+    off = layout.offsets[layout.names.index("in")]
+    angles = column_angles(old)
+    col = lambda a: f"vis{a:+.0f}"
+    old_cols = {col(a) for a in angles}
+    free = (np.asarray(layout.evolve_w) > 0) & (np.asarray(layout.allowed) > 0)
+    w0, mask = np.array(pop.w0), np.array(pop.mask)
+    for i, n in enumerate(names):
+        c, _, f = n.partition(".")
+        if not c.startswith("vis"):
+            continue
+        r = off + i
+        if c not in old_cols:
+            a = float(c[3:])
+            j = off + names.index(f"{col(angles[angles < a].max())}.{f}")
+            k = off + names.index(f"{col(angles[angles > a].min())}.{f}")
+            w0[:, r] = np.where(free[r], 0.5 * (w0[:, j] * mask[:, j] + w0[:, k] * mask[:, k]), w0[:, r])
+            mask[:, r] = np.where(free[r], np.maximum(mask[:, j], mask[:, k]), mask[:, r])
+    if scale != 1.0:
+        for i, n in enumerate(names):
+            if n.startswith("vis"):
+                w0[:, off + i] = np.where(free[off + i], scale * w0[:, off + i], w0[:, off + i])
+    return pop._replace(w0=jnp.asarray(w0), mask=jnp.asarray(mask))
 
 
-B21 = with_tectum(B20)
-_S2 = dict(row_extra=poison_metrics, plastic=True, generations=30, ticks=LIFE_15, eta_max=1.0, dense_plastic=True)
-stage(Stage("2.0", "s2_0_eyes", "1.8", B20, W20, VISION_CH2, BODY_17, world_ch2, **_S2,
-            notes="the affect brain with camera eyes (9 columns, range 6) in the world of chapter 2"))
-stage(Stage("2.1", "s2_1_tectum", "1.8", B21, W20, VISION_CH2, BODY_17, world_ch2, **_S2,
-            notes="optic tectum: a map of the visual field picks one target; orient and approach programmes"))
-
+# 2.1 camera eyes: 9 columns over 120 degrees, range 6, in the world of chapter 2. No new cells: every projection
+# that read the five old columns reads all nine, each synapse its own (no copies of a circuit per column; what is
+# worth what, and in which column it counts, stays for evolution and the pain rule to set). The tectum has no stage
+# (user, 2026-10-12): its innate half answers to moving and looming things, which this world does not have, and its
+# other half, value choosing a place, is a gate that arrives with the basal ganglia. A first design (a 9-cell map
+# with one winner driving orient and approach programmes) was neutral to harmful at generation 0 (STAGE_LOG v35).
+# A short adaptation step like hands: no control.
+B20 = camera_eyes(B18)
+# Generation 0 (`scripts/probes/eyes.py`, the population of trial x.weven, eight worlds, well-fed lifetime): old eyes
+# 1144; new columns silent 1199; interpolated 75 (twice the input from the eyes); interpolated and all eye synapses
+# times 5/9 1027, with the poison share at 0.06 against 0.10.
+EYES_SCALE = 5 / 9    # nine columns instead of five: the same total input from the eyes
+_S2 = dict(row_extra=poison_metrics, plastic=True, generations=40, ticks=LIFE_15, eta_max=1.0, dense_plastic=True)
+stage(Stage("2.1", "s2_1_eyes", "1.8", B20, W20, VISION_CH2, BODY_17, world_ch2, **_S2,
+            adapt_init=lambda pop, layout: interpolate_eyes(pop, layout, scale=EYES_SCALE),
+            notes="camera eyes (9 columns, range 6) in the world of chapter 2; the new columns start as the mean of "
+                  "their neighbours"))
+stage(Stage("x.eyes0", "x_eyes_silent", "1.8", B20, W20, VISION_CH2, BODY_17, world_ch2, **_S2,
+            notes="TRIAL: 2.1 with the new eye columns starting silent"))
 
 # ------------------------------------------------------------------ running
 
@@ -1033,9 +1032,11 @@ def run_stage(key: str, generations: int | None = None, control: bool = False, i
     if init_from and init_from not in ("auto", "none"):
         print(f"warm start from {init_from}")
         init = load_population(init_from, exp, seed=seed)
+        from life.run import make_layout
+        lay = make_layout(exp)
+        if s.adapt_init:
+            init = s.adapt_init(init, lay)
         if s.dense_plastic and not control:
-            from life.run import make_layout
-            lay = make_layout(exp)
             init = init._replace(mask=jnp.where(((np.asarray(lay.rule) > 0) & (np.asarray(lay.allowed) > 0))[None], 1.0, init.mask))
     rs, rules_fn = s.build(exp)
     res = run_evolution(exp, rs, s.fitness or default_fitness, rules_for_generation=rules_fn, init_population=init,

@@ -1958,3 +1958,39 @@ How the `x.weven` animals spend a life (`forage.py`, `freeze.py`, recorded gener
 4000 while 92% of the bushes are full by mid-life; facing a full bush on 12% of ticks, and then USE 0.48, FORWARD
 0.37, turn 0.15; a third of all ticks is spent in stands of 50+ ticks grasping at nothing, which begin with a
 stomach at 89% and end at 71% (the fed animal staying where it ate, `settle` and `rest` at 0.63).
+
+## v36 (2026-10-12, night): the tectum is left out; camera eyes with interpolated columns (stage 2.1, seed 0)
+
+Decisions (user): no tectum stage (its innate half answers to moving and looming things, which this world lacks;
+value choosing a place is a gate that comes with the basal ganglia; the value cells already have their own synapse
+from every eye column, no copies of a circuit per column). The shared colour is dropped: in eight worlds the
+adapted population lost 42% with it (1144 -> 661, poison share 0.13 -> 0.18); a full bush and its own empty bush
+go from a cosine of 0.22 to 0.55. The new eye columns start as the mean of their neighbours
+(`stages.interpolate_eyes`, `Stage.adapt_init`), not silent.
+
+Generation 0 (`scripts/probes/eyes.py`, population of `x.weven`, eight worlds): old eyes 1144; new columns silent
+1199 +-168 (poison share 0.10); interpolated 75 (twice the input from the eyes); interpolated with every eye synapse
+times 5/9: 1027 +-91, poison share 0.06.
+
+Evolution, 40 generations from the frozen affect population in the world of chapter 2, seed 0, lesions in four
+worlds (`runs/logs/x_world_lesion.py`):
+
+| start of the new columns | intact | plasticity off | flee off | fed off | poison share (intact / plasticity off) | learning rate |
+|---|---|---|---|---|---|---|
+| interpolated, times 5/9 (`2.1`) | 791 | 51% | 93% | 92% | 0.094 / 0.218 | 0.26 |
+| silent (trial `x.eyes0`) | 492 | 68% | 90% | 103% | 0.138 / 0.225 | 0.30 |
+
+Mean size of the look weights onto the value cells per column (-60 ... +60) after the run: interpolated,
+appetitive 0.11 0.12 0.12 0.14 0.13 0.19 0.16 0.16 0.14; silent, appetitive 0.14 0.13 0.23 0.09 0.21 0.04 0.22 0.05
+0.25 (the four new columns still weak after 40 generations).
+
+Reading (one seed): the head start holds after evolution, and learning is used more than at any point in chapter
+1 (plasticity off 51%; 43-48% in the association stage, with poison at half of all bushes there as here). Nine
+eyes feeding the pain rule halve the poison share. To watch: the fitness within both runs falls over the
+generations while the berries eaten rise (interpolated: 858 in generations 0-5, 654 in 20-30, 767 in 30-40), as
+in a population that forages well enough to run into the supply.
+
+Housekeeping: `runs/` from 17.5 GB to 1.3 GB (user): superseded runs, archives, probe runs, every side-path run
+and all `dashboard.html` files are deleted. Kept: the 36 runs behind the frozen stages and the book (population,
+recording, curve, configuration) and the chapter 2 runs. Side-path stages are still defined; their populations are
+gone.

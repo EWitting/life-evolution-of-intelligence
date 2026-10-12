@@ -1,7 +1,7 @@
 # Status
 
 One screen on where the project is. Plan: `docs/BRAIN_EVOLUTION.md`. **Frozen stages: `frozen/README.md`.** Details, numbers and run directories:
-`docs/STAGE_LOG.md`. Newest decisions: `docs/DECISIONS.md` (ADR-017 to ADR-025). Last updated 2026-10-12 (chapter 1 frozen).
+`docs/STAGE_LOG.md`. Newest decisions: `docs/DECISIONS.md` (ADR-017 to ADR-025). Last updated 2026-10-12 (chapter 2 started: world chosen, camera eyes seed 0).
 
 ## How a stage is judged
 
@@ -54,19 +54,18 @@ remapping the stored populations and freezing again.
 | 1.7 drives | `cold` and `hungry` need cells; warmth by kinesis: `warm_seek` (run while the skin is cold), `rest` (stay where it is warm); `hungry` shuts the warmth mode; evolvable `hungry` -> feeding synapses. World: the 1.5 world made cold, hot springs (which do not block) | **frozen**, passes (user's decision on the head to head) | Main 386 +-14 vs control 309 +-18; re-evaluated 401 vs 341 (+60 +-37: 124, -4, 62). **Head to head -65 +-33** (-88, -108, 0): the control half does better next to main animals (432-532) than among its own (276-409). Lesions: hungry 26 27 18, rest 72 86 71, cold and warm_seek 89 94 86, plasticity 71 66 76. Main moves 45% of ticks vs 71%, bites at nothing 32% vs 12%. Either population alone at half density does 55-80% better (`density.py`): food is a race, resting animals leave food to roamers and gain by burning less. |
 | 1.8 affect | two states that outlast their trigger, each a modulator released at once and cleared slowly: pain -> `alarm` -> `flee` -> forward; taste -> `fed` -> `serotonin` -> `settle` -> `rest`. Fade times are genes (`Genome.clear`). World: the drives world with every berry type in its own patches (`patch_types`) | **frozen**, passes | Main 769 +-33 vs control 485 +-38 (last 50 generations of 40: the whole run); re-evaluated 919 vs 625 (+294 +-5: 297, 285, 301); head to head +482 +-112 (604, 258, 583). Lesions: fed 63 54 66, settle 63 54 64, flee 81 86 89, rest 41 36 37, hungry 41 54 41. **No longer used in this world: cold and warm_seek 101 105 107, plasticity 99 95 99.** Fade times stayed near the design (seed 0: alarm 8 ticks, serotonin 84). Both populations were still rising at generation 40. |
 | side paths | 1.1l, 1.5c (centred association before habituation), 1.5f, 1.6h, 1.6 reversal, x.hands, x.td, old 1.2-1.4 | defined, not on the path | Listed with reasons in `frozen/README.md`. |
-| chapter 2 | eyes + tectum -> pallium -> dopamine critic -> hands -> basal ganglia with actor -> curiosity | plan revised 2026-10-12 (ADR-025; `BRAIN_EVOLUTION.md`, "Revised plan for the chapter") | The definitions 2.1-2.5 and `x.td` in `stages.py` are the old design on the reversal brain: each stage is defined again on the affect brain when its turn comes. A few dozen generations per stage; lab experiments for the learning stages; dopamine as a circuit. |
+| chapter 2 world | the drives world without patches, more food (density 0.3); looks as in chapter 1 | chosen (user, 2026-10-12) | Of five worlds tried only this one gives learning a job again; every world with patches leaves it neutral (STAGE_LOG v34). A shared colour for a type's bush and empty bush cost 42% and is dropped. |
+| 2.1 camera eyes | 9 eye columns, range 6; no new cells; the new columns start as the mean of their neighbours, all eye synapses times 5/9 | seed 0 run, 40 generations; **not frozen** | Re-evaluated 791; plasticity off 51%, flee 93, fed 92; poison share 0.09 against 0.22 without learning. With the new columns starting silent: 492, plasticity off 68%. The tectum has no stage (user): STAGE_LOG v35, v36. |
+| chapter 2, next | pallium -> dopamine critic -> hands -> basal ganglia with actor -> curiosity | planned (ADR-025) | The definitions `old2.1`-`old2.5` and `x.td` in `stages.py` are the first design on the reversal brain; each stage is defined again when its turn comes. |
 | later, 3.x-5.x | pallium clustering, hippocampus, cerebellum, uncertainty modulators; simulating, mentalizing, speaking | planned | |
 
 ## Next steps
 
-1. **Resume here: chapter 2.** Its definitions are stale (2.1-2.5 predate the rerun). Start from the frozen 1.8
-   population. **Do not take the 1.8 world over as it is** (user, 2026-10-12): its patches hold only poison or
-   only good, which makes warmth seeking and learned aversion nearly useless (see the affect row). A world for
-   learning needs poison standing between good bushes again, for example patches that are mostly one kind. A world
-   in which every circuit matters is the aim; that it is harder and noisier is accepted, and that some circuits
-   matter less in some worlds is normal. Other points to settle first, with the user: dopamine is reserved for the prediction error and must stay sharp in time (persistence at the
-   receiving cell, not in the modulator); the user's notes in `docs/BRAIN_EVOLUTION.md` (visual resolution, hands,
-   what evolution may hard-code).
+1. **Resume here: stage 2.1 (camera eyes) has one seed.** Decide with the user whether it gets two more seeds and
+   is frozen as it is (an adaptation step without control; the silent-start trial `x.eyes0` is the comparison), then
+   the book page. To look at first: fitness falls within the run while berries rise (supply?). After that the
+   pallium (ADR-025): first probe is the assay of the association stage with the learned synapses reading the
+   pallium. Dopamine stays reserved for the prediction error and sharp in time.
 2. Cheaper evaluations for expensive stages (user, 2026-10-12): the export runs its simulations in parallel
    (`--jobs`) and prints a line per finished task; still to add: lesions of the new cells and the parent's only,
    four worlds for a routine check, seed 0 first.
@@ -95,7 +94,8 @@ remapping the stored populations and freezing again.
 - The well-fed lifetime has a ceiling at the life cap; in 1.0 most agents reach it at any cap (STAGE_LOG v23).
 - The learning world is new every generation, so fitness swings between generations (sd about 290 in 1.5): read
   trends over blocks of generations with their standard error, not from single blocks.
-- Chapter 2 definitions in `stages.py` are stale (plan revised, ADR-025). The dashboard clips displayed weights at `w_max`.
+- The first chapter 2 design in `stages.py` (`old2.x`) is stale (ADR-025). The dashboard clips displayed weights at `w_max`.
+- `runs/` was cleaned on 2026-10-12: side-path runs and all `dashboard.html` files are gone (light dashboards come from the recordings).
 
 Practical notes: one process runs a non-plastic stage at about 4-5 s per generation of 1000 ticks and a stage with
 4000-tick lives at 15-40 s (an unrecorded simulation stops when every animal is dead); how many JAX processes fit in parallel depends on free memory, so on whether the laptop is in use for other things (five were killed for low memory on 2026-10-08 with VS Code and Chrome open; six or seven ran with them closed): check free memory and the size of one running process before starting a batch. A sleeping laptop pauses

@@ -25,7 +25,9 @@ class WorldConfig:
     patches: int = 0                 # > 0: objects spawn only inside this many discs (patchy food)
     patch_radius: int = 3            # cells
     patch_types: bool = False        # with patches: every patch holds one object type, so what an animal finds
-                                     # says what grows around it. Heat sources stay spread evenly over the map
+                                     # says what grows around it. Heat sources stay spread evenly over the map.
+                                     # Built for stage 1.8; not for later stages as it is: with patches of only
+                                     # poison or only good, learning and warmth seeking lose their use (docs/STATUS.md)
     variety_bonus: float = 0.0       # OHOL 'yum': food not eaten recently is worth (1 + bonus) x, food eaten
                                      # repeatedly down to (1 - bonus) x; 0 = off
     variety_tau: float = 100.0       # ticks over which the memory of what was eaten fades

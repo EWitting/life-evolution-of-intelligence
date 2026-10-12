@@ -60,9 +60,11 @@ remapping the stored populations and freezing again.
 ## Next steps
 
 1. **Resume here: chapter 2.** Its definitions are stale (2.1-2.5 predate the rerun). Start from the frozen 1.8
-   population. Points to settle first, with the user: the chapter-2 world (the patch world makes warmth seeking
-   and learned aversion nearly useless, see the affect row: a world for learning needs poison standing between good
-   bushes again); dopamine is reserved for the prediction error and must stay sharp in time (persistence at the
+   population. **Do not take the 1.8 world over as it is** (user, 2026-10-12): its patches hold only poison or
+   only good, which makes warmth seeking and learned aversion nearly useless (see the affect row). A world for
+   learning needs poison standing between good bushes again, for example patches that are mostly one kind. A world
+   in which every circuit matters is the aim; that it is harder and noisier is accepted, and that some circuits
+   matter less in some worlds is normal. Other points to settle first, with the user: dopamine is reserved for the prediction error and must stay sharp in time (persistence at the
    receiving cell, not in the modulator); the user's notes in `docs/BRAIN_EVOLUTION.md` (visual resolution, hands,
    what evolution may hard-code).
 2. Cheaper evaluations for expensive stages (user, 2026-10-12): the export runs its simulations in parallel

@@ -745,6 +745,17 @@ stage(Stage("1.8", "s1_8_affect", "1.7", B18, W18, VISION_CH1, BODY_17,
             notes="two lasting states: alarm after pain (keep going), serotonin after a meal (stay); "
                   "the drives world with every berry type in its own patches"))
 
+# Trials for the world of chapter 2 (2026-10-12, STAGE_LOG v34): the affect brain and population, nothing new, in
+# worlds with poison standing between good bushes again. The question: does the lineage pick learning up again
+# where the world pays for it? Not stages of the chain.
+for _key, _name, _world, _note in (
+        ("x.w60", "x_world_p60", replace(W18, patch_purity=0.6), "patches 60% their own type"),
+        ("x.weven", "x_world_even", replace(W17, spawn_density=0.3), "no patches, more food (the drives population "
+                                                                     "gains from learning here)")):
+    stage(Stage(_key, _name, "1.8", B18, _world, VISION_CH1, BODY_17,
+                lambda exp: learning_world(exp, springs=SPRINGS_17, berries=LEARN_BERRIES), **_S15,
+                notes="TRIAL: the affect population in a chapter 2 world candidate: " + _note))
+
 
 # 1.6 extinction and reversal: the learned weights now relax back toward their inherited values (a fast,
 # forgetting component), so an association that stops being renewed fades and a new one can take over. World: the

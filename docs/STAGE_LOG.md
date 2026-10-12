@@ -1894,3 +1894,21 @@ Reading (one seed, few worlds: a direction, not a result):
   (1.6 of 6 to 8 poison bites).
 - Worlds differ a lot (lifetime 320 to 900 over eight worlds of one setting): compare within the same worlds only.
   A recorded and an unrecorded simulation of the same life give the same numbers (checked).
+
+**Does the lineage pick learning up again? (trial stages `x.w60`, `x.weven`: the affect brain and population, nothing
+new, 40 generations, seed 0.)** Before and after in the same eight worlds (`stages.lesion`, seed 123):
+
+| world | | intact | plasticity off | berries (intact / off) | poison share (intact / off) | learning rate |
+|---|---|---|---|---|---|---|
+| no patches, density 0.3 (`x.weven`) | before | 443 | 119% | 31.3 / 41.2 | 0.212 / 0.226 | 0.45 |
+| | after | 690 | 87% | 56.2 / 56.6 | 0.189 / 0.225 | 0.14 |
+| patches 60% own type (`x.w60`) | before | 417 | 106% | 29.1 / 33.7 | 0.147 / 0.166 | 0.45 |
+| | after | 494 | 102% | 39.4 / 42.6 | 0.150 / 0.166 | 0.24 |
+
+Other lesions after, % of intact: `x.weven` cold 96, flee 97, fed 84; `x.w60` cold 99, flee 90, fed 65.
+
+Reading: where the world pays for learning the lineage has it back within 40 generations (plasticity off from 119%
+to 87%, and learning no longer costs berries), and the way back was a lower learning rate: 0.45 to 0.14. The rate
+had drifted up in the affect stage (0.33 after drives), where nothing held it; at 0.45 a lesson spread to good
+food. Restoring the learned synapses that had gone missing (87% present) changes nothing. In the 60% patches
+learning stays neutral: the rate came down too, the room is small (11%). One seed.

@@ -19,7 +19,7 @@ def test_definition_unchanged(key):
     for part in ("parent", "plastic", "dense_plastic", "rules"):
         assert now[part] == stored[part], f"stage {key}: {part} changed since it was frozen"
     for part, value in stored["config"].items():
-        assert now["config"][part] == value, f"stage {key}: {part} changed since it was frozen"
+        assert now["config"][part] == freeze.with_defaults(part, value), f"stage {key}: {part} changed since it was frozen"
 
 
 @pytest.mark.parametrize("key", KEYS)

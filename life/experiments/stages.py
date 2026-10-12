@@ -715,6 +715,16 @@ stage(Stage("1.7", "s1_7_drives", "1.5", B17, W17, VISION_CH1, BODY_17,
                   "the 1.5 world made cold with hot springs"))
 
 
+# 1.8 affect (DRAFT, 2026-10-12: the world only; the brain is still the drives brain). For a lasting state to have a
+# job, what just happened must say something about what is near (STAGE_LOG v33): every berry type grows in its own
+# patches, so a good meal means more good bushes close by and a poison bite means the neighbours are poison too.
+# Hot springs stay spread evenly.
+W18 = replace(W17, patches=80, patch_radius=6, patch_types=True)
+stage(Stage("1.8", "s1_8_affect", "1.7", B17, W18, VISION_CH1, BODY_17,
+            lambda exp: learning_world(exp, springs=SPRINGS_17, berries=LEARN_BERRIES), **_S15,
+            notes="DRAFT: the drives world with every berry type in its own patches; brain to be designed"))
+
+
 # 1.6 extinction and reversal: the learned weights now relax back toward their inherited values (a fast,
 # forgetting component), so an association that stops being renewed fades and a new one can take over. World: the
 # novel types swap their meaning halfway through life.

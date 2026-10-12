@@ -45,16 +45,16 @@ for n in sys.argv[1:]:
         visits.append(v)
 
     left_full, bites, wait_full, wait_empty, dist, stomach, hungry_at_leave, back = [], [], [], [], [], [], [], []
-    near_good, near_bad, after_bad, after_good, wait_bad, in_visit = [], [], [], [], [], []
+    near_good, near_bad, after_bad, after_good, wait_bad, in_visit, good_at_bad, bad_at_good = [], [], [], [], [], [], [], []
     for i, v in enumerate(visits):
         for j, (o, t0, t1, b, c) in enumerate(v):
             nxt = v[j + 1] if j + 1 < len(v) else None
             if pain[o] > 0:
-                near_bad.append(around(t1, c, bad_full))
+                near_bad.append(around(t1, c, bad_full)); good_at_bad.append(around(t1, c, good_full))
                 if nxt: after_bad.append(pain[nxt[0]] > 0); wait_bad.append(nxt[1] - t1)
                 continue
             still = g[min(T - 1, t1 + 1), c[0], c[1]] == o - 1          # the bush still carries berries after the last bite
-            left_full.append(still); bites.append(b); near_good.append(around(t1, c, good_full))
+            left_full.append(still); bites.append(b); near_good.append(around(t1, c, good_full)); bad_at_good.append(around(t1, c, bad_full))
             stomach.append(food[t1, i]); hungry_at_leave.append(cell("hungry")[min(T - 1, t1 + 6), i] > 0.5)
             if b > 1: in_visit.append((t1 - t0) / (b - 1))
             if nxt:
@@ -78,7 +78,7 @@ for n in sys.argv[1:]:
           f"(then stomach {np.mean(np.array(stomach)[left_full]) / max_food:.0%} full, still hungry in {hungry_at_leave[left_full].mean():.0%})")
     print(f"   wait for the next meal: {med(wait_full):.0f} ticks (median) after leaving berries, {med(wait_empty):.0f} after emptying the bush; "
           f"next bush {med(dist):.0f} cells away (median), the same bush in {mean(back):.0%}; an emptied bush is empty for {med(regrow):.0f} ticks (median)")
-    print(f"   clumping, bushes with berries within {RADIUS} cells: good ones around a good meal {mean(near_good):.3f} (whole map {base_good:.3f}); "
-          f"poison ones around a poison bite {mean(near_bad):.3f} (whole map {base_bad:.3f})")
+    print(f"   clumping, bushes with berries within {RADIUS} cells (good / poison): around a good meal {mean(near_good):.3f} / {mean(bad_at_good):.3f}, "
+          f"around a poison bite {mean(good_at_bad):.3f} / {mean(near_bad):.3f}, whole map {base_good:.3f} / {base_bad:.3f}")
     print(f"   the next visit is to poison: after a poison bite {mean(after_bad):.0%}, after a good meal {mean(after_good):.0%}; "
           f"wait after a poison bite {med(wait_bad):.0f} ticks (median)", flush=True)

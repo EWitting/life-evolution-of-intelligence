@@ -37,6 +37,16 @@ def rules_digest(s, exp) -> str:
     return h.hexdigest()[:16]
 
 
+def with_defaults(part: str, stored):
+    """A stored part of a configuration (world, body, ...) with the options that were added to the code since, at
+    their defaults: a new option that is switched off does not change a stage."""
+    from .config import ExperimentConfig
+    default = json.loads(ExperimentConfig().to_json()).get(part)
+    if not isinstance(stored, dict) or not isinstance(default, dict):
+        return stored
+    return {**{k: v for k, v in default.items() if k not in stored and k not in RUN_ONLY}, **stored}
+
+
 def definition(key: str) -> dict:
     """The stage as defined now, as plain data."""
     from .experiments import stages as S
@@ -63,7 +73,7 @@ def freeze(key: str) -> Path:
         seed = cfg["evolution"]["seed"]
         # the population must have lived under the stage as defined (a run may differ in life length: 1.0 settles)
         for part in ("brain", "world", "vision", "body"):
-            assert cfg[part] == d["config"][part], f"{run}: {part} differs from the definition of {key}"
+            assert with_defaults(part, cfg[part]) == d["config"][part], f"{run}: {part} differs from the definition of {key}"
         shutil.copyfile(run / "population.npz", out / f"seed{seed}.npz")
         shutil.copyfile(run / "config.json", out / f"seed{seed}.json")
         d["runs"].append({"seed": seed, "dir": str(run.relative_to(S.RUNS_DIR.parent)).replace("\\", "/"),

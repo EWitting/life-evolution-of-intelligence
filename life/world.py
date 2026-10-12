@@ -62,6 +62,21 @@ def init_world(cfg: WorldConfig, rules: RuleArrays, key: jax.Array) -> WorldStat
     place = (jax.random.uniform(k1, (H, W)) < density) & (total > 0)
     obj = jax.random.choice(k2, w.shape[0], (H, W), p=p)
     grid = jnp.where(place, obj, EMPTY).astype(jnp.int32)
+    if cfg.patches > 0 and cfg.patch_types:
+        # one type per patch: the patches are shared out over the types by spawn weight (in order, so every world
+        # has the same mix) and a cell belongs to the nearest patch centre. Heat sources are placed apart, evenly
+        k8, k9 = jax.random.split(jax.random.fold_in(key, 8))
+        wc = jnp.where(rules.heat_value > 0, 0.0, w)
+        we = w - wc
+        cdf = jnp.cumsum(wc) / jnp.maximum(wc.sum(), 1e-9)
+        patch_type = jnp.searchsorted(cdf, (jnp.arange(cfg.patches) + 0.5) / cfg.patches)
+        nearest = ((yy[None] - cen[:, 0, None, None]) ** 2 + (xx[None] - cen[:, 1, None, None]) ** 2).argmin(axis=0)
+        grid = jnp.where(place & (jax.random.uniform(k8, (H, W)) < wc.sum() / jnp.maximum(total, 1e-9)),
+                         patch_type[nearest], EMPTY).astype(jnp.int32)
+        even = jax.random.uniform(k9, (H, W)) < cfg.spawn_density * we.sum() / jnp.maximum(total, 1e-9)
+        heat_obj = jax.random.choice(jax.random.fold_in(key, 9), w.shape[0], (H, W),
+                                     p=jnp.where(we.sum() > 0, we / jnp.maximum(we.sum(), 1e-9), p))
+        grid = jnp.where(even & (we.sum() > 0), heat_obj, grid).astype(jnp.int32)
     timer = rules.decay_ticks[grid]
     if cfg.start_spent > 0:   # staggered regrowth: some objects start as the spent form that decays into them
         M = rules.decay_new.shape[0]

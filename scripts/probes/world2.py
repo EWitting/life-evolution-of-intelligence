@@ -4,7 +4,9 @@ chapter 1 (learning, warmth, the lasting states), not only for the last one.
 
     uv run python scripts/probes/world2.py [field=value ...]     WorldConfig fields, e.g. patch_purity=0.8
     WORLDS=<n> (default 4), SEED=<frozen seed> (default 0), LESIONS=a,b,... (default: the list below),
-    POP=<frozen stage> (default 1.8; e.g. 1.7: the drives population on its own brain, in the same worlds),
+    STAGE=<stage whose world is varied> (default 1.8; 2.1: the world of chapter 2, e.g. with patches=320
+    patch_radius=6 patch_types=1 patch_purity=0.6 height=256 width=256),
+    POP=<frozen stage> (default: STAGE; e.g. 1.7: the drives population on its own brain, in the same worlds),
     EYES=ch2 (9 columns, range 6 instead of 5 columns, range 5; the four new columns start silent)"""
 import os, sys
 from dataclasses import replace
@@ -13,14 +15,15 @@ from life.experiments import stages as S
 from life.freeze import load_frozen
 from life.run import make_layout, make_simulate
 
-s = S.STAGES["1.8"]
+STAGE = os.environ.get("STAGE", "1.8")
+s = S.STAGES[STAGE]
 for a in sys.argv[1:]:
     k_, v_ = a.split("=")
     s = replace(s, world=replace(s.world, **{k_: type(getattr(s.world, k_))(float(v_))}))
-WORLDS, SEED, POP = int(os.environ.get("WORLDS", 4)), int(os.environ.get("SEED", 0)), os.environ.get("POP", "1.8")
+WORLDS, SEED, POP = int(os.environ.get("WORLDS", 4)), int(os.environ.get("SEED", 0)), os.environ.get("POP", STAGE)
 s = replace(s, brain=S.STAGES[POP].brain)
 LESIONS = os.environ.get("LESIONS", "no_plasticity,cold,rest,hungry,flee,fed").split(",")
-tag = f"{POP} in " + (" ".join(sys.argv[1:]) or "the 1.8 world")
+tag = f"{POP} in " + (" ".join(sys.argv[1:]) or f"the {STAGE} world")
 if os.environ.get("EYES") == "ch2":   # the camera eyes of chapter 2: the five old columns keep their inherited weights
     s = replace(s, vision=S.VISION_CH2)
     tag += " eyes=ch2"

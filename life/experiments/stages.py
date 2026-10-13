@@ -1000,6 +1000,19 @@ stage(Stage("2.1", "s2_1_eyes", "1.8", B20, W20, VISION_CH2, BODY_17, world_ch2,
 stage(Stage("x.eyes0", "x_eyes_silent", "1.8", B20, W20, VISION_CH2, BODY_17, world_ch2, **_S2,
             notes="TRIAL: 2.1 with the new eye columns starting silent"))
 
+# Trials (2026-10-13, STAGE_LOG v40): is there a patch purity at which both learning and the lasting states pay,
+# now that the lineage learns again? The frozen camera-eyes population, nothing new, at four times the area of
+# chapter 1 (256 x 256), with the same share of the map in patches as the affect world. Not stages of the chain.
+W20_256 = replace(W20, height=256, width=256)
+for _key, _name, _world, _note in (
+        ("x.c256", "x_ch2_256", W20_256, "no patches (the world of chapter 2, larger)"),
+        ("x.c60", "x_ch2_256_p60", replace(W20_256, patches=320, patch_radius=6, patch_types=True, patch_purity=0.6),
+         "patches 60% their own type"),
+        ("x.c80", "x_ch2_256_p80", replace(W20_256, patches=320, patch_radius=6, patch_types=True, patch_purity=0.8),
+         "patches 80% their own type")):
+    stage(Stage(_key, _name, "2.1", B20, _world, VISION_CH2, BODY_17, world_ch2, **_S2,
+                notes="TRIAL: the camera-eyes population at 256 x 256: " + _note))
+
 # ------------------------------------------------------------------ running
 
 EVOLUTION_OVERRIDES: dict = {}   # set from the command line (--mutation-prob), applied to every stage

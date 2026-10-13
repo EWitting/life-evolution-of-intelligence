@@ -2092,3 +2092,48 @@ for the chapter; the tectum is not mentioned (user).
 
 To try (user): is there a patch purity at which both the lasting states and learning pay? (v34 tried 1.0, 0.8,
 0.6, 0.3 and 0 with the affect population, before the learning rate had come down and before the larger world.)
+
+## v40 (2026-10-13): the dead are dropped from the arrays; three world sizes; patch purity with the camera-eyes population
+
+**Speed** (user: build it first, the runs add up). An unrecorded simulation checks every 100 ticks how many animals
+live and, at a half, a quarter and an eighth of the population, goes on with arrays of that size
+(`run.make_simulate`, `COMPACT`; `world.take_agents`). A row keeps the index of its animal (`ids`), so every animal
+keeps its random draws; the living keep their order (the USE loop goes by index); the dead are seen and heard by
+nobody; the statistics of a dropped animal are written to the full arrays at the cut. The frozen 2.1 seed 0 at
+181 x 181, one process alone: 18.7 -> 8.4 s per world of 4000 ticks, compiling included in about 10 s. Every
+statistic is identical, also in `crowding.py` (676 / 1015, 765 / 1569). Test `test_dropping_the_dead_changes_nothing`
+(50 tests). Two small changes of meaning: the food of a dead animal is reported as 0 (it was slightly negative
+when the animal died on the last tick simulated), and pain still scheduled for a dead animal
+(`sickness_delay`, not used on the chain) is no longer counted. Recorded simulations are unchanged.
+
+**World size** (`crowding.py 2.1 181 256 362`, four worlds, 256 animals, the same density of bushes):
+
+| cells per side | start population | evolved (frozen 2.1, seed 0) | gain | evolved at the life cap | berries | poison share |
+|---|---|---|---|---|---|---|
+| 181 (as frozen) | 676 | 1015 | +339 | 19% | 170 | 0.098 |
+| 256 | 765 | 1569 | +804 | 33% | 284 | 0.081 |
+| 362 | 815 | 1924 | +1109 | 45% | 385 | 0.066 |
+
+The start population gains little from space (+13%, +21%), the evolved one a great deal (+55%, +90%): at 181 two
+thirds of what evolution added is still hidden by crowding, at 256 about a quarter (taking 362 as the measure,
+where it has not levelled off either). The life cap (user): a large share at the cap is no problem as long as the
+well-fed lifetime still tells animals apart, and it does (it counts how full the stomach is, not only ticks
+alive). Time per world is the same at every size (10-20 s with three processes running).
+
+**Patch purity, generation 0** (`world2.py` with `STAGE=2.1`: the frozen 2.1 seed 0 in its world at 256 x 256 with
+320 patches of radius 6, the share of the map that the affect world had; four worlds; % of intact):
+
+| world | intact | plasticity off | fed off | flee off | rest off | poison share (intact / plasticity off) |
+|---|---|---|---|---|---|---|
+| no patches | 1046 | 48 +-9 | 104 | 84 | 100 | 0.098 / 0.206 |
+| patches 30% own type | 561 | 90 +-19 | 94 | 99 | 98 | 0.113 / 0.184 |
+| patches 60% | 602 | 86 +-15 | 95 | 95 | 96 | 0.089 / 0.149 |
+| patches 80% | 672 | 89 +-17 | 95 | 95 | 90 | 0.062 / 0.107 |
+| patches 100% (the affect world's kind) | 831 | 96 +-13 | 90 | 77 | 88 | 0.033 / 0.056 |
+
+Reading (one seed, four worlds): unlike the affect population in v34 (plasticity off 104-106% in every patched
+world), this population gains from learning in mixed patches too (10-14%, within the noise of four worlds), and
+the lasting states matter a little (5-10%) though it spent 40 generations in a world that had no use for them.
+Neither is large at generation 0, and every patched world is much poorer than the open one (561-831 against
+1046). Whether the lineage takes both up is a question for evolution: trials `x.c256`, `x.c60`, `x.c80` (the frozen
+2.1 population, 40 generations, seed 0, 256 x 256 without patches and with patches 60% and 80% their own type).

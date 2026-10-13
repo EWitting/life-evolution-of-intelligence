@@ -1006,6 +1006,8 @@ stage(Stage("x.eyes0", "x_eyes_silent", "1.8", B20, W20, VISION_CH2, BODY_17, wo
 W20_256 = replace(W20, height=256, width=256)
 for _key, _name, _world, _note in (
         ("x.c256", "x_ch2_256", W20_256, "no patches (the world of chapter 2, larger)"),
+        ("x.cmix", "x_ch2_256_pmix", replace(W20_256, patches=320, patch_radius=6),
+         "patches of bushes with every type mixed in them (rich and poor ground, not good and bad ground)"),
         ("x.c60", "x_ch2_256_p60", replace(W20_256, patches=320, patch_radius=6, patch_types=True, patch_purity=0.6),
          "patches 60% their own type"),
         ("x.c70", "x_ch2_256_p70", replace(W20_256, patches=320, patch_radius=6, patch_types=True, patch_purity=0.7),

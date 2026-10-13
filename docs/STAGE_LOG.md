@@ -2207,6 +2207,33 @@ as sums, thresholds 1.5 and 9 bites, fades 33 and 100 ticks, thresholds and fade
 seed 0, 256 x 256, patches 60, 70, 80% pure). The test: is the fed state used at 60% and learning at 80%, where
 release at once left one of them idle (`x.c60`, `x.c80`)?
 
-**Stopped for low memory** (six JAX processes while the laptop was in use: too many): the three `x.s` trials at
-generation 3, and the 16-world lesions of `x.c70` seeds 1 and 2, `x.c60` and `x.c80`. To run again, at most three
-processes at a time.
+**All trials with lesions in 16 worlds** (seed 0 unless stated; % of intact; intact in the same 16 worlds per
+purity). A first batch of six JAX processes was stopped for low memory with the laptop in use; three at a time
+(0.8 GB each) run fine.
+
+| trial | intact | plasticity off | rest off | fed off | flee off |
+|---|---|---|---|---|---|
+| 60%, released at once (`x.c60`) | 1410 | 57 | 90 | 92 | 80 |
+| 60%, adding up (`x.s60`) | 1223 | 85 | 79 | 92 | 91 |
+| 70%, at once, seed 0 (`x.c70`) | 1162 | 62 | 78 | 80 | 89 |
+| 70%, at once, seed 1 | 1077 | 46 | 98 | 98 | 78 |
+| 70%, at once, seed 2 | 1147 | 95 | 69 | 101 | 82 |
+| 70%, adding up (`x.s70`) | 1358 | 86 | 66 | 74 | 92 |
+| 80%, at once (`x.c80`) | 1410 | 102 | 49 | 77 | 70 |
+| 80%, adding up (`x.s80`) | 1295 | 97 | 64 | 79 | 90 |
+
+Evolved fade times (ticks, alarm / serotonin): at once 5-7 / 33-39; adding up 27-30 / 97-124. The thresholds of
+the adding-up trials did not move (flee 1.4-1.5 bites, settle 9.0): a bias mutates in steps of 0.1.
+
+Reading:
+
+- **70% is not a world where all three are reliably used.** Seed 0 uses learning and the stay state; seed 1 only
+  learning (and the alarm); seed 2 neither learning nor `fed` (its `rest` serves warmth). A lineage settles on one
+  way of avoiding poison: know it by its look, or stay where the food was good. In a patch world the two do the
+  same job, so evolution keeps one; which one depends on purity, and near the crossover on the seed.
+- **Adding up does not widen the range.** The fed state is used at 70% and 80% as with release at once and not at
+  60%; learning is used less at every purity (85, 86, 97 against 57, 62, 102); the alarm is used less (90-92
+  against 70-89: two poison bites within the fade are rare). Intact fitness is lower at 60% and 80% and higher at
+  70%. At 70% it is the one trial with both moderately used (86 and 74), one seed.
+- Next candidate (trial `x.cmix`): patches of bushes with the types mixed evenly inside them. Then a meal says
+  "more bushes close by" (the stay state) and nothing about which are poison (learning): two jobs instead of one.

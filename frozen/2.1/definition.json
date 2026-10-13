@@ -1,13 +1,13 @@
 {
  "key": "2.1",
- "parent": "1.8",
+ "parent": "2.0",
  "plastic": true,
  "dense_plastic": true,
  "rules": "5cf50d3e83a15d87",
  "config": {
   "world": {
-   "height": 181,
-   "width": 181,
+   "height": 256,
+   "width": 256,
    "num_agents": 256,
    "max_food": 20.0,
    "start_food": 0.5,
@@ -21,10 +21,10 @@
    "hear_radius": 6,
    "pain_decay": 0.0,
    "spawn_density": 0.3,
-   "patches": 0,
-   "patch_radius": 3,
-   "patch_types": false,
-   "patch_purity": 1.0,
+   "patches": 320,
+   "patch_radius": 6,
+   "patch_types": true,
+   "patch_purity": 0.7,
    "variety_bonus": 0.0,
    "variety_tau": 100.0,
    "switch_tick": 0,
@@ -246,8 +246,8 @@
      "kwta": 0,
      "norm": 0.0,
      "norm_lag": false,
-     "bias": 0.0,
-     "evolve_bias": false,
+     "bias": -4.5,
+     "evolve_bias": true,
      "receptors": [
       [
        "alarm",
@@ -282,8 +282,8 @@
      "kwta": 0,
      "norm": 0.0,
      "norm_lag": false,
-     "bias": 0.0,
-     "evolve_bias": false,
+     "bias": -18.0,
+     "evolve_bias": true,
      "receptors": [
       [
        "serotonin",
@@ -1629,6 +1629,7 @@
      "baseline": 0.0,
      "scale": 1.0,
      "decay": 0.0,
+     "accumulate": 0.0,
      "terms": []
     },
     {
@@ -1639,6 +1640,7 @@
      "baseline": 0.0,
      "scale": 1.0,
      "decay": 0.9,
+     "accumulate": 1.0,
      "terms": []
     },
     {
@@ -1649,6 +1651,7 @@
      "baseline": 0.0,
      "scale": 1.0,
      "decay": 0.99,
+     "accumulate": 1.0,
      "terms": []
     }
    ]
@@ -1677,19 +1680,19 @@
  "runs": [
   {
    "seed": 0,
-   "dir": "runs/s2_1_eyes/20261012-211100",
+   "dir": "runs/s2_1_tuning/20261013-144633",
    "ticks": 4000,
    "generations": 40
   },
   {
    "seed": 1,
-   "dir": "runs/s2_1_eyes_seed1/20261012-211100",
+   "dir": "runs/s2_1_tuning_seed1/20261013-172959",
    "ticks": 4000,
    "generations": 40
   },
   {
    "seed": 2,
-   "dir": "runs/s2_1_eyes_seed2/20261012-220445",
+   "dir": "runs/s2_1_tuning_seed2/20261013-172959",
    "ticks": 4000,
    "generations": 40
   }

@@ -2273,3 +2273,42 @@ Every circuit is used in every seed, each several standard errors below 100: lea
 (`fed`) 74-86, `rest` 66-76, the alarm 86-92. With release at once at the same purity the seeds went three
 different ways (plasticity off 62, 46, 95; fed off 80, 98, 101). The user's reading holds: states that need
 several bites are used next to learning where patches are mixed.
+
+## v42 (2026-10-13, evening): the world and the affect of chapter 2 chosen; 2.0 and 2.1 frozen
+
+Decisions (user): the world of chapter 2 is 256 x 256 with patches 70% their own type, and the lasting states
+add up over bites (thresholds as set: `flee` above 1.5 poison bites, `settle` above 9 good bites). One stage in
+the book, framed as tuning that prepares for the chapter; the eyes are a small part of it, not a new module.
+
+**Straight from the affect population it does not work** (trial `x.direct`: camera eyes, the patches and the
+states that add up at once; three seeds from the frozen 1.8 seed 0, 40 generations, 16 worlds, % of intact):
+
+| seed | intact | plasticity off | rest off | fed off | flee off | learning rate |
+|---|---|---|---|---|---|---|
+| 0 | 1239 +-65 | 90 +-3 | 64 +-2 | 66 +-2 | 86 +-2 | 0.08 |
+| 1 | 1220 +-69 | 84 +-3 | 64 +-3 | 79 +-2 | 82 +-1 | 0.15 |
+| 2 | 1208 +-57 | 102 +-2 | 45 +-2 | 66 +-1 | 83 +-2 | 0.00 |
+
+Seed 2 turned its learning rate to 0 and still had it at 0 after 40 more generations (intact 1506, plasticity off
+100 +-1, fed off 60, rest off 33; `stages 2.1 --continue`, a new flag: start from a run of the stage itself without
+applying the stage's change to the population again). The affect population arrives with a learning rate that
+drifted up while learning was idle (0.36; the open-world populations have 0.14-0.25): at that rate a lesson
+spreads to good food, and in patches switching learning off is the shorter way. In open country learning is the
+only way to tell poison, so there the rate comes down and learning is used; the patches then keep it.
+
+**So the lineage has two steps** (user: option 1), and the trial runs that showed it are the frozen runs:
+
+- **2.0** = the first 2.1 (camera eyes in open country at 181 x 181, frozen 2026-10-12), renamed; the same
+  populations (git tag `stage-2.1`).
+- **2.1** = the trial `x.s70`: brain `B20S`, world `W21`, each seed from the same seed of 2.0, weight mutation
+  0.1, 40 generations. Run directories renamed to `s2_1_tuning*`; the direct-route runs are `x_2_1_direct*`.
+
+Stage 2.1 over three seeds (book export, 16 worlds): re-evaluated 1358 1359 1134; plasticity off 86 78 86, fed
+and settle off 74 77 86, rest off 66 76 69, flee off 92 86 91. The seed-0 population against its starting
+population (2.0 seed 0 with the new thresholds) in four worlds, at 128 / 181 / 256 / 362 cells per side with the
+same share of the map in patches (`crowding.py`, which now scales the number of patches): start 339 / 578 / 765 /
+915, evolved 696 / 1093 / 1463 / 1661; at the life cap 11 / 18 / 26 / 32%.
+
+Book: the page is now "Preparing the ground" (`book/wider-world.qmd`): a world with work for every part (table of
+the worlds tried, `book/data/worlds_2.1.json`), two steps, moods that build up, a little more to see, results. The
+export silences `flee`, `fed`, `settle` and `rest` for this stage (`book.LESION_REGIONS`). 52 tests.

@@ -980,9 +980,11 @@ def interpolate_eyes(pop, layout, old: VisionConfig = VISION_CH1, scale: float =
     return pop._replace(w0=jnp.asarray(w0), mask=jnp.asarray(mask))
 
 
-# Camera eyes: 9 columns over 120 degrees, range 6 (part of stage 2.1, defined below; here its first form, in the
-# open world at 181 x 181, frozen as 2.1 on 2026-10-12 and replaced on 2026-10-13: git tag `stage-2.1`, now the
-# trial `x.eyes`, the starting population of the trials that follow). No new cells: every projection
+# 2.0 camera eyes in open country: 9 columns over 120 degrees, range 6, in the open world at 181 x 181. The first
+# of the two steps that prepare the animal for chapter 2 (the second is 2.1; the book tells them as one stage).
+# Frozen as 2.1 on 2026-10-12, renamed 2.0 on 2026-10-13. What it does for the lineage: in open country, where
+# nothing but its look tells a poison bush from a good one, learning comes back (plasticity off 53, 44, 41% of
+# intact; the affect population had let it go, 99, 95, 99). No new cells: every projection
 # that read the five old columns reads all nine, each synapse its own (no copies of a circuit per column; what is
 # worth what, and in which column it counts, stays for evolution and the pain rule to set). The tectum has no stage
 # (user, 2026-10-12): its innate half answers to moving and looming things, which this world does not have, and its
@@ -995,10 +997,10 @@ B20 = camera_eyes(B18)
 # times 5/9 1027, with the poison share at 0.06 against 0.10.
 EYES_SCALE = 5 / 9    # nine columns instead of five: the same total input from the eyes
 _S2 = dict(row_extra=poison_metrics, plastic=True, generations=40, ticks=LIFE_15, eta_max=1.0, dense_plastic=True)
-stage(Stage("x.eyes", "s2_1_eyes", "1.8", B20, W20, VISION_CH2, BODY_17, world_ch2, **_S2,
+stage(Stage("2.0", "s2_1_eyes", "1.8", B20, W20, VISION_CH2, BODY_17, world_ch2, **_S2,
             adapt_init=lambda pop, layout: interpolate_eyes(pop, layout, scale=EYES_SCALE),
-            notes="TRIAL (the first 2.1): camera eyes in the open world at 181 x 181; the new columns start as the "
-                  "mean of their neighbours"))
+            notes="camera eyes (9 columns, range 6) in open country at 181 x 181, where learning comes back; the new "
+                  "columns start as the mean of their neighbours"))
 stage(Stage("x.eyes0", "x_eyes_silent", "1.8", B20, W20, VISION_CH2, BODY_17, world_ch2, **_S2,
             notes="TRIAL: 2.1 with the new eye columns starting silent"))
 
@@ -1016,7 +1018,7 @@ for _key, _name, _world, _note in (
          "patches 70% their own type"),
         ("x.c80", "x_ch2_256_p80", replace(W20_256, patches=320, patch_radius=6, patch_types=True, patch_purity=0.8),
          "patches 80% their own type")):
-    stage(Stage(_key, _name, "x.eyes", B20, _world, VISION_CH2, BODY_17, world_ch2, **_S2,
+    stage(Stage(_key, _name, "2.0", B20, _world, VISION_CH2, BODY_17, world_ch2, **_S2,
                 notes="TRIAL: the camera-eyes population at 256 x 256: " + _note))
 
 
@@ -1043,31 +1045,38 @@ def sum_affect_init(pop, layout):
     return pop._replace(b=b, clear=clear)
 
 
-for _key, _name, _purity in (("x.s60", "x_ch2_256_sum_p60", 0.6), ("x.s70", "x_ch2_256_sum_p70", 0.7),
-                             ("x.s80", "x_ch2_256_sum_p80", 0.8)):
-    stage(Stage(_key, _name, "x.eyes", B20S,
+for _key, _name, _purity in (("x.s60", "x_ch2_256_sum_p60", 0.6), ("x.s80", "x_ch2_256_sum_p80", 0.8)):   # 70%: stage 2.1
+    stage(Stage(_key, _name, "2.0", B20S,
                 replace(W20_256, patches=320, patch_radius=6, patch_types=True, patch_purity=_purity),
                 VISION_CH2, BODY_17, world_ch2, **_S2, adapt_init=sum_affect_init,
                 notes=f"TRIAL: lasting states that add up, with thresholds; patches {_purity:.0%} their own type"))
 
 
-# 2.1 tuning for chapter 2 (user, 2026-10-13; STAGE_LOG v40-v42). No new cells and no new circuit: the animal of
-# chapter 1 is prepared for the chapter in three ways, in one short adaptation step without control.
+# 2.1 tuning for chapter 2 (user, 2026-10-13; STAGE_LOG v40-v42). No new cells and no new circuit: after 2.0 the
+# animal is moved into the world of the chapter and its lasting states are made to fit it, in one short adaptation
+# step without control.
 #   world    four times the area of chapter 1 for the same 256 animals (256 x 256; at 128 crowding hid most of what
 #            a better forager gains), more food (density 0.3), and the berry types in patches that are 70% their
 #            own kind: mixed enough that a bush has to be known by its look, pure enough that a meal or a poison
 #            bite says something about the neighbours;
-#   eyes     9 columns and range 6 instead of 5 and 5, the new columns starting as the mean of their neighbours;
 #   affect   the two lasting states of stage 1.8 add up over bites instead of being released in full by one
 #            (`B20S`): in mixed patches one bite says little, several say what kind of patch this is.
-# Trial `x.s70`, three seeds, 16 worlds, % of intact: plasticity off 86 78 86, fed off 74 77 86, rest off 66 76 69,
-# flee off 92 86 91. With release at once the seeds went three ways at this purity; in the open world and in
-# patches of mixed types the lasting states were not used; in purer patches learning was not.
+# Three seeds, each from its own seed of 2.0, 16 worlds, % of intact: plasticity off 86 78 86, fed off 74 77 86,
+# rest off 66 76 69, flee off 92 86 91. With release at once the seeds went three ways at this purity; in the open
+# world and in patches of mixed types the lasting states were not used; in purer patches learning was not.
+# The order matters (trial `x.direct`, the same stage straight from the affect population, three seeds): the
+# lasting states are used (fed off 66 79 66) but learning weakly or not at all (plasticity off 90 84 102; seed 2
+# turned its learning rate to 0). The affect population arrives with a learning rate that drifted up while
+# learning was idle (0.36); in patches it is easier to switch such learning off than to tune it. Open country
+# first (2.0) brings the rate down and learning back; the patches then keep it.
 W21 = replace(W20_256, patches=320, patch_radius=6, patch_types=True, patch_purity=0.7)
-stage(Stage("2.1", "s2_1_tuning", "1.8", B20S, W21, VISION_CH2, BODY_17, world_ch2, **_S2,
+stage(Stage("2.1", "s2_1_tuning", "2.0", B20S, W21, VISION_CH2, BODY_17, world_ch2, **_S2, adapt_init=sum_affect_init,
+            notes="tuning for chapter 2: a wider world with patches 70% their own type, lasting states that add up "
+                  "over bites"))
+stage(Stage("x.direct", "x_2_1_direct", "1.8", B20S, W21, VISION_CH2, BODY_17, world_ch2, **_S2,
             adapt_init=lambda pop, layout: sum_affect_init(interpolate_eyes(pop, layout, scale=EYES_SCALE), layout),
-            notes="tuning for chapter 2: a wider world with patches 70% their own type, camera eyes (9 columns, "
-                  "range 6), lasting states that add up over bites"))
+            notes="TRIAL: stage 2.1 straight from the affect population (camera eyes, patches and lasting states "
+                  "that add up at once): learning does not reliably come back"))
 
 # ------------------------------------------------------------------ running
 
@@ -1086,7 +1095,7 @@ def make_exp(s: Stage, brain: BrainConfig, name: str, generations: int, seed: in
 
 
 def run_stage(key: str, generations: int | None = None, control: bool = False, init_from: str | None = "auto",
-              seed: int = 0, dashboard: bool = True, suffix: str = "", ticks: int | None = None):
+              seed: int = 0, dashboard: bool = True, suffix: str = "", ticks: int | None = None, adapt: bool = True):
     s = STAGES[key]
     if ticks:   # a trial with a longer or shorter life than the stage defines; use a suffix to keep it apart
         s = replace(s, ticks=ticks)
@@ -1108,7 +1117,7 @@ def run_stage(key: str, generations: int | None = None, control: bool = False, i
         init = load_population(init_from, exp, seed=seed)
         from life.run import make_layout
         lay = make_layout(exp)
-        if s.adapt_init:
+        if s.adapt_init and adapt:   # not when a run of this stage is continued: the change is already in it
             init = s.adapt_init(init, lay)
         if s.dense_plastic and not control:
             init = init._replace(mask=jnp.where(((np.asarray(lay.rule) > 0) & (np.asarray(lay.allowed) > 0))[None], 1.0, init.mask))
@@ -1458,6 +1467,8 @@ def main(argv=None):
     p.add_argument("--mutation-prob", type=float, default=None, help="per-synapse chance that a weight mutates")
     p.add_argument("--suffix", default="", help="appended to the run's experiment name (variants)")
     p.add_argument("--ticks", type=int, default=None, help="ticks per life, instead of the stage's own (trials)")
+    p.add_argument("--continue", dest="cont", action="store_true",
+                   help="--init-from is a run of this stage: do not apply the stage's change to the start population again")
     p.add_argument("--dashboard", action="store_true",
                    help="also write the run's full dashboard.html (about 150 MB and a peak in memory at the end of the "
                         "run; the book's light dashboards are made from the recording: `python -m life.book dashboards`)")
@@ -1473,7 +1484,7 @@ def main(argv=None):
     if a.mutation_prob is not None:
         EVOLUTION_OVERRIDES["weight_mutation_prob"] = a.mutation_prob
     return run_stage(a.stage, a.generations, a.control, a.init_from, a.seed, suffix=a.suffix, ticks=a.ticks,
-                     dashboard=a.dashboard)
+                     dashboard=a.dashboard, adapt=not a.cont)
 
 
 if __name__ == "__main__":

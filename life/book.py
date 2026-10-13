@@ -41,6 +41,8 @@ EXTRAS: dict[str, list[Callable]] = {}
 # Stages whose change is in how the inputs work, not in a region: in the head-to-head test both halves run on the
 # new brain, so the control animals would get adapting inputs their synapses were never tuned to. Not shown.
 NO_HEAD_TO_HEAD = ("1.2h", "1.6h")
+# stages whose question is whether older circuits are still used: the regions to silence with `--lesions recent`
+LESION_REGIONS = {"2.1": ("flee", "fed", "settle", "rest")}
 
 
 def extra(key: str):
@@ -271,6 +273,8 @@ def evaluate(key: str, worlds: int = 8, jobs: int = 5, lesions: str = "recent") 
     for i, r in enumerate(main):
         names = json.loads((r / "layout.json").read_text())["names"]
         labels = ["intact", "no_plasticity", "no_depression"] + [n for n in names if n not in ("in", "out") and n not in older]
+        if lesions == "recent" and key in LESION_REGIONS:
+            labels = ["intact", "no_plasticity"] + [n for n in LESION_REGIONS[key] if n in names]
         tasks += [("main", i, str(r), worlds, tuple(labels[k:k + 3])) for k in range(0, len(labels), 3)]
     tasks += [("control", i, str(r), worlds, ("intact",)) for i, r in enumerate(control)]
     import time

@@ -40,10 +40,16 @@ defaults (`freeze.with_defaults`).
 
 | stage | what it is | parent | life | seeds |
 |---|---|---|---|---|
-| 2.1 | camera eyes: 9 eye columns, range 6, no new cells; the world of chapter 2 (no patches, density 0.3, 181 x 181) | 1.8 | 4000 | 3 |
+| 2.0 | camera eyes (9 eye columns, range 6, no new cells) in open country: no patches, density 0.3, 181 x 181 | 1.8 | 4000 | 3 |
+| 2.1 | tuning for chapter 2: 256 x 256, patches 70% their own type; the lasting states add up over bites (`B20S`) | 2.0 | 4000 | 3 |
 
-2.1 (frozen 2026-10-12) is an adaptation step without control. Its starting population is the frozen 1.8 seed 0
-with the new eye columns interpolated (`stages.interpolate_eyes`, not part of the stored definition).
+2.0 and 2.1 are two adaptation steps without control; the book tells them as one stage ("Preparing the ground").
+2.0 (frozen 2026-10-12 as 2.1, renamed 2026-10-13; the same populations, git tag `stage-2.1`) starts from the
+frozen 1.8 seed 0 with the new eye columns interpolated (`stages.interpolate_eyes`, not part of the stored
+definition); its three seeds start from that same run. In open country learning comes back. 2.1 (frozen
+2026-10-13) starts each seed from the same seed of 2.0, with the thresholds and fade times of
+`stages.sum_affect_init`. Straight from 1.8 the same stage does not reliably bring learning back (trial
+`x.direct`, STAGE_LOG v42).
 
 ## Side paths (defined in `stages.py`, not part of the lineage)
 

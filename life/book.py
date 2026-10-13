@@ -598,6 +598,14 @@ def crowding(s, main: list[Path], control: list[Path]):
     return "crowding", json.loads(f.read_text()) if f.exists() else None
 
 
+@extra("2.1")
+def worlds_tried(s, main: list[Path], control: list[Path]):
+    """The worlds tried for chapter 2 (trial stages x.c*, x.s*, STAGE_LOG v40-v41; lesions by
+    scripts/probes/trial_lesion.py), kept as a data file."""
+    f = BOOK_DIR / "data" / f"worlds_{s.key}.json"
+    return "worlds", json.loads(f.read_text()) if f.exists() else None
+
+
 @extra("1.2h")
 @extra("1.6h")
 def adaptation_off(s, main: list[Path], control: list[Path]):

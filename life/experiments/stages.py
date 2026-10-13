@@ -980,7 +980,9 @@ def interpolate_eyes(pop, layout, old: VisionConfig = VISION_CH1, scale: float =
     return pop._replace(w0=jnp.asarray(w0), mask=jnp.asarray(mask))
 
 
-# 2.1 camera eyes: 9 columns over 120 degrees, range 6, in the world of chapter 2. No new cells: every projection
+# Camera eyes: 9 columns over 120 degrees, range 6 (part of stage 2.1, defined below; here its first form, in the
+# open world at 181 x 181, frozen as 2.1 on 2026-10-12 and replaced on 2026-10-13: git tag `stage-2.1`, now the
+# trial `x.eyes`, the starting population of the trials that follow). No new cells: every projection
 # that read the five old columns reads all nine, each synapse its own (no copies of a circuit per column; what is
 # worth what, and in which column it counts, stays for evolution and the pain rule to set). The tectum has no stage
 # (user, 2026-10-12): its innate half answers to moving and looming things, which this world does not have, and its
@@ -993,10 +995,10 @@ B20 = camera_eyes(B18)
 # times 5/9 1027, with the poison share at 0.06 against 0.10.
 EYES_SCALE = 5 / 9    # nine columns instead of five: the same total input from the eyes
 _S2 = dict(row_extra=poison_metrics, plastic=True, generations=40, ticks=LIFE_15, eta_max=1.0, dense_plastic=True)
-stage(Stage("2.1", "s2_1_eyes", "1.8", B20, W20, VISION_CH2, BODY_17, world_ch2, **_S2,
+stage(Stage("x.eyes", "s2_1_eyes", "1.8", B20, W20, VISION_CH2, BODY_17, world_ch2, **_S2,
             adapt_init=lambda pop, layout: interpolate_eyes(pop, layout, scale=EYES_SCALE),
-            notes="camera eyes (9 columns, range 6) in the world of chapter 2; the new columns start as the mean of "
-                  "their neighbours"))
+            notes="TRIAL (the first 2.1): camera eyes in the open world at 181 x 181; the new columns start as the "
+                  "mean of their neighbours"))
 stage(Stage("x.eyes0", "x_eyes_silent", "1.8", B20, W20, VISION_CH2, BODY_17, world_ch2, **_S2,
             notes="TRIAL: 2.1 with the new eye columns starting silent"))
 
@@ -1014,7 +1016,7 @@ for _key, _name, _world, _note in (
          "patches 70% their own type"),
         ("x.c80", "x_ch2_256_p80", replace(W20_256, patches=320, patch_radius=6, patch_types=True, patch_purity=0.8),
          "patches 80% their own type")):
-    stage(Stage(_key, _name, "2.1", B20, _world, VISION_CH2, BODY_17, world_ch2, **_S2,
+    stage(Stage(_key, _name, "x.eyes", B20, _world, VISION_CH2, BODY_17, world_ch2, **_S2,
                 notes="TRIAL: the camera-eyes population at 256 x 256: " + _note))
 
 
@@ -1043,10 +1045,29 @@ def sum_affect_init(pop, layout):
 
 for _key, _name, _purity in (("x.s60", "x_ch2_256_sum_p60", 0.6), ("x.s70", "x_ch2_256_sum_p70", 0.7),
                              ("x.s80", "x_ch2_256_sum_p80", 0.8)):
-    stage(Stage(_key, _name, "2.1", B20S,
+    stage(Stage(_key, _name, "x.eyes", B20S,
                 replace(W20_256, patches=320, patch_radius=6, patch_types=True, patch_purity=_purity),
                 VISION_CH2, BODY_17, world_ch2, **_S2, adapt_init=sum_affect_init,
                 notes=f"TRIAL: lasting states that add up, with thresholds; patches {_purity:.0%} their own type"))
+
+
+# 2.1 tuning for chapter 2 (user, 2026-10-13; STAGE_LOG v40-v42). No new cells and no new circuit: the animal of
+# chapter 1 is prepared for the chapter in three ways, in one short adaptation step without control.
+#   world    four times the area of chapter 1 for the same 256 animals (256 x 256; at 128 crowding hid most of what
+#            a better forager gains), more food (density 0.3), and the berry types in patches that are 70% their
+#            own kind: mixed enough that a bush has to be known by its look, pure enough that a meal or a poison
+#            bite says something about the neighbours;
+#   eyes     9 columns and range 6 instead of 5 and 5, the new columns starting as the mean of their neighbours;
+#   affect   the two lasting states of stage 1.8 add up over bites instead of being released in full by one
+#            (`B20S`): in mixed patches one bite says little, several say what kind of patch this is.
+# Trial `x.s70`, three seeds, 16 worlds, % of intact: plasticity off 86 78 86, fed off 74 77 86, rest off 66 76 69,
+# flee off 92 86 91. With release at once the seeds went three ways at this purity; in the open world and in
+# patches of mixed types the lasting states were not used; in purer patches learning was not.
+W21 = replace(W20_256, patches=320, patch_radius=6, patch_types=True, patch_purity=0.7)
+stage(Stage("2.1", "s2_1_tuning", "1.8", B20S, W21, VISION_CH2, BODY_17, world_ch2, **_S2,
+            adapt_init=lambda pop, layout: sum_affect_init(interpolate_eyes(pop, layout, scale=EYES_SCALE), layout),
+            notes="tuning for chapter 2: a wider world with patches 70% their own type, camera eyes (9 columns, "
+                  "range 6), lasting states that add up over bites"))
 
 # ------------------------------------------------------------------ running
 

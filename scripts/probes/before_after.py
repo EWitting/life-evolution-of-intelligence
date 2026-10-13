@@ -1,4 +1,4 @@
-"""The frozen 2.1 seed 0 against the newest run of a trial stage, in the trial's world, the same worlds for both.
+"""The newest run of a trial stage's parent against the newest run of the trial, in the trial's world, the same worlds for both.
     uv run python before_after.py <trial key> [worlds]     also checks the vmapped simulation of run_evolution"""
 import sys
 import jax, numpy as np
@@ -12,7 +12,7 @@ exp = S.make_exp(s, s.brain, "before_after", 1, 0)
 rs, fn = s.build(exp)
 sim = make_simulate(exp, record=False)
 extra = S.poison_metrics(rs)
-pops = {"before": load_frozen("2.1", 0, exp), "after": load_population(latest_run(s.name), exp, seed=0)}
+pops = {"before": load_population(latest_run(S.STAGES[s.parent].name), exp, seed=0), "after": load_population(latest_run(s.name), exp, seed=0)}
 res = {k: [] for k in pops}
 for n, k in enumerate(jax.random.split(jax.random.PRNGKey(5), W)):
     kr, ks = jax.random.split(k)

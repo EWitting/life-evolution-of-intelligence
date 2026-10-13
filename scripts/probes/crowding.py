@@ -7,7 +7,7 @@ a population that forages better can look worse over the generations of a run. W
     WORLDS=<n> (default 4), BOOK=1: also write the table book/data/crowding_<key>.json for the stage's page"""
 import json, os, sys, time
 from dataclasses import replace
-import jax, numpy as np
+import jax, jax.numpy as jnp, numpy as np
 from life.experiments import stages as S
 from life.freeze import load_frozen
 from life.run import load_population, latest_run, make_layout, make_simulate
@@ -17,12 +17,15 @@ WORLDS = int(os.environ.get("WORLDS", 4))
 table = []
 for size in [int(a) for a in sys.argv[2:]] or [s0.world.height]:
     table.append([f"{size} x {size}" + (" (this stage)" if size == s0.world.height else "")])
-    s = replace(s0, world=replace(s0.world, height=size, width=size))
+    s = replace(s0, world=replace(s0.world, height=size, width=size,   # the same share of the map in patches
+                                  patches=round(s0.world.patches * size ** 2 / s0.world.height ** 2)))
     exp = S.make_exp(s, s.brain, "crowding_probe", 1, 0)
     lay = make_layout(exp)
     start = load_frozen(s.parent, 0, exp)
     if s.adapt_init:
         start = s.adapt_init(start, lay)
+    if s.dense_plastic:   # as a run of the stage starts (stages.run_stage)
+        start = start._replace(mask=jnp.where(((np.asarray(lay.rule) > 0) & (np.asarray(lay.allowed) > 0))[None], 1.0, start.mask))
     rs, fn = s.build(exp)
     sim = make_simulate(exp, record=False)
     extra = S.poison_metrics(rs)
@@ -45,7 +48,7 @@ if os.environ.get("BOOK"):
     out = {"columns": ["World, cells per side", "starting population", "reaching the end of life", "after evolution (seed 0)",
                        "reaching the end of life"], "rows": table,
            "caption": f"Well-fed lifetime, mean of {WORLDS} worlds, the same {s0.world.num_agents} animals and the same density "
-                      "of bushes in every size. The starting population is the population of the previous stage with the "
-                      "new eye columns filled in."}
+                      "of bushes in every size. The starting population is the population of the previous stage as this stage "
+                      "begins."}
     with open(os.path.join("book", "data", f"crowding_{s0.key}.json"), "w", encoding="utf-8") as f:
         json.dump(out, f)

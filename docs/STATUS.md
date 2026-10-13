@@ -1,7 +1,7 @@
 # Status
 
 One screen on where the project is. Plan: `docs/BRAIN_EVOLUTION.md`. **Frozen stages: `frozen/README.md`.** Details, numbers and run directories:
-`docs/STAGE_LOG.md`. Newest decisions: `docs/DECISIONS.md` (ADR-017 to ADR-025). Last updated 2026-10-12 (chapter 2: world chosen, camera eyes frozen).
+`docs/STAGE_LOG.md`. Newest decisions: `docs/DECISIONS.md` (ADR-017 to ADR-025). Last updated 2026-10-13 (dead animals dropped from the arrays; world size and patch purity tried).
 
 ## How a stage is judged
 
@@ -65,15 +65,22 @@ remapping the stored populations and freezing again.
    for the pallium: the assay of the association stage with the learned synapses reading the pallium. What it has
    to fix is measured (STAGE_LOG v37, v38): the animals find food at once and die of repeated poison bites (30 in a
    full life; a perfect learner takes 2), and they strip the good bushes near them by biting on a full stomach.
-   To try first (user, v39): (a) a larger world for the chapter, four or eight times the area of chapter 1
-   (256 x 256, 362 x 362) instead of the two times of the frozen 2.1, now that size costs no time:
-   `crowding.py 2.1 181 256 362` shows what is left of the crowding; against it, more animals reach the life cap
-   (33% at 256), where well-fed lifetime cannot grow, so a longer life may have to come with it. If a larger world
-   is taken, 2.1 is run and frozen again in it (the user's decision; about 15 minutes a seed) and its book page
-   exported again. (b) A patch purity at which both the lasting states and learning pay, now with the frozen 2.1
-   population. Done: the simulation no longer costs agents x cells (a 256 x 256 world runs as fast as
-   128 x 128). Measured and left: a fuller stomach at birth (little change). Not built: compacting the arrays
-   to the living animals (estimated 0.43 of the brain updates with halving at 1/2, 1/4, 1/8).
+   Before it, two things were tried (STAGE_LOG v40, 2026-10-13), both waiting for the user's decision:
+   (a) **World size.** Frozen 2.1 seed 0 at 181 / 256 / 362 per side: start population 676 / 765 / 815, evolved
+   1015 / 1569 / 1924, at the life cap 19 / 33 / 45% (no problem as long as the well-fed lifetime tells animals
+   apart, user). Crowding still hides two thirds of the stage's gain at 181 and about a quarter at 256. Size costs
+   no time. If a larger world is taken, 2.1 is run and frozen again in it (the user's decision; about 15 minutes
+   for three seeds in parallel) and its book page exported again. **Open before that:** the trial `x.c256` (the
+   frozen 2.1 population, 40 more generations in the open world at 256) ended worse than it began (-325 +-100 in
+   16 shared worlds); find out why first (a second seed; the proper 2.1 from the affect population at 256
+   compared with the frozen one in the same worlds, `scripts/probes/before_after.py`).
+   (b) **Patch purity.** No purity gives both learning and the stay-after-a-meal state a job: `fed` off is 92-101%
+   of intact from 0 to 80% purity (generation 0 and after 40 generations, trials `x.c60`, `x.c80`), and pays only
+   in pure patches, where learning does not. Learning (70-87%) and the alarm (`flee` off about 80% at 256) pay in
+   every mixed world. Not tried: a world with both kinds of ground (some pure patches in open, mixed country).
+   Done: the simulation no longer costs agents x cells, and an unrecorded simulation drops the dead from its
+   arrays (about half the time, identical numbers). Measured and left: a fuller stomach at birth (little change).
+   Compare two populations in 16 shared worlds, not four.
 2. Cheaper evaluations (user, 2026-10-12): the export runs in parallel (`--jobs`), prints a line per finished
    task and silences only the regions of the stage and its parent (`--lesions recent`, default); four worlds for a
    routine check (`--worlds 4`), seed 0 first. A stage run writes its 150 MB dashboard only with `--dashboard`.
@@ -123,7 +130,7 @@ Evolution: one life per individual, siblings, elitism + tournament, recombinatio
 strength genes.
 Tools: stage runner and chain, replicate, summary, lesion(s), versus, respond, compare, dashboard (architecture
 view with hard-wired projections drawn dark; a 64-agent sample of large populations), probes (`scripts/probes/`).
-43 tests.
+50 tests.
 
 ## Future goals (beyond the current chapters)
 

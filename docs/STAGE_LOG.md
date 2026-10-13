@@ -2137,3 +2137,31 @@ the lasting states matter a little (5-10%) though it spent 40 generations in a w
 Neither is large at generation 0, and every patched world is much poorer than the open one (561-831 against
 1046). Whether the lineage takes both up is a question for evolution: trials `x.c256`, `x.c60`, `x.c80` (the frozen
 2.1 population, 40 generations, seed 0, 256 x 256 without patches and with patches 60% and 80% their own type).
+
+**The trials** (40 generations from the frozen 2.1 seed 0, 256 x 256, seed 0; 14 minutes each with four processes
+running). Lesions in four worlds of the trial's own world (`runs/logs/x_world_lesion.py`, before -> after, % of
+intact), and both populations in 16 other shared worlds (`scripts/probes/before_after.py`):
+
+| trial | intact, four worlds | plasticity off | flee off | fed off | poison share after (intact / plasticity off) | after - before, 16 worlds |
+|---|---|---|---|---|---|---|
+| `x.c256` no patches | 1604 -> 1176 | 61 -> 87 | 86 -> 79 | 97 -> 101 | 0.100 / 0.146 | **-325 +-100** (better in 3 of 16) |
+| `x.c60` patches 60% | 881 -> 1200 | 91 -> 70 | 84 -> 80 | 92 -> 95 | 0.058 / 0.109 | +44 +-56 (9 of 16) |
+| `x.c80` patches 80% | 897 -> 1272 | 86 -> 82 | 81 -> 83 | 95 -> 100 | 0.047 / 0.072 | +300 +-59 (15 of 16) |
+
+Reading (one seed):
+
+- No purity tried gives the stay-after-a-meal state a job next to learning: `fed` off stays at 92-101% from 0 to
+  80% purity, before and after evolution. It pays only in pure patches (generation 0: fed 90, rest 88 at 100%),
+  where learning does not (96). The two sit at opposite ends: a meal says "more of this close by" only where the
+  neighbours are of one kind, and then there is nothing to tell apart.
+- Learning pays in every mixed world (70-87% after), and so does the alarm (`flee` off 79-86% at this size, in
+  every world, before and after; it was 83, 96, 99 at 181 x 181).
+- **In the open world the population got worse in 40 more generations** (-325 +-100 in 16 worlds; berries 247 ->
+  139, plasticity off 61 -> 87%). The four-world tables alone would have hidden how far (and showed +319 for
+  `x.c60`, which 16 worlds put at +44): four worlds are too few to compare two populations. The vmapped simulation
+  that evolution uses gives the same numbers as the plain one (checked), so it is not the new compaction. Open:
+  drift under noisy selection (one life per genome; a genome's fitness in one world and another correlates +0.16,
+  v38), or selection at 256 favouring something the well-fed lifetime in other worlds does not show. To settle
+  before 2.1 is frozen again at a larger size.
+- The well-fed lifetime within a run swings with the world of the generation (467 to 2140 in `x.c256`), the same
+  swings in all three trials (the generations share their world seeds).

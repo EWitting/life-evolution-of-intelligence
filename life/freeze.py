@@ -44,7 +44,13 @@ def with_defaults(part: str, stored):
     default = json.loads(ExperimentConfig().to_json()).get(part)
     if not isinstance(stored, dict) or not isinstance(default, dict):
         return stored
-    return {**{k: v for k, v in default.items() if k not in stored and k not in RUN_ONLY}, **stored}
+    out = {**{k: v for k, v in default.items() if k not in stored and k not in RUN_ONLY}, **stored}
+    if part == "brain":   # the same for the options of a modulator (stored as a list of them)
+        from dataclasses import asdict
+        from .config import ModulatorSpec
+        blank = json.loads(json.dumps(asdict(ModulatorSpec(name=""))))
+        out["modulators"] = [{**{k: v for k, v in blank.items() if k not in m}, **m} for m in out.get("modulators", [])]
+    return out
 
 
 def definition(key: str) -> dict:

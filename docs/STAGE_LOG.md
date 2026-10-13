@@ -2184,7 +2184,8 @@ done (stopped for low memory, see below).
 
 **Lasting states that add up** (user's idea; not tried before). `ModulatorSpec.accumulate`: the modulator is
 decay x the previous value + the new value, a leaky sum, instead of the larger of the two (released at once); the
-cell that reads it gets a threshold counted in bites. Off by default, the frozen stages are unchanged (50 tests).
+cell that reads it gets a threshold counted in bites. Off by default, the frozen stages are unchanged (50 tests; `freeze.with_defaults` now also fills in a new option of
+a modulator).
 Generation 0 (`scripts/probes/sum_affect.py x.c70 ...`, the evolved population of `x.c70`, eight worlds, paired
 difference to the population as evolved, 1633; one bite is 0.96 on `us_pain` and 1.00 on `fed`; evolved fade
 times alarm 6 ticks, serotonin 33):

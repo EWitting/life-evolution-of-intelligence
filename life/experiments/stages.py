@@ -1015,6 +1015,37 @@ for _key, _name, _world, _note in (
     stage(Stage(_key, _name, "2.1", B20, _world, VISION_CH2, BODY_17, world_ch2, **_S2,
                 notes="TRIAL: the camera-eyes population at 256 x 256: " + _note))
 
+
+# Trials (2026-10-13, user's idea, STAGE_LOG v41): lasting states that add up. In stage 1.8 a modulator is released
+# at once (one poison bite is a full alarm, one good bite a full stay). Here each is a leaky sum of the events and
+# the cell that reads it has a threshold counted in bites, so that in a patch of mixed kinds the animal leaves or
+# stays on several bites. Start values from generation 0 (`scripts/probes/sum_affect.py`: neutral for the population
+# of x.c70): alarm above 1.5 poison bites, fading over about 33 ticks; stay above 9 good bites (a bush has 6),
+# fading over about 100. Evolution moves the thresholds (the biases of `flee` and `settle`) and the fade times.
+SUM_ALARM, SUM_FED = (1.5, 0.97), (9.0, 0.99)   # (threshold in bites, fraction left after a tick)
+B20S = replace(B20,
+               modulators=tuple(replace(m, accumulate=1.0) if m.name in ("alarm", "serotonin") else m for m in B20.modulators),
+               regions=tuple(replace(r, bias=-3.0 * SUM_ALARM[0], evolve_bias=True) if r.name == "flee" else
+                             replace(r, bias=-2.0 * SUM_FED[0], evolve_bias=True) if r.name == "settle" else r
+                             for r in B20.regions))
+
+
+def sum_affect_init(pop, layout):
+    """The designed thresholds and fade times (an inherited bias or fade time would be that of release at once)."""
+    b, clear = pop.b, pop.clear
+    for cell, mod, (t, d), sens in (("flee", "alarm", SUM_ALARM, 3.0), ("settle", "serotonin", SUM_FED, 2.0)):
+        b = b.at[:, layout.region(cell)].set(-sens * t)
+        clear = clear.at[:, layout.mod_names.index(mod)].set(d)
+    return pop._replace(b=b, clear=clear)
+
+
+for _key, _name, _purity in (("x.s60", "x_ch2_256_sum_p60", 0.6), ("x.s70", "x_ch2_256_sum_p70", 0.7),
+                             ("x.s80", "x_ch2_256_sum_p80", 0.8)):
+    stage(Stage(_key, _name, "2.1", B20S,
+                replace(W20_256, patches=320, patch_radius=6, patch_types=True, patch_purity=_purity),
+                VISION_CH2, BODY_17, world_ch2, **_S2, adapt_init=sum_affect_init,
+                notes=f"TRIAL: lasting states that add up, with thresholds; patches {_purity:.0%} their own type"))
+
 # ------------------------------------------------------------------ running
 
 EVOLUTION_OVERRIDES: dict = {}   # set from the command line (--mutation-prob), applied to every stage
@@ -1072,9 +1103,9 @@ def run_stage(key: str, generations: int | None = None, control: bool = False, i
 def stage_of_run(run_dir) -> Stage:
     from pathlib import Path
     name = Path(run_dir).resolve().parent.name
-    for s in STAGES.values():
-        if name.startswith(s.name):
-            return s
+    found = [s for s in STAGES.values() if name.startswith(s.name)]   # the longest name: x_ch2_256_p70, not x_ch2_256
+    if found:
+        return max(found, key=lambda s: len(s.name))
     raise KeyError(f"no stage for experiment {name}")
 
 

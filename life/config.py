@@ -164,6 +164,9 @@ class ModulatorSpec:
     scale: float = 1.0
     decay: float = 0.0               # > 0: the modulator is max(new value, decay * previous value): released at
                                      # once, cleared slowly (a persistent state that outlasts its trigger)
+    accumulate: float = 0.0          # with decay > 0: the modulator is decay * previous value + accumulate * new
+                                     # value instead (a leaky sum: every event adds to what is left of the earlier
+                                     # ones, so a cell with a threshold answers to several events close together)
     terms: tuple = ()                # ((region, weight), ...): adds sum(weight * mean(region)) to pos - neg; e.g.
                                      # a TD error r + gamma V(t) - V(t-1) from reward, value and value-copy regions
 

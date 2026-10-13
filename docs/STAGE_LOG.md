@@ -2174,3 +2174,38 @@ the same numbers as the plain one (checked in `before_after.py`), so the compact
 **A fourth size** (`crowding.py 2.1 512`): start 876, evolved 2149, 51% at the life cap, 458 berries, poison share
 0.057. The evolved population over 181 / 256 / 362 / 512: 1015 / 1569 / 1924 / 2149 (+55%, +23%, +12% per
 doubling of the area): levelling off, with half the animals at the cap at 512.
+
+## v41 (2026-10-13, afternoon): patches 70% pure in 16 worlds; lasting states that add up, generation 0
+
+**Seed 0 of `x.c70` with lesions in 16 worlds** (`scripts/probes/trial_lesion.py`, `WORLDS=16`): intact 1162;
+plasticity off 62% of intact, rest off 78, fed off 80, flee off 89. The four-world picture holds. Seeds 1 and 2
+(`x_ch2_256_p70_seed1`, `_seed2`, each from its own frozen 2.1 population) have evolved; their lesions are not
+done (stopped for low memory, see below).
+
+**Lasting states that add up** (user's idea; not tried before). `ModulatorSpec.accumulate`: the modulator is
+decay x the previous value + the new value, a leaky sum, instead of the larger of the two (released at once); the
+cell that reads it gets a threshold counted in bites. Off by default, the frozen stages are unchanged (50 tests).
+Generation 0 (`scripts/probes/sum_affect.py x.c70 ...`, the evolved population of `x.c70`, eight worlds, paired
+difference to the population as evolved, 1633; one bite is 0.96 on `us_pain` and 1.00 on `fed`; evolved fade
+times alarm 6 ticks, serotonin 33):
+
+| variant | difference |
+|---|---|
+| alarm adds up, no threshold | -5 +-30 |
+| alarm above 1.5 poison bites | -147 +-76 |
+| the same, fading over about 33 ticks | -29 +-45 |
+| stay adds up, no threshold | +62 +-33 |
+| stay above 3 good bites | -4 +-26 |
+| stay above 9 good bites (a bush has 6) | -147 +-31 |
+| the same, fading over about 100 ticks | +1 +-20 |
+
+Reading: nothing is clearly better at generation 0 in a population tuned to release at once. A threshold alone
+hurts because the evolved fade times are short (the bites fade before they add up); with a longer fade it is
+neutral. The question is what evolution does with it: trials `x.s60`, `x.s70`, `x.s80` (brain `B20S`: both states
+as sums, thresholds 1.5 and 9 bites, fades 33 and 100 ticks, thresholds and fades evolvable; the frozen 2.1
+seed 0, 256 x 256, patches 60, 70, 80% pure). The test: is the fed state used at 60% and learning at 80%, where
+release at once left one of them idle (`x.c60`, `x.c80`)?
+
+**Stopped for low memory** (six JAX processes while the laptop was in use: too many): the three `x.s` trials at
+generation 3, and the 16-world lesions of `x.c70` seeds 1 and 2, `x.c60` and `x.c80`. To run again, at most three
+processes at a time.

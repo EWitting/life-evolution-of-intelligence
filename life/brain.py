@@ -95,6 +95,7 @@ class Layout(NamedTuple):
     has_dep: bool
     has_decay: bool
     has_receptors: bool
+    mod_accum: tuple = ()   # static: ModulatorSpec.accumulate per modulator (empty = none accumulates)
 
     def region(self, name: str) -> slice:
         i = self.names.index(name)
@@ -257,7 +258,8 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
                   has_adapt=bool(cfg.in_adapt),
                   has_gain=bool(gain.any()), has_elig=bool((elig > 0).any()), has_dep=bool((dep_U > 0).any()),
                   has_decay=bool((decay > 0).any()), groups=tuple(r.group for r in regions),
-                  rec_gain=j(rec_gain), rec_bias=j(rec_bias), has_receptors=bool(rec_gain.any() or rec_bias.any()))
+                  rec_gain=j(rec_gain), rec_bias=j(rec_bias), has_receptors=bool(rec_gain.any() or rec_bias.any()),
+                  mod_accum=tuple(float(m.accumulate) for m in mods) if any(m.accumulate for m in mods) else ())
 
 
 def constrain(layout: Layout, w: jnp.ndarray, w_max: float) -> jnp.ndarray:
@@ -330,7 +332,10 @@ def compute_modulators(layout: Layout, x: jnp.ndarray, world_sig: jnp.ndarray, p
         else:
             v = world_sig[WORLD_SIGNALS.index(kind)]
         v = scale * (v - base)
-        out.append(jnp.maximum(v, clear[i] * prev[i]) if decay > 0 else v)
+        if decay > 0 and layout.mod_accum and layout.mod_accum[i] > 0:
+            out.append(clear[i] * prev[i] + layout.mod_accum[i] * v)
+        else:
+            out.append(jnp.maximum(v, clear[i] * prev[i]) if decay > 0 else v)
     return jnp.stack(out) if out else jnp.zeros(1, jnp.float32)
 
 

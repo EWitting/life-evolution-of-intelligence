@@ -75,9 +75,15 @@ remapping the stored populations and freezing again.
    (b) **Patch purity.** There is a crossover (trials from the frozen 2.1 population at 256 x 256, 40 generations,
    one seed, % of intact with plasticity / flee / fed off): no patches 55 / 89 / 98; patches 60% their own type
    64 / 75 / 94; **70%: 69 / 78 / 82**; 80%: 100 / 64 / 76. At 70% learning and both lasting states are used.
-   To do before choosing it: two more seeds and lesions in more worlds. The user's idea, not built: lasting states
-   that add up over several bites (a leaky sum and a threshold instead of release at once), so that a mixed
-   patch is judged by several bites; a generation-0 probe first.
+   Seed 0 at 70% holds in 16 worlds (62 / 89 / 80, rest off 78). World size: 256 x 256 (user, 2026-10-13).
+   **Resume here (v41), at most three processes at a time (two batches were stopped for low memory):**
+   (1) lesions in 16 worlds of the 70% trial's seeds 1 and 2, already evolved (`WORLDS=16
+   scripts/probes/trial_lesion.py x.c70 x_ch2_256_p70_seed1`, `_seed2`) and of `x.c60`, `x.c80`;
+   (2) the user's idea, built: lasting states that add up over several bites (`ModulatorSpec.accumulate`, a
+   leaky sum with a threshold; neutral at generation 0 with long fades, `sum_affect.py`): run the trials `x.s60`,
+   `x.s70`, `x.s80` and lesion them in 16 worlds, to see whether the fed state is used at 60% and learning at 80%;
+   (3) then the user decides the world of chapter 2 (purity, release at once or sums) and 2.1 is run and frozen
+   again in it at 256 x 256, three seeds, weight mutation 0.1.
    Done: the simulation no longer costs agents x cells, and an unrecorded simulation drops the dead from its
    arrays (about half the time, identical numbers). Measured and left: a fuller stomach at birth (little change).
    Compare two populations in 16 shared worlds, not four. **Start warm-started trials at weight mutation 0.1**

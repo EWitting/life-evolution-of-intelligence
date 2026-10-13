@@ -75,19 +75,19 @@ remapping the stored populations and freezing again.
    (b) **Patch purity.** There is a crossover (trials from the frozen 2.1 population at 256 x 256, 40 generations,
    one seed, % of intact with plasticity / flee / fed off): no patches 55 / 89 / 98; patches 60% their own type
    64 / 75 / 94; **70%: 69 / 78 / 82**; 80%: 100 / 64 / 76. At 70% learning and both lasting states are used.
-   Seed 0 at 70% holds in 16 worlds (62 / 89 / 80, rest off 78). World size: 256 x 256 (user, 2026-10-13).
-   **Resume here (v41), at most three processes at a time (two batches were stopped for low memory):**
-   (1) lesions in 16 worlds of the 70% trial's seeds 1 and 2, already evolved (`WORLDS=16
-   scripts/probes/trial_lesion.py x.c70 x_ch2_256_p70_seed1`, `_seed2`) and of `x.c60`, `x.c80`;
-   (2) the user's idea, built: lasting states that add up over several bites (`ModulatorSpec.accumulate`, a
-   leaky sum with a threshold; neutral at generation 0 with long fades, `sum_affect.py`): run the trials `x.s60`,
-   `x.s70`, `x.s80` and lesion them in 16 worlds, to see whether the fed state is used at 60% and learning at 80%;
-   (3) then the user decides the world of chapter 2 (purity, release at once or sums) and 2.1 is run and frozen
-   again in it at 256 x 256, three seeds, weight mutation 0.1.
-   Done: the simulation no longer costs agents x cells, and an unrecorded simulation drops the dead from its
-   arrays (about half the time, identical numbers). Measured and left: a fuller stomach at birth (little change).
-   Compare two populations in 16 shared worlds, not four. **Start warm-started trials at weight mutation 0.1**
-   (now the default of `stages <key>`): at 1.0 a population loses a quarter in 40 generations (v40).
+   In 16 worlds and over seeds (v41): at 70% with release at once seed 0 uses all three, seed 1 only learning,
+   seed 2 neither learning nor `fed`; patches with the types mixed inside (`x.cmix`, three seeds) leave the lasting
+   states unused. World size: 256 x 256 (user, 2026-10-13).
+   **Candidate (user): patches 70% their own type, lasting states that add up** (`ModulatorSpec.accumulate`, brain
+   `B20S`, trial `x.s70`: a leaky sum, `flee` above 1.5 poison bites, `settle` above 9 good bites; the thresholds
+   stay as set). Seed 0, 16 worlds, % of intact: plasticity off 86, rest 66, fed 74, flee 92; at 60%: 85, 79, 92,
+   91; at 80%: 97, 64, 79, 90.
+   **Resume here:** seeds 1 and 2 of `x.s70` (`stages x.s70 --seed 1 --init-from <newest run of s2_1_eyes_seed1>
+   --suffix _seed1`), then `WORLDS=16 ONLY=no_plasticity,fed,flee,rest scripts/probes/trial_lesion.py x.s70
+   [x_ch2_256_sum_p70_seed1]` for all three seeds (with standard errors). At most three processes, runs started a
+   few minutes apart (the recording at the end of a run takes about 2 GB for a moment; two batches were stopped
+   for low memory). If every circuit is used in the three seeds, the user decides, and 2.1 is defined on `B20S` in
+   that world, run and frozen again (three seeds, weight mutation 0.1), and its book page exported.
 2. Cheaper evaluations (user, 2026-10-12): the export runs in parallel (`--jobs`), prints a line per finished
    task and silences only the regions of the stage and its parent (`--lesions recent`, default); four worlds for a
    routine check (`--worlds 4`), seed 0 first. A stage run writes its 150 MB dashboard only with `--dashboard`.

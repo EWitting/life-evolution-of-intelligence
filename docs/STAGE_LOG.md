@@ -2237,3 +2237,24 @@ Reading:
   70%. At 70% it is the one trial with both moderately used (86 and 74), one seed.
 - Next candidate (trial `x.cmix`): patches of bushes with the types mixed evenly inside them. Then a meal says
   "more bushes close by" (the stay state) and nothing about which are poison (learning): two jobs instead of one.
+
+**Patches with the types mixed inside them** (`x.cmix`: rich and poor ground instead of good and bad ground; three
+seeds, each from its own frozen 2.1 population, 40 generations, lesions in 16 worlds, % of intact):
+
+| seed | intact | plasticity off | rest off | fed off | flee off |
+|---|---|---|---|---|---|
+| 0 | 1383 | 52 | 99 | 99 | 90 |
+| 1 | 1546 | 33 | 98 | 100 | 97 |
+| 2 | 1458 | 41 | 94 | 100 | 93 |
+
+Learning does all the work, more than in any other world tried; the stay state is unused in every seed and the
+alarm nearly so (the user's prediction: hunger alone is enough there, and a poison bite says nothing about the
+neighbours). Out as a candidate.
+
+**Candidate for the chapter (user): patches 70% their own type with the lasting states adding up** (`x.s70`): in
+its one seed every circuit is used (86 / 66 / 74 / 92), and the same holds at 60% and 80% but for learning at 80%
+(97). Seeds 1 and 2 are needed before 2.1 is frozen again in it. `trial_lesion.py` now prints standard errors
+over the worlds (the fitness, and each lesion's ratio to intact). The first run of the two seeds was stopped for
+low memory at the end of generation 40, before the populations were written: a run records its last generation
+again at the end (about 2 GB for a moment, v37), and two runs reached that point together. Start runs a few
+minutes apart.

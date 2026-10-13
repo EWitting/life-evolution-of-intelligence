@@ -1112,7 +1112,7 @@ def stage_of_run(run_dir) -> Stage:
 
 
 def lesion(run_dir: str, regions: list[str] | None = None, worlds: int = 8, seed: int = 123,
-           only: tuple | None = None) -> dict:
+           only: tuple | None = None, per_world: bool = False) -> dict:
     """Lesion study: the run's final population in its own world, intact and with each region silenced (all
     outgoing synapses removed). Averages over `worlds` independent worlds. Returns {label: stats means}.
     The worlds depend only on `seed`, so two runs of the same stage are measured in the same worlds.
@@ -1160,6 +1160,8 @@ def lesion(run_dir: str, regions: list[str] | None = None, worlds: int = 8, seed
             row.update({k2: float(v) for k2, v in extra(st, fit).items()})
             acc.append(row)
         out[label] = {k2: float(np.mean([r[k2] for r in acc])) for k2 in acc[0]}
+        if per_world:   # the fitness in every world, for a standard error over worlds
+            out[label]["fitness_worlds"] = [r["fitness"] for r in acc]
     return out
 
 

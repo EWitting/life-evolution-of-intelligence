@@ -1008,6 +1008,8 @@ for _key, _name, _world, _note in (
         ("x.c256", "x_ch2_256", W20_256, "no patches (the world of chapter 2, larger)"),
         ("x.c60", "x_ch2_256_p60", replace(W20_256, patches=320, patch_radius=6, patch_types=True, patch_purity=0.6),
          "patches 60% their own type"),
+        ("x.c70", "x_ch2_256_p70", replace(W20_256, patches=320, patch_radius=6, patch_types=True, patch_purity=0.7),
+         "patches 70% their own type"),
         ("x.c80", "x_ch2_256_p80", replace(W20_256, patches=320, patch_radius=6, patch_types=True, patch_purity=0.8),
          "patches 80% their own type")):
     stage(Stage(_key, _name, "2.1", B20, _world, VISION_CH2, BODY_17, world_ch2, **_S2,
@@ -1408,6 +1410,10 @@ def main(argv=None):
         for s in STAGES.values():
             print(f"{s.key:5s} {s.name:32s} parent={s.parent}  {s.notes}")
         return
+    if a.mutation_prob is None and a.init_from != "none" and STAGES[a.stage].parent:
+        # a warm-started population is near its optimum: with every weight mutating in every child it loses ground
+        # (mutational load; the trial x.c256 of 2026-10-13 lost a quarter in 40 generations at 1.0, STAGE_LOG v40)
+        a.mutation_prob = 0.1
     if a.mutation_prob is not None:
         EVOLUTION_OVERRIDES["weight_mutation_prob"] = a.mutation_prob
     return run_stage(a.stage, a.generations, a.control, a.init_from, a.seed, suffix=a.suffix, ticks=a.ticks,

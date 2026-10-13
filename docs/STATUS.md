@@ -66,21 +66,22 @@ remapping the stored populations and freezing again.
    to fix is measured (STAGE_LOG v37, v38): the animals find food at once and die of repeated poison bites (30 in a
    full life; a perfect learner takes 2), and they strip the good bushes near them by biting on a full stomach.
    Before it, two things were tried (STAGE_LOG v40, 2026-10-13), both waiting for the user's decision:
-   (a) **World size.** Frozen 2.1 seed 0 at 181 / 256 / 362 per side: start population 676 / 765 / 815, evolved
-   1015 / 1569 / 1924, at the life cap 19 / 33 / 45% (no problem as long as the well-fed lifetime tells animals
-   apart, user). Crowding still hides two thirds of the stage's gain at 181 and about a quarter at 256. Size costs
-   no time. If a larger world is taken, 2.1 is run and frozen again in it (the user's decision; about 15 minutes
-   for three seeds in parallel) and its book page exported again. **Open before that:** the trial `x.c256` (the
-   frozen 2.1 population, 40 more generations in the open world at 256) ended worse than it began (-325 +-100 in
-   16 shared worlds); find out why first (a second seed; the proper 2.1 from the affect population at 256
-   compared with the frozen one in the same worlds, `scripts/probes/before_after.py`).
-   (b) **Patch purity.** No purity gives both learning and the stay-after-a-meal state a job: `fed` off is 92-101%
-   of intact from 0 to 80% purity (generation 0 and after 40 generations, trials `x.c60`, `x.c80`), and pays only
-   in pure patches, where learning does not. Learning (70-87%) and the alarm (`flee` off about 80% at 256) pay in
-   every mixed world. Not tried: a world with both kinds of ground (some pure patches in open, mixed country).
+   (a) **World size.** Frozen 2.1 seed 0 at 181 / 256 / 362 / 512 per side: start population 676 / 765 / 815 /
+   876, evolved 1015 / 1569 / 1924 / 2149, at the life cap 19 / 33 / 45 / 51% (no problem as long as the well-fed
+   lifetime tells animals apart, user). Levelling off: +55%, +23%, +12% per doubling of the area. Size costs
+   little time up to 512. If a larger world is taken, 2.1 is run and frozen again in it (the user's decision;
+   about 15 minutes for three seeds in parallel) and its book page exported again. The open world at 256 holds
+   its level under evolution (trial `x.c256`, +19 +-40 in 16 worlds).
+   (b) **Patch purity.** There is a crossover (trials from the frozen 2.1 population at 256 x 256, 40 generations,
+   one seed, % of intact with plasticity / flee / fed off): no patches 55 / 89 / 98; patches 60% their own type
+   64 / 75 / 94; **70%: 69 / 78 / 82**; 80%: 100 / 64 / 76. At 70% learning and both lasting states are used.
+   To do before choosing it: two more seeds and lesions in more worlds. The user's idea, not built: lasting states
+   that add up over several bites (a leaky sum and a threshold instead of release at once), so that a mixed
+   patch is judged by several bites; a generation-0 probe first.
    Done: the simulation no longer costs agents x cells, and an unrecorded simulation drops the dead from its
    arrays (about half the time, identical numbers). Measured and left: a fuller stomach at birth (little change).
-   Compare two populations in 16 shared worlds, not four.
+   Compare two populations in 16 shared worlds, not four. **Start warm-started trials at weight mutation 0.1**
+   (now the default of `stages <key>`): at 1.0 a population loses a quarter in 40 generations (v40).
 2. Cheaper evaluations (user, 2026-10-12): the export runs in parallel (`--jobs`), prints a line per finished
    task and silences only the regions of the stage and its parent (`--lesions recent`, default); four worlds for a
    routine check (`--worlds 4`), seed 0 first. A stage run writes its 150 MB dashboard only with `--dashboard`.

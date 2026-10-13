@@ -2139,29 +2139,38 @@ Neither is large at generation 0, and every patched world is much poorer than th
 2.1 population, 40 generations, seed 0, 256 x 256 without patches and with patches 60% and 80% their own type).
 
 **The trials** (40 generations from the frozen 2.1 seed 0, 256 x 256, seed 0; 14 minutes each with four processes
-running). Lesions in four worlds of the trial's own world (`runs/logs/x_world_lesion.py`, before -> after, % of
-intact), and both populations in 16 other shared worlds (`scripts/probes/before_after.py`):
+running). Lesions after the run in four worlds of the trial's own world (`runs/logs/x_world_lesion.py`, % of
+intact), and the start and evolved populations in 16 other shared worlds (`scripts/probes/before_after.py`):
 
-| trial | intact, four worlds | plasticity off | flee off | fed off | poison share after (intact / plasticity off) | after - before, 16 worlds |
+| trial | intact, four worlds | plasticity off | flee off | fed off | poison share (intact / plasticity off) | after - before, 16 worlds |
 |---|---|---|---|---|---|---|
-| `x.c256` no patches | 1604 -> 1176 | 61 -> 87 | 86 -> 79 | 97 -> 101 | 0.100 / 0.146 | **-325 +-100** (better in 3 of 16) |
-| `x.c60` patches 60% | 881 -> 1200 | 91 -> 70 | 84 -> 80 | 92 -> 95 | 0.058 / 0.109 | +44 +-56 (9 of 16) |
-| `x.c80` patches 80% | 897 -> 1272 | 86 -> 82 | 81 -> 83 | 95 -> 100 | 0.047 / 0.072 | +300 +-59 (15 of 16) |
+| `x.c256` no patches | 1645 | 55 | 89 | 98 | 0.069 / 0.158 | +19 +-40 (better in 9 of 16) |
+| `x.c60` patches 60% | 1514 | 64 | 75 | 94 | 0.066 / 0.122 | +558 +-71 (16 of 16) |
+| `x.c70` patches 70% | 1416 | **69** | **78** | **82** | 0.054 / 0.099 | +402 +-57 (16 of 16) |
+| `x.c80` patches 80% | 1567 | 100 | 64 | 76 | 0.065 / 0.071 | +641 +-69 (16 of 16) |
 
-Reading (one seed):
+The start population in the same four worlds: no patches intact 1604, plasticity off 61, flee 86, fed 97; 60%:
+881, 91, 84, 92; 80%: 897, 86, 81, 95.
 
-- No purity tried gives the stay-after-a-meal state a job next to learning: `fed` off stays at 92-101% from 0 to
-  80% purity, before and after evolution. It pays only in pure patches (generation 0: fed 90, rest 88 at 100%),
-  where learning does not (96). The two sit at opposite ends: a meal says "more of this close by" only where the
-  neighbours are of one kind, and then there is nothing to tell apart.
-- Learning pays in every mixed world (70-87% after), and so does the alarm (`flee` off 79-86% at this size, in
-  every world, before and after; it was 83, 96, 99 at 181 x 181).
-- **In the open world the population got worse in 40 more generations** (-325 +-100 in 16 worlds; berries 247 ->
-  139, plasticity off 61 -> 87%). The four-world tables alone would have hidden how far (and showed +319 for
-  `x.c60`, which 16 worlds put at +44): four worlds are too few to compare two populations. The vmapped simulation
-  that evolution uses gives the same numbers as the plain one (checked), so it is not the new compaction. Open:
-  drift under noisy selection (one life per genome; a genome's fitness in one world and another correlates +0.16,
-  v38), or selection at 256 favouring something the well-fed lifetime in other worlds does not show. To settle
-  before 2.1 is frozen again at a larger size.
-- The well-fed lifetime within a run swings with the world of the generation (467 to 2140 in `x.c256`), the same
-  swings in all three trials (the generations share their world seeds).
+Reading (one seed, lesions in four worlds: a direction):
+
+- **There is a crossover between 60% and 80%.** At 60% the lineage uses learning and the alarm and hardly the
+  stay-after-a-meal state; at 80% it uses both lasting states and has dropped learning altogether (the poison
+  share is the same with and without it); at 70% all three are used: plasticity off 69, flee off 78, fed off 82.
+- The alarm pays in every world at this size (64-89%); it was 83, 96, 99 at 181 x 181 without patches.
+- After 40 generations the patched worlds are as rich as the open one (1362-1492 against 1378 in the 16 worlds):
+  the poverty at generation 0 was a population that did not know patches.
+- The open world holds its level in 40 more generations (+19 +-40).
+
+**A mistake in the first round of these trials, kept as a lesson.** They were started with plain `stages <key>`,
+which mutated every weight in every child (`weight_mutation_prob` 1.0; the frozen stages ran at 0.1 through
+`replicate` and `chain`). In the open world the population then lost a quarter in 40 generations (-325 +-100 in 16
+worlds, berries 247 -> 139, plasticity off 61 -> 87%), the 60% trial gained nothing (+44 +-56) and no trial used
+the fed state (95-101%): mutational load, which hides what a world selects for. A warm-started stage run from the
+command line now defaults to 0.1. Two more things it showed: four worlds are too few to compare two populations
+(they gave +319 for the 60% trial that 16 worlds put at +44), and the vmapped simulation that evolution uses gives
+the same numbers as the plain one (checked in `before_after.py`), so the compaction was not the cause.
+
+**A fourth size** (`crowding.py 2.1 512`): start 876, evolved 2149, 51% at the life cap, 458 berries, poison share
+0.057. The evolved population over 181 / 256 / 362 / 512: 1015 / 1569 / 1924 / 2149 (+55%, +23%, +12% per
+doubling of the area): levelling off, with half the animals at the cap at 512.

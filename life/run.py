@@ -22,11 +22,12 @@ from .config import ExperimentConfig
 from .evolution import next_generation
 from .ruleset import Ruleset, RuleArrays
 from .sensors import input_names, ray_offsets, observe_all, flatten_obs
-from .world import init_world, step_world, WorldState
+from .world import init_world, step_world, take_agents, WorldState
 from . import actions as A
 
 RUNS_DIR = Path(__file__).resolve().parent.parent / "runs"
 STOP_CHECK = 100   # ticks between checks whether anyone is still alive (unrecorded simulations stop when nobody is)
+COMPACT = (2, 4, 8)   # an unrecorded simulation goes on with 1/2, 1/4, 1/8 of the arrays once that few agents live
 
 
 def make_layout(exp: ExperimentConfig) -> brain.Layout:
@@ -38,15 +39,19 @@ def make_tick(exp: ExperimentConfig, layout: brain.Layout):
     """One world tick for all agents: observe -> brains -> world. Shared by run_evolution and Lab.
     tick(rules, pop, world, bstate, sig, key, override) -> (world, bstate, sig, acts, obs, ev)
     sig[N, 3] are the world signals of the last tick (brain.WORLD_SIGNALS: reward, pain, food).
-    `override[N]` replaces an agent's chosen action when >= 0 (Lab uses it; pass -1s otherwise)."""
+    `override[N]` replaces an agent's chosen action when >= 0 (Lab uses it; pass -1s otherwise).
+    `ids` [n]: when the arrays hold only n of the N agents, their indices in the full population (every agent keeps
+    the random draws of its index)."""
     offsets = jnp.asarray(ray_offsets(exp.vision))
     wcfg, vcfg, bcfg = exp.world, exp.vision, exp.brain
     N = wcfg.num_agents
 
     def tick(rules: RuleArrays, pop: brain.Genome, world: WorldState, bstate: brain.BrainState,
-             sig: jnp.ndarray, key: jax.Array, override: jnp.ndarray):
-        obs = flatten_obs(observe_all(vcfg, wcfg, rules, world, offsets, exp.body, jax.random.fold_in(key, 7)))
+             sig: jnp.ndarray, key: jax.Array, override: jnp.ndarray, ids: jnp.ndarray | None = None):
+        obs = flatten_obs(observe_all(vcfg, wcfg, rules, world, offsets, exp.body, jax.random.fold_in(key, 7), ids))
         keys = jax.random.split(key, N)
+        if ids is not None:
+            keys = keys[ids]
         bstate, acts = jax.vmap(brain.step, in_axes=(None, None, 0, 0, 0, 0, 0))(
             bcfg, layout, pop, bstate, obs, sig, keys)
         acts = jnp.where(override >= 0, override, acts)
@@ -59,16 +64,17 @@ def make_tick(exp: ExperimentConfig, layout: brain.Layout):
     return tick
 
 
-def make_simulate(exp: ExperimentConfig, record: bool):
+def make_simulate(exp: ExperimentConfig, record: bool, compact: bool = True):
     """Returns a jitted simulate(rules, pop, key) -> (stats, recording_or_None) for one generation.
-    With record=True the recording holds per-tick arrays plus weight snapshots every record_weights_every ticks."""
+    With record=True the recording holds per-tick arrays plus weight snapshots every record_weights_every ticks.
+    An unrecorded simulation drops dead agents from its arrays (COMPACT); `compact=False` keeps them, with the
+    same result."""
     layout = make_layout(exp)
     tick = make_tick(exp, layout)
     T = exp.evolution.ticks_per_generation
     N = exp.world.num_agents
     every = exp.evolution.record_weights_every if record else T
     assert T % every == 0, f"ticks_per_generation ({T}) must be a multiple of record_weights_every ({every})"
-    no_override = -jnp.ones(N, jnp.int32)
 
     @jax.jit
     def simulate(rules: RuleArrays, pop: brain.Genome, key: jax.Array):
@@ -83,7 +89,7 @@ def make_simulate(exp: ExperimentConfig, record: bool):
         M = rules.food_value.shape[-1]
         half = exp.world.switch_tick if phased else T // 2
 
-        def one_tick(carry, k):
+        def one_tick(carry, k, pop=pop, ids=None):
             world, bstate, sig, eats, tsum, fed, meal, fed_meal = carry
             tsum = tsum + world.temp * world.alive
             level = world.food / exp.world.max_food * world.alive
@@ -91,7 +97,7 @@ def make_simulate(exp: ExperimentConfig, record: bool):
             fed_meal = fed_meal + level * meal
             late = world.tick >= half
             r = rules_at(world.tick)
-            world, bstate, sig, acts, obs, ev = tick(r, pop, world, bstate, sig, k, no_override)
+            world, bstate, sig, acts, obs, ev = tick(r, pop, world, bstate, sig, k, -jnp.ones(sig.shape[0], jnp.int32), ids)
             meal = jnp.maximum(meal, (ev["gained"] > 0).astype(jnp.float32))
             oh = jax.nn.one_hot(ev["ate"], M, dtype=jnp.float32).at[:, 0].set(0.0)
             oh = oh.at[:, 0].set(((ev["ate"] > 0) & (r.pain_value[ev["ate"]] > 0)).astype(jnp.float32))
@@ -104,6 +110,11 @@ def make_simulate(exp: ExperimentConfig, record: bool):
                            ate=ev["ate"].astype(jnp.int16),
                            x=bstate.x.astype(jnp.float16))
             return (world, bstate, sig, eats, tsum, fed, meal, fed_meal), rec
+
+        def stats_of(carry):
+            world, _, _, eats, tsum, fed, _, fed_meal = carry
+            return dict(alive_ticks=world.alive_ticks, eaten=world.eaten, pain=world.pain_total, alive=world.alive,
+                        food=jnp.maximum(world.food, 0.0), eats=eats, fed=fed, fed_meal=fed_meal, tsum=tsum)
 
         def chunk(carry, keys):
             carry, recs = jax.lax.scan(one_tick, carry, keys)
@@ -122,25 +133,37 @@ def make_simulate(exp: ExperimentConfig, record: bool):
             # nothing to record: stop once every agent is dead (no statistic changes after that). Long lives are
             # mostly empty ticks in the first generations of a stage; the random keys per tick are unchanged
             keys = jax.random.split(ks, T).reshape(T // STOP_CHECK, STOP_CHECK, -1)
+            # The dead cost as much as the living, so once half the agents are dead the arrays are cut to the
+            # living half (then a quarter, an eighth): `ids` maps a row to its agent, the order is kept (the USE
+            # loop goes by index), the dead are seen by nobody, and what a dropped agent had is in `stats`.
+            # (Pain still scheduled for a dead agent, WorldConfig.sickness_delay, is no longer counted.)
+            sizes = [N // d for d in COMPACT if compact and N % d == 0]
+            i, ids, pop_n, stats = jnp.int32(0), None, pop, None
+            for nxt in sizes + [0]:
+                def body(c, pop_n=pop_n, ids=ids):
+                    i, carry = c
+                    carry, _ = jax.lax.scan(lambda cc, k: one_tick(cc, k, pop_n, ids), carry, keys[i])
+                    return i + 1, carry
 
-            def body(c):
-                i, carry = c
-                carry, _ = jax.lax.scan(one_tick, carry, keys[i])
-                return i + 1, carry
-
-            _, carry = jax.lax.while_loop(lambda c: (c[0] < T // STOP_CHECK) & c[1][0].alive.any(), body,
-                                          (jnp.int32(0), carry))
+                i, carry = jax.lax.while_loop(
+                    lambda c, nxt=nxt: (c[0] < T // STOP_CHECK) & (c[1][0].alive.sum() > nxt), body, (i, carry))
+                now = stats_of(carry)
+                stats = now if ids is None else {k: v.at[ids].set(now[k]) for k, v in stats.items()}
+                if nxt:
+                    sel = jnp.argsort(~carry[0].alive, stable=True)[:nxt]   # the living first, in their order
+                    ids = sel if ids is None else ids[sel]
+                    pop_n = jax.tree_util.tree_map(lambda x: x[sel], pop_n)
+                    carry = (take_agents(carry[0], sel),) + jax.tree_util.tree_map(lambda x: x[sel], carry[1:])
             recs = snaps = None
         else:
             keys = jax.random.split(ks, T).reshape(T // every, every, -1)
             carry, (recs, snaps) = jax.lax.scan(chunk, carry, keys)
-        world, bstate, sig, eats, tsum, fed, meal, fed_meal = carry
+            stats = stats_of(carry)
         # eats[N, 2, M]: objects eaten per local id in the first and second half of life (learning curves);
         # column 0 (empty) instead counts eating anything painful (poison), whatever its id in this world.
         # fed: sum over ticks alive of the food level as a fraction of max_food ('well-fed lifetime');
         # fed_meal: the same, counted only from the tick after the agent's first (positive) meal
-        stats = dict(alive_ticks=world.alive_ticks, eaten=world.eaten, pain=world.pain_total, alive=world.alive,
-                     food=world.food, eats=eats, fed=fed, fed_meal=fed_meal, temp_mean=tsum / jnp.maximum(world.alive_ticks, 1))
+        stats["temp_mean"] = stats.pop("tsum") / jnp.maximum(stats["alive_ticks"], 1)
         if record:
             recs = jax.tree_util.tree_map(lambda a: a.reshape((T,) + a.shape[2:]), recs)
             recs["w_snap"] = snaps

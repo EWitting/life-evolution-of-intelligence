@@ -191,3 +191,21 @@ def test_siblings_share_a_genome(tmp_path):
         assert f["w0"].shape[0] == 2
     stats, _ = make_simulate(exp, record=False)(rs.to_arrays(exp.vision.appearance_dim), out["pop"], jax.random.PRNGKey(0))
     assert stats["alive_ticks"].shape == (8,)                          # statistics stay per individual
+
+
+def test_dropping_the_dead_changes_nothing():
+    rs = toy_ruleset()
+    exp = ExperimentConfig(world=WorldConfig(height=12, width=12, num_agents=16, spawn_density=0.15, max_food=4.0,
+                                             hunger_per_tick=0.02, move_cost=1.0, eat_on_pick=True),
+                           vision=VisionConfig(columns=3, range=3, appearance_noise=0.1),
+                           brain=BrainConfig(regions=(RegionSpec("hidden", 4),)),
+                           evolution=EvolutionConfig(ticks_per_generation=600))
+    layout = make_layout(exp)
+    pop = jax.vmap(lambda k: brain.init_genome(k, layout))(jax.random.split(jax.random.PRNGKey(0), 16))
+    rules = rs.to_arrays(exp.vision.appearance_dim)
+    a, _ = make_simulate(exp, record=False, compact=False)(rules, pop, jax.random.PRNGKey(3))
+    b, _ = make_simulate(exp, record=False)(rules, pop, jax.random.PRNGKey(3))
+    life = np.sort(np.asarray(a["alive_ticks"]))
+    assert life[7] < 500 and life[3] + 100 < life[-1]                  # deaths spread over several checks
+    for k in a:
+        assert np.array_equal(np.asarray(a[k]), np.asarray(b[k])), k

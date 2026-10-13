@@ -120,6 +120,12 @@ def init_world(cfg: WorldConfig, rules: RuleArrays, key: jax.Array) -> WorldStat
     )
 
 
+def take_agents(state: WorldState, sel: jnp.ndarray) -> WorldState:
+    """The same world with only the agents `sel` [n] (indices), in that order; the maps are untouched."""
+    maps = ("grid_obj", "grid_uses", "grid_timer", "tick")
+    return state._replace(**{f: getattr(state, f)[sel] for f in state._fields if f not in maps})
+
+
 def local_temperature(cfg: WorldConfig, rules: RuleArrays, grid: jnp.ndarray) -> jnp.ndarray:
     """[H, W] temperature of every cell: ambient plus heat from nearby objects (linear fall-off), clipped to [0, 1]."""
     r = cfg.heat_radius

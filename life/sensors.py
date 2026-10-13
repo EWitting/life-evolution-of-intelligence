@@ -69,7 +69,9 @@ def ray_offsets(v: VisionConfig) -> np.ndarray:
 
 
 def observe_all(v: VisionConfig, w: WorldConfig, rules: RuleArrays, state: WorldState, offsets: jnp.ndarray,
-                b: BodyConfig | None = None, key: jax.Array | None = None) -> dict:
+                b: BodyConfig | None = None, key: jax.Array | None = None, ids: jnp.ndarray | None = None) -> dict:
+    """`ids` [n]: the agents' indices in the full population when `state` holds only some of them (run.make_simulate
+    drops the dead); the perception noise is then drawn for the full population, so every agent keeps its draws."""
     b = b or BodyConfig()
     H, W = w.height, w.width
     bounds = jnp.array([H - 1, W - 1], jnp.int32)
@@ -118,9 +120,13 @@ def observe_all(v: VisionConfig, w: WorldConfig, rules: RuleArrays, state: World
         k1, k2 = jax.random.split(key)
         K = v.appearance_dim
         hit = vision[..., :1]
-        vision = vision.at[..., 4:].add(v.appearance_noise * jax.random.normal(k1, vision[..., 4:].shape) * hit)
+        full = n if ids is None else w.num_agents
+        nv, nb = jax.random.normal(k1, (full,) + vision.shape[1:-1] + (K,)), jax.random.normal(k2, (full, K))
+        if ids is not None:
+            nv, nb = nv[ids], nb[ids]
+        vision = vision.at[..., 4:].add(v.appearance_noise * nv * hit)
         held = body[:, 3:4]
-        body = body.at[:, 4:4 + K].add(v.appearance_noise * jax.random.normal(k2, (body.shape[0], K)) * held)
+        body = body.at[:, 4:4 + K].add(v.appearance_noise * nb * held)
     return {"vision": vision, "body": body, "sound": heard.astype(jnp.float32)}
 
 

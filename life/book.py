@@ -603,11 +603,16 @@ def crowding(s, main: list[Path], control: list[Path]):
 
 
 @extra("2.1")
-def worlds_tried(s, main: list[Path], control: list[Path]):
-    """The worlds tried for chapter 2 (trial stages x.c*, x.s*, STAGE_LOG v40-v41; lesions by
-    scripts/probes/trial_lesion.py), kept as a data file."""
-    f = BOOK_DIR / "data" / f"worlds_{s.key}.json"
-    return "worlds", json.loads(f.read_text()) if f.exists() else None
+def settled(s, main: list[Path], control: list[Path]):
+    """The stage's starting and evolved populations in the same worlds: the row of the stage's own world from the
+    table of scripts/probes/crowding.py."""
+    f = BOOK_DIR / "data" / f"crowding_{s.key}.json"
+    if not f.exists():
+        return "settled", None
+    row = next((r for r in json.loads(f.read_text())["rows"] if "(this stage)" in r[0]), None)
+    return "settled", row and {"columns": ["Fitness in the same worlds", "at the start of the run", "at its end"],
+                               "rows": [["Seed 0", row[1], row[3]]],
+                               "caption": "Well-fed lifetime, mean of four worlds."}
 
 
 @extra("1.2h")
@@ -694,6 +699,8 @@ def main(argv=None):
         else:
             for p in dashboards(key):
                 print(f"wrote {p} ({p.stat().st_size / 1e6:.1f} MB)")
+            if (DATA_DIR / f"{key}.json").exists():   # the data file links the dashboards that exist: write it again
+                print(f"wrote {export(key)} (dashboard links)")
 
 
 

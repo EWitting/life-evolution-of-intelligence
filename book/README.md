@@ -12,7 +12,8 @@ diagram; only the text is written by hand. Never copy a number into the text.
 
     python -m life.book export 1.1 --evaluate    # curves, summary, brain + lesions, head to head (simulates)
     python -m life.book export 1.1               # the same without simulating; keeps the earlier evaluation
-    python -m life.book dashboards 1.1           # light dashboards of seed 0 (main, control) -> book/dashboards/
+    python -m life.book dashboards 1.1           # light dashboards of seed 0 (main, control) -> book/dashboards/,
+                                                 # and the data file again, so that the page links them
 
 Commit `data/*.json`. `dashboards/` and the rendered `_book/` are not committed to `main`.
 

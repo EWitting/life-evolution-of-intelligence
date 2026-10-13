@@ -2258,3 +2258,18 @@ over the worlds (the fitness, and each lesion's ratio to intact). The first run 
 low memory at the end of generation 40, before the populations were written: a run records its last generation
 again at the end (about 2 GB for a moment, v37), and two runs reached that point together. Start runs a few
 minutes apart.
+
+**The candidate over three seeds** (`x.s70`: patches 70% their own type, lasting states that add up; each seed from
+its own frozen 2.1 population, 40 generations, weight mutation 0.1; lesions in 16 worlds, % of intact +- the
+standard error of the ratio over the worlds; the two seeds were started some minutes apart and ran through):
+
+| seed | intact | plasticity off | rest off | fed off | flee off | poison share (intact / plasticity off) |
+|---|---|---|---|---|---|---|
+| 0 | 1358 +-86 | 86 +-4 | 66 +-2 | 74 +-2 | 92 +-1 | 0.066 / 0.105 |
+| 1 | 1359 +-101 | 78 +-7 | 76 +-3 | 77 +-3 | 86 +-1 | 0.068 / 0.119 |
+| 2 | 1134 +-83 | 86 +-3 | 69 +-3 | 86 +-2 | 91 +-2 | 0.084 / 0.118 |
+
+Every circuit is used in every seed, each several standard errors below 100: learning 78-86, the stay state
+(`fed`) 74-86, `rest` 66-76, the alarm 86-92. With release at once at the same purity the seeds went three
+different ways (plasticity off 62, 46, 95; fed off 80, 98, 101). The user's reading holds: states that need
+several bites are used next to learning where patches are mixed.

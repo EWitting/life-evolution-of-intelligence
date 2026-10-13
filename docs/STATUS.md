@@ -82,12 +82,13 @@ remapping the stored populations and freezing again.
    `B20S`, trial `x.s70`: a leaky sum, `flee` above 1.5 poison bites, `settle` above 9 good bites; the thresholds
    stay as set). Seed 0, 16 worlds, % of intact: plasticity off 86, rest 66, fed 74, flee 92; at 60%: 85, 79, 92,
    91; at 80%: 97, 64, 79, 90.
-   **Resume here:** seeds 1 and 2 of `x.s70` (`stages x.s70 --seed 1 --init-from <newest run of s2_1_eyes_seed1>
-   --suffix _seed1`), then `WORLDS=16 ONLY=no_plasticity,fed,flee,rest scripts/probes/trial_lesion.py x.s70
-   [x_ch2_256_sum_p70_seed1]` for all three seeds (with standard errors). At most three processes, runs started a
-   few minutes apart (the recording at the end of a run takes about 2 GB for a moment; two batches were stopped
-   for low memory). If every circuit is used in the three seeds, the user decides, and 2.1 is defined on `B20S` in
-   that world, run and frozen again (three seeds, weight mutation 0.1), and its book page exported.
+   Three seeds, 16 worlds (v41): plasticity off 86 78 86, rest 66 76 69, fed 74 77 86, flee 92 86 91 (standard
+   errors 1-7): every circuit is used in every seed.
+   **Resume here:** the user decides whether this is the world and the affect of chapter 2. If so: define 2.1 on
+   `B20S` in that world (how the change of affect and of world is told in the book is open: part of the page of
+   2.1 or a page of its own), run it from the frozen affect population and freeze it again (three seeds, weight
+   mutation 0.1, runs started a few minutes apart: the recording at the end of a run takes about 2 GB for a
+   moment; at most three processes), export its book page. Then the pallium.
 2. Cheaper evaluations (user, 2026-10-12): the export runs in parallel (`--jobs`), prints a line per finished
    task and silences only the regions of the stage and its parent (`--lesions recent`, default); four worlds for a
    routine check (`--worlds 4`), seed 0 first. A stage run writes its 150 MB dashboard only with `--dashboard`.

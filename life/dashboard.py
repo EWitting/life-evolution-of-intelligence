@@ -29,7 +29,7 @@ BRAIN_AGENTS = 6   # light export: agents whose activations and weights are stor
 
 
 def _light(data: dict, rec, x: np.ndarray, w_max: float, eta_max: float) -> dict:
-    """The light export (docs/BOOK_BRIEF.md): three arrays make up almost all of a dashboard's size. Activations
+    """The light export (book/README.md): three arrays make up almost all of a dashboard's size. Activations
     and weights are kept for a few agents (the best one and others spread evenly over the recorded sample, which
     is ordered by fitness), and the world grid as its first tick plus the cells that change. All agents and the
     whole life stay in the world view."""

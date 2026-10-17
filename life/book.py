@@ -1,4 +1,4 @@
-"""Data files for the interactive book (docs/BOOK_BRIEF.md): prose and numbers are separate.
+"""Data files for the interactive book (book/README.md): prose and numbers are separate.
 
     python -m life.book export 1.1               # book/data/1.1.json from the runs `stages.seed_runs` finds now
     python -m life.book export 1.1 --evaluate    # also re-evaluation, head to head and lesions (simulates: one

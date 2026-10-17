@@ -1,836 +1,474 @@
 # Brain evolution sequence: architectures, learning rules and experiments
 
-A plan for growing the brain one module at a time, in roughly the order brains evolved. Status and findings
-per stage: `docs/STATUS.md`; details: `docs/STAGE_LOG.md`. The implemented stages sometimes deviate from this
-plan (for example fixed-meaning cell types, ADR-016); STATUS/STAGE_LOG describe what was actually built. Framework terms (regions, projections, `rule`, `modulated`, warm start) are those of
-ADR-007, ADR-012 and ADR-013.
+The plan for growing the brain one module at a time, in roughly the order brains evolved. Chapter 1 is described
+as built; later chapters are the current plan. Where the project stands: `docs/STATUS.md`; numbers, runs and the
+variants that were tried: `docs/STAGE_LOG.md`; the reasons behind design rules: `docs/DECISIONS.md`. Exact wiring:
+`life/experiments/stages.py`. Framework terms (regions, projections, `rule`, `modulated`, warm start) are those of
+ADR-007, ADR-012 and ADR-013. Last brought up to date 2026-10-17.
 
-The spine is Max Bennett's *A Brief History of Intelligence* (2023): **steering → reinforcing → simulating →
-mentalizing → speaking**. Around it are finer steps taken from comparative neuroscience. The literature does
+The spine is Max Bennett's *A Brief History of Intelligence* (2023): **steering -> reinforcing -> simulating ->
+mentalizing -> speaking**. Around it are finer steps taken from comparative neuroscience. The literature does
 not settle many of these points, so every stage says how confident the claim is. "Mya" means million years
 ago; all dates are approximate.
 
----
-
-## 0. Why exp02 got stuck, and what that says about the order
-
-One correction to the summary of the book first. Bennett puts **associative learning inside breakthrough 1
-(steering)**, in the first bilaterians (nematode-like worms). What comes with vertebrates (breakthrough 2) is
-*reinforcement learning with prediction errors* **and** *pattern recognition* (the pallium, which later
-becomes cortex). So the book's order is:
-
-1. Steering: valence, affect, and associative learning (classical conditioning) of stimuli onto good/bad.
-2. Reinforcing: basal ganglia with temporal-difference dopamine, curiosity, pattern recognition in the
-   pallium, spatial maps, timing.
-3. Simulating: neocortex as a generative model, vicarious trial and error, episodic memory, counterfactuals.
-4. Mentalizing: granular prefrontal cortex, models of one's own mind and of others' minds, imitation,
-   planning for future needs.
-5. Speaking: language, shared attention, culture that accumulates.
-
-Why this matters for exp02: **the oldest associative learning is not pure Hebbian learning either.** In
-*Aplysia*, *C. elegans* and *Drosophila*, a conditioned stimulus (CS) becomes linked to an unconditioned
-stimulus (US) through a **third factor**, a neuromodulator released by the US: serotonin in *Aplysia*,
-dopamine and octopamine in insects. The synapse also has to "remember" that it was recently active, because
-the US comes after the CS. So the smallest real step up from evolved reflexes is:
-
-> dW = eta · US(t) · eligibility(pre, post), where eligibility is a decaying trace of recent co-activity
-> and US is a *raw* valence signal (not yet a prediction error).
-
-exp02's rule was `dW = eta · (A·pre·post + ...)`. When the poison's pain arrived, the berry's appearance had
-already left the input (it had been eaten). Nothing in the rule linked "pain now" to "that appearance a tick
-ago", and unmodulated Hebb strengthens every co-activation regardless of consequence. The fix is not
-reinforcement learning. It is the ingredients of stage 1.5 below: a valence neuron that acts as a
-modulator, an eligibility trace, and pain short enough that a purely reactive policy cannot do the job.
-
-In short, the step from "Hebbian" to "RL" is really four smaller steps:
-(a) unmodulated Hebb (habituation, clustering),
-(b) US-gated Hebb with eligibility traces (classical conditioning),
-(c) the modulator becomes a *prediction error* (Rescorla-Wagner, then TD),
-(d) the prediction error trains *action selection* (actor-critic basal ganglia).
+Stages are named, not numbered, in the book. A stage gets a key in `stages.py` when it is defined; keys are
+historical names, not positions (STATUS has the chain).
 
 ---
 
-## 1. Design principles for the sequence
+## 0. Where learning sits in the sequence
+
+Bennett puts **associative learning inside breakthrough 1 (steering)**, in the first bilaterians. What comes with
+vertebrates (breakthrough 2) is *reinforcement learning with prediction errors* and *pattern recognition* (the
+pallium, which later becomes cortex).
+
+The oldest associative learning is not plain Hebbian learning. In *Aplysia*, *C. elegans* and *Drosophila* a
+conditioned stimulus (CS) becomes linked to an unconditioned stimulus (US) through a **third factor**, a
+neuromodulator released by the US, and the synapse keeps a short trace of its recent activity because the US
+comes after the CS:
+
+> dW = eta · US(t) · eligibility(pre), with a raw US (not yet a prediction error).
+
+So the step from "Hebbian" to "RL" is four smaller steps, and the chapters follow them:
+(a) unmodulated adaptation (habituation; later clustering),
+(b) US-gated learning with eligibility traces (classical conditioning; chapter 1),
+(c) the teacher becomes a *prediction error* (TD dopamine; chapter 2),
+(d) the prediction error trains *action selection* (actor-critic basal ganglia; chapter 2).
+
+---
+
+## 1. Design principles
 
 1. **One module or one rule per stage.** A stage adds regions and projections, or one new learning rule or
-   core mechanism, never both at once if that can be avoided.
-2. **Every stage has an ecological driver.** In biology, each innovation paid off because of a change in the
-   environment (Cambrian predation, vertebrate open-water hunting, nocturnal mammal life, arboreal primate
-   social groups). In the framework that driver is an *environment feature* that makes the new module pay,
-   and the experiment should be built so that the previous architecture measurably fails at it.
-3. **Controls are warm-started from the same population.** Run A continues evolving the old architecture
-   for the same number of generations. Run B adds the new module. Both start from the previous stage's
-   `population.npz` (ADR-012). The comparison is B against A, not B against generation 0.
-4. **Growth by duplication, starting silent.** Most new brain regions evolved by duplicating and then
-   specialising existing structures (gene and genome duplications in early vertebrates are the classic
-   case). In practice, a new region either (i) starts with zero outgoing weights, so inherited behaviour is
-   unchanged until evolution connects it, or (ii) starts as a noisy copy of an existing region. Either way
-   the warm start does not fall off a cliff.
-5. **Randomise per life whatever must be learned** (ADR-012). Keep whatever was learned at the previous
-   stage *profitable*, so that the new skill is an addition on top of it.
-6. **Keep a reactive or old-architecture baseline in every experiment.** exp02 showed that the environment
-   often provides a shortcut. If the control solves the task, the task is not yet the right one.
+   core mechanism, not both at once where that can be avoided.
+2. **New cells have a fixed meaning** (ADR-016). A module is a set of named cell types with hard-wired defining
+   inputs and outputs and tunable strengths. Without that, evolution routes behaviour through the existing
+   ganglion and the new module stays unused. Value cells and modes act on motor programmes, not on the motor
+   neurons directly (ADR-020).
+3. **Every stage has an ecological driver.** The world is built so that the new module pays, and the previous
+   brain measurably lacks it. If the control solves the task, the task is not yet the right one; the control
+   must have had the means and still not got there.
+4. **Design first, evolution tunes.** A module is designed and checked step by step before any evolution: the
+   brain alone in scripted situations (assay; lab experiments for learning stages), then generation 0 with the
+   mechanism on and off in the same worlds, then a short evolution (about 40 generations) that tunes the module
+   and the rest of the brain to each other (ADR-022, ADR-025). A change after which something must be learned
+   again from scratch gets a longer run.
+5. **A stage succeeds when its circuit is used**: three seeds, lesions per region below intact, main not clearly
+   worse than control. Controls are warm-started from the same population (ADR-012). Older circuits are
+   checked with lesions after every stage: a part that is idle for a stage drifts.
+6. **What is learned must not be inheritable** (ADR-017). The looks and meanings a learner is about are drawn per
+   life; ancestral things (a staple food, hot springs, walls, other animals) keep a fixed look so that the
+   innate compartment has something to be innate about. From the pallium on, the weights of a learned region
+   are drawn at each birth; the genome holds their statistics and rule genes.
+7. **New world mechanics come from OHOL where possible**; a mechanism of our own only when OHOL has nothing
+   that fits. Each behind a config switch that defaults off (ADR-010).
 
 ---
 
-## 2. Core mechanisms this sequence will need
+## 2. Core mechanisms
 
-This collects everything the stages below ask of the core. **Status 2026-09-30:** M1-M7 and M9 are implemented
-(ADR-015/016; M3 as receptors for broadcast modulators plus `gain` projections); M10 partly (mid-life rule switch,
-temperature, patches, variety bonus, delayed sickness; moving objects not yet); M8 (offline mode) is still to do.
-
-| id | mechanism | used from stage | notes |
+| id | mechanism | status | used by |
 |---|---|---|---|
-| M1 | **Eligibility traces for modulated rules**: per synapse `e ← λ e + pre·post`, `dW = eta·mod·e` | 1.5 | `trace_tau` already exists per neuron; a per-synapse trace is `[N,N]` more state, the same size as `w`. |
-| M2 | **Internal, named modulators** (**ADR**, extends ADR-013): a vector `mod[k]` for k in {`da`, `5ht`, `ne`, `ach`, `us`}, each written by a designated region (for example the mean activity of neurons in region `vta`). Each projection chooses *which* modulator gates its plasticity. | 1.5 (`us`), 2.5 (`da`) | Replaces today's world-provided scalar `reward`. Keep `reward` as a special case of the `us` modulator, computed by a hard-wired taste region. |
-| M3 | **Gain modulation**: a modulator multiplies the input gain of a target region (`h_j ← g(mod)·h_j`) instead of adding to it. | 1.2 | This is how hypothalamic and neuromodulatory state switches behaviour modes. Additive-only networks can approximate it, but evolution finds that much harder. |
-| M4 | **Short-term synaptic depression** (a resource variable per synapse that is used up by pre-synaptic activity and recovers with a time constant) | 1.4 | Habituation. Rate-based Tsodyks-Markram model, so it satisfies ADR-002. |
-| M5 | **Lateral inhibition / k-winners-take-all** inside a region | 2.1 | Can be done today with fixed negative intra-region projections; a `kwta` flag on the region would be cheaper and more stable. |
-| M6 | **Error-driven (delta) rule** with a teacher region: `dW = eta·pre·(teacher − post)` | 2.9 (cerebellum), 3.1 (cortex) | The climbing fibre in the cerebellum; prediction error in cortex. |
-| M7 | **Efference copy input**: the last action as a one-hot in the body channel | 2.8 | Widening the body channel is allowed by ADR-005. Needed for path integration and for forward models. |
-| M8 | **Offline mode** (**ADR**): for some brain steps the motor output is gated off and sensory input is replaced by a predicted-input region (thalamic gate). Triggered by a region's activity (for example "deliberate" at choice points) or during rest/sleep. | 3.2 | This is "simulation" in the sense of the book. It costs extra `steps_per_tick`. |
-| M9 | **Observation extensions** (ADR-005 widening): aftertaste (appearance of the last eaten object, decaying), appearance noise/occlusion, second body meter (e.g. water), other agents' facing/held item/last action, sound vector | per stage | A smell channel would be a *new* channel and needs an **ADR**; the stages below avoid it by using short-range vision as "smell". |
-| M10 | **World mechanics**: moving objects (OHOL `move` transitions, already a known gap), contact hazards, seasons/regrowth schedules, mid-life rule changes | 1.4, 2.9, 3.x, 4.4 | Each behind a config switch that defaults off (ADR-010). |
+| M1 | **Eligibility traces** for modulated rules: `dW = eta · mod · trace` | built | association; dopamine and actor |
+| M2 | **Named modulators** written by designated cells, read by projections (plasticity) and receptors (state) | built | association (`us_pain`), affect (`alarm`, `serotonin`), dopamine |
+| M3 | **Gain and receptor modulation**: a modulator changes a cell's bias or input gain | built (receptors, `gain` projections) | affect |
+| M4 | **Adaptation**: an input passes on itself minus its slow average | built | habituation |
+| M4b | **Short-term synaptic depression** (Tsodyks-Markram resource per synapse) | built, not on the chain | |
+| M5 | **k-winners-take-all** inside a region | built | pallium |
+| M6 | **Delta rule** with a teacher region: `dW = eta · pre · (teacher - post)` | built | cerebellum, cortex |
+| M7 | **Efference copy**: the last action as input | built | hippocampus, forward models |
+| M8 | **Offline mode**: motor output gated off, predicted input replaces real input (thalamic gate) | to build | chapter 3 |
+| M9 | **Observation extensions**: aftertaste, appearance noise and occlusion, other agents' facing, held item and last action, a sound vector | partly built (noise) | per stage |
+| M10 | **World mechanics**: temperature and hot springs, patches (with a purity), dud bushes, mid-life rule switch, delayed sickness (built); moving objects (OHOL `move`), seasons (to build) | partly built | per stage |
+
+Delayed sickness is built but not used: it teaches whatever is in view when the sickness starts. A stage that
+uses it must show that the blame lands on what was eaten (for example a trace of what was in the mouth).
 
 ### 2.1 Where STDP fits
 
-Spike-timing-dependent plasticity (STDP) is not a stage of its own because it is not a lineage innovation.
-It is a synaptic mechanism found wherever it has been looked for: *Xenopus* tectum (Zhang et al. 1998, one of
-the first in vivo demonstrations), fish, insects (locust mushroom body, Cassenaer & Laurent 2007), and
-mammalian cortex and hippocampus (Markram et al. 1997; Bi & Poo 1998). It was most likely present from the
-first centralised nervous systems onward. What it adds is **causal order**: a synapse strengthens when pre
-fires *before* post and weakens when it fires after.
+Spike-timing-dependent plasticity is not a stage of its own: it is a synaptic mechanism found wherever it has
+been looked for (*Xenopus* tectum, fish, insect mushroom body, mammalian cortex and hippocampus) and most likely
+present from the first centralised nervous systems on. In this rate-coded framework (ADR-002) it is the `trace`
+rule. One tick is about a second, so it behaves like behavioural-timescale plasticity (BTSP; Bittner et al.
+2017) rather than millisecond STDP; millisecond STDP needs `steps_per_tick > 1` and is kept for specific tests.
 
-In this framework (rate coded, ADR-002), STDP is the existing `trace` rule
-(`A·pre_trace·post − C·pre·post_trace`). Two points about timescale:
-- One tick is a behavioural-timescale step (about a second), not milliseconds. Our "STDP" therefore behaves
-  less like classic millisecond STDP and more like **behavioural-timescale plasticity** (BTSP; Bittner et
-  al. 2017, hippocampus, windows of seconds), which is arguably the better match anyway.
-- Classic millisecond STDP can only be modelled with `steps_per_tick > 1`. That makes the brain slower, so
-  keep it for specific tests.
-
-STDP plays four distinct roles in the plan:
-
-| role | stage | how |
+| role | where | how |
 |---|---|---|
-| **Eligibility trace for three-factor learning** ("neo-Hebbian": STDP tags a synapse, and a later modulator converts the tag into a weight change; Izhikevich 2007, Gerstner et al. 2018) | 1.5, 2.5, 2.6 | M1 is built on the `trace` rule instead of `pre·post`, so only CS-*before*-US pairings get credit. Test: a variant of 1.5 where the look-alike berry is sometimes eaten *just after* the pain (backward pairing) must not be learned as poison. |
-| **Map refinement / self-organisation** | 2.1 (tectum), 2.3 (pallium) | Unmodulated STDP plus lateral inhibition sharpens topographic maps and feature detectors during life. Optional "development" variant: the tectum starts coarse and self-organises in the first ticks of life instead of being fully genetically specified (genome encodes the rule, not the map; a smaller genome). |
-| **Sequence learning and anticipation** | 2.8 (hippocampus), 3.3 (replay) | Asymmetric STDP on recurrent place-cell synapses makes each place cell excite the *next* one along a travelled path. Place fields shift backwards with experience (Mehta et al. 2000), activity then predicts where the animal goes next, and sequences can be replayed offline. This was the old exp03 idea ("STDP sequence learning") and belongs here as **stage 2.8b**: food appears at the end of a route that is fixed per life. The STDP agent anticipates (turns early and cuts corners); the symmetric-Hebb agent of 2.8 does not. |
-| **Predictive learning in cortex** | 3.1 | Temporally asymmetric learning is one of the local mechanisms proposed for learning to predict the next input. The delta rule (M6) is the main tool; STDP is the biologically plainer alternative worth comparing. |
+| eligibility trace for three-factor learning (Izhikevich 2007; Gerstner et al. 2018) | association, dopamine, actor | only CS-before-US pairings get credit |
+| sequence learning and anticipation | hippocampus sequences, replay | asymmetric plasticity on recurrent place-cell synapses: each place cell excites the next one along a travelled path (Mehta et al. 2000) |
+| predictive learning in cortex | chapter 3 | the plainer alternative to the delta rule, worth comparing |
 
 ---
 
-## 3. Overview table
+## 3. Overview
 
-| stage | era, animals (approx.) | brain structure added | new learning rule / mechanism | experiment where it beats the previous stage |
-|---|---|---|---|---|
-| 0.1 | ~650–600 Mya, cnidarians | diffuse nerve net: sensor→motor reflex | none (evolved weights) | baseline only |
-| 1.0 | ~560 Mya, first bilaterians | centralised sensorimotor path (ganglion, exc + inh) | none | several food types |
-| 1.1 | early bilaterians | **valence cell types** with innate motor meaning | none | inheritable poison look-alikes |
-| 1.2 | early bilaterians | **hypothalamic drives** (hunger, cold) selecting a mode: forage or keep warm (kinesis) | need cells gating motor programmes | cold world with few hot springs |
-| 1.3 | early bilaterians | **affective states**: serotonin dwell / PDF roam | slow nuclei + receptors | patchy food: area-restricted search |
-| 1.4 | cnidarians onward | habituation (sensory-specific satiety) | short-term depression (M4) | OHOL yum variety bonus |
-| 1.5 | early bilaterians | plastic identity→aversive synapses (proto-amygdala / mushroom-body output) | **US-gated Hebb + eligibility trace** (M1, M2 `us`), pain as teacher | novel foods with a new look every life |
-| 1.6 | bilaterians | extinction and reversal (tried, left out) | decay of learned weights toward inherited ones | poison identity flips mid-life |
-| 2.1 | ~520 Mya, early vertebrates | **optic tectum**: topographic map, target competition | lateral inhibition (M5) | several targets in view |
-| 2.2 | early vertebrates | **pallium as expansion layer** (sparse random coding) | fixed sparse projection + k-WTA | nonlinear (XOR-like) poison rule |
-| 2.3 | early vertebrates | **pallium pattern completion and clustering** | competitive Hebb / Oja + recurrent Hebb | noisy, occluded appearance, few samples |
-| 2.4 | early vertebrates | **basal ganglia** gating of brainstem motor programs | fixed disinhibition circuit | conflicting drives: less dithering |
-| 2.5 | early vertebrates | **dopamine as reward prediction error** (critic, opponent value populations) | TD error as modulator; dopamine teaches valence | look-alike discrimination without over-generalising; chains |
-| 2.6 | early vertebrates | **actor**: striatal Go/NoGo (D1/D2) learning of actions | RPE-gated three-factor on cortex→striatum, signed by pathway | per-life action→outcome contingency |
-| 2.7 | early vertebrates | **curiosity**: novelty as intrinsic reward | familiarity from habituation (1.4) feeds dopamine | sparse, hidden rewards |
-| 2.8 | early vertebrates | **medial pallium (hippocampus homologue)**: place and head-direction codes | efference copy (M7), Hebbian place-reward links | food location fixed per life but out of view |
-| 2.8b | early vertebrates | recurrent place-cell sequences | asymmetric STDP (`trace` rule) on recurrent synapses | anticipating a route fixed per life |
-| 2.9 | jawed vertebrates | **cerebellum**: timing and forward prediction | delta rule with climbing-fibre teacher (M6) | eyeblink-style timed avoidance |
-| 2.10 | vertebrates | **uncertainty modulators** (NE, ACh) | modulator-scaled learning rate | stable vs volatile worlds |
-| 3.1 | ~200 Mya, early mammals | **neocortex** as predictive, generative model | self-supervised prediction error (M6) | partial observability, predictable regrowth |
-| 3.2 | early mammals | **vicarious trial and error**: simulation at choice points | offline mode (M8) | latent learning, detours, outcome devaluation |
-| 3.3 | early mammals | **replay and sleep** (hippocampus→cortex→striatum) | offline replay trains model-free system (Dyna) | same experience, fewer samples |
-| 3.4 | early mammals | **agranular prefrontal cortex**: goals held over time | persistent attractor + gated update | multi-step goals with distractors |
-| 3.5 | mammals | **episodic memory and counterfactuals** | one-shot hippocampal storage, "what if" RPE | one-shot events, near misses |
-| 4.1 | ~60–30 Mya, primates | **granular PFC: model of own mind** | confidence readout from own predictive model | opt-out under uncertainty |
-| 4.2 | primates | **theory of mind**: self-model applied to others | inverse planning over observed agents | infer others' goals; follow or avoid |
-| 4.3 | primates | **imitation / observational learning** | others' actions as teacher signal | crafting chain too hard to discover alone |
-| 4.4 | primates, great apes | **anticipating future needs** | simulation under a drive not currently felt | seasons: store food before winter |
-| 5.1 | vertebrates onward (side branch) | innate signals (alarm and food calls) | evolved sound→affect links | predator alarm, food call |
-| 5.2 | primates, birds | learned signal meaning | RL over signals (signalling games) | per-life random signal conventions |
-| 5.3 | hominins, <2 Mya | shared attention, naming, proto-grammar | joint-attention-gated association | instruction in cooperative crafting |
-| 5.4 | Homo sapiens, <0.3 Mya | language as shared simulation and cumulative culture | teaching across generations | knowledge that no single life can rediscover |
+| chapter | stage | animals (approx.) | brain added | rule or mechanism | world that makes it pay | status |
+|---|---|---|---|---|---|---|
+| 1 | steering | ~560 Mya, first bilaterians | ganglion (exc + inh), sensor -> motor reflexes | none (evolved) | several berry types | built |
+| 1 | valence | early bilaterians | appetitive and aversive value cells on a grasp programme | none | inherited poison types | built |
+| 1 | habituation | all animals | adapting look inputs | M4 | a dud bush type with a new look every life | built |
+| 1 | association | early bilaterians | pain as the teacher of look -> aversive synapses | US-gated learning, M1, M2 | novel foods with a new look every life | built |
+| 1 | drives | early bilaterians | `cold`, `hungry`, warmth by kinesis | need cells select modes | cold, few hot springs | built |
+| 1 | affect | early bilaterians | lasting states after pain (`alarm`) and a meal (`serotonin`) that add up over bites | modulators with receptors | berry types in patches 70% their own kind | being redone (2026-10-17) |
+| 2 | pallium | ~520 Mya, early vertebrates | sparse expansion of the look | fixed per-life random projection, M5 | look-alikes | next |
+| 2 | dopamine | early vertebrates | critic: opponent value cells, dopamine cell, habenula | TD error as teacher | cues that predict food | planned |
+| 2 | hands | early vertebrates | pick, hold, eat | none | food can be held | planned |
+| 2 | basal ganglia | early vertebrates | striatum D1/D2, GPi, actor | dopamine-gated, signed by pathway | which action works is drawn per life | planned |
+| 2 | curiosity | early vertebrates | novelty signal onto dopamine | familiarity memory | rewards hidden behind objects | planned |
+| 2 | parked | vertebrates | hippocampus and sequences, cerebellum, noradrenaline and acetylcholine, pallium clustering | | | after the five above |
+| 3 | | ~200 Mya, early mammals | neocortex as a generative model; simulation; replay; goals; episodes | M6, M8 | latent learning, detours, devaluation | planned |
+| 4 | | ~60-30 Mya, primates | model of own mind, of others; imitation; future needs | | groups, crafting chains, seasons | planned |
+| 5 | | hominins | signals, learned meaning, shared attention, culture | | signalling games, deep crafting trees | far off |
 
 ---
 
 ## 4. The stages
 
-Each stage has the same fields. **Adds** = new regions and projections. **Rule** = learning rule or
-mechanism. **Experiment** = world setup; what is randomised per life; control; metric; expected outcome.
+Each planned stage has the same fields. **Adds** = new regions and projections. **Rule** = learning rule or
+mechanism. **World** = what makes it pay; what is drawn per life. **Control**, **Metric**, **Expected**.
 **Confidence** = how sure the evolutionary claim is.
 
-### Chapter 0: before bilaterians (context, optional)
+### Chapter 0: before bilaterians (context only)
 
-#### 0.1 Nerve net reflexes
-- **When, who.** Cnidarians (jellyfish, sea anemones), about 650–600 Mya. Sponges have no neurons, though
-  they do have many of the synaptic genes.
-- **Biology.** A diffuse net with no brain. Reflexes such as withdrawal and feeding tentacle movements. Some
-  pacemaker neurons drive rhythmic swimming, the ancestor of central pattern generators.
-- **Framework.** `in→out` fixed projection only, no hidden region. Useful as the "how far do pure reflexes
-  go" baseline for exp01.
-- **Experiment.** None needed; exp01 with the hidden region removed is the baseline.
-- **Confidence.** High for the anatomy. Recent work (for example Botton-Amiot et al. 2023 on *Nematostella*)
-  suggests even cnidarians may show simple associative learning, so the boundary between chapters 0 and 1
-  is blurry.
+Cnidarians (about 650-600 Mya): a diffuse nerve net with reflexes and pacemaker neurons, no brain. Not a stage;
+there is evidence of simple associative learning even here (Botton-Amiot et al. 2023), so the boundary with
+chapter 1 is blurry.
 
-### Chapter 1: steering (first bilaterians, about 600–550 Mya)
+### Chapter 1: steering (first bilaterians, about 600-550 Mya)
 
-Ecological driver: a bilateral body that moves forward. Steering means one decision, over and over: turn
-toward good things, away from bad ones. The earliest brain is a cluster of neurons at the front that turns
-sensory input into "approach" or "avoid". Model animals: *C. elegans*, flatworms, and the presumed
-worm-like common ancestor. (*C. elegans* is highly derived, so it is only a proxy.)
+A bilateral body that moves forward. Steering is one decision, over and over: turn toward good things, away from
+bad ones. Model animals: *C. elegans*, flatworms, the presumed worm-like common ancestor. Order as built: steering
+-> valence -> habituation -> association -> drives -> affect. Results per stage: STATUS and the book.
 
-Implementation note (2026-09-30): every new module below is a set of **cell types with a fixed meaning**
-(hard-wired defining inputs and outputs; ADR-016). Without that, evolution simply routes behaviour through the
-existing ganglion and the new module stays unused (stage 1.1 v1/v2 in `docs/STAGE_LOG.md`). Exact wiring:
-`life/experiments/stages.py`; results: `docs/STATUS.md`.
+The world of chapter 1: OHOL berry bushes and colour look-alikes on a 128 x 128 map with 256 animals; five
+coarse eye columns (range 5); lives of 4000 ticks; fitness is the well-fed lifetime from the first meal (ADR-024).
+The affect stage moves to 256 x 256, the world chapter 2 starts in.
 
-Order as built (2026-10-03, ADR-024): 1.0 -> 1.1 -> 1.5, with drives (1.2), affect (1.3) and habituation (1.4)
-rejoining after them. The sections below keep the numbering of the plan. Reversal (1.6) was tried and left
-out. Fitness is the well-fed lifetime from the first meal: survival, weighted by how full the stomach is.
+#### Steering
+- **Adds.** `ganglion_e` (16 excitatory) and `ganglion_i` (8 inhibitory) between the senses and the motor
+  neurons, plus direct sensor -> motor reflexes. All evolved. The animal sees only the outside world; movement
+  costs energy; it eats what it grasps.
+- **Confidence.** High for a centralised sensorimotor path in early bilaterians.
 
-#### 1.0 Centralised sensorimotor steering
-- **Adds.** `ganglion_e` (16 excitatory) and `ganglion_i` (8 inhibitory) interneurons between the senses and the
-  motor neurons, plus direct sensor->motor reflex arcs. All evolved.
-- **Senses.** 5 coarse vision columns (range 5), body state, sound: early bilaterians had simple photoreceptors
-  and chemosensing; camera eyes come with vertebrates (2.1).
-- **World.** Four kinds of berry bush (the OHOL gooseberry and colour look-alikes, *similar* appearances) and
-  wild onions. Several food types are needed: with one, the lineage becomes a specialist that ignores new food.
+#### Valence
+- **Biology.** Bilaterian sensory neurons fall mostly into appetitive and aversive classes that converge on a few
+  interneurons (in *C. elegans* AIY/AIZ-type cells bias runs against turns; aversive cues stop pharyngeal
+  pumping). Bennett: sorting the world into good and bad is the original job of a brain.
+- **Adds.** Value cells `valence_app` and `valence_av` (taste and pain enter the brain only here) acting on a
+  contact-gated `grasp` programme; aversion turns away and, through `no_feed`, blocks the bite. Input from object
+  identity (the look) is kept separate from generic features, because only identity may later be learned about.
+- **World.** Six berry types, two always poison (inheritable).
+- **Confidence.** Medium: the valence framing is Bennett's synthesis; the ancestor's anatomy is inferred.
 
-#### 1.1 Valence neurons
-- **Biology.** Bilaterian sensory neurons mostly fall into appetitive and aversive classes that converge onto a
-  few interneurons (in *C. elegans*, AIY/AIZ-type interneurons bias forward runs vs turns; aversive cues suppress
-  pharyngeal pumping). Bennett argues that valence, classifying the world into good and bad, is the original
-  function of a brain.
-- **Adds (v21, ADR-020, ADR-023).** Value cells `valence_app` and `valence_av` (two each; taste and pain enter the
-  brain only here) acting on a motor programme that is permitted only in its context: `grasp` (USE; something
-  adjacent ahead). Aversion turns the animal away and, through `no_feed`, blocks the bite. The animal eats what it
-  grasps; holding returns later (`stages.with_hands`: a value cell per sign for the thing in hand and an `ingest`
-  programme). Evolved input from object identity (appearance) and, separately, from generic features (something
-  there, near, wall), because only identity may later become a conditioned stimulus.
-- **World.** 6 berry types, 2 of them always poison (inheritable); more bushes so the good food stays constant.
-- **Result.** Clearly better than the control; valence lesions destroy foraging (STATUS).
-- **Confidence.** Medium. The valence/steering framing is Bennett's synthesis; the ancestor's anatomy is inferred.
+#### Habituation
+- **Biology.** A weaker response to a repeated harmless stimulus is found in essentially every animal.
+- **Adds.** No new cells: every look input passes on its input minus its slow average (about 50 ticks), so what
+  stays in view fades and what is unusual stands out (M4).
+- **World.** The valence world plus a dud bush type that never bears fruit, with a new look every life.
+- **Confidence.** High.
 
-#### 1.2 Drives: hypothalamus-like homeostatic neurons
-- **Biology.** Neurosecretory cells that sense internal state (feeding state, osmolarity, temperature) and
-  broadcast it by neuropeptides are deeply conserved; the vertebrate hypothalamus and the insect
-  pars intercerebralis probably share this ancestor (Tessmar-Raible, Arendt et al.). Drives change the
-  *valence* of stimuli: food is attractive only when hungry. Thermotaxis in *C. elegans* works on temperature
-  *changes* sensed by AFD, with run-and-tumble steering.
-- **Adds (v23, ADR-024; generation-0 probe done, stage to be run).** Two need cells and one behavioural mode.
-  `cold` fires when the skin is below a comfortable temperature and drives `warm_seek` (-> FORWARD): keep moving
-  while it is cold. `rest` (inhibitory) fires where the skin is warm and nearly blocks FORWARD: stay. Together this
-  is kinesis, as in small animals: no gradient is climbed and nothing is known about what a heat source looks like.
-  `hungry` (inhibitory) fires below about 2/3 stomach and shuts both: a hungry animal forages, a fed one looks
-  after its temperature. A drive selects a mode; it does not gate one action. New senses: body temperature (what
-  the cold costs) and skin temperature (the place; the body lags by about 30 ticks).
-- **Tried and dropped.** Hunger as a gain on the appetitive cell (v5-v13: unused). Gradient thermotaxis alone (cold
-  AND warming -> forward, cold AND cooling -> turn): a spring's gradient reaches four cells, so most of the map
-  has none.
-- **World.** OHOL-style temperature: body temperature drifts toward the ambient temperature plus heat from hot
-  springs (OHOL heatValue); cold multiplies hunger (as in OHOL). Few springs: three quarters of the map is cold.
-- **Result so far.** At generation 0, before any evolution: well-fed lifetime +65% over the cold-blind brain;
-  warmth seeking without the hunger gate starves (STAGE_LOG v23).
-- **Replaced.** The two-nutrient forager of the first plan (OHOL has no second nutrient; temperature is the
-  OHOL-faithful second drive).
-- **Confidence.** High that homeostatic neuropeptide control is ancient. Medium that it looked like a
+#### Association (classical conditioning)
+- **Biology.** Worms associate an odour with starvation or food, *Aplysia* a touch with a shock, flies an odour
+  with sugar or shock. The synapse from the CS cell is strengthened when it was recently active *and* the US
+  modulator arrives; in insects at the mushroom-body output synapses, with dopamine cells carrying the US.
+- **Adds.** `us_pain` (hard-wired from the pain sense) as the teacher of the adapted look -> aversive synapses,
+  with a short eligibility trace: `dW = eta · us_pain · trace(pre)`. The learning rate evolves.
+- **World.** A world of only novel foods, half of them poison, with a new look every life.
+- **Learned from pain only** (ADR-024). A taste teacher on the look -> appetitive synapses went unused in six
+  seeds, and learned appetite spread to look-alike poison: learning what is good waits for dopamine, which has a
+  predicted reward to compare with.
+- **Confidence.** High that modulated associative learning exists across bilaterians; medium whether the common
+  ancestor had it.
+
+#### Drives
+- **Biology.** Neurosecretory cells that sense internal state and broadcast it by neuropeptides are deeply
+  conserved (the vertebrate hypothalamus and the insect pars intercerebralis probably share this ancestor).
+  A drive changes what matters: food draws only when hungry.
+- **Adds.** `cold` -> `warm_seek` -> forward (keep moving while the skin is cold); `rest` (stay where it is
+  warm); `hungry` shuts both, so a hungry animal forages and a fed one looks after its warmth: kinesis, no
+  gradient climbed. `hungry` also gets evolvable synapses onto feeding (not hard-wired).
+- **World.** The association world made cold (OHOL-style temperature, cold multiplies hunger), with a few hot
+  springs that do not block.
+- **Confidence.** High that homeostatic neuropeptide control is ancient; medium that it looked like a
   hypothalamus in the first bilaterians.
 
-#### 1.3 Affect: persistent behavioural modes (dwelling, roaming)
-- **Biology.** In *C. elegans*, serotonin released on food encounter produces **dwelling** (slow, many turns,
-  local search) and neuropeptide PDF produces **roaming** (long straight runs) (Flavell et al. 2013). The
-  mode lasts minutes, long after the stimulus is gone. Bennett's "affect" is exactly this: a global,
-  persistent state along valence and arousal that biases every reflex at once. (Escape and stress modes are
-  left for later.)
-- **As built (2026-10-12, stage 1.8, STAGE_LOG v33).** Pain -> modulator `alarm` -> `flee` -> forward; taste -> `fed` -> modulator `serotonin` -> `settle` -> `rest`. World: one berry type per patch (not to be reused as it is in later stages: learned aversion and warmth seeking are unused in it). The roam nucleus below was dropped (`hungry` does that job).
-- **First design (v3-v13, unused).** `raphe` (serotonin, slow, driven by taste) broadcasting `5ht` onto receptors of `dwell` (-> turns);
-  `pdf` (slow, driven by hunger) broadcasting `pdf` onto receptors of `roam` (-> forward). The two nuclei
-  inhibit each other through hard-wired inhibitory receptors (v5); evolved input from valence.
-- **World.** Food in 10 dense patches (calibrated so foraging still pays).
-- **Confidence.** High for the phenomenon across bilaterians (area-restricted search is found in worms,
-  flies, fish, birds and mammals). Medium for the exact neuromodulator mapping in the ancestor.
-
-#### 1.4 Habituation
-- **Biology.** Habituation (a weaker response to a repeated harmless stimulus) is found in essentially every
-  animal, and even in single cells. Sensory-specific satiety (a food eaten repeatedly loses appeal) is one form.
-  Sensitisation (stronger reflexes after a noxious event, serotonergic in *Aplysia*) is left for later.
-- **Adds.** Short-term synaptic depression (`u <- u + (1-u)/tau_rec - U u pre`, effective weight `w u`) on the
-  identity -> appetitive synapses.
-- **World.** OHOL's "yum" mechanic: a food not eaten recently is worth more, a repeated one less, so switching
-  between food types pays. (Replaces the contact-hazard design of the first plan: no OHOL counterpart.)
-- **Caveat.** Weakest payoff of chapter 1; it is needed later (2.7 reuses habituation as familiarity).
-- **Confidence.** High.
-
-#### 1.5 Associative learning: classical conditioning with a US-gated rule (exp02 done right)
-- **Biology.** Worms learn to associate an odour or salt concentration with starvation or food; *Aplysia*
-  learns to associate a touch with a shock; bees and flies learn odour->sugar or odour->shock. The mechanism
-  is activity-dependent, modulator-gated plasticity: the synapse from the CS neuron is strengthened when
-  it was recently active *and* the US modulator arrives. In insects this happens at the mushroom body
-  output synapses, with dopamine neurons carrying the US (Aso, Rubin et al.).
-- **Adds (ADR-021, ADR-024).** A US neuron `us_pain` (hard-wired from the sense) as the teacher (`us_av`) of the
-  identity -> aversive synapses, about what was sensed just before (short eligibility trace):
-  `dW = eta * teacher * trace(pre)`. Pain is immediate. The learning rate evolves. Built directly on 1.1.
-- **Tried and dropped.** A single signed teacher with a long trace (aversion spread to everything); a second
-  teacher, taste on the identity -> appetitive synapses (v19-v22: silencing it left fitness at or above intact in
-  six seeds; learned appetite spread to look-alike poison); a safety cell. Appetitive learning returns with the
-  reward prediction error (2.5).
-- **World.** One ancestral good and one ancestral poison type, and four novel types that get a new look every life,
-  two of them poison; novel food is half of all bushes; lives last 2000 ticks.
-- **Metric.** The lesions "no_plasticity" and "us_pain" (same population, learning off), main vs control head to
-  head.
-- **Finding (v21, two teachers, energy fitness; rerun under way).** Main ahead of control in every seed (+2.7 +-0.8,
-  head to head +9.7 +-2.8); the pain teacher is worth 6-10% in every seed. Weak but consistent.
-- **Confidence.** High that modulated associative learning exists across bilaterians. Medium on whether the
-  *common ancestor* had it or whether it evolved several times.
-
-#### 1.6 Extinction and reversal
-- **Biology.** Extinction is not forgetting: after a CS stops predicting the US, the response fades, but it
-  returns spontaneously later (Pavlov). Neurally this is new inhibitory learning layered over the old
-  association, plus fast and slow memory components.
-- **Adds.** The learned weights relax back toward their inherited values (`decay`), a fast forgetting component.
-- **World.** As 1.5, but the novel types swap their meaning halfway through life.
-- **Result (v22): left out of the chain.** Three seeds: learning unused in this world (plasticity off 101% of
-  intact) and the relaxing weights lose head to head in every seed (-6.5 +-1.6). A mechanism that undoes what was
-  learned works against 1.5; reversal is better left to error-driven learning (2.5).
-- **Confidence.** High for the phenomena in vertebrates and many invertebrates; the fast-component
-  implementation is a modelling choice.
-
-### Chapter 2: reinforcing (early vertebrates, about 520–450 Mya)
-
-Ecological driver: Cambrian predation and active hunting in open water, followed by vision-guided
-navigation. The vertebrate brain plan is already complete in lampreys: forebrain (pallium, subpallium incl.
-**basal ganglia**, **hypothalamus**), midbrain (**tectum**, dopamine neurons), hindbrain (reticular
-formation, motor pattern generators, and a small **cerebellum**, which appears clearly only in jawed
-vertebrates). Grillner's lamprey work shows the basal ganglia circuit (striatum, GPi/SNr, STN, SNc
-dopamine) already present and wired as in mammals. That is the main anatomical reason for putting RL here.
-
-Suggested region names from here on: `tectum`, `pallium`, `striatum`, `gpi`, `snc` (dopamine),
-`hippocampus` (medial pallium), `cerebellum`, `brainstem` (motor programs; the old `hidden` can be renamed
-to this).
-
-#### Revised plan for the chapter (2026-10-12, ADR-025)
-
-Reviewed with the user after chapter 1. The stage sections below are the first plan (2026-09); where they differ
-from this block, this block holds. The definitions in `stages.py` (2.1-2.5, `x.td`) are still the old ones, built
-on the reversal brain; every stage is defined again on the frozen affect brain when its turn comes, and probed
-step by step like the chapter 1 stages (assay, generation 0, then evolution).
-
-**Order.**
-
-| step | what | kind |
-|---|---|---|
-| 1 | camera eyes (9 columns, range 6) and the **tectum** | innate; the control gets the same eyes |
-| 2 | **pallium**: sparse expansion of the look, weights drawn per life; the pain rule of the association stage reads it | first learned region |
-| 3 | **dopamine critic**, complete: taste and pain as rewards, opponent value cells, dopamine as the teacher | learning; lab experiments |
-| 4 | **hands**: pick, hold, eat | short adaptation step, no controlled experiment |
-| 5 | **basal ganglia with the actor** (old 2.4 and 2.6 as one stage) | learning; lab experiments |
-| 6 | **curiosity** | learning |
-| later | pallium clustering (old 2.3) when a world with noisy looks needs it; hippocampus, sequences, cerebellum, uncertainty modulators; delayed sickness | parked until 1-6 work |
-
-**Decisions.**
-
-- **Evolution is for tuning.** A new module is designed, hard-wired where it has a fixed meaning, and tested at
-  generation 0; evolution then tunes it and the rest of the brain to each other in a few dozen generations (the
-  affect stage: +250 at generation 0, fade times and strengths stayed near the design). Three seeds and the
-  lesions remain the test that a circuit is used. Exception: an architectural change after which something has to
-  be learned again from scratch gets a full run. The networks are cheap; long lives with a handful of agents on a
-  GPU are not needed yet.
-- **What is learned must not be inheritable** (ADR-017, to be built with the pallium). Two guards, plus a check:
-  1. the weights of a learned region are drawn at each birth; the genome holds their statistics and rule genes;
-  2. the looks and meanings of what has to be learned are drawn per life. Default: per life for the things a
-     stage's learner is about (berry variants, markers, tools); ancestral things (a staple food, hot springs,
-     walls, other animals) keep a fixed look, so that the innate compartment has something to be innate about.
-     Decided per stage;
-  3. the lesion with plasticity switched off, and a control without the learner. To keep in mind (user): this
-     only says something when the behaviour is one a non-learning network could have acquired by evolution, so a
-     stage should show that its control had the means and still does not get there.
-- **Pallium before the critic** (user): the networks that prepare the input are in place before the circuits that
-  learn from them, so that learning works on sparse, separated codes and not on the dense look. Its job is already
-  known from chapter 1: what is learned about one food spreads to foods that look like it (the staple and the
-  poison that looks 80% like it; ADR-021). The XOR world of the first plan is not needed as the driver. First
-  probe: the assay of the association stage with the learned synapses reading the pallium, look-alikes at several
-  similarities. The look has 8 features per eye column, so the expansion may gain little on the plain look that
-  habituation already centres; the probe decides the size and sparseness.
-- **The critic is built complete** (user): both teachers, the prediction error, opponent values, as in the
-  vertebrate circuit. That the taste teacher was unused in chapter 1 (six seeds) and that `x.td` was a tie are not
-  held against it: both were on a different brain, and raw taste teaching has no predicted reward to compare with,
-  which is what made it unstable. Parts are removed only when experiments on the finished circuit show them unused.
-- **Dopamine as a circuit, not as a formula.** See 2.5 below.
-- **Eyes with the tectum.** `VISION_CH2` keeps the names of the five old columns, so inherited weights carry over
-  and the four new columns start silent. Main and control both get the new eyes; the stage tests the tectum. The
-  bush, its berry and its empty bush get one shared colour from this world on (STATUS, known simplifications).
-- **Hands mid-chapter**, just before the actor: with eat-on-grasp there is no action to choose. A small
-  evolution step from the critic population into a pick-hold-eat world (`with_hands`; in `x.hands` the lineage
-  adapted in about ten generations), with a check that it has not lost much against eat-on-grasp. How this reads
-  in the book is open.
-- **Lab experiments** for the learning stages: single-animal, scripted situations as in an animal lab
-  (acquisition curves, omission and extinction, blocking, discrimination of look-alikes, later devaluation),
-  grown out of `scripts/probes/assay.py`, with results stored in the book's data files. They take the place of
-  the assay step for these stages and are shown in the book next to the world results.
-- **New world mechanics come from OHOL where possible** (user). When a stage needs something new in the world
-  (first the chained cues of the critic: a cue that predicts food some steps later), look first for OHOL objects
-  and transitions that give it and widen the slice toward the full OHOL set; a mechanism of our own only when
-  OHOL has nothing that fits. The marker stone and the "USE twice with a delay" source of 2.5 below are
-  placeholders until that search is done.
-- **Merged or dropped.** The fixed basal ganglia has no stage of its own (`hungry` already settles the conflict
-  between drives; little to gain alone). Thorn hazards and a second nutrient are gone (no OHOL counterpart; the
-  second need is warmth). Curiosity takes novelty from the adapted look inputs of the habituation stage, not from
-  synaptic depression. The tectum, striatum and value cells get fixed meanings (ADR-016) and act on programmes and
-  modes, not on the motor neurons directly (ADR-020).
-
-#### 2.1 Optic tectum: topographic target selection
-- **Biology.** The tectum (superior colliculus in mammals) is a retinotopic map. It picks *one* target by
-  lateral inhibition and drives orienting and approach toward it (or escape from a looming object).
-- **Adds.** Region `tectum` with one neuron per vision column (or two: approach and avoid). Topographic
-  `in(vision col c)→tectum(c)` projections. Fixed negative projections `tectum→tectum` (lateral
-  inhibition, M5). `tectum→out(turn left/right/forward)` topographic.
-- **Rule.** None new.
-- **Experiment.** Dense food with several targets in view simultaneously, and a few hazards next to food. (increase visual resolution?)
-- **Control.** 1.x architecture (distributed hidden region).
-- **Metric.** Ticks from "food in view" to "reaching it"; oscillation (left-right dithering count).
-- **Expected.** Fewer Buridan's-ass failures (averaging between two targets and walking between them).
-  Evolution *can* find this without the module, but the topographic prior makes it immediate.
-- **Confidence.** High (the tectum is a vertebrate hallmark; homologous map-like structures exist in some
-  invertebrates).
-
-#### 2.2 Pallium as an expansion layer (sparse random coding)
-- **Biology.** The oldest pallium is largely olfactory: piriform-like cortex with sparse, random, expansive
-  input from the olfactory bulb. Insects converged on the same design (mushroom body Kenyon cells). Random
-  sparse expansion turns an entangled input into one where almost any category is linearly separable
-  (Babadi & Sompolinsky 2014; Litwin-Kumar et al. 2017).
-- **Adds.** Region `pallium` (large: 5–10× the appearance features), fixed sparse random `in→pallium`,
-  k-WTA (M5). The plastic, US-gated projection of 1.5 now runs `pallium→valence` instead of
-  `in→valence`.
-- **Rule.** None new; the 1.5 rule on a different substrate.
-- **Experiment: nonlinear poison rule.** Four berry types built from two appearance features (colour A/B ×
-  shape A/B). Poison = an XOR of the two (e.g. A-A and B-B are poison), randomised per life by which pair
-  is poison.
-- **Control.** 1.6 (plastic `in→valence`).
-- **Metric.** Within-life drop in poison fraction.
-- **Expected.** The control cannot represent XOR with a single plastic layer onto valence; the expansion
-  agent can.
-- **Confidence.** High that the vertebrate pallium originated as olfactory/sensory association cortex; the
-  exact "expansion" function in early vertebrates is a model inference.
-
-#### 2.3 Pallium: pattern completion and clustering (unsupervised Hebbian)
-- **Biology.** Piriform cortex and the hippocampus have strong recurrent excitatory connections that store
-  patterns and complete them from partial input (Marr; Hopfield; Haberly). Competitive Hebbian learning
-  with inhibition clusters similar inputs into categories. This is the "associative learning for pattern
-  completion and clustering" in the user's summary. Note that it is *unsupervised*: no US needed.
-- **Adds.** `pallium→pallium` recurrent excitation (plastic `hebb`, unmodulated, with weight
-  normalisation), and `in→pallium` becomes plastic `oja`/competitive instead of fixed random.
-- **Rule.** Oja or competitive Hebb (exists: `rule="oja"`); recurrent Hebb with normalisation (normalisation). This is where plain Hebbian learning finally does the job it is suited for.
-- **Experiment: noisy, occluded objects.** Appearance vectors get per-sighting noise, and some vision
-  features are randomly dropped (M9). New object types are introduced per life (random appearances), so
-  categories must be formed *within* the life. Poison is one of the new categories.
-- **Control.** 2.2 (fixed random expansion).
-- **Metric.** Within-life poison-fraction drop at high noise; number of samples needed.
-- **Expected.** Clustering gives noise-robust categories, so the valence learning on top needs fewer
-  samples. At zero noise the two should tie. Run a noise sweep to show the crossover.
-- **Confidence.** Medium–high (recurrent autoassociation in olfactory and hippocampal pallium is widely
-  conserved in amniotes; less certain for the earliest vertebrates).
-
-#### 2.4 Basal ganglia: gated selection of brainstem motor programs (fixed)
-- **Biology.** Brainstem and spinal pattern generators produce complete action programs (swim, orient,
-  bite, escape). The GPi/SNr output nuclei inhibit all of them tonically. The striatum, driven by
-  pallium, thalamus and tectum, disinhibits one channel at a time (Redgrave, Prescott & Gurney 1999). This
-  is a selection architecture; learning comes in 2.5–2.6.
-- **Adds.** `striatum` (one channel per action, or per "program"), `gpi` (one per action, high bias, i.e.
-  tonically active), `gpi→out` fixed inhibitory, `striatum→gpi` fixed inhibitory. Inputs to striatum:
-  `pallium`, `tectum`, `valence`, `hypothalamus`. Optional `stn` (diffuse excitation of gpi) for a
-  "hold everything" brake when there is conflict.
-- **Rule.** None new (fixed, evolved).
-- **Experiment: conflicting drives.** Food next to a thorn hazard; hunger vs pain; two meters low at once
-  (from 1.2).
-- **Control.** 2.3 without the BG loop.
-- **Metric.** Dithering (switching between two actions over consecutive ticks without progress); decisive
-  completion of action sequences.
-- **Expected.** Small gains on its own. This stage mostly sets up the structure 2.5/2.6 learn in. It is
-  acceptable to merge it with 2.6.
-- **Confidence.** High (the lamprey BG is well characterised).
-
-#### Note: why there is no separate Rescorla-Wagner stage
-The 1.5 probes showed that plain US-gated conditioning over-generalises across look-alikes; error-driven
-(Rescorla-Wagner) learning is the textbook fix. In continuous time, however, a prediction that is active *before*
-the outcome arrives counts as an error and unlearns itself; the temporal-difference error
-`r + gamma V(t) - V(t-1)` is the continuous-time form of the same idea. So 2.5 introduces TD directly and lets
-dopamine replace the raw US as the teacher of the valence synapses.
-
-#### 2.5 Dopamine as reward prediction error (the critic)
-- **Biology.** Midbrain dopamine neurons report `δ = r + γV(s′) − V(s)` (Schultz, Dayan & Montague 1997). The
-  response moves from the reward to the earliest predicting cue, and a fully predicted reward no longer
-  produces a response. This explains blocking and second-order conditioning, which pure US-gated learning
-  (1.5) does not.
-- **Adds (as implemented).** Rates cannot be negative, so values are an opponent pair: `value_app` (expected
-  good) and `value_av` (expected bad) in the ventral striatum, plus copies delayed by one step. The modulator
-  `da = (us_taste - us_pain) + gamma (V_app - V_av) - (V_app_prev - V_av_prev)` (weighted region means) is the TD
-  error. Identity features and the pallium -> value synapses learn by TD(lambda) (`dW = eta * da * trace`); the
-  value populations feed valence (incentive salience); every `us`-gated projection switches to `da`.
-- **Rule.** TD(lambda) as a three-factor rule with eligibility traces.
-- **Revised (2026-10-12): the error is computed by cells.** The old definition writes the formula into the
-  modulator (`terms`, with copy regions as a one-step delay). The circuit it stands for, to be built instead:
-  - a dopamine cell `snc` with a **tonic rate** (a positive bias). The modulator is its rate minus that baseline
-    (`ModulatorSpec.baseline`): a burst is a positive error, a pause a negative one. A rate cannot go below
-    zero, so negative errors are capped at the tonic rate, as in real dopamine cells (Bayer & Glimcher 2005);
-  - **the subtraction is inhibition, the delay is a slow pathway.** Value reaches the dopamine cell twice: fast
-    and exciting (disinhibition through the pallidum), slow and inhibiting (striosomes directly onto the cell).
-    Fast minus slow is the change of value, which is the `gamma V(t) - V(t-1)` part (Houk, Adams & Barto 1995;
-    dopamine as the derivative of value: Kim et al. 2020). In the framework: a leaky inhibitory cell
-    (`alpha` < 1) in place of the copy regions. The discount and the time span then follow from two strengths
-    and one time constant, which evolution can tune;
-  - **bad news arrives through the habenula**: expected-bad value and pain excite a `habenula` cell that
-    inhibits the dopamine cell. This pathway is described in the lamprey (Stephenson-Jones et al. 2013), so it
-    fits the animal of this chapter. Taste excites the dopamine cell directly;
-  - **the chemical is short-lived.** Dopamine is taken up again within about a second, less than one tick, so
-    the modulator does not persist; the memory of what was active sits in the synapse (eligibility trace, a few
-    seconds: Yagishita et al. 2014). Persistence as built (`decay`: the larger of the new value and the faded old
-    one) suits a state such as serotonin and would erase pauses; a slowly cleared signed dopamine would need its
-    own form and is not planned;
-  - differences from the formula, to check in the lab experiments. (1) The formula compares the value now with
-    the value exactly one tick ago; the slow cell holds a fading average of the last few ticks, so a jump in
-    value gives a burst with a short tail instead of a one-tick pulse. Values at rest come out the same; only
-    the transients are blurred, like a slightly longer eligibility trace. With `alpha` = 1 the slow cell is the
-    one-tick copy and the formula is exact, so exact TD is one end of the range evolution tunes over. (2) Pauses
-    are capped at the tonic rate, bursts are not. Real dopamine has both properties: it follows TD closely in
-    kind (response moves to the cue, pause at an omitted reward, blocking) and deviates in the same two ways.
-    Blocking, omission and the move of the response from reward to cue are the tests.
-- **Experiment: chained cues.** A reward requires a short causal chain: e.g. a berry is only available at
-  bushes next to a marker object (a stone), or a food source must be USEd twice with a delay. The marker
-  identity is randomised per life. Reward comes 5–20 ticks after the first cue.
-- **Control.** 2.4 with US-gated (1.5-style) learning.
-- **Metric.** Approach latency to the *first* cue in the chain, later in life vs earlier; blocking test (a
-  second cue added after the first is learned should not be learned).
-- **Expected.** The TD agent learns to approach the first cue in the chain; the US-gated agent learns only
-  cues close to the reward (or needs very long traces, which then overgeneralise).
-- **Confidence.** High for mammals and good evidence for fish; the dopamine RPE in lampreys is plausible but
-  less directly shown.
-
-#### 2.6 Actor: learned action selection in the striatum (Go/NoGo)
-- **Biology.** The same `δ` trains cortex→striatum synapses: on D1 (direct, "Go") cells a positive `δ`
-  strengthens, on D2 (indirect, "NoGo") cells a negative `δ` strengthens (Frank 2005; Collins & Frank 2014).
-  This is actor-critic RL, and operant (instrumental) conditioning. It differs from Pavlovian learning in
-  1.5: it learns which *action* to take, not just the value of a stimulus.
-- **Adds.** Split `striatum` into `striatum_d1` and `striatum_d2`; `pallium→striatum_*` plastic,
-  `modulated="da"`, with opposite sign conventions; `d1→gpi` inhibitory (Go), `d2→(gpe)→gpi` net excitatory
-  (NoGo).
-- **Rule.** `dW = eta·(+δ)·e` on D1, `dW = eta·(−δ)·e` on D2; eligibility trace per synapse (M1).
-- **Experiment: per-life action→outcome contingency.** In OHOL terms: one food source yields only if the
-  agent USEs it while holding a particular tool (e.g. a stone), and which tool works is randomised per life.
-  Or: a bush gives food on USE, a look-alike gives food only on repeated USE after a wait. The agent must
-  learn *what to do*, not only what to approach.
-- **Control.** 2.5 (critic only; actions still from evolved fixed weights plus value-driven approach).
-- **Metric.** Rate of successful yields per life, second half vs first half.
-- **Expected.** Only the actor-critic agent learns the per-life action.
-- **Confidence.** High for mammals; the D1/D2 split is conserved at least to lampreys (Grillner lab).
-
-#### 2.7 Curiosity: novelty as intrinsic reward
-- **Biology.** Dopamine neurons also respond to novel, unexpected stimuli; fish and all later vertebrates
-  explore new objects, and Bennett puts curiosity here. It is the classic fix for exploration in RL.
-- **Adds.** A `novelty` region driven by pallium activity *not* explained by habituated (familiar)
-  synapses from 1.4; `novelty→snc` adds a bonus to `δ`.
-- **Rule.** No new rule; reuses M4 depression as familiarity.
-- **Experiment: sparse hidden rewards.** Food is rare and found only by interacting with objects
-  (USE on some non-food object occasionally yields food, identity randomised per life), in a world full of
-  inert objects.
-- **Control.** 2.6.
-- **Metric.** Fraction of object types the agent has interacted with; food per life.
-- **Expected.** The curious agent samples more object types and finds the productive one; the control
-  settles on the first thing that pays.
-- **Confidence.** Medium (novelty responses of dopamine neurons are well shown in mammals; evidence for
-  "curiosity" in fish is mostly behavioural).
-
-#### 2.8 Hippocampus homologue: spatial maps
-- **Biology.** Lesions of the goldfish lateral pallium (the homologue of the hippocampus) impair spatial but
-  not cue learning (Rodríguez, Salas et al.). Head-direction cells (in flies and in the vertebrate
-  brainstem/thalamus) do path integration from self-motion. Place cells bind locations to what is there.
-- **Adds.**
-  - Body input: efference copy of the last action (M7).
-  - A `head_direction` ring attractor (fixed, evolved or hand-set) updated by turn efference copies.
-  - A `hippocampus` region receiving `head_direction`, efference copy of FORWARD and pallial object
-    features; recurrent (place-like) Hebbian connections; `hippocampus→value` plastic under `da`.
-- **Rule.** Recurrent Hebb (2.3) plus TD on place features (2.5).
-- **Experiment: remembered location.** In each life, a single rich food patch sits at a random position,
-  out of view from most of the map, and regrows; landmarks (distinct rocks) are scattered. The agent must
-  return to it after eating elsewhere or after the patch has regrown.
-- **Control.** 2.7.
-- **Metric.** Ticks from leaving the patch to returning to it, later in life.
-- **Expected.** The map agent returns directly; the control has to rediscover it by search.
-- **Confidence.** Medium–high for the teleost hippocampus homologue; lower for lampreys.
-
-#### 2.8b Sequences: asymmetric STDP on place cells
-- **Biology.** Recurrent hippocampal synapses with asymmetric (pre-before-post) plasticity learn travelled
-  paths; place fields shift backwards with repetition, so activity anticipates the next location (Mehta et
-  al. 2000). This is the substrate of replay (3.3) and of simulating paths (3.2).
-- **Adds.** No new region. `hippocampus→hippocampus` switches from symmetric `hebb` to `trace` (STDP-like).
-- **Experiment: anticipating a route.** A reliable food source sits at the end of a winding corridor or
-  route (blocking objects), fixed per life, visited repeatedly.
-- **Control.** 2.8 with symmetric Hebb.
-- **Metric.** Ticks per traversal later in life; how early the agent turns before each bend.
-- **Confidence.** High for the phenomenon in rodents; medium for early vertebrates.
-
-#### 2.9 Cerebellum: timing and forward prediction
-- **Biology.** The cerebellum appears clearly in jawed vertebrates (lampreys have a small version; hagfish
-  have none). Granule cells are another expansion layer; Purkinje cells learn from a climbing-fibre error
-  signal (Marr-Albus-Ito). Classic function: precisely timed conditioned responses (eyeblink) and forward
-  models that predict the sensory consequences of one's own actions.
-- **Adds.** `granule` (expansion of `in` + efference copy + a bank of slow time-cells), `purkinje`,
-  `climbing` (teacher: pain or prediction error), `purkinje→out` inhibitory (via deep nuclei).
-- **Rule.** New: delta rule with a teacher region (M6), `dW = −eta·pre·climbing` (LTD on error).
-- **Experiment: timed hazard.** A warning object appears in view (e.g. a flame starts flickering) and after
-  exactly `k` ticks it stings anything facing it; stepping away at the right time avoids it, but stepping
-  away too early loses the food next to it. `k` is randomised per life (5–30 ticks).
-- **Control.** 2.8.
-- **Metric.** Pain per exposure and food lost, later in life.
-- **Expected.** The cerebellar agent times the avoidance; the BG agent can learn "avoid when the warning is
-  on" but pays for leaving early.
-- **Honest caveat.** A discrete grid world gives the cerebellum little to do. Its bigger role here is
-  introducing the **delta rule**, which chapter 3 depends on. This can be a short stage.
-- **Confidence.** High for the anatomy and eyeblink function; the forward-model role is well supported in
+#### Affect
+- **Biology.** In *C. elegans*, serotonin released on food produces dwelling and lasts minutes after the food is
+  gone (Flavell et al. 2013); pain and alarm leave a state too. Bennett's affect is such a global, lasting
+  state that biases every reflex at once. Area-restricted search is found in worms, flies, fish, birds and
   mammals.
+- **Adds.** Two states that outlast their trigger, each a modulator that adds up over events and fades slowly:
+  pain -> `alarm` -> `flee` -> forward (above about 1.5 poison bites); taste -> `fed` -> `serotonin` -> `settle`
+  -> `rest` (above about 9 good bites, a bush has 6). Fade times and thresholds evolve. `hungry` does the job of
+  a roaming state.
+- **World.** 256 x 256 (four times the area of the earlier worlds; at 128 crowding hides most of what a better
+  forager gains), more food, berry types in patches that are 70% their own kind: mixed enough that a bush must
+  be known by its look, pure enough that a meal or a poison bite says something about the neighbours.
+- **Why this world.** In patches of one type learning goes idle and its rate drifts up (a lesson then spreads to
+  good food); in open country or evenly mixed patches the lasting states go idle. States released in full by one
+  bite left the 70% world on a knife edge (seeds went three ways); states that add up use everything in every
+  seed (STAGE_LOG v34, v40-v42).
+- **Status.** Being redone from the drives population in this world (trial `x.affect2`, 2026-10-17). It replaces
+  the first affect stage (one type per patch) and the two tuning steps that followed it (`2.0`, `2.1`), which
+  are kept as a side path.
+- **Confidence.** High for the phenomenon; medium for the exact neuromodulator mapping in the ancestor.
 
-#### 2.10 Uncertainty modulators: noradrenaline and acetylcholine
-- **Biology.** The locus coeruleus (noradrenaline, NE) and basal forebrain (acetylcholine, ACh) exist in all
-  vertebrates. Theory (Yu & Dayan 2005; Behrens et al. 2007) says NE signals unexpected uncertainty
-  (the world changed: learn faster, explore) and ACh signals expected uncertainty (the cues are unreliable:
-  rely on priors).
-- **Adds.** An `lc` region reading `|δ|` over time and writing `ne` (M2). `ne` scales `eta` of plastic
-  projections and the action temperature.
-- **Rule.** Learning rate scaled by a modulator (meta-learning as mechanism).
-- **Experiment: stable vs volatile lives.** Per life, the poison/reward identity either never changes
-  (stable) or reverses every 100–200 ticks (volatile), randomised.
-- **Control.** 2.9 (fixed `eta`).
-- **Metric.** Reward per life, separately for stable and volatile lives.
-- **Expected.** A fixed `eta` is a compromise that is too slow for volatile lives or too noisy for stable
-  ones; the NE agent adapts.
-- **Confidence.** Medium (the neuromodulators are conserved; the computational roles are theory with
-  growing but indirect evidence).
+#### Left out of chapter 1
+- **Extinction and reversal**: learned weights relaxing back toward the inherited ones, in a world whose
+  meanings swap mid-life. Learning was unused there and the relaxing weights lost head to head in every seed.
+  Reversal is left to error-driven learning (dopamine).
+- **Sensory-specific satiety** (OHOL's "yum" bonus) and contact hazards: no stage; habituation got its job from
+  the dud bush.
 
-### Chapter 3: simulating (early mammals, about 220–150 Mya)
+### Chapter 2: reinforcing (early vertebrates, about 520-450 Mya)
 
-Ecological driver (Bennett's version): small nocturnal mammals living among dinosaurs benefited from
-planning moves before making them. The new structure is the six-layered **neocortex** (sensory, motor,
-agranular prefrontal), in a loop with the thalamus and basal ganglia. Birds converged on similar abilities
-with a differently organised pallium (DVR), so "simulation" is a function, not uniquely a layered cortex.
+Ecological driver: Cambrian predation and active hunting in open water. The vertebrate brain plan is already
+complete in lampreys: forebrain (pallium, basal ganglia, hypothalamus), midbrain (tectum, dopamine cells),
+hindbrain (pattern generators, a small cerebellum, clear only in jawed vertebrates). Grillner's lamprey work shows
+the basal ganglia wired as in mammals, the main reason for putting reinforcement learning here.
 
-#### 3.1 Neocortex as a generative model (self-supervised prediction)
-- **Biology.** The predictive processing view (Rao & Ballard 1999; Friston; Hawkins) treats cortex as learning
-  to predict its own input, with the error between prediction and input driving learning. Feedforward
-  input arrives in layer 4, predictions come top-down into layer 1/apical dendrites; the thalamus relays
-  and gates.
-- **Adds.** `cortex_l4` (input), `cortex_l23` (state), `cortex_pred` (predicted next input), `error`
-  (input − prediction, fixed wiring). `cortex_l23` also receives efference copy (M7) so that it predicts
-  the consequences of actions. `cortex_l23→striatum` and `→value` join the pallium inputs.
-- **Rule.** Delta rule (M6) with `error` as the teacher: `dW(l23→pred) = eta·l23·error`. Unsupervised
-  Hebb/Oja on `l4→l23`.
-- **Experiment: partial observability with predictable structure.** Narrow field of view (fewer columns),
-  with food that regrows on a fixed schedule at fixed positions per life, and objects that are often
-  occluded. The good state representation is "what is where and when", which has to be inferred.
-- **Control.** 2.10.
-- **Metric.** Food per tick; also a probe: prediction error on held-out ticks (the dashboard can show
-  `error` activity dropping over a life).
-- **Expected.** A modest gain in reward; the main visible effect is a learned world model. It becomes
-  decisive in 3.2.
-- **Confidence.** Medium; predictive processing is a strong framework but not established fact.
+Order: **pallium -> dopamine -> hands -> basal ganglia -> curiosity.** Parked until these five work:
+hippocampus and sequences, cerebellum, uncertainty modulators, pallium clustering. The world is the one of the
+affect stage until a stage needs more; the eyes stay those of chapter 1.
 
-#### 3.2 Vicarious trial and error: simulating actions before taking them
-- **Biology.** Rats pause at choice points and "look" both ways; the hippocampus then sweeps ahead along each
-  option (Johnson & Redish 2007). Tolman's latent learning, detours and outcome devaluation (Adams &
-  Dickinson) show behaviour that model-free RL cannot produce.
-- **Adds.** M8 offline mode. A `deliberate` neuron (driven by high uncertainty / conflict in striatum, i.e.
-  from 2.10's `ne`) switches the thalamic gate: for K internal steps, motor output is suppressed, the
-  cortex's predicted next input replaces real input, a candidate action from striatum is fed as efference
-  copy, and `value` evaluates the imagined state. The best imagined action is then executed.
-- **Rule.** No new plasticity; a new *mode* of using the model.
-- **Experiments.**
-  1. *Latent learning.* The first half of life has no reward in a walled maze-like area (OHOL walls or
-     blocking objects); then food appears at one location. The model-based agent goes there directly.
-  2. *Outcome devaluation.* Two foods, two meters (1.2). After the agent is sated on one, does it
-     immediately stop working for it (goal-directed) or keep going (habit)?
-  3. *Detour.* A known path gets blocked mid-life (M10).
-- **Control.** 3.1 without offline mode (same world model, used only as a representation).
-- **Metric.** Ticks to reach the reward after it appears; responses to the devalued food.
-- **Expected.** Clear wins in all three for the simulating agent. This is the stage where "more than RL"
-  (the thing exp02 was reaching for) actually appears.
-- **Confidence.** High for the behaviour in mammals; the specific circuit is still debated.
+How the learning stages are checked: **lab experiments** take the place of the assay. One animal in scripted
+situations, as in an animal lab (acquisition curves, omission and extinction, blocking, discrimination of
+look-alikes, later devaluation), grown out of `scripts/probes/assay.py`, with results stored in the book's data
+files and shown next to the world results.
 
-#### 3.3 Replay and sleep: learning from simulated experience
-- **Biology.** During rest and sleep, the hippocampus replays sequences, forwards and backwards (Foster &
-  Wilson 2006); replay seems to drive consolidation into cortex and value updates in striatum. Dyna (Sutton
-  1990) is the RL counterpart.
-- **Adds.** A rest state (NOOP for a stretch or a NOOP-heavy "sleep" when sated) triggers offline mode with
-  no sensory input: the cortex/hippocampus generate sequences, and the normal `da`-gated rules learn from
-  them.
-- **Experiment.** Same as 2.8 or 3.2, but with experience limited (short lives or few rewards); make
-  resting safe (no predators yet).
-- **Control.** 3.2 with offline mode only at choice points.
-- **Metric.** Reward per life vs amount of real experience.
-- **Expected.** Better sample efficiency. Resting evolves as a behaviour in its own right.
-- **Confidence.** High for replay; medium for its necessity in learning.
+Region names from here on: `pallium`, `striatum`, `gpi`, `snc` (dopamine), `habenula`, later `hippocampus`,
+`cerebellum`.
 
-#### 3.4 Agranular prefrontal cortex: holding goals over time
-- **Biology.** Rodent medial PFC holds task rules and goals and gates which options get simulated;
-  PFC-BG-thalamus loops update working memory in a gated way (O'Reilly & Frank 2006, PBWM).
-- **Adds.** `pfc` with strong recurrent self-excitation (attractors, slow leak); a separate BG loop
-  (`striatum_pfc`) that learns *when to update* `pfc` content, under `da`; `pfc→cortex_l23` biases
-  simulation, `pfc→striatum` biases action.
-- **Rule.** Existing `da`-gated rules, now also on the gating loop.
-- **Experiment: multi-step goals with distractors.** A reward needs a sequence such as "pick up tool X at
-  place A, carry it past food to target B, USE". Which tool and which target are shown by a cue at the
-  start of each life (or each trial). Distracting food is on the way.
-- **Control.** 3.3.
-- **Metric.** Completed sequences per life.
-- **Expected.** The PFC agent keeps its goal; the control drops the tool at the first food.
-- **Confidence.** Medium (PFC homologies across mammals are debated, but working-memory gating is well
-  supported).
+#### Pallium: sparse expansion of the look
+- **Biology.** The oldest pallium is largely olfactory: piriform-like cortex with sparse, random, expansive
+  input. Insects converged on the same design (Kenyon cells). Random sparse expansion separates inputs that
+  overlap (Babadi & Sompolinsky 2014; Litwin-Kumar et al. 2017).
+- **Why first.** The networks that prepare the input come before the circuits that learn from them, so that
+  learning works on separated codes and not on the dense look. The job is known from chapter 1: what is learned
+  about one food spreads to foods that look like it (the staple and the poison that looks 80% like it).
+- **Adds.** Region `pallium` (several times the look features), fixed sparse random `look -> pallium` drawn at
+  each birth (the genome holds density and gain), k-WTA (M5). The pain rule of the association stage reads the
+  pallium instead of the look.
+- **First probe.** The assay of the association stage with the learned synapses reading the pallium, look-alikes
+  at several similarities. The look has 8 features per eye column, so the expansion may gain little on a look
+  that habituation already centres; the probe sets size and sparseness. Before the design: measure the repeated
+  poison bites and the bites on a full stomach in the affect world, and how much a perfect learner could gain
+  there (`lessons.py`).
+- **Control.** The affect brain.
+- **Metric.** Poison bites on look-alikes of a learned poison, and on the good look-alikes of it, later in life.
+- **Confidence.** High that the vertebrate pallium began as sensory association cortex; the expansion function
+  in early vertebrates is a model inference.
 
-#### 3.5 Episodic memory and counterfactual learning
-- **Biology.** One-shot storage of "what, where, when" (hippocampus). Rats show regret-like signals after a
-  missed better option (Steiner & Redish 2014). Bennett puts both in the simulation breakthrough.
-- **Adds.** Fast one-shot Hebbian storage in `hippocampus` (very high `eta` on a subset of synapses, reset
-  or decaying after use); a counterfactual `δ` computed from a simulated alternative action.
-- **Experiment.** One-shot events: a rare, rich food cache that appears once per life at a random place and
-  must be remembered after one visit; near-miss situations where the unchosen option would have paid.
-- **Control.** 3.4.
-- **Expected.** Better use of single experiences.
+#### Dopamine: the critic
+- **Biology.** Midbrain dopamine cells report `δ = r + γV(s') − V(s)` (Schultz, Dayan & Montague 1997): the
+  response moves from the reward to the earliest cue that predicts it, and a fully predicted reward no longer
+  produces one. This explains blocking and second-order conditioning, which US-gated learning does not. With it
+  the animal can learn what is good, which chapter 1 could not.
+- **Built complete.** Both teachers (taste and pain), the prediction error, opponent value cells, as in the
+  vertebrate circuit. Parts are removed only when experiments on the finished circuit show them unused.
+- **The error is computed by cells, not written as a formula:**
+  - values are an opponent pair (rates cannot be negative): `value_app` and `value_av` in the ventral striatum,
+    learned from the pallium by TD(lambda) (`dW = eta · da · trace`);
+  - a dopamine cell `snc` with a **tonic rate**; the modulator is its rate minus that baseline
+    (`ModulatorSpec.baseline`): a burst is a positive error, a pause a negative one, capped at the tonic rate as
+    in real dopamine cells (Bayer & Glimcher 2005);
+  - **the subtraction is inhibition, the delay a slow pathway.** Value reaches the dopamine cell fast and
+    exciting (disinhibition through the pallidum) and slow and inhibiting (striosomes directly onto the cell);
+    fast minus slow is the change of value, the `γV(t) − V(t−1)` part (Houk, Adams & Barto 1995; Kim et al.
+    2020). The slow path is a leaky inhibitory cell (`alpha` < 1); with `alpha` = 1 it is the exact one-tick
+    TD, one end of the range evolution tunes over;
+  - **bad news through the habenula**: expected-bad value and pain excite `habenula`, which inhibits the
+    dopamine cell (described in the lamprey: Stephenson-Jones et al. 2013). Taste excites the dopamine cell
+    directly;
+  - **dopamine is short-lived** (taken up within about a second): the modulator does not persist; the memory of
+    what was active is the eligibility trace in the synapse (a few seconds: Yagishita et al. 2014);
+  - the value cells feed valence (incentive salience), and every `us`-gated projection switches to `da`.
+- **Rule.** TD(lambda) as a three-factor rule with eligibility traces. No separate Rescorla-Wagner stage: in
+  continuous time a prediction active before the outcome unlearns itself, and TD is the continuous-time form.
+- **World: cues that predict food.** A cue some ticks before food, its look drawn per life, taken from OHOL
+  objects and transitions where possible.
+- **Lab experiments.** Acquisition, the response moving from reward to cue, a pause at an omitted reward,
+  blocking, discrimination of look-alikes, reversal.
+- **Control.** The pallium brain with US-gated learning.
+- **Expected.** The TD animal approaches the first cue of a chain and learns what is good; the US-gated animal
+  learns only cues close to the outcome.
+- **Confidence.** High for mammals, good evidence for fish; the RPE in lampreys is plausible but less directly
+  shown.
+
+#### Hands
+- **Adds.** Pick up, hold, eat (`stages.with_hands`: a value cell per sign for the thing in hand and an `ingest`
+  programme). With eat-on-grasp there is no action to choose; the actor needs one.
+- **How.** A short adaptation step from the dopamine population into a pick-hold-eat world, no controlled
+  experiment (in the trial `x.hands` the lineage adapted in about ten generations), with a check that it has not
+  lost much against eat-on-grasp.
+
+#### Basal ganglia with the actor
+- **Biology.** Pattern generators produce whole programmes (swim, orient, bite, escape); the GPi/SNr inhibit all
+  of them tonically, and the striatum disinhibits one at a time (Redgrave, Prescott & Gurney 1999). The same
+  `δ` trains the pallium -> striatum synapses: on D1 (Go) cells a positive `δ` strengthens, on D2 (NoGo) cells a
+  negative one (Frank 2005; Collins & Frank 2014). This is operant learning: which *action* to take, not only
+  the value of a thing. One stage: the fixed selection circuit alone has little to gain, since `hungry` already
+  settles the conflict between drives.
+- **Adds.** `striatum_d1`, `striatum_d2`, `gpi` (tonic), `gpi -> programmes` inhibitory; pallium -> striatum
+  plastic under `da`, signed by pathway. Striatum cells have a fixed meaning and act on programmes.
+- **Rule.** `dW = eta · (+δ) · e` on D1, `dW = eta · (−δ) · e` on D2.
+- **World: an action -> outcome contingency drawn per life.** For example: one food source yields only when used
+  while holding a particular object, which object works is drawn per life (from OHOL transitions).
+- **Control.** The hands brain (critic only).
+- **Metric.** Yields per life, second half against first half; lab experiments as in a lever-pressing rat.
+- **Confidence.** High for mammals; the D1/D2 split is conserved at least to lampreys.
+
+#### Curiosity
+- **Biology.** Fish and all later vertebrates explore new objects, and Bennett puts curiosity in this
+  breakthrough. Dopamine cells respond to novel stimuli, and the response fades as the stimulus becomes familiar
+  (Ljungberg, Apicella & Schultz 1992; Horvitz 2000). It is the classic fix for exploration in RL.
+- **What is new and what is not.** This is curiosity about what is *unfamiliar*, which needs only a memory of
+  what has been seen. Curiosity about what cannot yet be *predicted* (surprise, learning progress) needs a model
+  of the senses and belongs to chapter 3.
+- **Where novelty comes from** (decided when the stage is designed):
+  - lasting familiarity on the pallium: each thing has its own sparse code, and the synapses from that code onto
+    a `novelty` cell weaken with every sighting and stay weak (repetition suppression; anti-Hebbian familiarity
+    models of the perirhinal cortex, Bogacz & Brown 2003). Stimulus-specific and lifelong;
+  - the adapted look of the habituation stage: already built, but it remembers only about 50 ticks ("unusual in
+    the last minute", not "never seen") and spreads across look-alikes;
+  - a fast route through the tectum, whose responses adapt to repeated stimuli and which drives short-latency
+    dopamine responses to salient events (Dommett et al. 2005; Redgrave & Gurney 2006).
+  `novelty -> snc` then adds a bonus to `δ`.
+- **World: hidden rewards.** Food found by interacting with objects (using some non-food object sometimes yields
+  food; which one is drawn per life), among many inert objects.
+- **Control.** The basal ganglia brain.
+- **Metric.** Share of object types tried; food per life.
+- **Confidence.** Medium: novelty responses of dopamine cells are well shown in mammals; in fish the evidence
+  for curiosity is mostly behavioural.
+
+#### Parked until the five stages above work
+- **Hippocampus homologue (medial pallium).** Place and head-direction codes from efference copy (M7), place ->
+  value links under `da`. World: a rich patch at a position fixed per life, out of view. Lesions of the goldfish
+  lateral pallium impair spatial but not cue learning (Rodríguez et al. 2002). Then **sequences**: asymmetric
+  plasticity on recurrent place-cell synapses, a route fixed per life; the substrate of replay and of
+  simulating paths in chapter 3.
+- **Cerebellum.** Granule expansion, Purkinje cells learning from a climbing-fibre error (delta rule, M6).
+  World: a warning object that stings after a delay drawn per life. A grid world gives it little to do; its role
+  here is to bring in the delta rule chapter 3 depends on.
+- **Noradrenaline and acetylcholine.** A cell reading `|δ|` over time scales the learning rates and the action
+  noise. World: lives whose meanings are stable or switch often, drawn per life.
+- **Pallium clustering.** Competitive Hebb / Oja and recurrent pattern completion on the pallium, when a world
+  with noisy, occluded looks needs categories formed within a life.
+- **Delayed sickness**, with blame that lands on what was eaten (section 2).
+
+#### Not a stage
+- **Tectum.** Its innate half answers to moving and looming things, which this world lacks; its other half,
+  value choosing a place, comes with the basal ganglia; the value cells already have their own synapse from
+  every eye column. A target map with one winner was neutral to harmful at generation 0 (STAGE_LOG v35, v36).
+- **Camera eyes.** Nine columns instead of five cost compute and change little in a world this simple
+  (STAGE_LOG v35-v37). Revisit when a stage needs finer vision.
+
+### Chapter 3: simulating (early mammals, about 220-150 Mya)
+
+Ecological driver (Bennett): small nocturnal mammals among dinosaurs gained by planning moves before making them.
+The new structure is the six-layered **neocortex** (sensory, motor, agranular prefrontal) in a loop with the
+thalamus and basal ganglia. Birds reached similar abilities with a differently organised pallium, so
+"simulation" is a function, not uniquely a layered cortex. Planned stages: a cortex that predicts, trying actions
+in the head, replay, goals held over time, single events. The tests are the classic ones from the rat lab:
+latent learning, detours, outcome devaluation.
+
+#### Neocortex as a generative model
+- **Biology.** Cortex learns to predict its own input; the error between prediction and input drives learning
+  (Rao & Ballard 1999; Friston; Hawkins).
+- **Adds.** `cortex_l4` (input), `cortex_l23` (state, with efference copy so it predicts the consequences of
+  actions), `cortex_pred` (predicted next input), `error` (input − prediction). `cortex_l23` joins the pallium
+  as input to the striatum and the value cells.
+- **Rule.** Delta rule (M6) with `error` as teacher; Oja on `l4 -> l23`.
+- **World.** Partial observability with predictable structure: food that regrows on a schedule at positions
+  fixed per life, objects often occluded.
+- **Also here.** Curiosity about what cannot be predicted: the prediction error, or how fast it falls, as a
+  bonus to dopamine.
+- **Confidence.** Medium; predictive processing is a strong framework, not established fact.
+
+#### Vicarious trial and error
+- **Biology.** Rats pause at choice points while the hippocampus sweeps ahead along each option (Johnson & Redish
+  2007). Latent learning, detours and outcome devaluation show behaviour that model-free RL cannot produce.
+- **Adds.** Offline mode (M8): a `deliberate` cell (driven by conflict or uncertainty in the striatum) switches
+  the thalamic gate; for some internal steps motor output is suppressed, the cortex's prediction replaces real
+  input, a candidate action is fed as efference copy, and the value cells evaluate the imagined state.
+- **World.** Latent learning (a maze-like area without reward, then food at one place), devaluation (sated on one
+  food: does the animal stop working for it at once?), detour (a known path blocked mid-life).
+- **Control.** The same world model used only as a representation.
+- **Confidence.** High for the behaviour; the circuit is still debated.
+
+#### Replay and sleep
+- **Biology.** At rest the hippocampus replays sequences forward and backward (Foster & Wilson 2006); replay
+  drives consolidation and value updates. Dyna (Sutton 1990) is the RL counterpart.
+- **Adds.** A rest state triggers offline mode with no sensory input; the normal `da`-gated rules learn from what
+  is generated. World: little real experience (short lives or few rewards), safe resting.
+- **Confidence.** High for replay; medium for its necessity.
+
+#### Agranular prefrontal cortex: goals over time
+- **Biology.** Medial PFC holds rules and goals and gates which options get simulated; PFC-BG-thalamus loops
+  update working memory in a gated way (O'Reilly & Frank 2006).
+- **Adds.** `pfc` with recurrent self-excitation; a basal ganglia loop that learns when to update it, under `da`.
+- **World.** Multi-step goals with distractors (fetch a tool shown at the start of a life, carry it past food to
+  a target).
 - **Confidence.** Medium.
 
-### Chapter 4: mentalizing (primates, about 65–5 Mya)
+#### Episodic memory and counterfactuals
+- **Biology.** One-shot storage of what, where and when in the hippocampus; regret-like signals after a missed
+  better option (Steiner & Redish 2014).
+- **Adds.** Fast one-shot storage on a subset of hippocampal synapses; a counterfactual `δ` from a simulated
+  alternative. World: a rich cache that appears once per life; near misses.
+- **Confidence.** Medium.
 
-Ecological driver (Bennett, following the social brain hypothesis of Dunbar and Humphrey): large, complex
-social groups where status and alliances decide access to food and mates. The new structure is
-**granular prefrontal cortex** (with a layer 4), present in primates only (Preuss; Passingham & Wise 2012).
-Here the framework needs other agents that matter: the multi-agent world already exists (ADR-008), and
-continuous lifecycles (the continuous life cycle, STATUS.md) become necessary.
+### Chapter 4: mentalizing (primates, about 65-5 Mya)
 
-#### 4.1 A model of one's own mind (metacognition)
-- **Biology.** Granular PFC models the agent's *own* intentions and knowledge; monkeys can report confidence
-  and opt out of hard choices (Hampton 2001; Kiani & Shadlen 2009).
-- **Adds.** `gpfc` region that receives `pfc`, `cortex_l23` and `error`, and predicts the agent's own next
-  action and its success probability. It is trained by delta rule (M6) on the actual action and outcome.
-  `gpfc→striatum` can pick an "opt out" program.
-- **Experiment: opt-out under uncertainty.** A choice between two berries whose appearance is noisy (2.3
-  noise), and a third safe but small food source. Poison costs a lot.
-- **Control.** Chapter 3 final architecture.
-- **Metric.** Reward per life; whether opt-outs track difficulty.
-- **Expected.** Better choices in hard trials. The main purpose is to build the self-model that 4.2 reuses.
-- **Confidence.** Medium (metacognition is also claimed in rats and birds, and the granular-PFC link is
-  Bennett's synthesis).
+Ecological driver (Bennett, after Dunbar and Humphrey): large groups where status and alliances decide access to
+food. The new structure is **granular prefrontal cortex**, present in primates only. The world needs other
+animals that matter, and the life cycle has to become continuous (STATUS, future goals).
 
-#### 4.2 Theory of mind: the self-model applied to others
-- **Biology.** Primates infer others' goals and what they have seen (Hare, Call & Tomasello 2001 on
-  chimpanzee food competition). The "simulation theory" of mind reading: run one's own model with the
-  other's inputs.
-- **Adds.** Observation extensions (M9): other agents' facing, held object and last action in the vision
-  columns that hit an agent. A `tom` region: a copy of `gpfc`/`pfc` (growth by duplication, principle 4)
-  whose inputs come from observed agents instead of oneself; it predicts their next action and inferred
-  goal.
-- **Rule.** Delta rule on observed actions (predict what they do next; the error comes when they do it).
-- **Experiments.**
-  1. *Following an informed agent.* Some agents (e.g. older, or born with a genome that sees further) know
-     where food is; others can infer it from where they head.
-  2. *Food competition.* A dominant agent takes food it sees; subordinates do better picking food the
-     dominant one *cannot see* (requires modelling its view).
-- **Control.** 4.1.
-- **Metric.** Food per life for followers/subordinates.
-- **Confidence.** Medium; ToM in non-human primates is real but more limited than in humans, and whether it
-  needs granular PFC specifically is debated.
+- **A model of one's own mind.** `gpfc` predicts the animal's own next action and its chance of success (delta
+  rule); an opt-out programme. World: noisy looks, costly poison, a safe small alternative.
+  Confidence medium.
+- **Theory of mind.** Observation extensions (M9: others' facing, held object, last action); a `tom` region, a
+  copy of the self-model fed with what others do. World: following an informed animal; food competition with a
+  dominant animal that takes what it sees. Confidence medium.
+- **Imitation.** The inferred action of a successful animal as a teacher of one's own policy. World: a crafting
+  chain too long to find alone (a larger OHOL slice), which chain works drawn per life. Confidence medium-high
+  for great apes.
+- **Anticipating future needs.** In offline mode, a simulated future drive state replaces the current one. World:
+  seasons with a winter in which nothing regrows; storing food beforehand. Confidence low-medium.
 
-#### 4.3 Imitation and observational learning
-- **Biology.** Primates (and some birds) learn tool use by watching (e.g. chimpanzee nut cracking, learned
-  over years by watching the mother). This uses the ToM model's inferred action as a teacher signal.
-- **Adds.** `tom`'s inferred action for an observed agent feeds `striatum` as an imitation target: a `da`
-  bonus when the agent's own action matches an observed successful action (or a delta rule from observed
-  action to own policy).
-- **Experiment: crafting chain too hard to discover.** Use a larger OHOL slice (bigger OHOL slices, STATUS.md, e.g. sharp stone
-  → skewer → ... → cooked food) worth a lot of food. A few "demonstrator" agents are warm-started with the
-  skill hard-wired or pre-learned; others must acquire it within life. Randomise per life which of two
-  chains works.
-- **Control.** 4.2 (can see others but has no imitation pathway).
-- **Metric.** Fraction of naive agents that complete the chain.
-- **Confidence.** Medium–high for imitation in great apes; the mechanism is a model choice.
+### Chapter 5: speaking (hominins, about 2-0.1 Mya)
 
-#### 4.4 Anticipating future needs
-- **Biology.** The Bischof-Köhler hypothesis: only humans (and perhaps great apes and corvids; Mulcahy &
-  Call 2006) plan for a drive they do not feel right now. Bennett puts this with mentalizing, as modelling
-  one's *future self* as another mind.
-- **Adds.** In offline mode (M8), the `hypothalamus` input to simulated value can be replaced by a
-  *simulated* future drive state (e.g. "hungry, in winter").
-- **Experiment: seasons.** A long life with a winter period in which nothing regrows (M10). Carrying/storing
-  food beforehand (drop items in a spot, come back) is the only way to survive winter. The winter start is
-  signalled by a cue (e.g. day length via a body input).
-- **Control.** 4.3 with offline mode that only uses the current drive.
-- **Metric.** Winter survival.
-- **Confidence.** Low–medium; this is contested for all non-human animals.
+Ecological driver: cooperation in hunting and child care, and knowledge that accumulates across generations.
+This chapter is the least certain, both biologically and in whether a grid world can carry it.
 
-### Chapter 5: speaking (hominins, about 2–0.1 Mya)
-
-Ecological driver: cooperation in hunting and child care, and knowledge that accumulates across
-generations. Language probably relied on pre-existing capacities (shared attention, imitation, vocal
-learning, which birds evolved independently) plus a hominin-specific drive to share attention and teach
-(Tomasello). Honest scope note: this chapter is aspirational for a rate-coded grid world, but the first two
-steps are feasible and connect to the future goals in STATUS.md.
-
-#### 5.1 Innate signals (side branch, possible from chapter 1–2 onward)
-- **Biology.** Vocal or chemical alarm and food calls exist in fish, birds and monkeys (vervet alarm calls:
-  Seyfarth & Cheney). They are innate and tied to affect.
-- **Adds.** Sound channel widened to a small vector (ADR-005 allows this); `affect→out(VOCALIZE)` and
-  `sound→affect`.
-- **Experiment.** Moving predators (M10); related agents (lineages, the continuous life cycle, STATUS.md) so that calling pays
-  through kin selection. The control is agents without sound input.
-- **Confidence.** High.
-
-#### 5.2 Learned signal meaning
-- **Adds.** Plastic `sound→pallium/value` under `da`; vocalization content selectable by BG.
-- **Experiment.** A signalling game: one agent sees where food is and cannot reach it, another can reach it
-  but cannot see it; both are rewarded. The mapping from signal to meaning is not given; conventions must
-  form within a life. Different groups form different conventions.
-- **Confidence.** Medium (learned signalling in some primates and many birds).
-
-#### 5.3 Shared attention, naming, proto-grammar
-- **Adds.** A joint-attention signal: when two agents look at the same object, association between the
-  heard sound and that object is boosted (a modulator gated by `tom` detecting shared gaze).
-- **Experiment.** Cooperative crafting where the recipe is known to one agent and the materials to
-  another; instruction-following.
-- **Confidence.** Low–medium as a claim about evolution (Tomasello's view is influential but debated).
-
-#### 5.4 Language as shared simulation and cumulative culture
-- **Idea (Bennett).** Language lets one brain drive another's simulator: "the berries past the big rock are
-  poison" installs a model-based lesson without the listener tasting them. Across generations, knowledge
-  ratchets up.
-- **Experiment.** The continuous lifecycle (the continuous life cycle, STATUS.md) with a crafting tree deep enough that no single
-  life can rediscover it; measure whether the depth of crafts reached keeps rising across generations with
-  communication on and plateaus with it off.
-- **Confidence.** Speculative as a mechanism, but a clean measurable target.
+- **Innate signals** (possible from chapter 2 on, as a side branch): a sound vector, affect -> VOCALIZE and
+  sound -> affect; moving predators and related animals so that calling pays. Confidence high.
+- **Learned signal meaning**: plastic sound -> pallium and value under `da`; a signalling game where conventions
+  form within a life. Confidence medium.
+- **Shared attention and naming**: association between a heard sound and an object boosted when two animals look
+  at the same thing. Confidence low-medium.
+- **Language as shared simulation and culture** (Bennett): one brain drives another's simulator. Test: a crafting
+  tree too deep for one life; does the depth reached keep rising across generations with communication on?
+  Speculative as a mechanism, but a clean target.
 
 ---
 
-## 5. Region → function → first stage
+## 5. Region -> function -> stage
 
-This is a reference for "what does the brainstem do vs the hypothalamus" in this project.
-
-| structure | real function (simplified) | where in this plan | framework form |
+| structure | real function (simplified) | stage | framework form |
 |---|---|---|---|
-| spinal cord / brainstem pattern generators, reticular formation | complete motor programs (swim, turn, bite); posture; basic reflexes; arousal | 1.0 (`hidden` → rename `brainstem`) | evolved fixed weights; later gated by BG |
-| hypothalamus | internal-state sensing (hunger, thirst, temperature), drives, hormones; selects which goal matters | 1.2 | drive neurons from body inputs; gain modulation (M3) |
-| neuromodulatory nuclei (raphe 5-HT, VTA/SNc DA, LC NE, basal forebrain ACh) | broadcast state: satiety/patience, reward prediction, surprise, attention | 1.3 (5-HT-like), 2.5 (DA), 2.10 (NE, ACh) | named modulator regions (M2) |
-| valence / amygdala | good/bad classification of stimuli; fear and appetitive conditioning | 1.1, 1.5 (in vertebrates the pallial amygdala takes this role) | US-gated plastic projection onto valence |
-| optic tectum / superior colliculus | retinotopic target selection, orienting, looming escape | 2.1 | topographic region with lateral inhibition |
-| pallium (olfactory cortex) | pattern separation, completion, categories | 2.2, 2.3 | expansion + k-WTA + Oja/recurrent Hebb |
-| basal ganglia (striatum, GPi/SNr, STN) | action selection by disinhibition; RL actor and critic | 2.4–2.6 | striatum channels, tonic GPi, `da`-gated rules |
-| hippocampus (medial pallium) | space, sequences, episodic memory, replay | 2.8, 3.3, 3.5 | head-direction ring, place-like recurrent Hebb, one-shot storage |
-| cerebellum | timing, forward models, error-driven motor learning | 2.9 | expansion + delta rule with climbing-fibre teacher |
-| thalamus | relay and gating of input to cortex; switches between perception and imagination | 3.1–3.2 | the gate of offline mode (M8) |
-| neocortex (sensory) | generative model of the senses | 3.1 | predictive-coding layers, delta rule |
-| agranular PFC (rodents and up) | goals, working memory, which simulations to run | 3.4 | attractor + gated update loop |
-| granular PFC (primates) | model of own mind, others' minds | 4.1–4.2 | self-model; duplicated for others |
-| language areas | shared simulation | 5.x | aspirational |
+| brainstem pattern generators | complete motor programmes (turn, bite, run); reflexes | steering, valence | evolved fixed weights; programmes with a fixed meaning |
+| hypothalamus | internal state, drives; which goal matters | drives | need cells selecting modes |
+| neuromodulatory nuclei (raphe 5-HT, VTA/SNc DA, LC NE, basal forebrain ACh) | lasting states, reward prediction, uncertainty | affect (`alarm`, `serotonin`), dopamine, parked (NE, ACh) | modulator cells with receptors (M2, M3) |
+| valence / amygdala | good and bad; fear and appetitive conditioning | valence, association | value cells; US-gated plastic synapses |
+| pallium (olfactory cortex) | pattern separation, later completion and categories | pallium; parked (clustering) | expansion + k-WTA; later Oja / recurrent Hebb |
+| basal ganglia (striatum, GPi/SNr, habenula, SNc) | action selection by disinhibition; critic and actor | dopamine, basal ganglia | value cells, dopamine cell, D1/D2 under `da` |
+| hippocampus (medial pallium) | space, sequences, episodes, replay | parked; chapter 3 | place codes, recurrent plasticity, one-shot storage |
+| cerebellum | timing, forward models | parked | expansion + delta rule |
+| optic tectum | orienting, looming escape | not a stage (see chapter 2) | |
+| thalamus | relay and gating; perception against imagination | chapter 3 | the gate of offline mode (M8) |
+| neocortex | generative model of the senses | chapter 3 | predictive layers, delta rule |
+| agranular / granular PFC | goals; models of own and others' minds | chapters 3, 4 | attractor with gated update; self-model |
 
 ---
 
@@ -838,32 +476,30 @@ This is a reference for "what does the brainstem do vs the hypothalamus" in this
 
 These evolved independently and make good "does the same function need the same structure?" experiments.
 
-- **Insect mushroom body:** expansion (Kenyon cells) + dopamine-gated output synapses, i.e. stages 1.5 + 2.2
-  without a vertebrate pallium. It is the best-understood modulated associative learning circuit (the full
-  larval and adult *Drosophila* connectomes exist) and is a realistic, well-documented template for
-  implementing 1.5/2.2.
-- **Insect central complex:** head-direction ring attractor and path integration (Seelig & Jayaraman 2015),
-  the cleanest model for 2.8.
+- **Insect mushroom body:** expansion (Kenyon cells) plus dopamine-gated output synapses, the association stage
+  and the pallium without a vertebrate pallium; the best-understood modulated learning circuit (full
+  *Drosophila* connectomes exist), a realistic template.
+- **Insect central complex:** head-direction ring and path integration (Seelig & Jayaraman 2015), the cleanest
+  model for the hippocampus stage.
 - **Octopus:** complex learning with a very different, distributed brain.
-- **Birds:** mammal-level simulation and planning with a nuclear (non-layered) pallium; corvids cache food
-  (4.4 analogue).
+- **Birds:** mammal-level planning with a non-layered pallium; corvids cache food.
 
 ---
 
-## 7. Order of work
-
-Current status, and what runs next: `docs/STATUS.md`.
-
----
-
-## 8. Main sources (for further reading)
+## 7. Main sources
 
 - Bennett, M. (2023). *A Brief History of Intelligence.*
 - Cisek, P. (2019). Resynthesizing behavior through phylogenetic refinement. *Attention, Perception &
-  Psychophysics.* A stepwise evolutionary account of the brain, very close in spirit to this document.
+  Psychophysics.*
 - Grillner, S. & Robertson, B. (2016). The basal ganglia over 500 million years. *Current Biology.*
 - Striedter, G. & Northcutt, R. G. (2020). *Brains Through Time.*
 - Schultz, Dayan & Montague (1997). A neural substrate of prediction and reward. *Science.*
+- Ljungberg, Apicella & Schultz (1992). Responses of monkey dopamine neurons during learning of behavioral
+  reactions. *J. Neurophysiol.*
+- Bogacz & Brown (2003). Comparison of computational models of familiarity discrimination in the perirhinal
+  cortex. *Hippocampus.*
+- Redgrave & Gurney (2006). The short-latency dopamine signal: a role in discovering novel actions? *Nat. Rev.
+  Neurosci.*
 - Frank, M. (2005). Dynamic dopamine modulation in the basal ganglia. *J. Cogn. Neurosci.*
 - Redgrave, Prescott & Gurney (1999). The basal ganglia: a vertebrate solution to the selection problem?
 - Flavell et al. (2013). Serotonin and PDF neuropeptide control of roaming and dwelling in *C. elegans*. *Cell.*

@@ -1,4 +1,4 @@
-"""Book export and light dashboard (docs/BOOK_BRIEF.md). Run: .venv\\Scripts\\python.exe -m pytest -q tests/test_book.py"""
+"""Book export and light dashboard (book/README.md). Run: .venv\\Scripts\\python.exe -m pytest -q tests/test_book.py"""
 import base64
 
 import numpy as np

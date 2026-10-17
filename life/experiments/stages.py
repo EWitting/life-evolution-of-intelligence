@@ -1078,6 +1078,25 @@ stage(Stage("x.direct", "x_2_1_direct", "1.8", B20S, W21, VISION_CH2, BODY_17, w
             notes="TRIAL: stage 2.1 straight from the affect population (camera eyes, patches and lasting states "
                   "that add up at once): learning does not reliably come back"))
 
+# Trial (user, 2026-10-17): the affect stage itself in the world of 2.1, with states that add up, from the drives
+# population, where learning is still used (plasticity off 71 66 76), and with the eyes of chapter 1. If it works,
+# it replaces 1.8, and 2.0 and 2.1 leave the chain.
+B18S = replace(B18,
+               modulators=tuple(replace(m, accumulate=1.0) if m.name in ("alarm", "serotonin") else m for m in B18.modulators),
+               regions=tuple(replace(r, bias=-3.0 * SUM_ALARM[0], evolve_bias=True) if r.name == "flee" else
+                             replace(r, bias=-2.0 * SUM_FED[0], evolve_bias=True) if r.name == "settle" else r
+                             for r in B18.regions))
+stage(Stage("x.affect2", "x_affect_ch2world", "1.7", B18S, W21, VISION_CH1, BODY_17,
+            lambda exp: learning_world(exp, springs=SPRINGS_17, berries=LEARN_BERRIES), **_S15, adapt_init=sum_affect_init,
+            notes="TRIAL: affect from the drives population in the world of 2.1 (256 x 256, patches 70% their own "
+                  "type), lasting states that add up, chapter 1 eyes"))
+# The same with the learning rates of the drives population times 0.4 (about 0.16, where 2.0 ended): is the inherited
+# rate why learning costs more than it saves at the start?
+stage(Stage("x.affect2lr", "x_affect_ch2world_lr", "1.7", B18S, W21, VISION_CH1, BODY_17,
+            lambda exp: learning_world(exp, springs=SPRINGS_17, berries=LEARN_BERRIES), **_S15,
+            adapt_init=lambda pop, layout: sum_affect_init(pop._replace(eta=pop.eta * 0.4), layout),
+            notes="TRIAL: x.affect2 with the inherited learning rates times 0.4"))
+
 # ------------------------------------------------------------------ running
 
 EVOLUTION_OVERRIDES: dict = {}   # set from the command line (--mutation-prob), applied to every stage

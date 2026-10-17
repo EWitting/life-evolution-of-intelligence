@@ -1544,7 +1544,7 @@ vs control 186 and 307 vs 187; superseded.)
 
 ## v31 (2026-10-08, morning): the check for the rerun order; the plan
 
-The user agreed to a complete rerun of chapter 1 with habituation before association (`docs/RERUN_PLAN.md`).
+The user agreed to a complete rerun of chapter 1 with habituation before association (`docs/RERUN_PLAN.md`, removed 2026-10-17; in git history).
 The one risk checked first: does habituation still pay in the familiar 1.1 world, where long lives alone had
 already cut the standing still to 7% of ticks?
 
@@ -2312,3 +2312,37 @@ same share of the map in patches (`crowding.py`, which now scales the number of 
 Book: the page is now "Preparing the ground" (`book/wider-world.qmd`): a world with work for every part (table of
 the worlds tried, `book/data/worlds_2.1.json`), two steps, moods that build up, a little more to see, results. The
 export silences `flee`, `fed`, `settle` and `rest` for this stage (`book.LESION_REGIONS`). 52 tests.
+
+## v43 (2026-10-17): can the affect stage itself be run in the world of chapter 2?
+
+Question (user): replace stage 1.8 by the affect stage in the world of 2.1 (256 x 256, patches 70% their own type,
+lasting states that add up), from the drives population, with the eyes of chapter 1, so that 2.0 and 2.1 leave
+the chain. Trials `x.affect2` and `x.affect2lr` (the inherited learning rates times 0.4); 40 generations, weight
+mutation 0.1, each seed from its own frozen 1.7 run; lesions in 16 worlds (`trial_lesion.py`), % of intact.
+
+| run | intact | plasticity off | fed off | flee off | rest off | learning rate (median of the largest per genome) |
+|---|---|---|---|---|---|---|
+| `x.affect2`, about generation 0 (one generation run) | 641 | 111 +-6 | 92 | 97 | 70 | 0.41 (as inherited) |
+| `x.affect2` seed 0 | 892 | 106 +-6 | 93 | 90 | 54 | 0.16 |
+| `x.affect2` seed 0, 40 more generations (`--continue`) | 1313 | 103 +-1 | 83 | 77 | 41 | 0.035 |
+| `x.affect2` seed 1 | 865 | 100 +-2 | 76 | 90 | 44 | 0.00 |
+| `x.affect2` seed 2 | 1210 | 101 +-1 | 87 | 83 | 39 | 0.00 |
+| `x.affect2lr`, about generation 0 | 730 | 97 +-4 | 93 | 93 | | 0.16 |
+| `x.affect2lr` seed 0 | 1184 | **84 +-4** | 70 | 88 | 68 | 0.13 |
+| `x.affect2lr` seed 1 | 1084 | 98 +-3 | 96 | 88 | 47 | 0.00 |
+
+Reading:
+
+- The lasting states are used in every run; learning is not, except in `x.affect2lr` seed 0, which looks like 2.1
+  (plasticity off 78-86 there). `cold` is unused (105).
+- At generation 0 learning at the inherited rate (0.41, tuned in the sparse drives world) avoids poison (share
+  0.105 against 0.144) but passes up a third of the good food (56 berries against 80): a lesson spreads to
+  look-alikes. Times 0.4 it costs far less good food (71 against 80) and is about neutral (97).
+- Room for learning (`lessons.py`, the 80-generation population, learning off): 17 poison bites per life, 15 of
+  them after the first of their type, 12 visits to a type that already hurt; a perfect learner saves 30 food
+  units, 9% of intake, at a lifetime of 2150 of 4000 ticks. The room grows with lifetime (about double at the cap).
+- 40 generations is not converged: seed 0 gained another 47% in the same 16 worlds between generation 40 and 80.
+  The training curve (new worlds every generation) does not show this; compare populations in shared worlds.
+- In patches a lineage can drop learning and rely on the lasting states; a rate at 0 is a flat spot that
+  selection does not leave (also `x.direct` seed 2 after 80 generations). The 2.1 lineage reached the patches
+  with learning in heavy use and a low rate after 40 generations in open country (2.0).

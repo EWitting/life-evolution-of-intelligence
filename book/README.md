@@ -1,7 +1,21 @@
 # The book
 
 A Quarto book with one page per stage, published at https://ewitting.github.io/life-evolution-of-intelligence/.
-Design and decisions: `docs/BOOK_BRIEF.md`.
+
+## How the pages are written
+
+- One page per stage on the chain, in chain order, by name only (no stage numbers). A page is a small report,
+  with the core first and detail below it: a short introduction that names what the stage adds and just enough
+  of its world to follow, the brain diagram, the circuit, where it helps one animal followed over a few dozen
+  ticks (`strip`), the biology the stage models, the world it lives in (with its settings), the results
+  (curves, table, lesions) and the runs with links to the dashboards. Text above the world section must not
+  depend on it; a term from the biology section that the circuit needs is explained there in a few words.
+- Plain language, short paragraphs, terms explained when first used; cells are named by their fixed meaning.
+- A stage is judged by whether its circuit is used (lesions), with main not clearly worse than control. Three
+  seeds and standard errors; a single run is not evidence.
+- The page is about the brain: world tuning and tried variants in a few sentences, few raw numbers. Show what did
+  not work where it teaches something about a circuit.
+- The text is written when a stage is frozen.
 
 Prose and numbers are separate. A page is Markdown (`.qmd`) with placeholders such as
 `<div data-life="curves" data-stage="1.1"></div>`. `js/life-book.js` fills them from `data/<stage>.json`, which

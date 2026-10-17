@@ -83,8 +83,7 @@ remapping the stored populations and freezing again.
    finished run before starting the next (`scripts/probes/README.md`, step 4); no new mechanisms without the
    user; **no reruns of frozen stages**. The chapter exam (every population in every earlier world) is dropped as
    a criterion: later populations carry equipment for things earlier worlds lack. A sanity check at most.
-5. Trim (2026-10-08): nothing is removed; every cell is used somewhere on the chain. `docs/RERUN_PLAN.md` is
-   carried out and kept for reference.
+5. Trim (2026-10-08): nothing is removed; every cell is used somewhere on the chain.
 
 ## Known issues and open points
 

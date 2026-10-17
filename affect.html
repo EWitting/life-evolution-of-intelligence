@@ -36,7 +36,6 @@ ul.task-list li input[type="checkbox"] {
 <script src="site_libs/quarto-search/fuse.min.js"></script>
 <script src="site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="./">
-<link href="./wider-world.html" rel="next">
 <link href="./drives.html" rel="prev">
 <script src="site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
@@ -336,22 +335,6 @@ ul.task-list li input[type="checkbox"] {
 </li>
       </ul>
   </li>
-        <li class="sidebar-item sidebar-item-section">
-      <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
- <span class="menu-text">Chapter 2: reinforcing</span></a>
-          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
-            <i class="bi bi-chevron-right ms-2"></i>
-          </a> 
-      </div>
-      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./wider-world.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Preparing the ground</span></a>
-  </div>
-</li>
-      </ul>
-  </li>
     </ul>
     </div>
 </nav>
@@ -362,9 +345,12 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#the-circuit" id="toc-the-circuit" class="nav-link active" data-scroll-target="#the-circuit">The circuit</a></li>
+  <li><a href="#the-circuit" id="toc-the-circuit" class="nav-link active" data-scroll-target="#the-circuit">The circuit</a>
+  <ul class="collapse">
+  <li><a href="#states-that-build-up" id="toc-states-that-build-up" class="nav-link" data-scroll-target="#states-that-build-up">States that build up</a></li>
+  </ul></li>
   <li><a href="#the-biology-affect" id="toc-the-biology-affect" class="nav-link" data-scroll-target="#the-biology-affect">The biology: affect</a></li>
-  <li><a href="#the-world-every-kind-of-bush-in-its-own-patches" id="toc-the-world-every-kind-of-bush-in-its-own-patches" class="nav-link" data-scroll-target="#the-world-every-kind-of-bush-in-its-own-patches">The world: every kind of bush in its own patches</a></li>
+  <li><a href="#the-world-patches-of-mostly-one-kind" id="toc-the-world-patches-of-mostly-one-kind" class="nav-link" data-scroll-target="#the-world-patches-of-mostly-one-kind">The world: patches of mostly one kind</a></li>
   <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">Results</a>
   <ul class="collapse">
   <li><a href="#main-against-control" id="toc-main-against-control" class="nav-link" data-scroll-target="#main-against-control">Main against control</a></li>
@@ -403,20 +389,25 @@ ul.task-list li input[type="checkbox"] {
 
 </div>
 <p>Everything this brain does so far, it does about the present. A bush is in front of it, so it bites. The skin is cold, so it walks. The stomach is empty, so it forages. When the cause is gone, the behaviour is gone in the same moment.</p>
-<p>But some events say something about the minutes that follow. An animal that has just eaten well is probably standing in a good place. An animal that has just been hurt is probably standing in a bad one. To use that, the brain has to keep something of the event after it is over. This stage adds two such states: an alarm after pain, and contentment after a meal. So that the states have something to work with, the bushes in this world grow in patches of one kind each.</p>
+<p>But some events say something about the minutes that follow. An animal that has just eaten well is probably standing in a good place. An animal that has just been hurt is probably standing in a bad one. To use that, the brain has to keep something of the event after it is over. This stage adds two such states: an alarm after pain, and contentment after a meal. So that the states have something to work with, the bushes in this world grow in patches that are mostly of one kind.</p>
 <div data-life="brain" data-stage="1.8">
 
 </div>
 <section id="the-circuit" class="level2">
 <h2 class="anchored" data-anchor-id="the-circuit">The circuit</h2>
-<p>Two <em>modulators</em>, substances that a few cells release and that reach many cells at once, each released by one event and cleared slowly. And three new cells.</p>
+<p>Two <em>modulators</em>, substances that a few cells release and that reach many cells at once, and three new cells.</p>
 <ul>
-<li><strong>Alarm.</strong> Pain releases the modulator <code>alarm</code>. It drives a new cell, <strong><code>flee</code></strong>, which pushes the animal forward. After a poison bite the animal keeps going for a short while, out of the patch of poison.</li>
-<li><strong>Serotonin.</strong> A new cell, <strong><code>fed</code></strong>, fires when the animal tastes food, and releases the modulator <code>serotonin</code>. It drives a new cell, <strong><code>settle</code></strong>, which switches on <code>rest</code>, the cell of the previous stage that holds the forward step back. After a meal the animal stays where it ate, also where it is cold.</li>
+<li><strong>Alarm.</strong> Pain releases the modulator <code>alarm</code>. It drives a new cell, <strong><code>flee</code></strong>, which pushes the animal forward. After poison bites the animal keeps going for a while, out of the poisoned ground.</li>
+<li><strong>Serotonin.</strong> A new cell, <strong><code>fed</code></strong>, fires when the animal tastes food, and releases the modulator <code>serotonin</code>. It drives a new cell, <strong><code>settle</code></strong>, which switches on <code>rest</code>, the cell of the previous stage that holds the forward step back. After a good meal the animal stays where it ate, also where it is cold.</li>
 </ul>
-<p><code>hungry</code> still shuts <code>rest</code>, as before. So a fed animal stays in the good patch until it is hungry again, and then it forages, with good bushes close by.</p>
+<p><code>hungry</code> still shuts <code>rest</code>, as before. So a fed animal stays on good ground until it is hungry again, and then it forages, with good bushes close by.</p>
 <p>The two states are not a second system next to the drives. They act on the same cells: the drives decide what the animal does from what the body needs now, and the two modulators push those same modes for a while after an event.</p>
-<p>The wiring is designed. Evolution may tune every strength, and also how fast each modulator is cleared, which sets how long each state lasts.</p>
+<section id="states-that-build-up" class="level3">
+<h3 class="anchored" data-anchor-id="states-that-build-up">States that build up</h3>
+<p>A modulator is released in small amounts and cleared slowly, so its level at any moment is a running sum of what happened lately, not a record of the last event alone. The cells that read it fire only above a threshold. One poison bite passes without alarm; the animal flees only when more than one comes within a short while. It settles only after more good bites than one bush can give.</p>
+<p>That matters in this world, where a patch is mostly one kind but not only one kind. A single bite says little about the ground: a poison bush can stand in good ground, and a good bush in poor ground. Several bites close together say much more.</p>
+<p>The wiring and the thresholds are designed. Evolution may tune every strength, the thresholds, and how fast each modulator is cleared, which sets how long each state lasts.</p>
+</section>
 </section>
 <section id="the-biology-affect" class="level2">
 <h2 class="anchored" data-anchor-id="the-biology-affect">The biology: affect</h2>
@@ -424,10 +415,12 @@ ul.task-list li input[type="checkbox"] {
 <p>In small animals such states are carried by <em>neuromodulators</em>. They are released quickly and cleared slowly, and that slowness is the memory. The roundworm <em>C. elegans</em> slows down and stays where it is for minutes after it has found food, under the influence of serotonin. After a harmful touch it speeds away, and keeps going well after the touch has ended.</p>
 <p>Such a state has two sides. It is good or bad, and it makes the animal more active or less. An animal that is alarmed is in a bad and active state. An animal that is content is in a good and quiet one.</p>
 </section>
-<section id="the-world-every-kind-of-bush-in-its-own-patches" class="level2">
-<h2 class="anchored" data-anchor-id="the-world-every-kind-of-bush-in-its-own-patches">The world: every kind of bush in its own patches</h2>
-<p>In the world of the previous stage the bushes of every kind were spread evenly. There, a meal says nothing about the place: the bush that was just emptied stays empty for a long time, and what grows next to it is as likely to be poison as anywhere else. A state that lasts has nothing to work with.</p>
-<p>So the bushes now grow in patches, and every patch holds one kind. After a good meal, the neighbouring bushes are most likely good as well. After a poison bite, the neighbours are most likely poison too. What just happened says what is near.</p>
+<section id="the-world-patches-of-mostly-one-kind" class="level2">
+<h2 class="anchored" data-anchor-id="the-world-patches-of-mostly-one-kind">The world: patches of mostly one kind</h2>
+<p>In the world of the previous stage the bushes of every kind were spread evenly. There, a meal says nothing about the place: what grows next to the bush just emptied is as likely to be poison as anywhere else. A state that lasts has nothing to work with.</p>
+<p>So the bushes now grow in patches, and most bushes in a patch are of one kind. After good meals, the neighbouring bushes are most likely good as well. After poison bites, the neighbours are most likely poison too.</p>
+<p>Not every bush in a patch is of the patch’s kind. In patches of only one kind, the first bite tells the animal all it needs to know about the bushes around it, and knowing a poison by its look, the lesson of the association stage, has nothing left to do. With other kinds standing among them, there is still a reason to know a bush by its look.</p>
+<p>The world is also larger than before, four times the area for the same number of animals, with more food. In the smaller world the animals took food from each other, and the better they foraged the more they did, so that what a better forager gains was mostly hidden. This is the world the next chapter starts in.</p>
 <p>The rest is as before: the world is cold, the hot springs are spread evenly, and the four kinds of berry bush are new in every life, half of them poison.</p>
 <div data-life="settings" data-stage="1.8">
 
@@ -445,35 +438,34 @@ ul.task-list li input[type="checkbox"] {
 <div data-life="summary" data-stage="1.8">
 
 </div>
-<p>The animals with the two states do better than the control in every seed, and by about the same amount in each. Unlike in the previous stage, the rows of the table agree. Sharing a world with control animals, the animals of this stage also come out ahead: staying in a good patch keeps an animal next to its next meal, and that helps in a race for berries as much as it does among its own kind.</p>
-<p>Both populations were still improving when the runs ended. The control improves too: without any lasting state, evolution makes it rest more, which keeps some of the animals near where they ate.</p>
+<p>The animals with the two states come out ahead of the control in two seeds out of three. In the third the two end about level: re-evaluated in the same worlds the control is somewhat ahead, and when both live in one world together the main animals are slightly ahead. Over the three seeds the gain is clear when the two populations share a world, and weaker when each lives among its own kind.</p>
 </section>
 <section id="is-the-circuit-used" class="level3">
 <h3 class="anchored" data-anchor-id="is-the-circuit-used">Is the circuit used?</h3>
 <div data-life="lesions" data-stage="1.8">
 
 </div>
-<p>Both new states are used. Silencing <code>fed</code> or <code>settle</code> gives nearly the same result, because they form one chain: without either, a meal leaves no serotonin behind and the animal no longer stays. Silencing <code>flee</code> costs less. The alarm is short and acts only after a poison bite, which is a small part of a life.</p>
-<p>Two things from earlier stages have lost their use in this world.</p>
+<p>The two states are used in every seed. Silencing <code>flee</code> costs the most of the new cells: the alarm now acts on a run of poison bites, which in these mixed patches is the clearest sign of bad ground. <code>fed</code> and <code>settle</code> are two links of one chain and cost about the same. <code>rest</code>, through which both staying after a meal and staying in the warmth act, costs more than either.</p>
+<p>Two things from earlier stages are not used in this world.</p>
 <ul>
-<li>Silencing <code>cold</code> or <code>warm_seek</code> no longer costs anything. In the previous stage a fed animal walked while it was cold, until it found warmth. Here that walk takes it out of a good patch, and staying where the food is turns out to be worth more than being warm.</li>
-<li>Switching the learning off costs little. In a patch of one kind, the first bite tells the animal what it needs to know about all the bushes around it, and the alarm carries it away from them. Knowing a poison by its look matters less when poison no longer stands between the good bushes.</li>
+<li>Silencing <code>cold</code> or <code>warm_seek</code> costs nothing, as with the first version of this stage. A fed animal that walks off in search of warmth leaves the good ground, and staying where the food is turns out to be worth more.</li>
+<li>Switching the learning off costs nothing either. In these patches the look of a bush and the ground it stands on say much the same thing, and the animals lean on the ground: two poison bites in a row and the alarm carries them off. Learning is not lost, though. Its strength is still there in every seed, at about the level where a lesson stays on the food it was learned about. What keeps it from paying is that a lesson about one berry spreads to the berries that look like it. That is the problem the next chapter starts with.</li>
 </ul>
-<p>Neither was removed. The cells are part of the previous stages as they were frozen, and a later world may need them again.</p>
+<p>Neither was removed. The cells belong to the previous stages as they were frozen, and the next stages need the learning.</p>
 </section>
 <section id="after-a-bite" class="level3">
 <h3 class="anchored" data-anchor-id="after-a-bite">After a bite</h3>
 <div data-life="table" data-stage="1.8" data-example="after_a_bite">
 
 </div>
-<p>The two states can be seen in what the animals do in the twenty ticks after a bite. After a poison bite the animals of this stage take more steps than the control. After a good meal they take almost none.</p>
+<p>After poison bites the animals of this stage take a few more steps than the control, and after a good meal a little fewer. The differences are small in this measure, because one bite alone no longer sets a state off: it takes several.</p>
 </section>
 <section id="how-a-life-is-spent" class="level3">
 <h3 class="anchored" data-anchor-id="how-a-life-is-spent">How a life is spent</h3>
 <div data-life="table" data-stage="1.8" data-example="life_spent">
 
 </div>
-<p>Both populations stand still for most of their life. Much of that time they bite at nothing: an animal that is held in place by <code>rest</code> still has its grasp programme, and a bite costs little.</p>
+<p>Both populations stand still for most of their life. Much of that time they bite at nothing: an animal held in place by <code>rest</code> still has its grasp programme, and a bite costs little.</p>
 </section>
 </section>
 <section id="the-runs-behind-this-page" class="level2">
@@ -906,9 +898,6 @@ ul.task-list li input[type="checkbox"] {
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="./wider-world.html" class="pagination-link" aria-label="Preparing the ground">
-        <span class="nav-page-text"><span class="chapter-title">Preparing the ground</span></span> <i class="bi bi-arrow-right-short"></i>
-      </a>
   </div>
 </nav>
 </div> <!-- /content -->

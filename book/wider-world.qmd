@@ -77,6 +77,8 @@ repaired first. After that, the patches kept it.
 
 ## Results
 
+How to read the table and the charts: see [How a stage is judged](index.qmd#sec-judged).
+
 ### The run
 
 This stage has no control, because there is no new circuit to test. The comparison is with the animals as they

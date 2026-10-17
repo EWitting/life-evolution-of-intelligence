@@ -15,7 +15,8 @@ bitten comes to mean *bad*.
 
 One new cell and one change to existing synapses:
 
-- **`us_pain`**, the *teacher*: driven by pain alone. When it fires, it broadcasts a teaching signal.
+- **`us_pain`**, the *teacher*: driven by pain alone. When it fires, it broadcasts a teaching signal. (*US*
+  stands for *unconditioned stimulus*: something that matters without any learning, as pain does.)
 - The synapses from the eyes' **look** inputs onto the aversive cells `valence_av`, which evolution shaped in
   earlier stages, can now also change during a life. A synapse grows when its input was just active and the
   teacher fires.
@@ -54,7 +55,7 @@ This is why the lesson has to land on the right food in the first place.
 One animal from the last generation, at two moments of its life.
 
 First, its first bite of a kind of berry that is poison in this life. Before the bite the aversive cells are
-silent and `grasp` fires. One tick after the bite the pain arrives, the teacher `us_pain` fires, and the aversive
+silent and `grasp` fires. One tick after the bite the pain arrives, the teacher fires, and the aversive
 cells and `no_feed` switch on by reflex, as they did before this stage. What cannot be seen is the change the
 teacher leaves behind in the synapses.
 
@@ -107,6 +108,8 @@ what it eats.
 :::
 
 ## Results
+
+How to read the table and the charts: see [How a stage is judged](index.qmd#sec-judged).
 
 ### Main against control
 

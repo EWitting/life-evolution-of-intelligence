@@ -7,9 +7,13 @@ Each stage adds a small circuit to the brain of the previous stage and changes t
 has something to be good for. Evolution then gets a number of generations to put the circuit to use. A page of
 this book is the report of one stage: what was added and why, the biology it is modelled on, and what happened.
 
-The concept of explaining cognition in steps following evolution is heavily inspired by the book *A Brief History Of Intelligence* by Max Bennett. However, the individual stages do not match one-to-one with the experiments mentioned in the book, and (while I do recommend it) it is not necessary to have read Bennett's work to be able to follow along.
+The concept of explaining cognition in steps following evolution is heavily inspired by the book *A Brief History of Intelligence* by Max Bennett. However, the individual stages do not match one-to-one with the experiments mentioned in the book, and (while I do recommend it) it is not necessary to have read Bennett's work to be able to follow along.
 
-Disclaimer: this work is not guaranteed to be scientifically accurate and match exactly with real brains. It is a unique blend between staying close to nature, but also just "going for it" and building up to something advanced based on what works, not restricted by having every choice requiring a citation. I personally think that, while not scientific enough to be applicable to medicine, and not optimized enough to replace machine learning algorithms, understanding these experiments builds intuition about intelligence that could seriously prove useful in either domain.
+A disclaimer: this work is not guaranteed to be scientifically accurate, and its brains do not match real brains
+exactly. It stays close to nature where it can, and elsewhere it just "goes for it": it builds up to something
+advanced from what works, without a citation for every choice. It is not scientific enough to be used in
+medicine, and not optimized enough to replace machine learning algorithms. Still, I think that following these
+experiments builds an intuition about intelligence that could prove useful in both.
 
 ## The animals and their world
 
@@ -27,7 +31,7 @@ slice of the game's rules at each stage and a larger one as the brain grows.
 
 An animal senses the world through a few coarse "eyes": a handful of directions, in each of which it sees whether
 something is there, how near it is, and what it looks like. What something looks like is a short list of numbers,
-its *appearance*. It can step forward, turn left or right, and grasp what is in front of it.
+its *look*. It can step forward, turn left or right, and grasp what is in front of it.
 
 ## The brain
 
@@ -43,15 +47,18 @@ hurts", that later stages can build on.
 
 ## How evolution runs
 
-A population is a set of genomes, each describing evolved synapse strengths and neuromodulator properties. Each genome lives as multiple siblings in a shared world. The genomes that did best
-have children, each from two parents, with a few mutations. That is one generation.
+A population is a set of genomes. A genome is what an animal inherits: the strengths of its evolved synapses, and
+a few other settings, such as how long a mood lasts once it is set off. Each genome is born as several identical
+animals, and the animals of all genomes share one world. The genomes that did best have children, each from two
+parents, with a few mutations. That is one generation.
 
 **Fitness** is what selection rewards. Here it is the *well-fed lifetime*: how long the animal lived, counted
 from its first meal, with each tick weighted by how full its stomach was. An animal that never eats scores zero.
 
-Evolved genomes are carried over to following stages, instead of starting from scratch any time a new module is added.
+A stage does not start from scratch. It starts from the evolved population of the stage before it, with the new
+circuit added.
 
-## How a stage is judged
+## How a stage is judged {#sec-judged}
 
 One life is mostly luck, and one evolution run can end almost anywhere. So every stage is run three times with
 different random seeds, and every result is given as a mean with its standard error over those seeds.
@@ -68,6 +75,17 @@ A stage succeeds when two things hold:
 
 A circuit that is not used is left out of the brain, and the page says so.
 
+### Reading the results
+
+The **results table** gives fitness in up to three rows, which measure the same thing with less and less noise.
+The first is taken from the last generations as they ran. In the second, every final population lives again in
+the same set of worlds, so that no population can owe its score to easier worlds. In the third, *head to head*,
+main and control animals live together and compete for the same bushes.
+
+The **lesion chart** has one bar per region: the fitness of the population with that region silenced, as a
+percentage of the intact population. A short bar means the animals depended on that region. A bar near 100 means
+they did as well without it. The dots are the seeds, and dots far apart mean the seeds disagree.
+
 ## How to read a stage page
 
 Every page starts with the brain. A short introduction says what the stage adds, and the diagram of the brain
@@ -75,6 +93,8 @@ follows right below it. Then come, in order of increasing detail: how the new ci
 modelled on, the world it was tested in, the results, and the list of runs behind them, with a link to a
 *dashboard* that replays the last generation of a run. Where it helps, a page zooms in on one animal over a few
 dozen ticks, right after the circuit, so that you can watch the circuit work.
+
+The diagrams and charts show more when you point at a box, an arrow, a bar or a curve, or tap it on a phone.
 
 The numbers, graphs and diagrams are drawn from data files that are written when a stage is run. Only the text
 is written by hand.

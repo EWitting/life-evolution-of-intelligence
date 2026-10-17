@@ -1,6 +1,6 @@
 # Roadmap {#sec-roadmap .unnumbered}
 
-This page says where the book is going. Only the first chapter is written. Everything after it is a plan, and the
+This page says where the book is going. The first chapter is written and the second has begun. Everything after that is a plan, and the
 plan changes as the experiments come in: stages have already been moved, merged and left out, and that will
 happen again.
 
@@ -10,7 +10,7 @@ to a group of animals, and each builds on the brain of the chapter before it.
 | chapter | animals | what the brain gains | |
 |---|---|---|---|
 | 1. Steering | the first worms | good and bad, needs, moods, a first kind of learning | written |
-| 2. Reinforcing | the first fish | learning from reward what to do | next |
+| 2. Reinforcing | the first fish | learning from reward what to do | in progress |
 | 3. Simulating | the first mammals | trying something in the head before doing it | planned |
 | 4. Mentalizing | primates | a model of its own mind, and of the minds of others | planned |
 | 5. Speaking | humans | knowledge that passes from one brain to another | far off |

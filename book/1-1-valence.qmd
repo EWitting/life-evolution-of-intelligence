@@ -11,7 +11,7 @@ poison, and a poison bite hurts.
 
 <div data-life="brain" data-stage="1.1"></div>
 
-Hover over a box or an arrow for details. The dark arrows are the designed wiring described below. The grey ones
+Point at or tap a box or an arrow for details. The dark arrows are the designed wiring described below. The grey ones
 were left to evolution.
 
 ## The circuit
@@ -81,6 +81,8 @@ avoid can be inherited. Learning it within a life is the subject of a later stag
 
 ## Results
 
+How to read the table and the charts: see [How a stage is judged](index.qmd#sec-judged).
+
 ### Main against control
 
 The control is the brain of the previous stage in this world. It cannot feel pain or taste at all, so it can only avoid
@@ -105,17 +107,9 @@ Whether a control finds the solution within the generations it is given is a mat
 short lives and many more generations, two of three controls did, late and suddenly, after dozens of generations
 without progress. If a control's curve above stays flat, that control had not found it yet.
 
-The three rows measure the same thing with less and less noise. The first is taken from the generations as they
-ran. The second gives every final population the same eight worlds. In the third, main and control animals live
-together and compete for the same bushes, so a difference cannot come from one population having had an easier
-world.
-
 ### Is the circuit used?
 
 <div data-life="lesions" data-stage="1.1"></div>
-
-Read this chart region by region. A short bar means the animals depended on that region. A bar near 100 means
-they did as well without it, and three dots far apart mean the seeds disagree.
 
 The two halves of the circuit are not used equally. The aversive side, `valence_av` and `no_feed`, is what the
 animals depend on. The appetitive side, `valence_app` and `grasp`, matters much less: the reflexes of the previous

@@ -65,6 +65,8 @@ new in every life, half of them poison.
 
 ## Results
 
+How to read the table and the charts: see [How a stage is judged](index.qmd#sec-judged).
+
 ### Main against control
 
 The control is the brain of the previous stage in this world of patches. It feels pain and tastes food as before,

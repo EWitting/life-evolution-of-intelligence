@@ -29,9 +29,18 @@
     if (!tip) { tip = el('div', 'lb-tip'); document.body.appendChild(tip); }
     tip.innerHTML = html; tip.style.display = 'block';
     const w = tip.offsetWidth, x = Math.min(ev.clientX + 14, window.innerWidth - w - 8);
-    tip.style.left = Math.max(4, x) + 'px'; tip.style.top = (ev.clientY + 14) + 'px';
+    const y = Math.min(ev.clientY + 14, window.innerHeight - tip.offsetHeight - 8);
+    tip.style.left = Math.max(4, x) + 'px'; tip.style.top = Math.max(4, y) + 'px';
   }
   function hideTip() { if (tip) tip.style.display = 'none'; }
+  // details on hover, and on a tap on a phone; a tap anywhere else closes them
+  let leaveTip = hideTip;
+  function hover(node, show, leave = hideTip) {
+    node.addEventListener('mousemove', show);
+    node.addEventListener('mouseleave', leave);
+    node.addEventListener('click', e => { e.stopPropagation(); if (leaveTip !== leave) leaveTip(); leaveTip = leave; show(e); });
+  }
+  document.addEventListener('click', () => { leaveTip(); leaveTip = hideTip; });
 
   const METRICS = {fit_mean: 'fitness (well-fed lifetime)', alive_ticks: 'lifetime (ticks)', eaten: 'food eaten',
     pain: 'pain received', poison_frac: 'share of berries eaten that were poison', temp_mean: 'body temperature',
@@ -106,14 +115,13 @@
       s += `<rect class="lb-hit" x="${m.l}" y="${m.t}" width="${W - m.l - m.r}" height="${H - m.t - m.b}"/></svg>`;
       plot.innerHTML = s;
       const svg = plot.firstChild, cross = svg.querySelector('.lb-cross'), hit = svg.querySelector('.lb-hit');
-      hit.addEventListener('mousemove', ev => {
+      hover(hit, ev => {
         const r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) * W / r.width;
         const g = Math.max(0, Math.min(G - 1, Math.round((px - m.l) * (G - 1) / (W - m.l - m.r))));
         cross.style.display = ''; cross.querySelector('line').setAttribute('x1', x(g)); cross.querySelector('line').setAttribute('x2', x(g));
         cross.querySelectorAll('circle').forEach((c, i) => { const v = series[i].mean[Math.min(g, series[i].mean.length - 1)]; c.setAttribute('cx', x(g)); c.setAttribute('cy', y(v)); });
         showTip(ev, `<b>generation ${g}</b>` + series.map(q => `<div><i class="lb-key ${q.c}"></i>${q.g} <b>${fmt(q.mean[Math.min(g, q.mean.length - 1)])}</b> <span class="lb-muted">${q.runs.map(r => fmt(r[Math.min(g, r.length - 1)])).join(' · ')}</span></div>`).join(''));
-      });
-      hit.addEventListener('mouseleave', () => { cross.style.display = 'none'; hideTip(); });
+      }, () => { cross.style.display = 'none'; hideTip(); });
     }
     draw();
   }
@@ -144,8 +152,7 @@
     root.innerHTML = s + `<div class="lb-caption">Each region is silenced in turn (no activity, no outgoing synapses) and the final population lives again in ${ev.worlds} shared worlds. Bar = mean over the seeds, dots = the seeds. A region that the animals use costs fitness when silenced; a bar at 100 means the population does as well without it.</div>`;
     root.querySelectorAll('.lb-row').forEach(g => {
       const r = rows[+g.dataset.i];
-      g.addEventListener('mousemove', e => showTip(e, `<b>${esc(r.name)}</b> silenced<div>${fmt(r.p.mean, 1)}% of intact (± ${fmt(r.p.se, 1)})</div><div class="lb-muted">per seed: ${r.p.seeds.map(v => fmt(v, 0)).join(' · ')}</div>`));
-      g.addEventListener('mouseleave', hideTip);
+      hover(g, e => showTip(e, `<b>${esc(r.name)}</b> silenced<div>${fmt(r.p.mean, 1)}% of intact (± ${fmt(r.p.se, 1)})</div><div class="lb-muted">per seed: ${r.p.seeds.map(v => fmt(v, 0)).join(' · ')}</div>`));
     });
   }
 
@@ -256,21 +263,18 @@
     root.querySelectorAll('.lb-edge').forEach(g => {
       const p = PROJ[+g.dataset.p];
       const range = p.dst === 'out' && p.dst_range.length ? ` (${D.brain.actions.slice(p.dst_range[0], p.dst_range[1]).join(', ')})` : '';
-      g.addEventListener('mousemove', e => showTip(e, `<b>${esc(p.src + sel(p))} → ${esc(p.dst)}${esc(range)}</b><div>${p.rule !== 'fixed' ? `learned within a life (rule: ${esc(p.rule)}${p.modulator ? ', gated by ' + esc(p.modulator) : ''})` : p.hard ? 'hard-wired' : 'evolved'}, ${p.src === 'in' && !p.hard ? 'mixed signs' : p.sign < 0 ? 'inhibitory' : 'excitatory'}${p.new ? ', added in this stage' : ''}</div><div>${fmt(p.synapses, p.synapses < 10 ? 0 : 0)} synapses, mean strength ${fmt(p.mean_abs)}${p.designed !== null && p.designed !== undefined ? ` (designed at ${fmt(Math.abs(p.designed))})` : ''}</div>`));
-      g.addEventListener('mouseleave', hideTip);
+      hover(g, e => showTip(e, `<b>${esc(p.src + sel(p))} → ${esc(p.dst)}${esc(range)}</b><div>${p.rule !== 'fixed' ? `learned within a life (rule: ${esc(p.rule)}${p.modulator ? ', gated by ' + esc(p.modulator) : ''})` : p.hard ? 'hard-wired' : 'evolved'}, ${p.src === 'in' && !p.hard ? 'mixed signs' : p.sign < 0 ? 'inhibitory' : 'excitatory'}${p.new ? ', added in this stage' : ''}</div><div>${fmt(p.synapses, p.synapses < 10 ? 0 : 0)} synapses, mean strength ${fmt(p.mean_abs)}${p.designed !== null && p.designed !== undefined ? ` (designed at ${fmt(Math.abs(p.designed))})` : ''}</div>`));
     });
     const lasts = m => m.lasts ? `Released at once and cleared slowly: it stays for about ${fmt(m.lasts, 0)} ticks (designed at ${fmt(m.lasts_designed, 0)}).` : 'Follows the cell that releases it, without delay.';
     root.querySelectorAll('.lb-mod').forEach(g => {
       const l = MODS[+g.dataset.m];
       const acts = l.proj ? `gates the learning of ${esc(l.proj.src + sel(l.proj))} → ${esc(l.proj.dst)}` : `acts on ${esc(l.dst)} (${l.how === 'gain' ? 'scales its response' : 'adds to its drive'}, sensitivity ${fmt(l.sens)})`;
-      g.addEventListener('mousemove', e => showTip(e, `<b>${esc(l.m.name)}</b> modulator${l.m.new ? ', added in this stage' : ''}<div>released by ${esc(l.src)}, ${acts}</div><div class="lb-muted">${lasts(l.m)}</div>`));
-      g.addEventListener('mouseleave', hideTip);
+      hover(g, e => showTip(e, `<b>${esc(l.m.name)}</b> modulator${l.m.new ? ', added in this stage' : ''}<div>released by ${esc(l.src)}, ${acts}</div><div class="lb-muted">${lasts(l.m)}</div>`));
     });
     root.querySelectorAll('.lb-reg').forEach(g => {
       const r = REG.find(o => o.name === g.dataset.r), ins = PROJ.filter(p => p.dst === r.name), outs = PROJ.filter(p => p.src === r.name);
       const rel = (D.brain.modulators || []).filter(m => m.pos === r.name).map(m => m.name), rec = (r.receptors || []).map(rc => rc[0]);
-      g.addEventListener('mousemove', e => showTip(e, `<b>${esc(r.name)}</b> ${r.size} neuron${r.size === 1 ? '' : 's'}${r.new ? ', added in this stage' : ''}<div class="lb-muted">from: ${esc([...new Set(ins.map(p => p.src))].join(', ') || '–')}</div><div class="lb-muted">to: ${esc([...new Set(outs.map(p => p.dst))].join(', ') || '–')}</div>${rel.length ? `<div class="lb-muted">releases: ${esc(rel.join(', '))}</div>` : ''}${rec.length ? `<div class="lb-muted">receptors for: ${esc(rec.join(', '))}</div>` : ''}`));
-      g.addEventListener('mouseleave', hideTip);
+      hover(g, e => showTip(e, `<b>${esc(r.name)}</b> ${r.size} neuron${r.size === 1 ? '' : 's'}${r.new ? ', added in this stage' : ''}<div class="lb-muted">from: ${esc([...new Set(ins.map(p => p.src))].join(', ') || '–')}</div><div class="lb-muted">to: ${esc([...new Set(outs.map(p => p.dst))].join(', ') || '–')}</div>${rel.length ? `<div class="lb-muted">releases: ${esc(rel.join(', '))}</div>` : ''}${rec.length ? `<div class="lb-muted">receptors for: ${esc(rec.join(', '))}</div>` : ''}`));
     });
   }
 
@@ -289,7 +293,7 @@
     const S = D.settings, w = S.world, e = S.evolution;
     const rows = [['World', `${w.height} × ${w.width} cells, ${w.num_agents} animals`], ['Objects', esc(S.objects.filter(n => !/Empty/.test(n) && /Bush|Onion|Spring/.test(n)).filter((n, i, a) => a.indexOf(n) === i).join(', '))],
       ['Stomach', `holds ${w.max_food}; born ${Math.round(100 * w.start_food)}% full; loses ${w.hunger_per_tick} per tick at rest, +${Math.round(100 * w.move_cost)}% when walking, +${Math.round(100 * w.turn_cost)}% when turning`],
-      ['Eyes', `${S.vision.columns} directions over ${S.vision.fov_degrees}°, range ${S.vision.range} cells, ${S.vision.appearance_dim} appearance features per object`],
+      ['Eyes', `${S.vision.columns} directions over ${S.vision.fov_degrees}°, range ${S.vision.range} cells, ${S.vision.appearance_dim} numbers for the look of each object`],
       ['Life', `${e.ticks_per_generation} ticks, one life per individual`],
       ['Evolution', `${w.num_agents / e.siblings} genomes × ${e.siblings} siblings, ${e.generations} generations, ${e.crossover ? 'two parents per child' : 'one parent per child'}, a weight mutates with probability ${e.weight_mutation_prob}`],
       ['Learning within a life', e.plastic ? 'yes' : 'none: every weight is inherited']];
@@ -369,11 +373,10 @@
     root.querySelector('.lb-striplegend').innerHTML = [...seen].sort((a, b) => a - b).map(o => { const ob = X.objects[o]; return `<span><i class="lb-objkey${ob.kind === 'empty bush' ? ' lb-hollow' : ''}" style="--c:${col(o)}"></i>${esc(ob.name)}${ob.effect === 'poison' ? ' (poison, ✕)' : ''}</span>`; }).join('')
       + '<span><i class="lb-objkey lb-tri"></i>the animal (points where it faces); grey = others</span>';
     heat.addEventListener('click', e => { const t = e.target.dataset.t; if (t !== undefined) show(+t); });
-    heat.addEventListener('mousemove', e => {
+    hover(heat, e => {
       const t = e.target.dataset.t; if (t === undefined) return hideTip();
       const s = steps[+t]; showTip(e, `<b>tick ${s.tick}</b>: ${esc(X.actions[s.action])}` + rows.map(r => `<div>${esc(r.label)} <b>${fmt(r.get(s), 2)}</b></div>`).join(''));
     });
-    heat.addEventListener('mouseleave', hideTip);
     root.querySelector('input').addEventListener('input', e => show(+e.target.value));
     root.querySelector('.lb-controls').addEventListener('click', e => {
       const a = e.target.dataset.a; if (!a) return;

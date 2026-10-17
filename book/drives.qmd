@@ -58,6 +58,8 @@ The food is as before: four kinds of berry bush, new in every life, half of them
 
 ## Results
 
+How to read the table and the charts: see [How a stage is judged](index.qmd#sec-judged).
+
 ### Main against control
 
 The control is the brain of the previous stage in this cold world. It gets cold and pays for it, and can do

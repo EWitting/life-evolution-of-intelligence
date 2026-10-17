@@ -6,32 +6,11 @@ Until now the brain has only looked outward. It sees, it tastes and it feels pai
 stomach is or how warm its body is. An animal that cannot feel its own state can do only one thing at a time, all
 the time: these animals forage whether they are starving or stuffed.
 
-This stage gives the body a second need, warmth, and gives the brain two cells that report on the body. With two
-needs there is, for the first time, something to decide: which one to look after now.
+This stage makes the world cold, which gives the body a second need, warmth, and it gives the brain two cells that
+report on the body: one for a cold skin and one for an emptying stomach. With two needs there is, for the first
+time, something to decide: which one to look after now.
 
-## The world: cold, with warm places
-
-The world of the previous stage becomes cold. A cold body burns its food faster, so an animal that stays cold
-starves sooner. Scattered through the world are a few hot springs, each warming the ground around it. An animal
-warms up slowly when it is near one and cools down slowly when it leaves.
-
-The animal cannot see where it is warm. It feels the temperature of its own skin and nothing more.
-
-The food is as before: four kinds of berry bush, new in every life, half of them poison.
-
-<div data-life="settings" data-stage="1.7"></div>
-
-## The biology: drives
-
-A drive is a signal from the body about something it needs: food, water, warmth, sleep. In vertebrates these
-signals are gathered in the *hypothalamus*, where small groups of neurons read the blood and the body and fire
-when a need is not met. They do not move a muscle themselves. They change what the rest of the brain does: which
-behaviour is switched on, and which is held back.
-
-The way the animals here find warmth is older still. A bacterium or a worm that is in a bad place does not know
-where the good place is. It moves, and when things are good it stops moving. This is *kinesis*: no map and no
-sense of direction, only a rule about when to keep going. It is enough to end up, most of the time, where it is
-good.
+<div data-life="brain" data-stage="1.7"></div>
 
 ## The circuit
 
@@ -45,12 +24,37 @@ Four new cells.
   `warm_seek` and `rest`. A hungry animal forgets about warmth and forages as it did before; a fed animal looks
   after its temperature.
 
+The animal has no map of where it is warm. It keeps walking while it is cold and stops where it is warm, and that
+is enough to end up near warmth most of the time.
+
 All of these connections are designed, and evolution may tune their strength. One set is left to evolution
 entirely: synapses from `hungry` onto the cells that feed (the grasp programme, the cell that blocks the bite, the
 appetitive cells and the ganglion). They start at zero. If it pays to bite less on a full stomach, this is where
 evolution can build it.
 
-<div data-life="brain" data-stage="1.7"></div>
+## The biology: drives
+
+A drive is a signal from the body about something it needs: food, water, warmth, sleep. In vertebrates these
+signals are gathered in the *hypothalamus*, where small groups of neurons read the blood and the body and fire
+when a need is not met. They do not move a muscle themselves. They change what the rest of the brain does: which
+behaviour is switched on, and which is held back.
+
+The way the animals here find warmth is older still. A bacterium or a worm that is in a bad place does not know
+where the good place is. It moves, and when things are good it stops moving. This is *kinesis*: no map and no
+sense of direction, only a rule about when to keep going. It is enough to end up, most of the time, where it is
+good.
+
+## The world: cold, with warm places
+
+The world of the previous stage becomes cold. A cold body burns its food faster, so an animal that stays cold
+starves sooner. Scattered through the world are a few hot springs, each warming the ground around it. An animal
+warms up slowly when it is near one and cools down slowly when it leaves.
+
+The animal cannot see where it is warm. It feels the temperature of its own skin and nothing more.
+
+The food is as before: four kinds of berry bush, new in every life, half of them poison.
+
+<div data-life="settings" data-stage="1.7"></div>
 
 ## Results
 

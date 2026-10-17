@@ -5,34 +5,14 @@
 The animal of the previous stage steers by reflex. What it sees is wired, through a small ganglion, straight to
 its motor neurons. It has no way of knowing what happened after it bit something.
 
-This stage gives it that. It adds a handful of neurons that stand for *this is good* and *this is bad*, and puts
-food in the world that is bad to eat.
+This stage gives it that. It adds a handful of neurons that stand for *this is good* and *this is bad*, a sorting
+of the world that is called *valence*. And it puts food in the world that is bad to eat: two kinds of berry are
+poison, and a poison bite hurts.
 
-## The world: two kinds of berry are poison
+<div data-life="brain" data-stage="1.1"></div>
 
-There are now six kinds of berry bush instead of four. They look alike, in the way that different berries look
-alike: each kind has the shape of a bush and its own colour.
-
-Four kinds are food. Two are poison, and always the same two. Eating a poison berry empties the stomach by about
-as much as a good berry fills it, and it hurts for a moment.
-
-Because the same two kinds are poison in every life, nothing has to be learned during a life. Which colours to
-avoid can be inherited. Learning it within a life is the subject of a later stage.
-
-<div data-life="settings" data-stage="1.1"></div>
-
-## The biology: valence
-
-In small animals, most sensory neurons fall into two classes. Some respond to things worth approaching, such as
-the smell of food. Others respond to things worth avoiding, such as a harmful chemical or a hard touch on the
-nose. The two classes converge onto a few interneurons that bias the animal towards carrying on or turning away.
-
-*Valence* is the name for this sorting of the world into good and bad. In the worm *C. elegans*, a much-studied
-animal with 302 neurons, harmful stimuli do two things at once: they trigger a turn, and they stop the pumping of
-the throat with which the worm feeds. Max Bennett argues that this sorting is what the first brains were for.
-
-The worm is only a stand-in. The animal that this chapter is about, the common ancestor of animals with a left
-and a right side, left no nervous system to look at.
+Hover over a box or an arrow for details. The dark arrows are the designed wiring described below. The grey ones
+were left to evolution.
 
 ## The circuit
 
@@ -57,13 +37,8 @@ inhibition is called *disinhibition*, and it is a common arrangement in real ner
 value turn into the right action for the situation: bite when the good thing is in front of the mouth, and not
 before.
 
-The aversive cells do what the worm does. They drive the motor neurons for turning, and through `no_feed` they
-shut down biting.
-
-<div data-life="brain" data-stage="1.1"></div>
-
-Hover over a box or an arrow for details. The dark arrows are the designed wiring described above. The grey ones
-were left to evolution.
+The aversive cells do what a worm does when something hurts (more on that below). They drive the motor neurons
+for turning, and through `no_feed` they shut down biting.
 
 ## Watching it work
 
@@ -77,6 +52,32 @@ The animal turns away. A few ticks later the pain has faded and it is eating aga
 
 Nothing was learned here. The animal will react in the same way the next time. What stops it from biting poison
 often is the evolved input from the eyes, which acts before the bite.
+
+## The biology: valence
+
+In small animals, most sensory neurons fall into two classes. Some respond to things worth approaching, such as
+the smell of food. Others respond to things worth avoiding, such as a harmful chemical or a hard touch on the
+nose. The two classes converge onto a few interneurons that bias the animal towards carrying on or turning away.
+
+In the worm *C. elegans*, a much-studied animal with 302 neurons, harmful stimuli do two things at once: they
+trigger a turn, and they stop the pumping of the throat with which the worm feeds. Max Bennett argues that this
+sorting into good and bad is what the first brains were for.
+
+The worm is only a stand-in. The animal that this chapter is about, the common ancestor of animals with a left
+and a right side, left no nervous system to look at.
+
+## The world: two kinds of berry are poison
+
+There are now six kinds of berry bush instead of four. They look alike, in the way that different berries look
+alike: each kind has the shape of a bush and its own colour.
+
+Four kinds are food. Two are poison, and always the same two. Eating a poison berry empties the stomach by about
+as much as a good berry fills it, and it hurts for a moment.
+
+Because the same two kinds are poison in every life, nothing has to be learned during a life. Which colours to
+avoid can be inherited. Learning it within a life is the subject of a later stage.
+
+<div data-life="settings" data-stage="1.1"></div>
 
 ## Results
 

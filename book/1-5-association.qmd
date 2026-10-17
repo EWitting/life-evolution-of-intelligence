@@ -3,63 +3,25 @@
 <div data-life="status" data-stage="1.5"></div>
 
 Until now everything the animal knows was put there by evolution. That works for poison that looks the same in
-every generation. It cannot work for food that is new.
+every generation. It cannot work for food that is new, and in this stage all food is new: every kind of berry
+gets a new colour in every life, and which kinds are poison is drawn anew.
 
 This stage adds the simplest kind of learning from experience: after a bite that hurts, the look of what was
 bitten comes to mean *bad*.
 
-## The world: nothing is familiar
-
-There are four kinds of berry bush, and all four are new in every life. Each life draws a new colour for every
-kind, and draws which two of the four are poison. Nothing an ancestor learned about colours is worth inheriting.
-
-The bushes still look like berry bushes. A new kind differs from the others in its colour, not in its shape, the
-way a new berry is recognisable as a berry.
-
-A poison berry costs about what a good berry gives, and it hurts for one tick. Half of all bushes are poison, so
-an animal that cannot learn pays that price on every second bush it tries, for as long as it lives. Leaving
-everything unknown alone is not an option either: there is nothing else to eat.
-
-There are no duds in this world. What the eyes learned to do in the previous stage stays, and this stage builds
-on it.
-
-<div data-life="settings" data-stage="1.5"></div>
-
-::: {.callout-note collapse="true" title="What did not work: a world where learning was hardly worth it"}
-The first versions of this world kept a familiar, safe kind of berry as half of all bushes, so that an animal that
-learned nothing would still get by. It got by very well: it ate about eleven good berries for every poison one. A
-perfect learner would have gained less than a tenth of its food. With so little to win, a lesson had to be nearly
-free of side effects to pay at all, and evolution switched learning off whenever it was not.
-
-Removing the familiar food turned this around. In the world above, a perfect learner would save about a quarter of
-what it eats.
-:::
-
-## The biology: learning by association
-
-A sea slug that is shocked after a touch learns to pull back from the touch. A rat that gets sick after a new food
-avoids that food afterwards. This is *associative learning*: something neutral (the touch, the taste) comes to
-predict something that already matters (the shock, the sickness), and the animal starts to respond to the first as
-it would to the second.
-
-The synapse-level picture, worked out in the sea slug *Aplysia* and the fruit fly, has three parts. A sensory
-neuron that was just active leaves a short-lived trace at its synapses. A *teaching signal*, released when
-something bad happens, reaches many synapses at once. Only the synapses that carry a fresh trace are strengthened.
-Pain says *something bad happened*; the trace says *and this is what was there*.
+<div data-life="brain" data-stage="1.5"></div>
 
 ## The circuit
 
 One new cell and one change to existing synapses:
 
 - **`us_pain`**, the *teacher*: driven by pain alone. When it fires, it broadcasts a teaching signal.
-- The synapses from the eyes' **look** inputs onto the aversive cells `valence_av`, which evolution shaped in the
-  previous stage, can now also change during a life. A synapse grows when its input was just active and the
+- The synapses from the eyes' **look** inputs onto the aversive cells `valence_av`, which evolution shaped in
+  earlier stages, can now also change during a life. A synapse grows when its input was just active and the
   teacher fires.
 
 The aversive cells already turn the animal away and block the bite. So nothing else has to change: once the look
 of a berry excites them, the animal treats that berry as it treats the poison it was born knowing.
-
-<div data-life="brain" data-stage="1.5"></div>
 
 ### What exactly gets blamed
 
@@ -93,8 +55,8 @@ One animal from the last generation, at two moments of its life.
 
 First, its first bite of a kind of berry that is poison in this life. Before the bite the aversive cells are
 silent and `grasp` fires. One tick after the bite the pain arrives, the teacher `us_pain` fires, and the aversive
-cells and `no_feed` switch on by reflex, as in the previous stage. What cannot be seen is the change the teacher
-leaves behind in the synapses.
+cells and `no_feed` switch on by reflex, as they did before this stage. What cannot be seen is the change the
+teacher leaves behind in the synapses.
 
 <div data-life="strip" data-stage="1.5" data-example="first_lesson"></div>
 
@@ -103,6 +65,46 @@ cells fire and `no_feed` holds the bite back. The animal moves on. It learned th
 it.
 
 <div data-life="strip" data-stage="1.5" data-example="lesson_again"></div>
+
+## The biology: learning by association
+
+A sea slug that is shocked after a touch learns to pull back from the touch. A rat that gets sick after a new food
+avoids that food afterwards. This is *associative learning*: something neutral (the touch, the taste) comes to
+predict something that already matters (the shock, the sickness), and the animal starts to respond to the first as
+it would to the second.
+
+The synapse-level picture, worked out in the sea slug *Aplysia* and the fruit fly, has three parts. A sensory
+neuron that was just active leaves a short-lived trace at its synapses. A *teaching signal*, released when
+something bad happens, reaches many synapses at once. Only the synapses that carry a fresh trace are strengthened.
+Pain says *something bad happened*; the trace says *and this is what was there*. The circuit above is this
+picture in its simplest form.
+
+## The world: nothing is familiar
+
+There are four kinds of berry bush, and all four are new in every life. Each life draws a new colour for every
+kind, and draws which two of the four are poison. Nothing an ancestor learned about colours is worth inheriting.
+
+The bushes still look like berry bushes. A new kind differs from the others in its colour, not in its shape, the
+way a new berry is recognisable as a berry.
+
+A poison berry costs about what a good berry gives, and it hurts for one tick. Half of all bushes are poison, so
+an animal that cannot learn pays that price on every second bush it tries, for as long as it lives. Leaving
+everything unknown alone is not an option either: there is nothing else to eat.
+
+There are no duds in this world. What the eyes learned to do in the previous stage stays, and this stage builds
+on it.
+
+<div data-life="settings" data-stage="1.5"></div>
+
+::: {.callout-note collapse="true" title="What did not work: a world where learning was hardly worth it"}
+The first versions of this world kept a familiar, safe kind of berry as half of all bushes, so that an animal that
+learned nothing would still get by. It got by very well: it ate about eleven good berries for every poison one. A
+perfect learner would have gained less than a tenth of its food. With so little to win, a lesson had to be nearly
+free of side effects to pay at all, and evolution switched learning off whenever it was not.
+
+Removing the familiar food turned this around. In the world above, a perfect learner would save about a quarter of
+what it eats.
+:::
 
 ## Results
 

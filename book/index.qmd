@@ -70,9 +70,11 @@ A circuit that is not used is left out of the brain, and the page says so.
 
 ## How to read a stage page
 
-Every page has the same parts: the idea and its biology, the circuit as a diagram, the results, and the list of
-runs behind them, with a link to a *dashboard* that replays the last generation of a run. Where it helps, a page
-zooms in on one animal over a few dozen ticks, so that you can watch the circuit work.
+Every page starts with the brain. A short introduction says what the stage adds, and the diagram of the brain
+follows right below it. Then come, in order of increasing detail: how the new circuit works, the biology it is
+modelled on, the world it was tested in, the results, and the list of runs behind them, with a link to a
+*dashboard* that replays the last generation of a run. Where it helps, a page zooms in on one animal over a few
+dozen ticks, right after the circuit, so that you can watch the circuit work.
 
 The numbers, graphs and diagrams are drawn from data files that are written when a stage is run. Only the text
 is written by hand.

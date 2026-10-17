@@ -8,40 +8,16 @@ moment.
 
 But some events say something about the minutes that follow. An animal that has just eaten well is probably
 standing in a good place. An animal that has just been hurt is probably standing in a bad one. To use that, the
-brain has to keep something of the event after it is over. This stage adds two such states.
+brain has to keep something of the event after it is over. This stage adds two such states: an alarm after pain,
+and contentment after a meal. So that the states have something to work with, the bushes in this world grow in
+patches of one kind each.
 
-## The world: every kind of bush in its own patches
-
-In the world of the previous stage the bushes of every kind were spread evenly. There, a meal says nothing about
-the place: the bush that was just emptied stays empty for a long time, and what grows next to it is as likely to
-be poison as anywhere else. A state that lasts has nothing to work with.
-
-So the bushes now grow in patches, and every patch holds one kind. After a good meal, the neighbouring bushes are
-most likely good as well. After a poison bite, the neighbours are most likely poison too. What just happened says
-what is near.
-
-The rest is as before: the world is cold, the hot springs are spread evenly, and the four kinds of berry bush are
-new in every life, half of them poison.
-
-<div data-life="settings" data-stage="1.8"></div>
-
-## The biology: affect
-
-A drive, as in the previous stage, follows the body: the hunger cell fires for as long as the stomach is empty and
-stops when it is full. An *affective state* is different in one respect. Something sets it off, and then it stays
-for a while by itself, after its cause has gone.
-
-In small animals such states are carried by *neuromodulators*: substances that a few cells release and that reach
-many cells at once. They are released quickly and cleared slowly, and that slowness is the memory. The roundworm
-*C. elegans* slows down and stays where it is for minutes after it has found food, under the influence of
-serotonin. After a harmful touch it speeds away, and keeps going well after the touch has ended.
-
-Such a state has two sides. It is good or bad, and it makes the animal more active or less. An animal that is
-alarmed is in a bad and active state. An animal that is content is in a good and quiet one.
+<div data-life="brain" data-stage="1.8"></div>
 
 ## The circuit
 
-Two modulators, each released by one event and cleared slowly, and three new cells.
+Two *modulators*, substances that a few cells release and that reach many cells at once, each released by one
+event and cleared slowly. And three new cells.
 
 - **Alarm.** Pain releases the modulator `alarm`. It drives a new cell, **`flee`**, which pushes the animal
   forward. After a poison bite the animal keeps going for a short while, out of the patch of poison.
@@ -58,7 +34,34 @@ animal does from what the body needs now, and the two modulators push those same
 The wiring is designed. Evolution may tune every strength, and also how fast each modulator is cleared, which
 sets how long each state lasts.
 
-<div data-life="brain" data-stage="1.8"></div>
+## The biology: affect
+
+A drive, as in the previous stage, follows the body: the hunger cell fires for as long as the stomach is empty and
+stops when it is full. An *affective state* is different in one respect. Something sets it off, and then it stays
+for a while by itself, after its cause has gone.
+
+In small animals such states are carried by *neuromodulators*. They are released quickly and cleared slowly, and
+that slowness is the memory. The roundworm *C. elegans* slows down and stays where it is for minutes after it has
+found food, under the influence of serotonin. After a harmful touch it speeds away, and keeps going well after
+the touch has ended.
+
+Such a state has two sides. It is good or bad, and it makes the animal more active or less. An animal that is
+alarmed is in a bad and active state. An animal that is content is in a good and quiet one.
+
+## The world: every kind of bush in its own patches
+
+In the world of the previous stage the bushes of every kind were spread evenly. There, a meal says nothing about
+the place: the bush that was just emptied stays empty for a long time, and what grows next to it is as likely to
+be poison as anywhere else. A state that lasts has nothing to work with.
+
+So the bushes now grow in patches, and every patch holds one kind. After a good meal, the neighbouring bushes are
+most likely good as well. After a poison bite, the neighbours are most likely poison too. What just happened says
+what is near.
+
+The rest is as before: the world is cold, the hot springs are spread evenly, and the four kinds of berry bush are
+new in every life, half of them poison.
+
+<div data-life="settings" data-stage="1.8"></div>
 
 ## Results
 

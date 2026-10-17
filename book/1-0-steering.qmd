@@ -4,18 +4,31 @@
 
 The first animal has no memory, no hunger and no idea of good or bad. It can do one thing: turn what it sees into
 movement. This stage evolves a brain that does that, from random wiring, until the animal finds food and eats it.
+The brain is small: the eyes, a clump of neurons behind them, and the motor neurons that move the animal.
 
 Everything after this stage is added to this brain.
 
-## The world: berries and onions
+<div data-life="brain" data-stage="1.0"></div>
 
-The world holds four kinds of berry bush and wild onions. All of it is food and nothing is dangerous. An animal
-that stands still starves, and so does one that walks without getting anywhere, because moving costs energy. The
-only way to live is to get to a bush that carries berries, bite, and go on to the next one.
+## The circuit
 
-The animal eats what it grasps. Picking something up and carrying it comes much later.
+- A **ganglion**, a clump of sixteen excitatory and eight inhibitory interneurons. The eyes connect to it, its
+  neurons connect to each other, and it connects to the motor neurons.
+- **Reflex arcs**: direct connections from the eyes to the motor neurons.
 
-<div data-life="settings" data-stage="1.0"></div>
+Every synapse in this brain is evolved: which ones exist, and how strong they are. Nothing is designed and nothing
+changes during a life.
+
+The brain sees the outside world only. It does not feel its stomach, and it does not notice whether a bite gave
+it anything. Those senses enter the brain in later stages, through cells made for them.
+
+## Watching it work
+
+One animal from the last generation, walking up to a bush and eating. The rows below the picture are the neurons
+of the ganglion; there is nothing in them to read, and that is the point. No neuron here stands for anything. The
+behaviour is spread over all of them, wherever evolution happened to put it.
+
+<div data-life="strip" data-stage="1.0" data-example="to_a_bush"></div>
 
 ## The biology: steering
 
@@ -29,27 +42,15 @@ of interneurons, and those to the motor neurons, with some sensory neurons wired
 direct connection is a reflex. The interneurons in between let several senses be weighed against each other
 before the muscles move.
 
-## The circuit
+## The world: berries and onions
 
-- A **ganglion** of sixteen excitatory and eight inhibitory interneurons. The eyes connect to it, its neurons
-  connect to each other, and it connects to the motor neurons.
-- **Reflex arcs**: direct connections from the eyes to the motor neurons.
+The world holds four kinds of berry bush and wild onions. All of it is food and nothing is dangerous. An animal
+that stands still starves, and so does one that walks without getting anywhere, because moving costs energy. The
+only way to live is to get to a bush that carries berries, bite, and go on to the next one.
 
-Every synapse in this brain is evolved: which ones exist, and how strong they are. Nothing is designed and nothing
-changes during a life.
+The animal eats what it grasps. Picking something up and carrying it comes much later.
 
-The brain sees the outside world only. It does not feel its stomach, and it does not notice whether a bite gave
-it anything. Those senses enter the brain in later stages, through cells made for them.
-
-<div data-life="brain" data-stage="1.0"></div>
-
-## Watching it work
-
-One animal from the last generation, walking up to a bush and eating. The rows below the picture are the neurons
-of the ganglion; there is nothing in them to read, and that is the point. No neuron here stands for anything. The
-behaviour is spread over all of them, wherever evolution happened to put it.
-
-<div data-life="strip" data-stage="1.0" data-example="to_a_bush"></div>
+<div data-life="settings" data-stage="1.0"></div>
 
 ## Results
 

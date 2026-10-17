@@ -7,27 +7,12 @@ needs and carries a mood for a while. This chapter builds the brain of an early 
 what it adds is about learning.
 
 Before anything is added, the ground is prepared. This stage puts no new part into the brain. It tunes what
-chapter 1 built, so that the stages after it have something to stand on: a world in which every part of the
-animal has work to do, moods that fit that world, and eyes that see a little more of it. The question is only
-whether the animals settle in, and whether they still use everything they have.
+chapter 1 built, so that the stages after it have something to stand on: moods that build up over several bites,
+eyes that see a little more, and a larger world of patches that are mostly one kind of bush, with bushes of the
+other kinds standing among them. The question is only whether the animals settle in, and whether they still use
+everything they have.
 
-## A world with work for every part
-
-The last two things chapter 1 added pull in opposite directions. Learning which food is poison pays where good
-and poison bushes stand side by side. The two lasting states, to keep going after pain and to stay after a meal,
-pay where every kind of bush grows in its own patch, because then what just happened says something about what is
-near. In a patch of one kind there is nothing left to learn, and in evenly mixed country there is nothing to stay
-for or to flee from.
-
-The stages of this chapter build on both, so its world sits in between: patches that are mostly one kind, with
-bushes of the other kinds standing among them. It is also larger, so that the animals get less in each other's
-way. The food is as before: four kinds of berry bush, new in every life, half of them poison.
-
-One thing stood in the way. In such patches, knowing a poison bush by its look and staying where the food was
-good are two ways of doing the same thing. With the lasting states as chapter 1 built them, each line of descent
-kept one of the two and let the other go. The next section is what made room for both.
-
-<div data-life="settings" data-stage="2.1"></div>
+<div data-life="brain" data-stage="2.1"></div>
 
 ## Moods that build up
 
@@ -41,25 +26,17 @@ So the two states now build up. Every bite adds a little, and what was added fad
 only when more than one poison bite has come in a short while, and settles only after more good bites than one
 bush can give. A single bite of either kind passes without a change of mood.
 
-This is closer to how such signals behave in a body. A modulator is released in small amounts and cleared slowly,
-so its level at any moment is a running sum of what happened lately, not a record of the last event alone.
-
 No cell is added for this. The same two modulators and the same cells are used; only how a modulator's level
 follows its release is different, and the cells that read it have a threshold. The thresholds were set by hand
 and the fading times were left to evolution.
 
-<div data-life="brain" data-stage="2.1"></div>
+The change was needed to keep both of chapter 1's ways of dealing with poison. In mixed patches, knowing a poison
+bush by its look and staying where the food was good are two ways of doing the same thing. With the lasting
+states as chapter 1 built them, each line of descent kept one of the two and let the other go. Moods that build
+up made room for both.
 
-## A part that is not used drifts
-
-The animals were not moved into the patches at once. They first spent a while in open country, with their new
-eyes.
-
-In the pure patches at the end of chapter 1, learning had nothing to do, and a part that is not used is not kept
-in shape: the animals arrived with learning set too strong, so that a lesson about one bush spread to bushes that
-only resembled it. Put straight into the patches, some lines of descent switched such learning off, which is
-easier than repairing it. In open country a poison bush can be told only by its look, so there learning was
-repaired first. After that, the patches kept it.
+This is closer to how such signals behave in a body. A modulator is released in small amounts and cleared slowly,
+so its level at any moment is a running sum of what happened lately, not a record of the last event alone.
 
 ## A little more to see
 
@@ -72,6 +49,31 @@ average of the same connection from its two neighbours, so that the animal makes
 its first tick, and all connections from the eyes are made weaker by the same factor, because nine send nearly
 twice as much as five. When the new directions started silent instead, the animals did worse after the same
 number of generations.
+
+## A world with work for every part
+
+The last two things chapter 1 added pull in opposite directions. Learning which food is poison pays where good
+and poison bushes stand side by side. The two lasting states, to keep going after pain and to stay after a meal,
+pay where every kind of bush grows in its own patch, because then what just happened says something about what is
+near. In a patch of one kind there is nothing left to learn, and in evenly mixed country there is nothing to stay
+for or to flee from.
+
+The stages of this chapter build on both, so its world sits in between: patches that are mostly one kind, with
+bushes of the other kinds standing among them. It is also larger, so that the animals get less in each other's
+way. The food is as before: four kinds of berry bush, new in every life, half of them poison.
+
+<div data-life="settings" data-stage="2.1"></div>
+
+## A part that is not used drifts
+
+The animals were not moved into the patches at once. They first spent a while in open country, with their new
+eyes.
+
+In the pure patches at the end of chapter 1, learning had nothing to do, and a part that is not used is not kept
+in shape: the animals arrived with learning set too strong, so that a lesson about one bush spread to bushes that
+only resembled it. Put straight into the patches, some lines of descent switched such learning off, which is
+easier than repairing it. In open country a poison bush can be told only by its look, so there learning was
+repaired first. After that, the patches kept it.
 
 ## Results
 

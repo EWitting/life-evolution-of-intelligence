@@ -84,6 +84,9 @@ remapping the stored populations and freezing again.
    user; **no reruns of frozen stages**. The chapter exam (every population in every earlier world) is dropped as
    a criterion: later populations carry equipment for things earlier worlds lack. A sanity check at most.
 5. Trim (2026-10-08): nothing is removed; every cell is used somewhere on the chain.
+6. Book to-do (user, 2026-10-17): a "Watching it work" strip for the drives page (a fed animal resting at a hot
+   spring) and the affect page (an animal fleeing after a poison bite; wait until the current work on affect is
+   done). Each needs an `@extra` in `life/book.py` that picks the moment with `life_strip`.
 
 ## Known issues and open points
 
@@ -134,6 +137,11 @@ view with hard-wired projections drawn dark; a 64-agent sample of large populati
 - Communication: VOCALIZE with a small vector (sound channel widening); a GIVE action for altruism.
 - Scale: GPU runs in WSL2 (`docs/SETUP.md`), larger populations (selection is noisy with 64 agents and one life).
 - Several seeds per stage comparison.
+- **Self-adaptive mutation** (user, 2026-10-17): step sizes as genes (one for weights, one for learning rates per
+  genome, mutating multiplicatively, as in evolution strategies), so that mutation shrinks once a population has
+  settled. Only with much larger populations and longer runs: with 64 genomes, one life each and recombination
+  the signal on a step-size gene is weak, and noisy selection favours small steps too early. Test first on the
+  recovery benchmark (STAGE_LOG v20).
 
 ## Known simplifications to revisit
 

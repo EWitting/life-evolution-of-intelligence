@@ -2346,3 +2346,59 @@ Reading:
 - In patches a lineage can drop learning and rely on the lasting states; a rate at 0 is a flat spot that
   selection does not leave (also `x.direct` seed 2 after 80 generations). The 2.1 lineage reached the patches
   with learning in heavy use and a low rate after 40 generations in open country (2.0).
+
+## v44 (2026-10-17, evening): learning rates that cannot get back; how long a stage needs; what limits learning
+
+**Convergence** (`x.affect2` seed 0, inherited mutation, continued in steps of 40 generations; the same 16 worlds,
+% of intact):
+
+| generation | intact | plasticity off | fed off | flee off | rest off | learning rate |
+|---|---|---|---|---|---|---|
+| 0 | 641 | 111 | 92 | 97 | 70 | 0.41 |
+| 40 | 892 | 106 | 93 | 90 | 54 | 0.16 |
+| 80 | 1313 | 103 | 83 | 77 | 41 | 0.035 |
+| 120 | 1354 | 104 | 79 | 77 | 40 | 0 |
+| 160 | 1527 | 102 | 96 | 77 | 42 | 0 |
+| 200 | 1536 | 102 | 96 | 75 | 36 | 0 |
+
+Levelled off at about 160 generations, four times the usual stage. The training curve (new worlds every
+generation) does not show this; only populations compared in shared worlds do. Learning did not come back with
+longer lives (about 1900 ticks); the meal state faded after generation 120.
+
+**Why learning rates go to 0 and stay there.** A rate mutates by `eta_max * N(0, 0.3)` clipped to [0, eta_max];
+`eta_max` is 1.0 from the association stage on, so the step has sd 0.3 against rates of 0.1-0.4. From 0.13 a
+mutation lands at exactly 0 with a chance of 33%, from 0.05 with 43%; from 0 half the mutations stay at 0 and a
+quarter of the upward ones land below 0.1. Where learning is near neutral (in patches the lasting states cover
+poison too), the clip piles the population up at 0, and a climb back meets a reset on nearly every second step.
+In open country a child at 0 dies out, which is why the 2.0 -> 2.1 route kept learning. New:
+`EvolutionConfig.eta_log_std` (off by default): a rate is multiplied by `exp(eta_log_std * N)` from at least
+`eta_floor` (0.01), as fade times and strengths already mutate; `Stage.evolution` sets it per stage.
+
+**Multiplicative rates** (`x.affect2log`, `eta_log_std` 0.3, otherwise `x.affect2`):
+
+| seed | generation | intact | plasticity off | fed off | flee off | rest off | poison share (on / off) | rate |
+|---|---|---|---|---|---|---|---|---|
+| 0 | 40 | 1100 | 89 +-7 | 84 | 90 | 58 | 0.092 / 0.121 | 0.155 |
+| 0 | 80 | 1336 | 100 +-3 | 81 | 83 | 54 | 0.093 / 0.102 | 0.195 |
+| 1 | 40 | 1061 | 92 +-7 | 82 | 90 | 61 | 0.093 / 0.120 | 0.248 |
+| 1 | 80 | 1256 | 91 +-5 | 90 | 94 | 63 | 0.077 / 0.109 | 0.188 |
+| 2 | 40 | 1387 | 99 +-1 | 87 | 77 | 40 | 0.099 / 0.100 | 0.008 |
+| 2 | 80 | 1426 | 101 +-1 | 97 | 83 | 35 | 0.098 / 0.099 | 0.006 |
+
+The rate is kept in two seeds of three, but its value shrinks as the rest of the brain improves: at generation 80
+learning trades good food for less poison about evenly.
+
+**What limits learning** (the three populations of generation 80, 16 worlds, learning on / off):
+
+- A slower adaptation of the look (`scripts/probes/adapt_tau.py`, about 200 and 500 ticks instead of 50, so that in
+  patches the average is not the local type): learning cuts a little more poison but costs more good food, and
+  intact fitness falls (the brains are tuned to 50). Not the bottleneck.
+- Novel types less alike (`scripts/probes/novel_sim.py`, `NOVEL_SIM` 0.5 instead of 0.8; two novel types then
+  share about 0.25 of their look instead of 0.64): plasticity off 94 +-4 and 79 +-5 instead of 100 and 91 (seeds 0
+  and 1), and learning no longer costs good food (berries 112 / 109 and 105 / 94 against 141 / 150 and 137 / 149).
+  Spreading to look-alikes is what limits learning in this world. Intact falls (novel bushes look less like the
+  bushes these brains approach).
+
+Trial running: `x.affect2sim` (multiplicative rates, novel similarity 0.5, from drives, 80 generations, three
+seeds). The idea (user): make the looks easy to tell apart until the pallium, and give the pallium the look-alikes
+back as its job.

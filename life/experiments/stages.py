@@ -75,6 +75,7 @@ class Stage:
     ticks: int = 1000
     plastic: bool = False
     eta_max: float = 0.5          # evolution clips learning rates to [0, eta_max]
+    evolution: tuple = ()         # ((EvolutionConfig field, value), ...) for this stage only (trials)
     dense_plastic: bool = False   # warm start: every synapse of a learned projection exists (the inherited ones keep
                                   # their weight, the others start at 0); an absent synapse could not learn
     adapt_init: Callable | None = None   # (population, layout) -> population: a change to the warm-start population
@@ -662,12 +663,12 @@ ANC_POISON_WEIGHT = 0.0   # spawn weight of the ancestral poison type (0: none)
 
 
 def learning_world(exp, reverse: bool = False, springs: float = 0.0, berries: int | None = None,
-                   shared_colour: bool = False):
+                   shared_colour: bool = False, novel_sim: float | None = None):
     """Four novel berry types (two of them poison, drawn per life, with a look drawn per life), one ancestral good
     and one ancestral poison type, no onions. NOVEL_WEIGHT sets how much of the supply is novel: familiar food
     should keep a non-learner alive, novel food should be worth trying."""
     return berry_world(exp, 6, poison=(4,), per_life_pool=NOVEL, per_life_k=2, springs=springs, reverse=reverse,
-                       novel_looks=NOVEL, novel_sim=NOVEL_SIM, poison_food=POISON_FOOD, onions=False,
+                       novel_looks=NOVEL, novel_sim=NOVEL_SIM if novel_sim is None else novel_sim, poison_food=POISON_FOOD, onions=False,
                        weights={0: STAPLE_WEIGHT, 4: ANC_POISON_WEIGHT, **{v: NOVEL_WEIGHT for v in NOVEL}},
                        berries=berries, shared_colour=shared_colour)
 
@@ -1096,6 +1097,18 @@ stage(Stage("x.affect2lr", "x_affect_ch2world_lr", "1.7", B18S, W21, VISION_CH1,
             lambda exp: learning_world(exp, springs=SPRINGS_17, berries=LEARN_BERRIES), **_S15,
             adapt_init=lambda pop, layout: sum_affect_init(pop._replace(eta=pop.eta * 0.4), layout),
             notes="TRIAL: x.affect2 with the inherited learning rates times 0.4"))
+# The same as x.affect2 with learning rates that mutate multiplicatively (EvolutionConfig.eta_log_std): is the
+# additive step, which clips small rates to 0 and leaves 0 only by a jump, why lineages drop learning? (v44)
+stage(Stage("x.affect2log", "x_affect_ch2world_log", "1.7", B18S, W21, VISION_CH1, BODY_17,
+            lambda exp: learning_world(exp, springs=SPRINGS_17, berries=LEARN_BERRIES), **_S15, adapt_init=sum_affect_init,
+            evolution=(("eta_log_std", 0.3),),
+            notes="TRIAL: x.affect2 with learning rates that mutate multiplicatively"))
+# The same with novel types less alike (two novel types share about 0.25 of their look instead of 0.64): at generation 80
+# of x.affect2log, learning gave up good food for less poison at 0.8 and gained at 0.5 (`novel_sim.py`, v44)
+stage(Stage("x.affect2sim", "x_affect_ch2world_sim05", "1.7", B18S, W21, VISION_CH1, BODY_17,
+            lambda exp: learning_world(exp, springs=SPRINGS_17, berries=LEARN_BERRIES, novel_sim=0.5), **{**_S15, "generations": 80},
+            adapt_init=sum_affect_init, evolution=(("eta_log_std", 0.3),),
+            notes="TRIAL: x.affect2log with novel types less alike (similarity 0.5)"))
 
 # ------------------------------------------------------------------ running
 
@@ -1109,7 +1122,7 @@ CROSSOVER = 1.0                  # every child has two parents (whole neurons fr
 def make_exp(s: Stage, brain: BrainConfig, name: str, generations: int, seed: int) -> ExperimentConfig:
     return ExperimentConfig(name=name, world=s.world, vision=s.vision, body=s.body, brain=brain,
                             evolution=EvolutionConfig(generations=generations, ticks_per_generation=s.ticks,
-                                                      eta_max=s.eta_max, **{"siblings": SIBLINGS, "crossover": CROSSOVER, **EVOLUTION_OVERRIDES},
+                                                      eta_max=s.eta_max, **{"siblings": SIBLINGS, "crossover": CROSSOVER, **dict(s.evolution), **EVOLUTION_OVERRIDES},
                                                       plastic=s.plastic, seed=seed))
 
 

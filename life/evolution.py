@@ -46,7 +46,11 @@ def mutate(key: jax.Array, g: Genome, cfg: EvolutionConfig, layout: Layout) -> G
     plastic = (layout.rule > 0) & (layout.proj_id >= 0)
     hit = jax.random.uniform(k[4], (P,)) < cfg.eta_mutation_prob
     per = lambda kk, std: jnp.where(plastic, (hit * std * jax.random.normal(kk, (P,)))[pid], 0.0)
-    eta = jnp.clip(g.eta + per(k[5], 0.3 * cfg.eta_max), 0.0, cfg.eta_max) * plastic
+    if cfg.eta_log_std > 0:   # multiplicative: steps in proportion to the rate, and a rate at 0 can come back
+        eta = jnp.where(per(k[5], 1.0) != 0, jnp.maximum(g.eta, cfg.eta_floor) * jnp.exp(cfg.eta_log_std * per(k[5], 1.0)), g.eta)
+        eta = jnp.clip(eta, 0.0, cfg.eta_max) * plastic
+    else:
+        eta = jnp.clip(g.eta + per(k[5], 0.3 * cfg.eta_max), 0.0, cfg.eta_max) * plastic
     ka, kb, kc, kd = jax.random.split(k[6], 4)
     return Genome(w0=w0, mask=mask, b=b, eta=eta, A=g.A + per(ka, cfg.mutation_std), B=g.B + per(kb, cfg.mutation_std),
                   C=g.C + per(kc, cfg.mutation_std), D=g.D + per(kd, 0.1 * cfg.mutation_std), clear=clear)

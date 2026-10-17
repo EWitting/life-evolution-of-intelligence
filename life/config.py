@@ -225,6 +225,10 @@ class EvolutionConfig:
     eta_max: float = 0.05            # clip for learning rates when plastic
     eta_mutation_prob: float = 0.1   # per plastic projection and child: chance that its rule genes (eta, A..D)
                                      # mutate. eta moves by eta_max * N(0, 0.3), clipped to [0, eta_max].
+    eta_log_std: float = 0.0         # > 0: eta is instead multiplied by exp(eta_log_std * N(0, 1)), from at least
+    eta_floor: float = 0.01          # eta_floor, so a rate takes steps in proportion to its size and 0 is no trap
+                                     # (the additive step clips about a third of small rates to exactly 0, and
+                                     # leaves 0 only by a jump to about 0.2; STAGE_LOG v44)
     record_weights_every: int = 100  # ticks between weight snapshots in the recording (must divide ticks)
     record_agents: int = 64          # the recording (dashboard) of the last generation shows this many agents,
                                      # sampled evenly over the fitness ranking (best first), in a world scaled

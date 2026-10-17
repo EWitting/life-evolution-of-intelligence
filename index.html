@@ -367,7 +367,10 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#the-animals-and-their-world" id="toc-the-animals-and-their-world" class="nav-link" data-scroll-target="#the-animals-and-their-world">The animals and their world</a></li>
   <li><a href="#the-brain" id="toc-the-brain" class="nav-link" data-scroll-target="#the-brain">The brain</a></li>
   <li><a href="#how-evolution-runs" id="toc-how-evolution-runs" class="nav-link" data-scroll-target="#how-evolution-runs">How evolution runs</a></li>
-  <li><a href="#how-a-stage-is-judged" id="toc-how-a-stage-is-judged" class="nav-link" data-scroll-target="#how-a-stage-is-judged">How a stage is judged</a></li>
+  <li><a href="#sec-judged" id="toc-sec-judged" class="nav-link" data-scroll-target="#sec-judged">How a stage is judged</a>
+  <ul class="collapse">
+  <li><a href="#reading-the-results" id="toc-reading-the-results" class="nav-link" data-scroll-target="#reading-the-results">Reading the results</a></li>
+  </ul></li>
   <li><a href="#how-to-read-a-stage-page" id="toc-how-to-read-a-stage-page" class="nav-link" data-scroll-target="#how-to-read-a-stage-page">How to read a stage page</a></li>
   </ul></li>
   </ul>
@@ -406,14 +409,14 @@ ul.task-list li input[type="checkbox"] {
 <h1 class="unnumbered">Introduction</h1>
 <p>This book follows one experiment: growing a brain in a simulation, one piece at a time, in roughly the order in which brains are thought to have evolved.</p>
 <p>Each stage adds a small circuit to the brain of the previous stage and changes the world so that the new circuit has something to be good for. Evolution then gets a number of generations to put the circuit to use. A page of this book is the report of one stage: what was added and why, the biology it is modelled on, and what happened.</p>
-<p>The concept of explaining cognition in steps following evolution is heavily inspired by the book <em>A Brief History Of Intelligence</em> by Max Bennett. However, the individual stages do not match one-to-one with the experiments mentioned in the book, and (while I do recommend it) it is not necessary to have read Bennett’s work to be able to follow along.</p>
-<p>Disclaimer: this work is not guaranteed to be scientifically accurate and match exactly with real brains. It is a unique blend between staying close to nature, but also just “going for it” and building up to something advanced based on what works, not restricted by having every choice requiring a citation. I personally think that, while not scientific enough to be applicable to medicine, and not optimized enough to replace machine learning algorithms, understanding these experiments builds intuition about intelligence that could seriously prove useful in either domain.</p>
+<p>The concept of explaining cognition in steps following evolution is heavily inspired by the book <em>A Brief History of Intelligence</em> by Max Bennett. However, the individual stages do not match one-to-one with the experiments mentioned in the book, and (while I do recommend it) it is not necessary to have read Bennett’s work to be able to follow along.</p>
+<p>A disclaimer: this work is not guaranteed to be scientifically accurate, and its brains do not match real brains exactly. It stays close to nature where it can, and elsewhere it just “goes for it”: it builds up to something advanced from what works, without a citation for every choice. It is not scientific enough to be used in medicine, and not optimized enough to replace machine learning algorithms. Still, I think that following these experiments builds an intuition about intelligence that could prove useful in both.</p>
 <section id="the-animals-and-their-world" class="level2">
 <h2 class="anchored" data-anchor-id="the-animals-and-their-world">The animals and their world</h2>
 <p>The animals live on a grid. Each has a stomach that empties a little every tick (one tick is about a second of behaviour) and faster when it moves. An animal whose stomach is empty dies.</p>
 <p>Food grows on bushes. A bush carries a few berries, and once the last one is eaten it stays empty for a long time, longer than a full stomach lasts, and then has all its berries back at once. Waiting beside an empty bush costs more than the bush will give, so an animal has to keep moving. At the start of a life most bushes are empty and somewhere along their regrowth, as in a world that has been grazed for a while. Through a life, food therefore comes at a steady rate: a small share of the bushes carries berries at any moment. A bite costs a little energy.</p>
 <p>The objects, their names and their pictures come from the game <em>One Hour One Life</em>. The simulation uses a small slice of the game’s rules at each stage and a larger one as the brain grows.</p>
-<p>An animal senses the world through a few coarse “eyes”: a handful of directions, in each of which it sees whether something is there, how near it is, and what it looks like. What something looks like is a short list of numbers, its <em>appearance</em>. It can step forward, turn left or right, and grasp what is in front of it.</p>
+<p>An animal senses the world through a few coarse “eyes”: a handful of directions, in each of which it sees whether something is there, how near it is, and what it looks like. What something looks like is a short list of numbers, its <em>look</em>. It can step forward, turn left or right, and grasp what is in front of it.</p>
 </section>
 <section id="the-brain" class="level2">
 <h2 class="anchored" data-anchor-id="the-brain">The brain</h2>
@@ -422,12 +425,12 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="how-evolution-runs" class="level2">
 <h2 class="anchored" data-anchor-id="how-evolution-runs">How evolution runs</h2>
-<p>A population is a set of genomes, each describing evolved synapse strengths and neuromodulator properties. Each genome lives as multiple siblings in a shared world. The genomes that did best have children, each from two parents, with a few mutations. That is one generation.</p>
+<p>A population is a set of genomes. A genome is what an animal inherits: the strengths of its evolved synapses, and a few other settings, such as how long a mood lasts once it is set off. Each genome is born as several identical animals, and the animals of all genomes share one world. The genomes that did best have children, each from two parents, with a few mutations. That is one generation.</p>
 <p><strong>Fitness</strong> is what selection rewards. Here it is the <em>well-fed lifetime</em>: how long the animal lived, counted from its first meal, with each tick weighted by how full its stomach was. An animal that never eats scores zero.</p>
-<p>Evolved genomes are carried over to following stages, instead of starting from scratch any time a new module is added.</p>
+<p>A stage does not start from scratch. It starts from the evolved population of the stage before it, with the new circuit added.</p>
 </section>
-<section id="how-a-stage-is-judged" class="level2">
-<h2 class="anchored" data-anchor-id="how-a-stage-is-judged">How a stage is judged</h2>
+<section id="sec-judged" class="level2">
+<h2 class="anchored" data-anchor-id="sec-judged">How a stage is judged</h2>
 <p>One life is mostly luck, and one evolution run can end almost anywhere. So every stage is run three times with different random seeds, and every result is given as a mean with its standard error over those seeds.</p>
 <p>Each stage has a <strong>main</strong> run, with the new circuit, and a <strong>control</strong>: the brain of the previous stage in the same new world, starting from the same population. The new circuit is then the only difference between them.</p>
 <p>A stage succeeds when two things hold:</p>
@@ -436,10 +439,16 @@ ul.task-list li input[type="checkbox"] {
 <li><strong>Main is not worse than control.</strong> It does not have to be better. The point of some stages is a circuit that later stages can build on.</li>
 </ol>
 <p>A circuit that is not used is left out of the brain, and the page says so.</p>
+<section id="reading-the-results" class="level3">
+<h3 class="anchored" data-anchor-id="reading-the-results">Reading the results</h3>
+<p>The <strong>results table</strong> gives fitness in up to three rows, which measure the same thing with less and less noise. The first is taken from the last generations as they ran. In the second, every final population lives again in the same set of worlds, so that no population can owe its score to easier worlds. In the third, <em>head to head</em>, main and control animals live together and compete for the same bushes.</p>
+<p>The <strong>lesion chart</strong> has one bar per region: the fitness of the population with that region silenced, as a percentage of the intact population. A short bar means the animals depended on that region. A bar near 100 means they did as well without it. The dots are the seeds, and dots far apart mean the seeds disagree.</p>
+</section>
 </section>
 <section id="how-to-read-a-stage-page" class="level2">
 <h2 class="anchored" data-anchor-id="how-to-read-a-stage-page">How to read a stage page</h2>
 <p>Every page starts with the brain. A short introduction says what the stage adds, and the diagram of the brain follows right below it. Then come, in order of increasing detail: how the new circuit works, the biology it is modelled on, the world it was tested in, the results, and the list of runs behind them, with a link to a <em>dashboard</em> that replays the last generation of a run. Where it helps, a page zooms in on one animal over a few dozen ticks, right after the circuit, so that you can watch the circuit work.</p>
+<p>The diagrams and charts show more when you point at a box, an arrow, a bar or a curve, or tap it on a phone.</p>
 <p>The numbers, graphs and diagrams are drawn from data files that are written when a stage is run. Only the text is written by hand.</p>
 
 

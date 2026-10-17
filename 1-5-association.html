@@ -414,7 +414,7 @@ ul.task-list li input[type="checkbox"] {
 <h2 class="anchored" data-anchor-id="the-circuit">The circuit</h2>
 <p>One new cell and one change to existing synapses:</p>
 <ul>
-<li><strong><code>us_pain</code></strong>, the <em>teacher</em>: driven by pain alone. When it fires, it broadcasts a teaching signal.</li>
+<li><strong><code>us_pain</code></strong>, the <em>teacher</em>: driven by pain alone. When it fires, it broadcasts a teaching signal. (<em>US</em> stands for <em>unconditioned stimulus</em>: something that matters without any learning, as pain does.)</li>
 <li>The synapses from the eyes’ <strong>look</strong> inputs onto the aversive cells <code>valence_av</code>, which evolution shaped in earlier stages, can now also change during a life. A synapse grows when its input was just active and the teacher fires.</li>
 </ul>
 <p>The aversive cells already turn the animal away and block the bite. So nothing else has to change: once the look of a berry excites them, the animal treats that berry as it treats the poison it was born knowing.</p>
@@ -446,7 +446,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="watching-it-work" class="level2">
 <h2 class="anchored" data-anchor-id="watching-it-work">Watching it work</h2>
 <p>One animal from the last generation, at two moments of its life.</p>
-<p>First, its first bite of a kind of berry that is poison in this life. Before the bite the aversive cells are silent and <code>grasp</code> fires. One tick after the bite the pain arrives, the teacher <code>us_pain</code> fires, and the aversive cells and <code>no_feed</code> switch on by reflex, as they did before this stage. What cannot be seen is the change the teacher leaves behind in the synapses.</p>
+<p>First, its first bite of a kind of berry that is poison in this life. Before the bite the aversive cells are silent and <code>grasp</code> fires. One tick after the bite the pain arrives, the teacher fires, and the aversive cells and <code>no_feed</code> switch on by reflex, as they did before this stage. What cannot be seen is the change the teacher leaves behind in the synapses.</p>
 <div data-life="strip" data-stage="1.5" data-example="first_lesson">
 
 </div>
@@ -489,6 +489,7 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="results" class="level2">
 <h2 class="anchored" data-anchor-id="results">Results</h2>
+<p>How to read the table and the charts: see <a href="./index.html#sec-judged">How a stage is judged</a>.</p>
 <section id="main-against-control" class="level3">
 <h3 class="anchored" data-anchor-id="main-against-control">Main against control</h3>
 <p>The control is the brain of the previous stage in this world, adapting eyes included: it feels pain and turns away from it, but it cannot change. It pays for every poison bush it tries, every time.</p>

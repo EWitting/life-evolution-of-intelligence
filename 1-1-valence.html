@@ -406,7 +406,7 @@ ul.task-list li input[type="checkbox"] {
 <div data-life="brain" data-stage="1.1">
 
 </div>
-<p>Hover over a box or an arrow for details. The dark arrows are the designed wiring described below. The grey ones were left to evolution.</p>
+<p>Point at or tap a box or an arrow for details. The dark arrows are the designed wiring described below. The grey ones were left to evolution.</p>
 <section id="the-circuit" class="level2">
 <h2 class="anchored" data-anchor-id="the-circuit">The circuit</h2>
 <p>Five new groups of neurons, each with a meaning that is fixed by its wiring:</p>
@@ -447,6 +447,7 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="results" class="level2">
 <h2 class="anchored" data-anchor-id="results">Results</h2>
+<p>How to read the table and the charts: see <a href="./index.html#sec-judged">How a stage is judged</a>.</p>
 <section id="main-against-control" class="level3">
 <h3 class="anchored" data-anchor-id="main-against-control">Main against control</h3>
 <p>The control is the brain of the previous stage in this world. It cannot feel pain or taste at all, so it can only avoid poison if evolution happens to wire the look of the poison berries to turning away.</p>
@@ -459,14 +460,12 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <p>In principle the control can end up where main does. The poison looks the same in every generation, so pain tells the animal nothing that the colour of the bush does not, and a brain without pain can evolve “this colour, turn away” in its reflex wiring. So the gap between the curves does not say what pain is worth. It says how much easier the value cells make the solution to find: main has a ready path from the look of a berry to a cell that turns the animal away and stops the bite, and it starts out with a reaction to the pain itself.</p>
 <p>Whether a control finds the solution within the generations it is given is a matter of luck. In earlier runs, with short lives and many more generations, two of three controls did, late and suddenly, after dozens of generations without progress. If a control’s curve above stays flat, that control had not found it yet.</p>
-<p>The three rows measure the same thing with less and less noise. The first is taken from the generations as they ran. The second gives every final population the same eight worlds. In the third, main and control animals live together and compete for the same bushes, so a difference cannot come from one population having had an easier world.</p>
 </section>
 <section id="is-the-circuit-used" class="level3">
 <h3 class="anchored" data-anchor-id="is-the-circuit-used">Is the circuit used?</h3>
 <div data-life="lesions" data-stage="1.1">
 
 </div>
-<p>Read this chart region by region. A short bar means the animals depended on that region. A bar near 100 means they did as well without it, and three dots far apart mean the seeds disagree.</p>
 <p>The two halves of the circuit are not used equally. The aversive side, <code>valence_av</code> and <code>no_feed</code>, is what the animals depend on. The appetitive side, <code>valence_app</code> and <code>grasp</code>, matters much less: the reflexes of the previous stage already bring the animal to food and make it bite.</p>
 <div class="callout callout-style-default callout-note callout-titled" title="What did not work: appetite on a full stomach">
 <div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">

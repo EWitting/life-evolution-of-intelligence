@@ -417,7 +417,7 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="watching-it-work" class="level2">
 <h2 class="anchored" data-anchor-id="watching-it-work">Watching it work</h2>
-<p>One animal from the last generation, at a dud. The two rows marked <code>vis+0</code> are two of the look inputs of the eye that points straight ahead, the two that respond most strongly to this dud.</p>
+<p>One animal from the last generation, at a dud. The two rows marked <code>vis+0</code> are two of the look inputs of the eye that points straight ahead (<code>vis</code> for vision, <code>+0</code> for its direction), the two that respond most strongly to this dud.</p>
 <p>The animal walks up and bites. Step through the ticks and watch the two look inputs: the dud does not change, and yet what the eye reports sinks a little with every tick, because the eye is getting used to it. The appetitive cells and <code>grasp</code> do not fade as smoothly. They hold for a while and then drop out, and the biting stops.</p>
 <p>Then the animal turns away, and the look inputs go <em>below</em> zero. Nothing is in front of the eye now, but the eye is still used to the dud, and what it reports is the difference: less of that look than usual.</p>
 <div data-life="strip" data-stage="1.2h" data-example="dud_visit">
@@ -457,15 +457,16 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="results" class="level2">
 <h2 class="anchored" data-anchor-id="results">Results</h2>
+<p>How to read the table and the charts: see <a href="./index.html#sec-judged">How a stage is judged</a>.</p>
 <p>The control is the brain of the previous stage, with eyes that do not adapt, in the same world. Its fitness swings from one generation to the next: every generation draws a new colour for the dud, and how well these animals do depends on whether they happen to like it.</p>
-<p>The first generations of main are a step back. Every synapse the animals inherit was shaped by eyes that reported the whole look, and now reports only the difference. The population has to re-tune before the change can pay.</p>
+<p>The first generations of main are a step back. Every synapse the animals inherit was tuned to eyes that reported the whole look, and the eyes now report only the difference. The population has to re-tune before the change can pay.</p>
 <div data-life="curves" data-stage="1.2h">
 
 </div>
 <div data-life="summary" data-stage="1.2h">
 
 </div>
-<p>The test in which main and control animals share a world is left out for this stage. In that test both halves run on the same brain, and here the difference <em>is</em> the brain’s inputs: the control animals would be given adapting eyes that none of their synapses were tuned to.</p>
+<p>The head-to-head test, in which main and control animals share a world, is left out for this stage. In that test all animals have the same eyes, and here the eyes are the difference: the control animals would be given adapting eyes that none of their synapses were tuned to.</p>
 <section id="how-a-life-is-spent" class="level3">
 <h3 class="anchored" data-anchor-id="how-a-life-is-spent">How a life is spent</h3>
 <div data-life="table" data-stage="1.2h" data-example="life_spent">

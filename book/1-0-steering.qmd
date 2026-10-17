@@ -83,4 +83,6 @@ stomach yet.
 
 ## The runs behind this page
 
+This stage was run once: every later stage starts from this one population and is judged over three seeds.
+
 <div data-life="runs" data-stage="1.0"></div>

@@ -54,7 +54,7 @@
     "href": "index.html#how-to-read-a-stage-page",
     "title": "Evolving a brain, stage by stage",
     "section": "How to read a stage page",
-    "text": "How to read a stage page\nEvery page has the same parts: the idea and its biology, the circuit as a diagram, the results, and the list of runs behind them, with a link to a dashboard that replays the last generation of a run. Where it helps, a page zooms in on one animal over a few dozen ticks, so that you can watch the circuit work.\nThe numbers, graphs and diagrams are drawn from data files that are written when a stage is run. Only the text is written by hand.",
+    "text": "How to read a stage page\nEvery page starts with the brain. A short introduction says what the stage adds, and the diagram of the brain follows right below it. Then come, in order of increasing detail: how the new circuit works, the biology it is modelled on, the world it was tested in, the results, and the list of runs behind them, with a link to a dashboard that replays the last generation of a run. Where it helps, a page zooms in on one animal over a few dozen ticks, right after the circuit, so that you can watch the circuit work.\nThe numbers, graphs and diagrams are drawn from data files that are written when a stage is run. Only the text is written by hand.",
     "crumbs": [
       "Introduction"
     ]
@@ -124,7 +124,29 @@
     "href": "1-0-steering.html",
     "title": "Steering",
     "section": "",
-    "text": "The world: berries and onions\nThe first animal has no memory, no hunger and no idea of good or bad. It can do one thing: turn what it sees into movement. This stage evolves a brain that does that, from random wiring, until the animal finds food and eats it.\nEverything after this stage is added to this brain.\nThe world holds four kinds of berry bush and wild onions. All of it is food and nothing is dangerous. An animal that stands still starves, and so does one that walks without getting anywhere, because moving costs energy. The only way to live is to get to a bush that carries berries, bite, and go on to the next one.\nThe animal eats what it grasps. Picking something up and carrying it comes much later.",
+    "text": "The circuit\nThe first animal has no memory, no hunger and no idea of good or bad. It can do one thing: turn what it sees into movement. This stage evolves a brain that does that, from random wiring, until the animal finds food and eats it. The brain is small: the eyes, a clump of neurons behind them, and the motor neurons that move the animal.\nEverything after this stage is added to this brain.\nEvery synapse in this brain is evolved: which ones exist, and how strong they are. Nothing is designed and nothing changes during a life.\nThe brain sees the outside world only. It does not feel its stomach, and it does not notice whether a bite gave it anything. Those senses enter the brain in later stages, through cells made for them.",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Steering</span>"
+    ]
+  },
+  {
+    "objectID": "1-0-steering.html#the-circuit",
+    "href": "1-0-steering.html#the-circuit",
+    "title": "Steering",
+    "section": "",
+    "text": "A ganglion, a clump of sixteen excitatory and eight inhibitory interneurons. The eyes connect to it, its neurons connect to each other, and it connects to the motor neurons.\nReflex arcs: direct connections from the eyes to the motor neurons.",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Steering</span>"
+    ]
+  },
+  {
+    "objectID": "1-0-steering.html#watching-it-work",
+    "href": "1-0-steering.html#watching-it-work",
+    "title": "Steering",
+    "section": "Watching it work",
+    "text": "Watching it work\nOne animal from the last generation, walking up to a bush and eating. The rows below the picture are the neurons of the ganglion; there is nothing in them to read, and that is the point. No neuron here stands for anything. The behaviour is spread over all of them, wherever evolution happened to put it.",
     "crumbs": [
       "Chapter 1: steering",
       "<span class='chapter-number'>1</span>  <span class='chapter-title'>Steering</span>"
@@ -142,22 +164,11 @@
     ]
   },
   {
-    "objectID": "1-0-steering.html#the-circuit",
-    "href": "1-0-steering.html#the-circuit",
+    "objectID": "1-0-steering.html#the-world-berries-and-onions",
+    "href": "1-0-steering.html#the-world-berries-and-onions",
     "title": "Steering",
-    "section": "The circuit",
-    "text": "The circuit\n\nA ganglion of sixteen excitatory and eight inhibitory interneurons. The eyes connect to it, its neurons connect to each other, and it connects to the motor neurons.\nReflex arcs: direct connections from the eyes to the motor neurons.\n\nEvery synapse in this brain is evolved: which ones exist, and how strong they are. Nothing is designed and nothing changes during a life.\nThe brain sees the outside world only. It does not feel its stomach, and it does not notice whether a bite gave it anything. Those senses enter the brain in later stages, through cells made for them.",
-    "crumbs": [
-      "Chapter 1: steering",
-      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Steering</span>"
-    ]
-  },
-  {
-    "objectID": "1-0-steering.html#watching-it-work",
-    "href": "1-0-steering.html#watching-it-work",
-    "title": "Steering",
-    "section": "Watching it work",
-    "text": "Watching it work\nOne animal from the last generation, walking up to a bush and eating. The rows below the picture are the neurons of the ganglion; there is nothing in them to read, and that is the point. No neuron here stands for anything. The behaviour is spread over all of them, wherever evolution happened to put it.",
+    "section": "The world: berries and onions",
+    "text": "The world: berries and onions\nThe world holds four kinds of berry bush and wild onions. All of it is food and nothing is dangerous. An animal that stands still starves, and so does one that walks without getting anywhere, because moving costs energy. The only way to live is to get to a bush that carries berries, bite, and go on to the next one.\nThe animal eats what it grasps. Picking something up and carrying it comes much later.",
     "crumbs": [
       "Chapter 1: steering",
       "<span class='chapter-number'>1</span>  <span class='chapter-title'>Steering</span>"
@@ -190,18 +201,7 @@
     "href": "1-1-valence.html",
     "title": "Valence: good and bad",
     "section": "",
-    "text": "The world: two kinds of berry are poison\nThe animal of the previous stage steers by reflex. What it sees is wired, through a small ganglion, straight to its motor neurons. It has no way of knowing what happened after it bit something.\nThis stage gives it that. It adds a handful of neurons that stand for this is good and this is bad, and puts food in the world that is bad to eat.\nThere are now six kinds of berry bush instead of four. They look alike, in the way that different berries look alike: each kind has the shape of a bush and its own colour.\nFour kinds are food. Two are poison, and always the same two. Eating a poison berry empties the stomach by about as much as a good berry fills it, and it hurts for a moment.\nBecause the same two kinds are poison in every life, nothing has to be learned during a life. Which colours to avoid can be inherited. Learning it within a life is the subject of a later stage.",
-    "crumbs": [
-      "Chapter 1: steering",
-      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Valence: good and bad</span>"
-    ]
-  },
-  {
-    "objectID": "1-1-valence.html#the-biology-valence",
-    "href": "1-1-valence.html#the-biology-valence",
-    "title": "Valence: good and bad",
-    "section": "The biology: valence",
-    "text": "The biology: valence\nIn small animals, most sensory neurons fall into two classes. Some respond to things worth approaching, such as the smell of food. Others respond to things worth avoiding, such as a harmful chemical or a hard touch on the nose. The two classes converge onto a few interneurons that bias the animal towards carrying on or turning away.\nValence is the name for this sorting of the world into good and bad. In the worm C. elegans, a much-studied animal with 302 neurons, harmful stimuli do two things at once: they trigger a turn, and they stop the pumping of the throat with which the worm feeds. Max Bennett argues that this sorting is what the first brains were for.\nThe worm is only a stand-in. The animal that this chapter is about, the common ancestor of animals with a left and a right side, left no nervous system to look at.",
+    "text": "The circuit\nThe animal of the previous stage steers by reflex. What it sees is wired, through a small ganglion, straight to its motor neurons. It has no way of knowing what happened after it bit something.\nThis stage gives it that. It adds a handful of neurons that stand for this is good and this is bad, a sorting of the world that is called valence. And it puts food in the world that is bad to eat: two kinds of berry are poison, and a poison bite hurts.\nHover over a box or an arrow for details. The dark arrows are the designed wiring described below. The grey ones were left to evolution.\nFive new groups of neurons, each with a meaning that is fixed by its wiring:\nTaste and pain are unconditioned signals: they mean good and bad without any experience. But they arrive only after the bite. To act in time, the value cells also get input from the eyes, and that input is evolved. Over generations, the look of a poison berry comes to excite the aversive cells before anything has been eaten.\nValue does not move the animal by itself. The appetitive cells excite grasp, but grasp can only fire when no_touch is silent, that is, when something is within reach. Releasing an action by switching off its inhibition is called disinhibition, and it is a common arrangement in real nervous systems. Here it makes a value turn into the right action for the situation: bite when the good thing is in front of the mouth, and not before.\nThe aversive cells do what a worm does when something hurts (more on that below). They drive the motor neurons for turning, and through no_feed they shut down biting.",
     "crumbs": [
       "Chapter 1: steering",
       "<span class='chapter-number'>2</span>  <span class='chapter-title'>Valence: good and bad</span>"
@@ -211,8 +211,8 @@
     "objectID": "1-1-valence.html#the-circuit",
     "href": "1-1-valence.html#the-circuit",
     "title": "Valence: good and bad",
-    "section": "The circuit",
-    "text": "The circuit\nFive new groups of neurons, each with a meaning that is fixed by its wiring:\n\nvalence_app, the appetitive cells: active when something is good. The sense of taste is hard-wired to them, and reaches the brain nowhere else.\nvalence_av, the aversive cells: active when something is bad. Pain is hard-wired to them, and reaches the brain nowhere else.\ngrasp, a motor programme: when it fires, the animal bites what is in front of it.\nno_touch, a gate: an inhibitory cell that is active whenever nothing is directly ahead, and holds grasp shut.\nno_feed: an inhibitory pair driven by the aversive cells, which blocks the bite.\n\nTaste and pain are unconditioned signals: they mean good and bad without any experience. But they arrive only after the bite. To act in time, the value cells also get input from the eyes, and that input is evolved. Over generations, the look of a poison berry comes to excite the aversive cells before anything has been eaten.\nValue does not move the animal by itself. The appetitive cells excite grasp, but grasp can only fire when no_touch is silent, that is, when something is within reach. Releasing an action by switching off its inhibition is called disinhibition, and it is a common arrangement in real nervous systems. Here it makes a value turn into the right action for the situation: bite when the good thing is in front of the mouth, and not before.\nThe aversive cells do what the worm does. They drive the motor neurons for turning, and through no_feed they shut down biting.\n\n\n\nHover over a box or an arrow for details. The dark arrows are the designed wiring described above. The grey ones were left to evolution.",
+    "section": "",
+    "text": "valence_app, the appetitive cells: active when something is good. The sense of taste is hard-wired to them, and reaches the brain nowhere else.\nvalence_av, the aversive cells: active when something is bad. Pain is hard-wired to them, and reaches the brain nowhere else.\ngrasp, a motor programme: when it fires, the animal bites what is in front of it.\nno_touch, a gate: an inhibitory cell that is active whenever nothing is directly ahead, and holds grasp shut.\nno_feed: an inhibitory pair driven by the aversive cells, which blocks the bite.",
     "crumbs": [
       "Chapter 1: steering",
       "<span class='chapter-number'>2</span>  <span class='chapter-title'>Valence: good and bad</span>"
@@ -224,6 +224,28 @@
     "title": "Valence: good and bad",
     "section": "Watching it work",
     "text": "Watching it work\nBelow is one animal from the last generation, around the moment it bites a poison berry.\nStep through it one tick at a time. At the bite, nothing in the brain has changed yet: the pain arrives with the next tick. Then the pain sense is on, both aversive cells fire, no_feed switches on and grasp falls silent. The animal turns away. A few ticks later the pain has faded and it is eating again.\n\n\n\nNothing was learned here. The animal will react in the same way the next time. What stops it from biting poison often is the evolved input from the eyes, which acts before the bite.",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Valence: good and bad</span>"
+    ]
+  },
+  {
+    "objectID": "1-1-valence.html#the-biology-valence",
+    "href": "1-1-valence.html#the-biology-valence",
+    "title": "Valence: good and bad",
+    "section": "The biology: valence",
+    "text": "The biology: valence\nIn small animals, most sensory neurons fall into two classes. Some respond to things worth approaching, such as the smell of food. Others respond to things worth avoiding, such as a harmful chemical or a hard touch on the nose. The two classes converge onto a few interneurons that bias the animal towards carrying on or turning away.\nIn the worm C. elegans, a much-studied animal with 302 neurons, harmful stimuli do two things at once: they trigger a turn, and they stop the pumping of the throat with which the worm feeds. Max Bennett argues that this sorting into good and bad is what the first brains were for.\nThe worm is only a stand-in. The animal that this chapter is about, the common ancestor of animals with a left and a right side, left no nervous system to look at.",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Valence: good and bad</span>"
+    ]
+  },
+  {
+    "objectID": "1-1-valence.html#the-world-two-kinds-of-berry-are-poison",
+    "href": "1-1-valence.html#the-world-two-kinds-of-berry-are-poison",
+    "title": "Valence: good and bad",
+    "section": "The world: two kinds of berry are poison",
+    "text": "The world: two kinds of berry are poison\nThere are now six kinds of berry bush instead of four. They look alike, in the way that different berries look alike: each kind has the shape of a bush and its own colour.\nFour kinds are food. Two are poison, and always the same two. Eating a poison berry empties the stomach by about as much as a good berry fills it, and it hurts for a moment.\nBecause the same two kinds are poison in every life, nothing has to be learned during a life. Which colours to avoid can be inherited. Learning it within a life is the subject of a later stage.",
     "crumbs": [
       "Chapter 1: steering",
       "<span class='chapter-number'>2</span>  <span class='chapter-title'>Valence: good and bad</span>"
@@ -256,18 +278,29 @@
     "href": "habituation.html",
     "title": "Habituation: getting used to what is always there",
     "section": "",
-    "text": "The world: a bush that never has berries\nThe animals of the previous stage know good from bad, and they respond to a look in the same way every time they see it. To them a bush that has been emptied still looks enough like food to bite at, and the look does not change however often the bite gives nothing. So an animal can stand in front of an empty bush for a long time, biting. What is missing is simple to say: an animal should stop responding to something that stays the same and keeps giving nothing.\nThis stage changes one thing, in the eyes.\nThe world of the previous stage gets one more kind of bush, a dud. It looks like a berry bush and never carries a berry. Its colour is drawn anew for every life, so nothing an ancestor knew about colours can tell an animal to leave it alone. In some lives the dud happens to have a colour the animal finds attractive, and then an animal that responds to a look in the same way every time will stand at it and bite for as long as it lives.\nThere are as many bushes with berries as before; the duds come on top.",
+    "text": "The circuit\nThe animals of the previous stage know good from bad, and they respond to a look in the same way every time they see it. To them a bush that has been emptied still looks enough like food to bite at, and the look does not change however often the bite gives nothing. So an animal can stand in front of an empty bush for a long time, biting. What is missing is simple to say: an animal should stop responding to something that stays the same and keeps giving nothing.\nThis stage changes one thing, in the eyes: they get used to what they keep seeing. To make that worth having, the world gets a dud, a bush that looks like food and never carries a berry.\nNo new cells. Each of the eyes’ look inputs now keeps a slow average of what it has been seeing, over roughly the last fifty ticks, and passes on the difference between what it sees now and that average.\nTwo things follow, both for the whole brain, because every neuron downstream of the eyes now gets the adapted look:",
     "crumbs": [
       "Chapter 1: steering",
       "<span class='chapter-number'>3</span>  <span class='chapter-title'>Habituation: getting used to what is always there</span>"
     ]
   },
   {
-    "objectID": "habituation.html#the-world-a-bush-that-never-has-berries",
-    "href": "habituation.html#the-world-a-bush-that-never-has-berries",
+    "objectID": "habituation.html#the-circuit",
+    "href": "habituation.html#the-circuit",
     "title": "Habituation: getting used to what is always there",
     "section": "",
-    "text": "NoteWhat did not work: making the food unfamiliar\n\n\n\n\n\nWithout the dud, in the world of the previous stage, the change of this stage was used only a little. The long lives had already selected most of the standing still away, and evolution can learn the look of an empty bush of every kind it has always known.\nGiving the good berries a new colour in every life did not change that. The animals with adapting eyes did slightly worse than those without. What makes adaptation worth having is something that looks like food and gives nothing, whatever colour it has.",
+    "text": "What stays in view fades. An animal that stands in front of a bush sees its look sink into the average. The appetitive cells, driven by that look, fall silent, and with them the urge to bite. The animal moves on.\nWhat is unusual stands out. All berry bushes look alike in most respects, and that shared part is nearly always in view, so it is nearly always in the average. What passes through is the part that differs: the colour of this bush. Nothing uses this yet. It becomes important in the next stage, where the animal learns from a single bite which colour is bad.",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Habituation: getting used to what is always there</span>"
+    ]
+  },
+  {
+    "objectID": "habituation.html#watching-it-work",
+    "href": "habituation.html#watching-it-work",
+    "title": "Habituation: getting used to what is always there",
+    "section": "Watching it work",
+    "text": "Watching it work\nOne animal from the last generation, at a dud. The two rows marked vis+0 are two of the look inputs of the eye that points straight ahead, the two that respond most strongly to this dud.\nThe animal walks up and bites. Step through the ticks and watch the two look inputs: the dud does not change, and yet what the eye reports sinks a little with every tick, because the eye is getting used to it. The appetitive cells and grasp do not fade as smoothly. They hold for a while and then drop out, and the biting stops.\nThen the animal turns away, and the look inputs go below zero. Nothing is in front of the eye now, but the eye is still used to the dud, and what it reports is the difference: less of that look than usual.\n\n\n\nNot every visit to a dud goes like this. Most are over within a few ticks, and some last far longer.",
     "crumbs": [
       "Chapter 1: steering",
       "<span class='chapter-number'>3</span>  <span class='chapter-title'>Habituation: getting used to what is always there</span>"
@@ -285,22 +318,11 @@
     ]
   },
   {
-    "objectID": "habituation.html#the-circuit",
-    "href": "habituation.html#the-circuit",
+    "objectID": "habituation.html#the-world-a-bush-that-never-has-berries",
+    "href": "habituation.html#the-world-a-bush-that-never-has-berries",
     "title": "Habituation: getting used to what is always there",
-    "section": "The circuit",
-    "text": "The circuit\nNo new cells. Each of the eyes’ look inputs now keeps a slow average of what it has been seeing, over roughly the last fifty ticks, and passes on the difference between what it sees now and that average.\nTwo things follow, both for the whole brain, because every neuron downstream of the eyes now gets the adapted look:\n\nWhat stays in view fades. An animal that stands in front of a bush sees its look sink into the average. The appetitive cells, driven by that look, fall silent, and with them the urge to bite. The animal moves on.\nWhat is unusual stands out. All berry bushes look alike in most respects, and that shared part is nearly always in view, so it is nearly always in the average. What passes through is the part that differs: the colour of this bush. Nothing uses this yet. It becomes important in the next stage, where the animal learns from a single bite which colour is bad.",
-    "crumbs": [
-      "Chapter 1: steering",
-      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Habituation: getting used to what is always there</span>"
-    ]
-  },
-  {
-    "objectID": "habituation.html#watching-it-work",
-    "href": "habituation.html#watching-it-work",
-    "title": "Habituation: getting used to what is always there",
-    "section": "Watching it work",
-    "text": "Watching it work\nOne animal from the last generation, at a dud. The two rows marked vis+0 are two of the look inputs of the eye that points straight ahead, the two that respond most strongly to this dud.\nThe animal walks up and bites. Step through the ticks and watch the two look inputs: the dud does not change, and yet what the eye reports sinks a little with every tick, because the eye is getting used to it. The appetitive cells and grasp do not fade as smoothly. They hold for a while and then drop out, and the biting stops.\nThen the animal turns away, and the look inputs go below zero. Nothing is in front of the eye now, but the eye is still used to the dud, and what it reports is the difference: less of that look than usual.\n\n\n\nNot every visit to a dud goes like this. Most are over within a few ticks, and some last far longer.",
+    "section": "The world: a bush that never has berries",
+    "text": "The world: a bush that never has berries\nThe world of the previous stage gets one more kind of bush, the dud. It looks like a berry bush and never carries a berry. Its colour is drawn anew for every life, so nothing an ancestor knew about colours can tell an animal to leave it alone. In some lives the dud happens to have a colour the animal finds attractive, and then an animal that responds to a look in the same way every time will stand at it and bite for as long as it lives.\nThere are as many bushes with berries as before; the duds come on top.\n\n\n\n\n\n\n\n\n\nNoteWhat did not work: making the food unfamiliar\n\n\n\n\n\nWithout the dud, in the world of the previous stage, the change of this stage was used only a little. The long lives had already selected most of the standing still away, and evolution can learn the look of an empty bush of every kind it has always known.\nGiving the good berries a new colour in every life did not change that. The animals with adapting eyes did slightly worse than those without. What makes adaptation worth having is something that looks like food and gives nothing, whatever colour it has.",
     "crumbs": [
       "Chapter 1: steering",
       "<span class='chapter-number'>3</span>  <span class='chapter-title'>Habituation: getting used to what is always there</span>"
@@ -333,29 +355,7 @@
     "href": "1-5-association.html",
     "title": "Association: learning what is bad",
     "section": "",
-    "text": "The world: nothing is familiar\nUntil now everything the animal knows was put there by evolution. That works for poison that looks the same in every generation. It cannot work for food that is new.\nThis stage adds the simplest kind of learning from experience: after a bite that hurts, the look of what was bitten comes to mean bad.\nThere are four kinds of berry bush, and all four are new in every life. Each life draws a new colour for every kind, and draws which two of the four are poison. Nothing an ancestor learned about colours is worth inheriting.\nThe bushes still look like berry bushes. A new kind differs from the others in its colour, not in its shape, the way a new berry is recognisable as a berry.\nA poison berry costs about what a good berry gives, and it hurts for one tick. Half of all bushes are poison, so an animal that cannot learn pays that price on every second bush it tries, for as long as it lives. Leaving everything unknown alone is not an option either: there is nothing else to eat.\nThere are no duds in this world. What the eyes learned to do in the previous stage stays, and this stage builds on it.",
-    "crumbs": [
-      "Chapter 1: steering",
-      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Association: learning what is bad</span>"
-    ]
-  },
-  {
-    "objectID": "1-5-association.html#the-world-nothing-is-familiar",
-    "href": "1-5-association.html#the-world-nothing-is-familiar",
-    "title": "Association: learning what is bad",
-    "section": "",
-    "text": "NoteWhat did not work: a world where learning was hardly worth it\n\n\n\n\n\nThe first versions of this world kept a familiar, safe kind of berry as half of all bushes, so that an animal that learned nothing would still get by. It got by very well: it ate about eleven good berries for every poison one. A perfect learner would have gained less than a tenth of its food. With so little to win, a lesson had to be nearly free of side effects to pay at all, and evolution switched learning off whenever it was not.\nRemoving the familiar food turned this around. In the world above, a perfect learner would save about a quarter of what it eats.",
-    "crumbs": [
-      "Chapter 1: steering",
-      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Association: learning what is bad</span>"
-    ]
-  },
-  {
-    "objectID": "1-5-association.html#the-biology-learning-by-association",
-    "href": "1-5-association.html#the-biology-learning-by-association",
-    "title": "Association: learning what is bad",
-    "section": "The biology: learning by association",
-    "text": "The biology: learning by association\nA sea slug that is shocked after a touch learns to pull back from the touch. A rat that gets sick after a new food avoids that food afterwards. This is associative learning: something neutral (the touch, the taste) comes to predict something that already matters (the shock, the sickness), and the animal starts to respond to the first as it would to the second.\nThe synapse-level picture, worked out in the sea slug Aplysia and the fruit fly, has three parts. A sensory neuron that was just active leaves a short-lived trace at its synapses. A teaching signal, released when something bad happens, reaches many synapses at once. Only the synapses that carry a fresh trace are strengthened. Pain says something bad happened; the trace says and this is what was there.",
+    "text": "The circuit\nUntil now everything the animal knows was put there by evolution. That works for poison that looks the same in every generation. It cannot work for food that is new, and in this stage all food is new: every kind of berry gets a new colour in every life, and which kinds are poison is drawn anew.\nThis stage adds the simplest kind of learning from experience: after a bite that hurts, the look of what was bitten comes to mean bad.\nOne new cell and one change to existing synapses:\nThe aversive cells already turn the animal away and block the bite. So nothing else has to change: once the look of a berry excites them, the animal treats that berry as it treats the poison it was born knowing.",
     "crumbs": [
       "Chapter 1: steering",
       "<span class='chapter-number'>4</span>  <span class='chapter-title'>Association: learning what is bad</span>"
@@ -365,8 +365,8 @@
     "objectID": "1-5-association.html#the-circuit",
     "href": "1-5-association.html#the-circuit",
     "title": "Association: learning what is bad",
-    "section": "The circuit",
-    "text": "The circuit\nOne new cell and one change to existing synapses:\n\nus_pain, the teacher: driven by pain alone. When it fires, it broadcasts a teaching signal.\nThe synapses from the eyes’ look inputs onto the aversive cells valence_av, which evolution shaped in the previous stage, can now also change during a life. A synapse grows when its input was just active and the teacher fires.\n\nThe aversive cells already turn the animal away and block the bite. So nothing else has to change: once the look of a berry excites them, the animal treats that berry as it treats the poison it was born knowing.\n\n\n\n\nWhat exactly gets blamed\nA bite hurts, and something has to take the blame. Getting this right turned out to be most of the work of this stage, and three things were needed, the first of which the animals already bring with them.\nThe lesson is about what sets the food apart. All berry bushes look alike in most respects. If pain strengthened the synapses of the whole look, one bad red berry would make the animal wary of every berry. This is where the adapting eyes of the previous stage pay a second time: they pass on the difference between the look right now and what they usually see. What all bushes share cancels out before it reaches a synapse. What is left to take the blame is the colour.\nThe pain is brief. While pain faded over several ticks, the teacher was still firing after the animal had turned away, and by then its eyes were on the next bush. The animal learned to distrust the neighbour of the poison as much as the poison.\nEvery learned synapse exists. The look synapses were sparse, as evolution had left them, and a synapse that is not there cannot learn. In this stage all of them are present, the new ones starting at zero.\n\n\n\n\n\n\nNoteWhat did not work: unlearning by tasting again\n\n\n\n\n\nAn earlier design had a second cell that lowered the aversion whenever something the animal distrusted turned out to taste fine. It worked when meals were fed to the brain in a test. In a living animal it never fired: aversion blocks the bite, so food that is distrusted is never tasted again, and the mistake cannot be found out.\nThis is why the lesson has to land on the right food in the first place.",
+    "section": "",
+    "text": "us_pain, the teacher: driven by pain alone. When it fires, it broadcasts a teaching signal.\nThe synapses from the eyes’ look inputs onto the aversive cells valence_av, which evolution shaped in earlier stages, can now also change during a life. A synapse grows when its input was just active and the teacher fires.\n\n\n\nWhat exactly gets blamed\nA bite hurts, and something has to take the blame. Getting this right turned out to be most of the work of this stage, and three things were needed, the first of which the animals already bring with them.\nThe lesson is about what sets the food apart. All berry bushes look alike in most respects. If pain strengthened the synapses of the whole look, one bad red berry would make the animal wary of every berry. This is where the adapting eyes of the previous stage pay a second time: they pass on the difference between the look right now and what they usually see. What all bushes share cancels out before it reaches a synapse. What is left to take the blame is the colour.\nThe pain is brief. While pain faded over several ticks, the teacher was still firing after the animal had turned away, and by then its eyes were on the next bush. The animal learned to distrust the neighbour of the poison as much as the poison.\nEvery learned synapse exists. The look synapses were sparse, as evolution had left them, and a synapse that is not there cannot learn. In this stage all of them are present, the new ones starting at zero.\n\n\n\n\n\n\nNoteWhat did not work: unlearning by tasting again\n\n\n\n\n\nAn earlier design had a second cell that lowered the aversion whenever something the animal distrusted turned out to taste fine. It worked when meals were fed to the brain in a test. In a living animal it never fired: aversion blocks the bite, so food that is distrusted is never tasted again, and the mistake cannot be found out.\nThis is why the lesson has to land on the right food in the first place.",
     "crumbs": [
       "Chapter 1: steering",
       "<span class='chapter-number'>4</span>  <span class='chapter-title'>Association: learning what is bad</span>"
@@ -377,7 +377,29 @@
     "href": "1-5-association.html#watching-it-work",
     "title": "Association: learning what is bad",
     "section": "Watching it work",
-    "text": "Watching it work\nOne animal from the last generation, at two moments of its life.\nFirst, its first bite of a kind of berry that is poison in this life. Before the bite the aversive cells are silent and grasp fires. One tick after the bite the pain arrives, the teacher us_pain fires, and the aversive cells and no_feed switch on by reflex, as in the previous stage. What cannot be seen is the change the teacher leaves behind in the synapses.\n\n\n\nLater in the same life the animal comes up to a bush of the same kind. Nothing hurts now, and yet the aversive cells fire and no_feed holds the bite back. The animal moves on. It learned this; no ancestor could have told it.",
+    "text": "Watching it work\nOne animal from the last generation, at two moments of its life.\nFirst, its first bite of a kind of berry that is poison in this life. Before the bite the aversive cells are silent and grasp fires. One tick after the bite the pain arrives, the teacher us_pain fires, and the aversive cells and no_feed switch on by reflex, as they did before this stage. What cannot be seen is the change the teacher leaves behind in the synapses.\n\n\n\nLater in the same life the animal comes up to a bush of the same kind. Nothing hurts now, and yet the aversive cells fire and no_feed holds the bite back. The animal moves on. It learned this; no ancestor could have told it.",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Association: learning what is bad</span>"
+    ]
+  },
+  {
+    "objectID": "1-5-association.html#the-biology-learning-by-association",
+    "href": "1-5-association.html#the-biology-learning-by-association",
+    "title": "Association: learning what is bad",
+    "section": "The biology: learning by association",
+    "text": "The biology: learning by association\nA sea slug that is shocked after a touch learns to pull back from the touch. A rat that gets sick after a new food avoids that food afterwards. This is associative learning: something neutral (the touch, the taste) comes to predict something that already matters (the shock, the sickness), and the animal starts to respond to the first as it would to the second.\nThe synapse-level picture, worked out in the sea slug Aplysia and the fruit fly, has three parts. A sensory neuron that was just active leaves a short-lived trace at its synapses. A teaching signal, released when something bad happens, reaches many synapses at once. Only the synapses that carry a fresh trace are strengthened. Pain says something bad happened; the trace says and this is what was there. The circuit above is this picture in its simplest form.",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Association: learning what is bad</span>"
+    ]
+  },
+  {
+    "objectID": "1-5-association.html#the-world-nothing-is-familiar",
+    "href": "1-5-association.html#the-world-nothing-is-familiar",
+    "title": "Association: learning what is bad",
+    "section": "The world: nothing is familiar",
+    "text": "The world: nothing is familiar\nThere are four kinds of berry bush, and all four are new in every life. Each life draws a new colour for every kind, and draws which two of the four are poison. Nothing an ancestor learned about colours is worth inheriting.\nThe bushes still look like berry bushes. A new kind differs from the others in its colour, not in its shape, the way a new berry is recognisable as a berry.\nA poison berry costs about what a good berry gives, and it hurts for one tick. Half of all bushes are poison, so an animal that cannot learn pays that price on every second bush it tries, for as long as it lives. Leaving everything unknown alone is not an option either: there is nothing else to eat.\nThere are no duds in this world. What the eyes learned to do in the previous stage stays, and this stage builds on it.\n\n\n\n\n\n\n\n\n\nNoteWhat did not work: a world where learning was hardly worth it\n\n\n\n\n\nThe first versions of this world kept a familiar, safe kind of berry as half of all bushes, so that an animal that learned nothing would still get by. It got by very well: it ate about eleven good berries for every poison one. A perfect learner would have gained less than a tenth of its food. With so little to win, a lesson had to be nearly free of side effects to pay at all, and evolution switched learning off whenever it was not.\nRemoving the familiar food turned this around. In the world above, a perfect learner would save about a quarter of what it eats.",
     "crumbs": [
       "Chapter 1: steering",
       "<span class='chapter-number'>4</span>  <span class='chapter-title'>Association: learning what is bad</span>"
@@ -410,7 +432,18 @@
     "href": "drives.html",
     "title": "Drives: hunger and cold",
     "section": "",
-    "text": "The world: cold, with warm places\nUntil now the brain has only looked outward. It sees, it tastes and it feels pain, but it has no idea how full its stomach is or how warm its body is. An animal that cannot feel its own state can do only one thing at a time, all the time: these animals forage whether they are starving or stuffed.\nThis stage gives the body a second need, warmth, and gives the brain two cells that report on the body. With two needs there is, for the first time, something to decide: which one to look after now.\nThe world of the previous stage becomes cold. A cold body burns its food faster, so an animal that stays cold starves sooner. Scattered through the world are a few hot springs, each warming the ground around it. An animal warms up slowly when it is near one and cools down slowly when it leaves.\nThe animal cannot see where it is warm. It feels the temperature of its own skin and nothing more.\nThe food is as before: four kinds of berry bush, new in every life, half of them poison.",
+    "text": "The circuit\nUntil now the brain has only looked outward. It sees, it tastes and it feels pain, but it has no idea how full its stomach is or how warm its body is. An animal that cannot feel its own state can do only one thing at a time, all the time: these animals forage whether they are starving or stuffed.\nThis stage makes the world cold, which gives the body a second need, warmth, and it gives the brain two cells that report on the body: one for a cold skin and one for an emptying stomach. With two needs there is, for the first time, something to decide: which one to look after now.\nFour new cells.\nThe animal has no map of where it is warm. It keeps walking while it is cold and stops where it is warm, and that is enough to end up near warmth most of the time.\nAll of these connections are designed, and evolution may tune their strength. One set is left to evolution entirely: synapses from hungry onto the cells that feed (the grasp programme, the cell that blocks the bite, the appetitive cells and the ganglion). They start at zero. If it pays to bite less on a full stomach, this is where evolution can build it.",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Drives: hunger and cold</span>"
+    ]
+  },
+  {
+    "objectID": "drives.html#the-circuit",
+    "href": "drives.html#the-circuit",
+    "title": "Drives: hunger and cold",
+    "section": "",
+    "text": "cold fires while the skin is cold.\nwarm_seek is driven by cold and pushes the animal forward: keep moving while it is cold.\nrest is an inhibitory cell that fires while the skin is warm and holds the forward step back: stay where it is warm.\nhungry is an inhibitory cell that fires when the stomach is less than about two thirds full. It shuts both warm_seek and rest. A hungry animal forgets about warmth and forages as it did before; a fed animal looks after its temperature.",
     "crumbs": [
       "Chapter 1: steering",
       "<span class='chapter-number'>5</span>  <span class='chapter-title'>Drives: hunger and cold</span>"
@@ -428,11 +461,11 @@
     ]
   },
   {
-    "objectID": "drives.html#the-circuit",
-    "href": "drives.html#the-circuit",
+    "objectID": "drives.html#the-world-cold-with-warm-places",
+    "href": "drives.html#the-world-cold-with-warm-places",
     "title": "Drives: hunger and cold",
-    "section": "The circuit",
-    "text": "The circuit\nFour new cells.\n\ncold fires while the skin is cold.\nwarm_seek is driven by cold and pushes the animal forward: keep moving while it is cold.\nrest is an inhibitory cell that fires while the skin is warm and holds the forward step back: stay where it is warm.\nhungry is an inhibitory cell that fires when the stomach is less than about two thirds full. It shuts both warm_seek and rest. A hungry animal forgets about warmth and forages as it did before; a fed animal looks after its temperature.\n\nAll of these connections are designed, and evolution may tune their strength. One set is left to evolution entirely: synapses from hungry onto the cells that feed (the grasp programme, the cell that blocks the bite, the appetitive cells and the ganglion). They start at zero. If it pays to bite less on a full stomach, this is where evolution can build it.",
+    "section": "The world: cold, with warm places",
+    "text": "The world: cold, with warm places\nThe world of the previous stage becomes cold. A cold body burns its food faster, so an animal that stays cold starves sooner. Scattered through the world are a few hot springs, each warming the ground around it. An animal warms up slowly when it is near one and cools down slowly when it leaves.\nThe animal cannot see where it is warm. It feels the temperature of its own skin and nothing more.\nThe food is as before: four kinds of berry bush, new in every life, half of them poison.",
     "crumbs": [
       "Chapter 1: steering",
       "<span class='chapter-number'>5</span>  <span class='chapter-title'>Drives: hunger and cold</span>"
@@ -465,7 +498,18 @@
     "href": "affect.html",
     "title": "Affect: states that last",
     "section": "",
-    "text": "The world: every kind of bush in its own patches\nEverything this brain does so far, it does about the present. A bush is in front of it, so it bites. The skin is cold, so it walks. The stomach is empty, so it forages. When the cause is gone, the behaviour is gone in the same moment.\nBut some events say something about the minutes that follow. An animal that has just eaten well is probably standing in a good place. An animal that has just been hurt is probably standing in a bad one. To use that, the brain has to keep something of the event after it is over. This stage adds two such states.\nIn the world of the previous stage the bushes of every kind were spread evenly. There, a meal says nothing about the place: the bush that was just emptied stays empty for a long time, and what grows next to it is as likely to be poison as anywhere else. A state that lasts has nothing to work with.\nSo the bushes now grow in patches, and every patch holds one kind. After a good meal, the neighbouring bushes are most likely good as well. After a poison bite, the neighbours are most likely poison too. What just happened says what is near.\nThe rest is as before: the world is cold, the hot springs are spread evenly, and the four kinds of berry bush are new in every life, half of them poison.",
+    "text": "The circuit\nEverything this brain does so far, it does about the present. A bush is in front of it, so it bites. The skin is cold, so it walks. The stomach is empty, so it forages. When the cause is gone, the behaviour is gone in the same moment.\nBut some events say something about the minutes that follow. An animal that has just eaten well is probably standing in a good place. An animal that has just been hurt is probably standing in a bad one. To use that, the brain has to keep something of the event after it is over. This stage adds two such states: an alarm after pain, and contentment after a meal. So that the states have something to work with, the bushes in this world grow in patches of one kind each.\nTwo modulators, substances that a few cells release and that reach many cells at once, each released by one event and cleared slowly. And three new cells.\nhungry still shuts rest, as before. So a fed animal stays in the good patch until it is hungry again, and then it forages, with good bushes close by.\nThe two states are not a second system next to the drives. They act on the same cells: the drives decide what the animal does from what the body needs now, and the two modulators push those same modes for a while after an event.\nThe wiring is designed. Evolution may tune every strength, and also how fast each modulator is cleared, which sets how long each state lasts.",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>Affect: states that last</span>"
+    ]
+  },
+  {
+    "objectID": "affect.html#the-circuit",
+    "href": "affect.html#the-circuit",
+    "title": "Affect: states that last",
+    "section": "",
+    "text": "Alarm. Pain releases the modulator alarm. It drives a new cell, flee, which pushes the animal forward. After a poison bite the animal keeps going for a short while, out of the patch of poison.\nSerotonin. A new cell, fed, fires when the animal tastes food, and releases the modulator serotonin. It drives a new cell, settle, which switches on rest, the cell of the previous stage that holds the forward step back. After a meal the animal stays where it ate, also where it is cold.",
     "crumbs": [
       "Chapter 1: steering",
       "<span class='chapter-number'>6</span>  <span class='chapter-title'>Affect: states that last</span>"
@@ -476,18 +520,18 @@
     "href": "affect.html#the-biology-affect",
     "title": "Affect: states that last",
     "section": "The biology: affect",
-    "text": "The biology: affect\nA drive, as in the previous stage, follows the body: the hunger cell fires for as long as the stomach is empty and stops when it is full. An affective state is different in one respect. Something sets it off, and then it stays for a while by itself, after its cause has gone.\nIn small animals such states are carried by neuromodulators: substances that a few cells release and that reach many cells at once. They are released quickly and cleared slowly, and that slowness is the memory. The roundworm C. elegans slows down and stays where it is for minutes after it has found food, under the influence of serotonin. After a harmful touch it speeds away, and keeps going well after the touch has ended.\nSuch a state has two sides. It is good or bad, and it makes the animal more active or less. An animal that is alarmed is in a bad and active state. An animal that is content is in a good and quiet one.",
+    "text": "The biology: affect\nA drive, as in the previous stage, follows the body: the hunger cell fires for as long as the stomach is empty and stops when it is full. An affective state is different in one respect. Something sets it off, and then it stays for a while by itself, after its cause has gone.\nIn small animals such states are carried by neuromodulators. They are released quickly and cleared slowly, and that slowness is the memory. The roundworm C. elegans slows down and stays where it is for minutes after it has found food, under the influence of serotonin. After a harmful touch it speeds away, and keeps going well after the touch has ended.\nSuch a state has two sides. It is good or bad, and it makes the animal more active or less. An animal that is alarmed is in a bad and active state. An animal that is content is in a good and quiet one.",
     "crumbs": [
       "Chapter 1: steering",
       "<span class='chapter-number'>6</span>  <span class='chapter-title'>Affect: states that last</span>"
     ]
   },
   {
-    "objectID": "affect.html#the-circuit",
-    "href": "affect.html#the-circuit",
+    "objectID": "affect.html#the-world-every-kind-of-bush-in-its-own-patches",
+    "href": "affect.html#the-world-every-kind-of-bush-in-its-own-patches",
     "title": "Affect: states that last",
-    "section": "The circuit",
-    "text": "The circuit\nTwo modulators, each released by one event and cleared slowly, and three new cells.\n\nAlarm. Pain releases the modulator alarm. It drives a new cell, flee, which pushes the animal forward. After a poison bite the animal keeps going for a short while, out of the patch of poison.\nSerotonin. A new cell, fed, fires when the animal tastes food, and releases the modulator serotonin. It drives a new cell, settle, which switches on rest, the cell of the previous stage that holds the forward step back. After a meal the animal stays where it ate, also where it is cold.\n\nhungry still shuts rest, as before. So a fed animal stays in the good patch until it is hungry again, and then it forages, with good bushes close by.\nThe two states are not a second system next to the drives. They act on the same cells: the drives decide what the animal does from what the body needs now, and the two modulators push those same modes for a while after an event.\nThe wiring is designed. Evolution may tune every strength, and also how fast each modulator is cleared, which sets how long each state lasts.",
+    "section": "The world: every kind of bush in its own patches",
+    "text": "The world: every kind of bush in its own patches\nIn the world of the previous stage the bushes of every kind were spread evenly. There, a meal says nothing about the place: the bush that was just emptied stays empty for a long time, and what grows next to it is as likely to be poison as anywhere else. A state that lasts has nothing to work with.\nSo the bushes now grow in patches, and every patch holds one kind. After a good meal, the neighbouring bushes are most likely good as well. After a poison bite, the neighbours are most likely poison too. What just happened says what is near.\nThe rest is as before: the world is cold, the hot springs are spread evenly, and the four kinds of berry bush are new in every life, half of them poison.",
     "crumbs": [
       "Chapter 1: steering",
       "<span class='chapter-number'>6</span>  <span class='chapter-title'>Affect: states that last</span>"
@@ -520,29 +564,7 @@
     "href": "wider-world.html",
     "title": "Preparing the ground",
     "section": "",
-    "text": "A world with work for every part\nChapter 1 ended with an animal that steers, avoids what hurts, learns which food to distrust, looks after two needs and carries a mood for a while. This chapter builds the brain of an early fish on top of it, and most of what it adds is about learning.\nBefore anything is added, the ground is prepared. This stage puts no new part into the brain. It tunes what chapter 1 built, so that the stages after it have something to stand on: a world in which every part of the animal has work to do, moods that fit that world, and eyes that see a little more of it. The question is only whether the animals settle in, and whether they still use everything they have.\nThe last two things chapter 1 added pull in opposite directions. Learning which food is poison pays where good and poison bushes stand side by side. The two lasting states, to keep going after pain and to stay after a meal, pay where every kind of bush grows in its own patch, because then what just happened says something about what is near. In a patch of one kind there is nothing left to learn, and in evenly mixed country there is nothing to stay for or to flee from.\nThe stages of this chapter build on both, so its world sits in between: patches that are mostly one kind, with bushes of the other kinds standing among them. It is also larger, so that the animals get less in each other’s way. The food is as before: four kinds of berry bush, new in every life, half of them poison.\nOne thing stood in the way. In such patches, knowing a poison bush by its look and staying where the food was good are two ways of doing the same thing. With the lasting states as chapter 1 built them, each line of descent kept one of the two and let the other go. The next section is what made room for both.",
-    "crumbs": [
-      "Chapter 2: reinforcing",
-      "<span class='chapter-number'>7</span>  <span class='chapter-title'>Preparing the ground</span>"
-    ]
-  },
-  {
-    "objectID": "wider-world.html#moods-that-build-up",
-    "href": "wider-world.html#moods-that-build-up",
-    "title": "Preparing the ground",
-    "section": "Moods that build up",
-    "text": "Moods that build up\nIn chapter 1 each lasting state was released in full by a single event. One poison bite was a full alarm, and one good bite was the full urge to stay. That fits a patch of one kind, where one bite is all the evidence there is.\nIn a patch of mixed kinds one bite says little. A good bush can stand in poor ground, and a poison bush in good ground. Several bites close together say much more: this is mostly good ground, or mostly bad.\nSo the two states now build up. Every bite adds a little, and what was added fades with time. The animal flees only when more than one poison bite has come in a short while, and settles only after more good bites than one bush can give. A single bite of either kind passes without a change of mood.\nThis is closer to how such signals behave in a body. A modulator is released in small amounts and cleared slowly, so its level at any moment is a running sum of what happened lately, not a record of the last event alone.\nNo cell is added for this. The same two modulators and the same cells are used; only how a modulator’s level follows its release is different, and the cells that read it have a threshold. The thresholds were set by hand and the fading times were left to evolution.",
-    "crumbs": [
-      "Chapter 2: reinforcing",
-      "<span class='chapter-number'>7</span>  <span class='chapter-title'>Preparing the ground</span>"
-    ]
-  },
-  {
-    "objectID": "wider-world.html#a-part-that-is-not-used-drifts",
-    "href": "wider-world.html#a-part-that-is-not-used-drifts",
-    "title": "Preparing the ground",
-    "section": "A part that is not used drifts",
-    "text": "A part that is not used drifts\nThe animals were not moved into the patches at once. They first spent a while in open country, with their new eyes.\nIn the pure patches at the end of chapter 1, learning had nothing to do, and a part that is not used is not kept in shape: the animals arrived with learning set too strong, so that a lesson about one bush spread to bushes that only resembled it. Put straight into the patches, some lines of descent switched such learning off, which is easier than repairing it. In open country a poison bush can be told only by its look, so there learning was repaired first. After that, the patches kept it.",
+    "text": "Moods that build up\nChapter 1 ended with an animal that steers, avoids what hurts, learns which food to distrust, looks after two needs and carries a mood for a while. This chapter builds the brain of an early fish on top of it, and most of what it adds is about learning.\nBefore anything is added, the ground is prepared. This stage puts no new part into the brain. It tunes what chapter 1 built, so that the stages after it have something to stand on: moods that build up over several bites, eyes that see a little more, and a larger world of patches that are mostly one kind of bush, with bushes of the other kinds standing among them. The question is only whether the animals settle in, and whether they still use everything they have.\nIn chapter 1 each lasting state was released in full by a single event. One poison bite was a full alarm, and one good bite was the full urge to stay. That fits a patch of one kind, where one bite is all the evidence there is.\nIn a patch of mixed kinds one bite says little. A good bush can stand in poor ground, and a poison bush in good ground. Several bites close together say much more: this is mostly good ground, or mostly bad.\nSo the two states now build up. Every bite adds a little, and what was added fades with time. The animal flees only when more than one poison bite has come in a short while, and settles only after more good bites than one bush can give. A single bite of either kind passes without a change of mood.\nNo cell is added for this. The same two modulators and the same cells are used; only how a modulator’s level follows its release is different, and the cells that read it have a threshold. The thresholds were set by hand and the fading times were left to evolution.\nThe change was needed to keep both of chapter 1’s ways of dealing with poison. In mixed patches, knowing a poison bush by its look and staying where the food was good are two ways of doing the same thing. With the lasting states as chapter 1 built them, each line of descent kept one of the two and let the other go. Moods that build up made room for both.\nThis is closer to how such signals behave in a body. A modulator is released in small amounts and cleared slowly, so its level at any moment is a running sum of what happened lately, not a record of the last event alone.",
     "crumbs": [
       "Chapter 2: reinforcing",
       "<span class='chapter-number'>7</span>  <span class='chapter-title'>Preparing the ground</span>"
@@ -554,6 +576,28 @@
     "title": "Preparing the ground",
     "section": "A little more to see",
     "text": "A little more to see\nThe animal now looks in nine directions where it had five, and sees one step further. This is not a new part of the brain. No cells are added, and nothing new is done with what the eyes see. Every part that listened to the five old directions listens to all nine, with a connection of its own from each.\nThe four new directions sit between the old ones. They do not start silent. Each new connection starts as the average of the same connection from its two neighbours, so that the animal makes sense of what it sees there from its first tick, and all connections from the eyes are made weaker by the same factor, because nine send nearly twice as much as five. When the new directions started silent instead, the animals did worse after the same number of generations.",
+    "crumbs": [
+      "Chapter 2: reinforcing",
+      "<span class='chapter-number'>7</span>  <span class='chapter-title'>Preparing the ground</span>"
+    ]
+  },
+  {
+    "objectID": "wider-world.html#a-world-with-work-for-every-part",
+    "href": "wider-world.html#a-world-with-work-for-every-part",
+    "title": "Preparing the ground",
+    "section": "A world with work for every part",
+    "text": "A world with work for every part\nThe last two things chapter 1 added pull in opposite directions. Learning which food is poison pays where good and poison bushes stand side by side. The two lasting states, to keep going after pain and to stay after a meal, pay where every kind of bush grows in its own patch, because then what just happened says something about what is near. In a patch of one kind there is nothing left to learn, and in evenly mixed country there is nothing to stay for or to flee from.\nThe stages of this chapter build on both, so its world sits in between: patches that are mostly one kind, with bushes of the other kinds standing among them. It is also larger, so that the animals get less in each other’s way. The food is as before: four kinds of berry bush, new in every life, half of them poison.",
+    "crumbs": [
+      "Chapter 2: reinforcing",
+      "<span class='chapter-number'>7</span>  <span class='chapter-title'>Preparing the ground</span>"
+    ]
+  },
+  {
+    "objectID": "wider-world.html#a-part-that-is-not-used-drifts",
+    "href": "wider-world.html#a-part-that-is-not-used-drifts",
+    "title": "Preparing the ground",
+    "section": "A part that is not used drifts",
+    "text": "A part that is not used drifts\nThe animals were not moved into the patches at once. They first spent a while in open country, with their new eyes.\nIn the pure patches at the end of chapter 1, learning had nothing to do, and a part that is not used is not kept in shape: the animals arrived with learning set too strong, so that a lesson about one bush spread to bushes that only resembled it. Put straight into the patches, some lines of descent switched such learning off, which is easier than repairing it. In open country a poison bush can be told only by its look, so there learning was repaired first. After that, the patches kept it.",
     "crumbs": [
       "Chapter 2: reinforcing",
       "<span class='chapter-number'>7</span>  <span class='chapter-title'>Preparing the ground</span>"

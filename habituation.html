@@ -362,10 +362,10 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#the-world-a-bush-that-never-has-berries" id="toc-the-world-a-bush-that-never-has-berries" class="nav-link active" data-scroll-target="#the-world-a-bush-that-never-has-berries">The world: a bush that never has berries</a></li>
-  <li><a href="#the-biology-adaptation-and-habituation" id="toc-the-biology-adaptation-and-habituation" class="nav-link" data-scroll-target="#the-biology-adaptation-and-habituation">The biology: adaptation and habituation</a></li>
-  <li><a href="#the-circuit" id="toc-the-circuit" class="nav-link" data-scroll-target="#the-circuit">The circuit</a></li>
+  <li><a href="#the-circuit" id="toc-the-circuit" class="nav-link active" data-scroll-target="#the-circuit">The circuit</a></li>
   <li><a href="#watching-it-work" id="toc-watching-it-work" class="nav-link" data-scroll-target="#watching-it-work">Watching it work</a></li>
+  <li><a href="#the-biology-adaptation-and-habituation" id="toc-the-biology-adaptation-and-habituation" class="nav-link" data-scroll-target="#the-biology-adaptation-and-habituation">The biology: adaptation and habituation</a></li>
+  <li><a href="#the-world-a-bush-that-never-has-berries" id="toc-the-world-a-bush-that-never-has-berries" class="nav-link" data-scroll-target="#the-world-a-bush-that-never-has-berries">The world: a bush that never has berries</a></li>
   <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">Results</a>
   <ul class="collapse">
   <li><a href="#how-a-life-is-spent" id="toc-how-a-life-is-spent" class="nav-link" data-scroll-target="#how-a-life-is-spent">How a life is spent</a></li>
@@ -402,10 +402,37 @@ ul.task-list li input[type="checkbox"] {
 
 </div>
 <p>The animals of the previous stage know good from bad, and they respond to a look in the same way every time they see it. To them a bush that has been emptied still looks enough like food to bite at, and the look does not change however often the bite gives nothing. So an animal can stand in front of an empty bush for a long time, biting. What is missing is simple to say: an animal should stop responding to something that stays the same and keeps giving nothing.</p>
-<p>This stage changes one thing, in the eyes.</p>
+<p>This stage changes one thing, in the eyes: they get used to what they keep seeing. To make that worth having, the world gets a <em>dud</em>, a bush that looks like food and never carries a berry.</p>
+<div data-life="brain" data-stage="1.2h">
+
+</div>
+<section id="the-circuit" class="level2">
+<h2 class="anchored" data-anchor-id="the-circuit">The circuit</h2>
+<p>No new cells. Each of the eyes’ <strong>look</strong> inputs now keeps a slow average of what it has been seeing, over roughly the last fifty ticks, and passes on the difference between what it sees now and that average.</p>
+<p>Two things follow, both for the whole brain, because every neuron downstream of the eyes now gets the adapted look:</p>
+<ul>
+<li><strong>What stays in view fades.</strong> An animal that stands in front of a bush sees its look sink into the average. The appetitive cells, driven by that look, fall silent, and with them the urge to bite. The animal moves on.</li>
+<li><strong>What is unusual stands out.</strong> All berry bushes look alike in most respects, and that shared part is nearly always in view, so it is nearly always in the average. What passes through is the part that differs: the colour of this bush. Nothing uses this yet. It becomes important in the next stage, where the animal learns from a single bite which colour is bad.</li>
+</ul>
+</section>
+<section id="watching-it-work" class="level2">
+<h2 class="anchored" data-anchor-id="watching-it-work">Watching it work</h2>
+<p>One animal from the last generation, at a dud. The two rows marked <code>vis+0</code> are two of the look inputs of the eye that points straight ahead, the two that respond most strongly to this dud.</p>
+<p>The animal walks up and bites. Step through the ticks and watch the two look inputs: the dud does not change, and yet what the eye reports sinks a little with every tick, because the eye is getting used to it. The appetitive cells and <code>grasp</code> do not fade as smoothly. They hold for a while and then drop out, and the biting stops.</p>
+<p>Then the animal turns away, and the look inputs go <em>below</em> zero. Nothing is in front of the eye now, but the eye is still used to the dud, and what it reports is the difference: less of that look than usual.</p>
+<div data-life="strip" data-stage="1.2h" data-example="dud_visit">
+
+</div>
+<p>Not every visit to a dud goes like this. Most are over within a few ticks, and some last far longer.</p>
+</section>
+<section id="the-biology-adaptation-and-habituation" class="level2">
+<h2 class="anchored" data-anchor-id="the-biology-adaptation-and-habituation">The biology: adaptation and habituation</h2>
+<p>Step into a room with a strong smell and after a few minutes it is gone. The smell is still there; the receptors have stopped reporting it. Sensory neurons respond to <em>change</em>: to what differs from the recent past. A steady input is the background, and the background carries no news. This is <em>sensory adaptation</em>.</p>
+<p><em>Habituation</em> is the same thing seen in behaviour. A snail that is touched pulls in its horns. Touch it again and again and it stops bothering. It is the simplest kind of learning there is, older than learning by association, and found in every animal that has been tested, including ones with a few hundred neurons.</p>
+</section>
 <section id="the-world-a-bush-that-never-has-berries" class="level2">
 <h2 class="anchored" data-anchor-id="the-world-a-bush-that-never-has-berries">The world: a bush that never has berries</h2>
-<p>The world of the previous stage gets one more kind of bush, a <em>dud</em>. It looks like a berry bush and never carries a berry. Its colour is drawn anew for every life, so nothing an ancestor knew about colours can tell an animal to leave it alone. In some lives the dud happens to have a colour the animal finds attractive, and then an animal that responds to a look in the same way every time will stand at it and bite for as long as it lives.</p>
+<p>The world of the previous stage gets one more kind of bush, the dud. It looks like a berry bush and never carries a berry. Its colour is drawn anew for every life, so nothing an ancestor knew about colours can tell an animal to leave it alone. In some lives the dud happens to have a colour the animal finds attractive, and then an animal that responds to a look in the same way every time will stand at it and bite for as long as it lives.</p>
 <p>There are as many bushes with berries as before; the duds come on top.</p>
 <div data-life="settings" data-stage="1.2h">
 
@@ -427,33 +454,6 @@ ul.task-list li input[type="checkbox"] {
 </div>
 </div>
 </div>
-</section>
-<section id="the-biology-adaptation-and-habituation" class="level2">
-<h2 class="anchored" data-anchor-id="the-biology-adaptation-and-habituation">The biology: adaptation and habituation</h2>
-<p>Step into a room with a strong smell and after a few minutes it is gone. The smell is still there; the receptors have stopped reporting it. Sensory neurons respond to <em>change</em>: to what differs from the recent past. A steady input is the background, and the background carries no news. This is <em>sensory adaptation</em>.</p>
-<p><em>Habituation</em> is the same thing seen in behaviour. A snail that is touched pulls in its horns. Touch it again and again and it stops bothering. It is the simplest kind of learning there is, older than learning by association, and found in every animal that has been tested, including ones with a few hundred neurons.</p>
-</section>
-<section id="the-circuit" class="level2">
-<h2 class="anchored" data-anchor-id="the-circuit">The circuit</h2>
-<p>No new cells. Each of the eyes’ <strong>look</strong> inputs now keeps a slow average of what it has been seeing, over roughly the last fifty ticks, and passes on the difference between what it sees now and that average.</p>
-<p>Two things follow, both for the whole brain, because every neuron downstream of the eyes now gets the adapted look:</p>
-<ul>
-<li><strong>What stays in view fades.</strong> An animal that stands in front of a bush sees its look sink into the average. The appetitive cells, driven by that look, fall silent, and with them the urge to bite. The animal moves on.</li>
-<li><strong>What is unusual stands out.</strong> All berry bushes look alike in most respects, and that shared part is nearly always in view, so it is nearly always in the average. What passes through is the part that differs: the colour of this bush. Nothing uses this yet. It becomes important in the next stage, where the animal learns from a single bite which colour is bad.</li>
-</ul>
-<div data-life="brain" data-stage="1.2h">
-
-</div>
-</section>
-<section id="watching-it-work" class="level2">
-<h2 class="anchored" data-anchor-id="watching-it-work">Watching it work</h2>
-<p>One animal from the last generation, at a dud. The two rows marked <code>vis+0</code> are two of the look inputs of the eye that points straight ahead, the two that respond most strongly to this dud.</p>
-<p>The animal walks up and bites. Step through the ticks and watch the two look inputs: the dud does not change, and yet what the eye reports sinks a little with every tick, because the eye is getting used to it. The appetitive cells and <code>grasp</code> do not fade as smoothly. They hold for a while and then drop out, and the biting stops.</p>
-<p>Then the animal turns away, and the look inputs go <em>below</em> zero. Nothing is in front of the eye now, but the eye is still used to the dud, and what it reports is the difference: less of that look than usual.</p>
-<div data-life="strip" data-stage="1.2h" data-example="dud_visit">
-
-</div>
-<p>Not every visit to a dud goes like this. Most are over within a few ticks, and some last far longer.</p>
 </section>
 <section id="results" class="level2">
 <h2 class="anchored" data-anchor-id="results">Results</h2>

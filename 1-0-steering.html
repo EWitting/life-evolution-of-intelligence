@@ -362,10 +362,10 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#the-world-berries-and-onions" id="toc-the-world-berries-and-onions" class="nav-link active" data-scroll-target="#the-world-berries-and-onions">The world: berries and onions</a></li>
-  <li><a href="#the-biology-steering" id="toc-the-biology-steering" class="nav-link" data-scroll-target="#the-biology-steering">The biology: steering</a></li>
-  <li><a href="#the-circuit" id="toc-the-circuit" class="nav-link" data-scroll-target="#the-circuit">The circuit</a></li>
+  <li><a href="#the-circuit" id="toc-the-circuit" class="nav-link active" data-scroll-target="#the-circuit">The circuit</a></li>
   <li><a href="#watching-it-work" id="toc-watching-it-work" class="nav-link" data-scroll-target="#watching-it-work">Watching it work</a></li>
+  <li><a href="#the-biology-steering" id="toc-the-biology-steering" class="nav-link" data-scroll-target="#the-biology-steering">The biology: steering</a></li>
+  <li><a href="#the-world-berries-and-onions" id="toc-the-world-berries-and-onions" class="nav-link" data-scroll-target="#the-world-berries-and-onions">The world: berries and onions</a></li>
   <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">Results</a></li>
   <li><a href="#the-runs-behind-this-page" id="toc-the-runs-behind-this-page" class="nav-link" data-scroll-target="#the-runs-behind-this-page">The runs behind this page</a></li>
   </ul>
@@ -397,13 +397,24 @@ ul.task-list li input[type="checkbox"] {
 <div data-life="status" data-stage="1.0">
 
 </div>
-<p>The first animal has no memory, no hunger and no idea of good or bad. It can do one thing: turn what it sees into movement. This stage evolves a brain that does that, from random wiring, until the animal finds food and eats it.</p>
+<p>The first animal has no memory, no hunger and no idea of good or bad. It can do one thing: turn what it sees into movement. This stage evolves a brain that does that, from random wiring, until the animal finds food and eats it. The brain is small: the eyes, a clump of neurons behind them, and the motor neurons that move the animal.</p>
 <p>Everything after this stage is added to this brain.</p>
-<section id="the-world-berries-and-onions" class="level2">
-<h2 class="anchored" data-anchor-id="the-world-berries-and-onions">The world: berries and onions</h2>
-<p>The world holds four kinds of berry bush and wild onions. All of it is food and nothing is dangerous. An animal that stands still starves, and so does one that walks without getting anywhere, because moving costs energy. The only way to live is to get to a bush that carries berries, bite, and go on to the next one.</p>
-<p>The animal eats what it grasps. Picking something up and carrying it comes much later.</p>
-<div data-life="settings" data-stage="1.0">
+<div data-life="brain" data-stage="1.0">
+
+</div>
+<section id="the-circuit" class="level2">
+<h2 class="anchored" data-anchor-id="the-circuit">The circuit</h2>
+<ul>
+<li>A <strong>ganglion</strong>, a clump of sixteen excitatory and eight inhibitory interneurons. The eyes connect to it, its neurons connect to each other, and it connects to the motor neurons.</li>
+<li><strong>Reflex arcs</strong>: direct connections from the eyes to the motor neurons.</li>
+</ul>
+<p>Every synapse in this brain is evolved: which ones exist, and how strong they are. Nothing is designed and nothing changes during a life.</p>
+<p>The brain sees the outside world only. It does not feel its stomach, and it does not notice whether a bite gave it anything. Those senses enter the brain in later stages, through cells made for them.</p>
+</section>
+<section id="watching-it-work" class="level2">
+<h2 class="anchored" data-anchor-id="watching-it-work">Watching it work</h2>
+<p>One animal from the last generation, walking up to a bush and eating. The rows below the picture are the neurons of the ganglion; there is nothing in them to read, and that is the point. No neuron here stands for anything. The behaviour is spread over all of them, wherever evolution happened to put it.</p>
+<div data-life="strip" data-stage="1.0" data-example="to_a_bush">
 
 </div>
 </section>
@@ -412,22 +423,11 @@ ul.task-list li input[type="checkbox"] {
 <p>The oldest animals with a front and a back were small worms, and what set them apart from jellyfish and sponges was that they could go somewhere. A body with a front end, sense organs on it, and a clump of neurons behind them can do something a net of nerves spread through the body cannot: turn towards what is good and away from what is bad. In <em>A Brief History of Intelligence</em> this is the first of the breakthroughs, <em>steering</em>.</p>
 <p>The circuit for it is small. In the worm <em>C. elegans</em>, with 302 neurons, sensory neurons connect to a few layers of interneurons, and those to the motor neurons, with some sensory neurons wired to motor neurons directly. A direct connection is a reflex. The interneurons in between let several senses be weighed against each other before the muscles move.</p>
 </section>
-<section id="the-circuit" class="level2">
-<h2 class="anchored" data-anchor-id="the-circuit">The circuit</h2>
-<ul>
-<li>A <strong>ganglion</strong> of sixteen excitatory and eight inhibitory interneurons. The eyes connect to it, its neurons connect to each other, and it connects to the motor neurons.</li>
-<li><strong>Reflex arcs</strong>: direct connections from the eyes to the motor neurons.</li>
-</ul>
-<p>Every synapse in this brain is evolved: which ones exist, and how strong they are. Nothing is designed and nothing changes during a life.</p>
-<p>The brain sees the outside world only. It does not feel its stomach, and it does not notice whether a bite gave it anything. Those senses enter the brain in later stages, through cells made for them.</p>
-<div data-life="brain" data-stage="1.0">
-
-</div>
-</section>
-<section id="watching-it-work" class="level2">
-<h2 class="anchored" data-anchor-id="watching-it-work">Watching it work</h2>
-<p>One animal from the last generation, walking up to a bush and eating. The rows below the picture are the neurons of the ganglion; there is nothing in them to read, and that is the point. No neuron here stands for anything. The behaviour is spread over all of them, wherever evolution happened to put it.</p>
-<div data-life="strip" data-stage="1.0" data-example="to_a_bush">
+<section id="the-world-berries-and-onions" class="level2">
+<h2 class="anchored" data-anchor-id="the-world-berries-and-onions">The world: berries and onions</h2>
+<p>The world holds four kinds of berry bush and wild onions. All of it is food and nothing is dangerous. An animal that stands still starves, and so does one that walks without getting anywhere, because moving costs energy. The only way to live is to get to a bush that carries berries, bite, and go on to the next one.</p>
+<p>The animal eats what it grasps. Picking something up and carrying it comes much later.</p>
+<div data-life="settings" data-stage="1.0">
 
 </div>
 </section>

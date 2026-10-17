@@ -2402,3 +2402,16 @@ learning trades good food for less poison about evenly.
 Trial running: `x.affect2sim` (multiplicative rates, novel similarity 0.5, from drives, 80 generations, three
 seeds). The idea (user): make the looks easy to tell apart until the pallium, and give the pallium the look-alikes
 back as its job.
+
+**`x.affect2sim`** (multiplicative rates, novel similarity 0.5, 80 generations from drives; 16 worlds, % of intact):
+
+| seed | intact | plasticity off | fed off | flee off | rest off | poison share (on / off) | rate |
+|---|---|---|---|---|---|---|---|
+| 0 | 721 | 67 +-4 | 100 | 96 | 95 | 0.084 / 0.137 | 0.24 |
+| 1 | 1120 | 53 +-6 | 98 | 98 | 88 | 0.070 / 0.155 | 0.32 |
+| 2 | 968 | 87 +-5 | 92 | 88 | 68 | 0.119 / 0.142 | 0.08 |
+
+Learning is used in every seed, and strongly in two; there the lasting states go idle. The same either-or as with
+patch purity: in patches of one type, learning (by look) and the lasting states (by place) do the same job, which
+bushes here are poison, so a lineage keeps one. Next idea (discussed with the user): a world in which they answer
+different questions, as in the worm (dwelling: how much food is here; aversive learning: which food is bad).

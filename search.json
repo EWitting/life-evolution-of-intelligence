@@ -190,7 +190,7 @@
     "href": "1-0-steering.html#the-runs-behind-this-page",
     "title": "Steering",
     "section": "The runs behind this page",
-    "text": "The runs behind this page",
+    "text": "The runs behind this page\nThis stage was run once: every later stage starts from this one population and is judged over three seeds.",
     "crumbs": [
       "Chapter 1: steering",
       "<span class='chapter-number'>1</span>  <span class='chapter-title'>Steering</span>"

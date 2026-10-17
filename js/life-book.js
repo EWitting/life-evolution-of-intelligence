@@ -47,9 +47,8 @@
   function status(root, D) {
     const ev = D.evaluation, n = D.runs.main.length, notes = [];
     if (D.provisional && D.provisional.length) notes.push(`<b>Provisional.</b> These runs were made with settings that differ from the stage as it is defined now (${D.provisional.map(esc).join('; ')}). The numbers will change when the stage is rerun.`);
-    const founder = !(D.runs.control && D.runs.control.length);
-    if (n < 3 && founder) notes.push('<b>One lineage.</b> This stage is where the lineage begins: it has no control and was run once. Every later stage starts from this population and is judged over three seeds.');
-    else if (n < 3) notes.push(`<b>${n} seed${n === 1 ? '' : 's'}.</b> A single run is not evidence: a stage is judged over three seeds.`);
+    const founder = !(D.runs.control && D.runs.control.length);   // run once on purpose; the page says so in its text
+    if (n < 3 && !founder) notes.push(`<b>${n} seed${n === 1 ? '' : 's'}.</b> A single run is not evidence: a stage is judged over three seeds.`);
     if (!ev) notes.push('Lesions, head to head and the re-evaluation have not been exported for these runs yet.');
     else if (ev.stale) notes.push('Lesions, head to head and the re-evaluation below were measured on earlier runs than the curves.');
     root.innerHTML = notes.length ? `<div class="lb-note">${notes.map(t => `<p>${t}</p>`).join('')}</div>` : '';

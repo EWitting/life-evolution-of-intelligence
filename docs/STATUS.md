@@ -1,7 +1,7 @@
 # Status
 
 One screen on where the project is. Plan: `docs/BRAIN_EVOLUTION.md`. **Frozen stages: `frozen/README.md`.** Details, numbers and run directories:
-`docs/STAGE_LOG.md`. Newest decisions: `docs/DECISIONS.md` (ADR-017 to ADR-025). Last updated 2026-10-13 (the world and affect of chapter 2 chosen; 2.0 and 2.1 frozen).
+`docs/STAGE_LOG.md`. Newest decisions: `docs/DECISIONS.md` (ADR-017 to ADR-025). Last updated 2026-10-17 (affect redefined in the world of chapter 2 and frozen; 2.0 and 2.1 off the chain; learning rates mutate multiplicatively; 100 generations per stage).
 
 ## How a stage is judged
 
@@ -12,7 +12,9 @@ than control (user, 2026-10-01). One life is mostly luck, so a design is checked
 1. **Mechanism, brain only**: `scripts/probes/assay.py` (scripted experience, then actions in fixed situations).
 2. **Generation 0, paired**: `scripts/probes/gen0.py` (parent population, mechanism on vs off, same worlds). A
    diagnostic, not a gate: a neutral or mildly negative result can still go on to evolution.
-3. **Evolution**: main vs control, 64 genomes x 4 siblings, recombination, 150 generations, three seeds:
+3. **Evolution**: main vs control, 64 genomes x 4 siblings, recombination, **100 generations** (user, 2026-10-17:
+   long enough to tell whether a circuit is used, short of full convergence at about 160, STAGE_LOG v44), weight
+   mutation 0.1, learning rates mutating multiplicatively (`eta_log_std` 0.3, `Stage.evolution`), three seeds:
 
        stages replicate <key>      two more seeds of main and control
        stages summary <key>        last 50 generations (+ re-evaluation in 8 shared worlds), +- s.e. over seeds
@@ -32,15 +34,15 @@ than control (user, 2026-10-01). One life is mostly luck, so a design is checked
 **Fitness = well-fed lifetime from the first meal** (ADR-024; v19-v22 used energy acquired). Cells that lesions
 show unused in every seed are removed.
 
-## Stages (rerun of 2026-10-08, affect 2026-10-12; STAGE_LOG v32, v33)
+## Stages (rerun of 2026-10-08, affect 2026-10-17; STAGE_LOG v32, v33, v43-v45)
 
-Chain: 1.0 -> 1.1 -> 1.2h habituation -> 1.5 association -> 1.7 drives -> 1.8 affect -> 2.0 -> 2.1 -> chapter 2. The keys are
+Chain: 1.0 -> 1.1 -> 1.2h habituation -> 1.5 association -> 1.7 drives -> 1.8 affect -> chapter 2. The keys are
 historical names, not positions; the book shows the stages by name only (no stage numbers, user 2026-10-08). Lives are 4000
 ticks from the settling run of 1.0 on. Footing v25 (born a quarter full, food as a flow, a bite cost). Every stage
 starts from the seed-0 run of its parent. Three seeds unless stated; lesion = fitness with the region silenced, %
 of intact, per seed.
 
-**Stages 2.0 and 2.1 are frozen (2026-10-13).** **Chapter 1 is frozen: 1.0, 1.1, 1.2h, 1.5, 1.7 (2026-10-08, tag `chapter-1-drives`) and 1.8 (2026-10-12, tag `chapter-1`).** Definitions and final populations are in
+**Chapter 1 is frozen: 1.0, 1.1, 1.2h, 1.5, 1.7 (2026-10-08, tag `chapter-1-drives`) and 1.8 (2026-10-17, tag `chapter-1-v2`).** The first affect route (1.8old, 2.0, 2.1) stays frozen off the chain. Definitions and final populations are in
 `frozen/` (`frozen/README.md`, `life/freeze.py`); `tests/test_frozen.py` fails when a frozen definition changes.
 **Do not rerun these stages or their lineage** (user, 2026-10-08). A change that has to touch one is made by
 remapping the stored populations and freezing again.
@@ -52,29 +54,27 @@ remapping the stored populations and freezing again.
 | 1.2h habituation | no new cells: every look input passes on its input minus its slow average (about 50 ticks), so what stays in view fades and what is unusual stands out. World: the 1.1 world plus a dud bush type (colour per life, never a berry) | **frozen**, passes | Main 1139 +-15 vs control 1073 +-35; re-evaluated 1361 vs 1272 (+89 +-65: 218, 42, 8). Adaptation switched off: 36, 55, 36% of intact. Biting at nothing 28% of ticks vs 62%. Without the dud the adaptation was used weakly (84%). No head to head (the change is in the inputs). |
 | 1.5 association | `us_pain` teaches the look -> aversive synapses (plain: the adapted look already carries what sets a food apart); a world of only novel foods, half of them poison | **frozen**, passes | Main 592 +-20 vs control 354 +-19; re-evaluated 721 vs 360 (+361 +-66); head to head +520 +-120. Lesions: no_plasticity and us_pain 43 48 43. Poison share 0.13-0.15 vs 0.23-0.24. Learning rate evolved up (0.3 -> 0.60 in seed 0). Clearer than the old order (+175, head to head +71). Lives are short (about 1170 of 4000 in the recorded generation). |
 | 1.7 drives | `cold` and `hungry` need cells; warmth by kinesis: `warm_seek` (run while the skin is cold), `rest` (stay where it is warm); `hungry` shuts the warmth mode; evolvable `hungry` -> feeding synapses. World: the 1.5 world made cold, hot springs (which do not block) | **frozen**, passes (user's decision on the head to head) | Main 386 +-14 vs control 309 +-18; re-evaluated 401 vs 341 (+60 +-37: 124, -4, 62). **Head to head -65 +-33** (-88, -108, 0): the control half does better next to main animals (432-532) than among its own (276-409). Lesions: hungry 26 27 18, rest 72 86 71, cold and warm_seek 89 94 86, plasticity 71 66 76. Main moves 45% of ticks vs 71%, bites at nothing 32% vs 12%. Either population alone at half density does 55-80% better (`density.py`): food is a race, resting animals leave food to roamers and gain by burning less. |
-| 1.8 affect | two states that outlast their trigger, each a modulator released at once and cleared slowly: pain -> `alarm` -> `flee` -> forward; taste -> `fed` -> `serotonin` -> `settle` -> `rest`. Fade times are genes (`Genome.clear`). World: the drives world with every berry type in its own patches (`patch_types`) | **frozen**, passes | Main 769 +-33 vs control 485 +-38 (last 50 generations of 40: the whole run); re-evaluated 919 vs 625 (+294 +-5: 297, 285, 301); head to head +482 +-112 (604, 258, 583). Lesions: fed 63 54 66, settle 63 54 64, flee 81 86 89, rest 41 36 37, hungry 41 54 41. **No longer used in this world: cold and warm_seek 101 105 107, plasticity 99 95 99.** Fade times stayed near the design (seed 0: alarm 8 ticks, serotonin 84). Both populations were still rising at generation 40. |
+| 1.8 affect | two states that outlast their trigger and add up over bites (a leaky sum): pain -> `alarm` -> `flee` -> forward above about 1.5 poison bites; taste -> `fed` -> `serotonin` -> `settle` -> `rest` above about 9 good bites. Thresholds and fade times evolve. World: 256 x 256 (four times the area), density 0.3, berry types in patches 70% their own kind (320 patches of radius 6); chapter 1 eyes | **frozen**, passes | Re-evaluated (8 worlds) main 1222 1483 1501 vs control 1421 1150 1080 (+185 +-194); **head to head +216 +-135** (+32, +478, +138). Lesions: flee 86 77 88, fed 94 89 86, settle 86 89 83, rest 62 39 51, hungry 24 10 21. Not used in this world: plasticity 98 105 100, cold and warm_seek 102 100 102. Learning rates kept (0.23, 0.11, 0.13; control 0.40, 0.24, 0.13). 100 generations, multiplicative learning-rate mutation. |
 | side paths | 1.1l, 1.5c (centred association before habituation), 1.5f, 1.6h, 1.6 reversal, x.hands, x.td, old 1.2-1.4 | defined, not on the path | Listed with reasons in `frozen/README.md`. |
-| chapter 2 world | 256 x 256 (four times the area of chapter 1), density 0.3, the berry types in patches 70% their own kind (320 patches of radius 6); looks as in chapter 1 | chosen (user, 2026-10-13) | Crowding hid most of a forager's gain at 128 and 181. No world gave both learning and the lasting states a job while the states were released at once: open country and patches of mixed types leave the states idle, purer patches leave learning idle, and at 70% the seeds went three ways (STAGE_LOG v40, v41). |
-| 2.0 camera eyes, open country | 9 eye columns, range 6; no new cells; the new columns start as the mean of their neighbours, all eye synapses times 5/9; open country at 181 x 181 | **frozen** (three seeds, no control; the first 2.1, renamed) | Re-evaluated 1085 1109 1154 (start population 676); plasticity off 53 44 41%: learning comes back, the learning rate comes down. flee 83 96 99, fed 93 100 100. The tectum has no stage (user): STAGE_LOG v35, v36. |
-| 2.1 tuning for chapter 2 | the world of chapter 2; the two lasting states add up over bites (`ModulatorSpec.accumulate`: a leaky sum; `flee` fires above 1.5 poison bites, `settle` above 9 good bites) | **frozen** (three seeds, each from its seed of 2.0; no control) | Re-evaluated 1358 1359 1134 (16 worlds). Every circuit is used in every seed: plasticity off 86 78 86, fed off 74 77 86, rest off 66 76 69, flee off 92 86 91. Seed 0 against its start population in the same worlds: 1463 against 765. Straight from 1.8 learning does not come back (trial `x.direct`: plasticity off 90 84 102). Book: one page for 2.0 and 2.1, "Preparing the ground". |
+| first affect route | 1.8old (states released at once, one berry type per patch; learning unused 99 95 99) -> 2.0 (camera eyes in open country: learning back) -> 2.1 (the chapter 2 world, states that add up) | frozen, off the chain (2026-10-17) | The new 1.8 does this in one stage. Straight from drives with the additive mutation of learning rates, lineages set the rate to 0 and keep it there (`x.affect2`, 200 generations); multiplicative steps keep it (v43, v44). |
 | chapter 2, next | pallium -> dopamine critic -> hands -> basal ganglia with actor -> curiosity | planned (ADR-025) | The definitions `old2.1`-`old2.5` and `x.td` in `stages.py` are the first design on the reversal brain; each stage is defined again when its turn comes. |
 | later, 3.x-5.x | pallium clustering, hippocampus, cerebellum, uncertainty modulators; simulating, mentalizing, speaking | planned | |
 
 ## Next steps
 
-1. **Resume here: the pallium** (ADR-025). The ground is prepared (2.0, 2.1, book page "Preparing the ground").
-   First probe for the pallium: the assay of the association stage with the learned synapses reading the pallium.
-   What it has to fix was measured in open country (STAGE_LOG v37, v38): repeated poison bites (30 in a full life;
-   a perfect learner takes 2) and bites on a full stomach; measure both again in the world of 2.1 before the
-   design. In that world learning is worth 14-22% (plasticity off 86 78 86), so look first at how much a perfect
-   learner could gain there (`lessons.py`).
-   Rules learned on 2026-10-13 (STAGE_LOG v40-v42): start warm-started runs at weight mutation 0.1 (the default of
-   `stages <key>` now; at 1.0 a population loses a quarter in 40 generations); compare populations and lesions in
-   16 shared worlds with standard errors (`trial_lesion.py`, `before_after.py`), not four; at most three JAX
-   processes with the laptop in use, runs started a few minutes apart (a run takes about 2 GB for a moment when
-   it records its last generation); a part that is idle for a stage drifts (the learning rate in 1.8), so check
-   older circuits with lesions after every stage. An unrecorded simulation drops the dead from its arrays (about
-   half the time, identical numbers), and world size costs little time.
+1. **Resume here: the pallium** (ADR-025), on the new 1.8 population, in its world. First probe: the assay of the
+   association stage with the learned synapses reading the pallium. What it has to fix (STAGE_LOG v44): a lesson
+   spreads to look-alikes (novel types share about 0.64 of their look); with types less alike (0.5) learning is
+   worth far more and no longer costs good food. In 1.8 learning is weak but its rate is not lost; the pallium
+   stage should make it pay again. Measure repeated poison bites and bites on a full stomach in this world first
+   (`lessons.py`: a perfect learner would save about 9% of intake at lifetimes of about 2150 ticks).
+   Rules (STAGE_LOG v40-v44): weight mutation 0.1 for warm-started runs; learning rates mutate multiplicatively
+   (with the additive step an idle rate is trapped at 0); 100 generations; compare populations and lesions in 16
+   shared worlds with standard errors (`trial_lesion.py`), never by the training curve (new worlds every
+   generation); at most three JAX processes with the laptop in use, started a few minutes apart; check older
+   circuits with lesions after every stage. In patches of one type, learning and the lasting states do the same
+   job and a lineage leans on one of them: a world gives two mechanisms each a job only if they answer different
+   questions.
 2. Cheaper evaluations (user, 2026-10-12): the export runs in parallel (`--jobs`), prints a line per finished
    task and silences only the regions of the stage and its parent (`--lesions recent`, default); four worlds for a
    routine check (`--worlds 4`), seed 0 first. A stage run writes its 150 MB dashboard only with `--dashboard`.

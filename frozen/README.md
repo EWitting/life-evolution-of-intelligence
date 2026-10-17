@@ -13,7 +13,7 @@ A later change that has to touch a frozen stage (removing a cell that lesions sh
 made by remapping the stored populations onto the new layout and freezing again, with the reason in
 `docs/STAGE_LOG.md`. Results and criteria per stage: `docs/STATUS.md` and the book.
 
-## Chapter 1 (frozen 2026-10-08, git tag `chapter-1-drives`; 1.0 to 1.5 also as `chapter-1-partial`; affect 2026-10-12, tag `chapter-1`)
+## Chapter 1 (frozen 2026-10-08, git tag `chapter-1-drives`; 1.0 to 1.5 also as `chapter-1-partial`; affect redefined and frozen 2026-10-17, tag `chapter-1-v2`)
 
 **Order of the chain: 1.0 -> 1.1 -> 1.2h -> 1.5 -> 1.7 -> 1.8.** The keys are historical names, not positions (1.5 and
 1.7 keep the numbers they had in an earlier order); they stay because run directories, data files and the stage
@@ -30,26 +30,26 @@ from that same parent run.
 | 1.2h | habituation: the look inputs adapt to their slow average; world with a dud bush type | 1.1 | 4000 | 3 |
 | 1.5 | association: pain teaches the look -> aversive synapses; only novel foods, half poison | 1.2h | 4000 | 3 |
 | 1.7 | drives: `cold`, `warm_seek`, `rest`, `hungry`; the 1.5 world made cold, with hot springs | 1.5 | 4000 | 3 |
-| 1.8 | affect: `alarm` -> `flee`, `serotonin` (`fed`) -> `settle` -> `rest`; the 1.7 world with one berry type per patch | 1.7 | 4000 | 3 |
+| 1.8 | affect: `alarm` -> `flee`, `serotonin` (`fed`) -> `settle` -> `rest`, adding up over bites; 256 x 256, berry types in patches 70% their own kind; learning rates mutate multiplicatively; 100 generations | 1.7 | 4000 | 3 |
 
 Chapter 1 is complete. A stored population written before a gene existed (the modulator fade times, `Genome.clear`,
 2026-10-12) loads with the designed value, and a stored configuration is read with options added since at their
 defaults (`freeze.with_defaults`).
 
-## Chapter 2
+## The first affect route (frozen, off the chain since 2026-10-17)
 
 | stage | what it is | parent | life | seeds |
 |---|---|---|---|---|
-| 2.0 | camera eyes (9 eye columns, range 6, no new cells) in open country: no patches, density 0.3, 181 x 181 | 1.8 | 4000 | 3 |
+| 1.8old | the first affect stage: states released at once by one bite; the 1.7 world with one berry type per patch (frozen 2026-10-12 as 1.8, tag `chapter-1`) | 1.7 | 4000 | 3 |
+| 2.0 | camera eyes (9 eye columns, range 6, no new cells) in open country: no patches, density 0.3, 181 x 181 | 1.8old | 4000 | 3 |
 | 2.1 | tuning for chapter 2: 256 x 256, patches 70% their own type; the lasting states add up over bites (`B20S`) | 2.0 | 4000 | 3 |
 
-2.0 and 2.1 are two adaptation steps without control; the book tells them as one stage ("Preparing the ground").
-2.0 (frozen 2026-10-12 as 2.1, renamed 2026-10-13; the same populations, git tag `stage-2.1`) starts from the
-frozen 1.8 seed 0 with the new eye columns interpolated (`stages.interpolate_eyes`, not part of the stored
-definition); its three seeds start from that same run. In open country learning comes back. 2.1 (frozen
-2026-10-13) starts each seed from the same seed of 2.0, with the thresholds and fade times of
-`stages.sum_affect_init`. Straight from 1.8 the same stage does not reliably bring learning back (trial
-`x.direct`, STAGE_LOG v42).
+In 1.8old learning went unused and its rate drifted up; 2.0 brought learning back in open country, 2.1 moved the
+lineage into the world of chapter 2. The new 1.8 does the same in one stage: what kept learning from surviving the
+direct route was the additive mutation of learning rates, which traps an idle rate at 0 (STAGE_LOG v43-v45). 2.0
+(frozen 2026-10-12 as 2.1, renamed 2026-10-13; git tag `stage-2.1`) starts from the frozen 1.8old seed 0 with the
+new eye columns interpolated (`stages.interpolate_eyes`); 2.1 starts each seed from the same seed of 2.0, with
+`stages.sum_affect_init`.
 
 ## Side paths (defined in `stages.py`, not part of the lineage)
 

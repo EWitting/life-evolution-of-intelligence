@@ -752,7 +752,7 @@ B18 = extend(B17,
                           fixed("settle", "rest", 3.0)),
              modulators=(Mod("alarm", pos="us_pain", decay=0.9), Mod("serotonin", pos="fed", decay=0.99)))
 W18 = replace(W17, patches=80, patch_radius=6, patch_types=True)
-stage(Stage("1.8", "s1_8_affect", "1.7", B18, W18, VISION_CH1, BODY_17,
+stage(Stage("1.8old", "s1_8_affect", "1.7", B18, W18, VISION_CH1, BODY_17,
             lambda exp: learning_world(exp, springs=SPRINGS_17, berries=LEARN_BERRIES), **_S15,
             notes="two lasting states: alarm after pain (keep going), serotonin after a meal (stay); "
                   "the drives world with every berry type in its own patches"))
@@ -766,7 +766,7 @@ for _key, _name, _world, _note in (
         ("x.w30f", "x_world_p30_food", replace(W18, patch_purity=0.3, spawn_density=0.3), "the same, with more food"),
         ("x.weven", "x_world_even", replace(W17, spawn_density=0.3), "no patches, more food (the drives population "
                                                                      "gains from learning here)")):
-    stage(Stage(_key, _name, "1.8", B18, _world, VISION_CH1, BODY_17,
+    stage(Stage(_key, _name, "1.8old", B18, _world, VISION_CH1, BODY_17,
                 lambda exp: learning_world(exp, springs=SPRINGS_17, berries=LEARN_BERRIES), **_S15,
                 notes="TRIAL: the affect population in a chapter 2 world candidate: " + _note))
 
@@ -998,11 +998,11 @@ B20 = camera_eyes(B18)
 # times 5/9 1027, with the poison share at 0.06 against 0.10.
 EYES_SCALE = 5 / 9    # nine columns instead of five: the same total input from the eyes
 _S2 = dict(row_extra=poison_metrics, plastic=True, generations=40, ticks=LIFE_15, eta_max=1.0, dense_plastic=True)
-stage(Stage("2.0", "s2_1_eyes", "1.8", B20, W20, VISION_CH2, BODY_17, world_ch2, **_S2,
+stage(Stage("2.0", "s2_1_eyes", "1.8old", B20, W20, VISION_CH2, BODY_17, world_ch2, **_S2,
             adapt_init=lambda pop, layout: interpolate_eyes(pop, layout, scale=EYES_SCALE),
             notes="camera eyes (9 columns, range 6) in open country at 181 x 181, where learning comes back; the new "
                   "columns start as the mean of their neighbours"))
-stage(Stage("x.eyes0", "x_eyes_silent", "1.8", B20, W20, VISION_CH2, BODY_17, world_ch2, **_S2,
+stage(Stage("x.eyes0", "x_eyes_silent", "1.8old", B20, W20, VISION_CH2, BODY_17, world_ch2, **_S2,
             notes="TRIAL: 2.1 with the new eye columns starting silent"))
 
 # Trials (2026-10-13, STAGE_LOG v40): is there a patch purity at which both learning and the lasting states pay,
@@ -1039,6 +1039,8 @@ B20S = replace(B20,
 
 def sum_affect_init(pop, layout):
     """The designed thresholds and fade times (an inherited bias or fade time would be that of release at once)."""
+    if "flee" not in layout.names:   # the control (the parent's brain) has no lasting states
+        return pop
     b, clear = pop.b, pop.clear
     for cell, mod, (t, d), sens in (("flee", "alarm", SUM_ALARM, 3.0), ("settle", "serotonin", SUM_FED, 2.0)):
         b = b.at[:, layout.region(cell)].set(-sens * t)
@@ -1074,7 +1076,7 @@ W21 = replace(W20_256, patches=320, patch_radius=6, patch_types=True, patch_puri
 stage(Stage("2.1", "s2_1_tuning", "2.0", B20S, W21, VISION_CH2, BODY_17, world_ch2, **_S2, adapt_init=sum_affect_init,
             notes="tuning for chapter 2: a wider world with patches 70% their own type, lasting states that add up "
                   "over bites"))
-stage(Stage("x.direct", "x_2_1_direct", "1.8", B20S, W21, VISION_CH2, BODY_17, world_ch2, **_S2,
+stage(Stage("x.direct", "x_2_1_direct", "1.8old", B20S, W21, VISION_CH2, BODY_17, world_ch2, **_S2,
             adapt_init=lambda pop, layout: sum_affect_init(interpolate_eyes(pop, layout, scale=EYES_SCALE), layout),
             notes="TRIAL: stage 2.1 straight from the affect population (camera eyes, patches and lasting states "
                   "that add up at once): learning does not reliably come back"))
@@ -1109,6 +1111,22 @@ stage(Stage("x.affect2sim", "x_affect_ch2world_sim05", "1.7", B18S, W21, VISION_
             lambda exp: learning_world(exp, springs=SPRINGS_17, berries=LEARN_BERRIES, novel_sim=0.5), **{**_S15, "generations": 80},
             adapt_init=sum_affect_init, evolution=(("eta_log_std", 0.3),),
             notes="TRIAL: x.affect2log with novel types less alike (similarity 0.5)"))
+
+# 1.8 affect (redefined 2026-10-17, STAGE_LOG v43-v45; the first affect stage is `1.8old`, a side path with 2.0 and
+# 2.1 after it). The two lasting states of `1.8old`, now adding up over bites (B18S: `flee` above about 1.5 poison
+# bites, `settle` above about 9 good bites; thresholds and fade times evolve), from the drives population, with the
+# eyes of chapter 1, in the world of chapter 2: 256 x 256 (at 128 crowding hides most of what a better forager gains),
+# more food (density 0.3), berry types in patches 70% their own kind. Learning rates mutate multiplicatively
+# (`eta_log_std`): with the additive step a lineage that leaves learning idle loses it for good (v44). 100 generations,
+# the standard from here on (user): long enough to tell whether a circuit is used, short of full convergence (about
+# 160 generations, v44). In patches of one type, learning (by look) and the lasting states (by place) do the same job,
+# so a lineage leans on one of them; here it leans on the lasting states, and learning stays weak but recoverable.
+W18S = W21
+stage(Stage("1.8", "s1_8_affect2", "1.7", B18S, W18S, VISION_CH1, BODY_17,
+            lambda exp: learning_world(exp, springs=SPRINGS_17, berries=LEARN_BERRIES), **{**_S15, "generations": 100},
+            adapt_init=sum_affect_init, evolution=(("eta_log_std", 0.3),),
+            notes="two lasting states that add up over bites: alarm after poison bites (keep going), serotonin after "
+                  "good bites (stay); 256 x 256, berry types in patches 70% their own kind"))
 
 # ------------------------------------------------------------------ running
 

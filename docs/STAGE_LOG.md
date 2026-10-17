@@ -2415,3 +2415,29 @@ Learning is used in every seed, and strongly in two; there the lasting states go
 patch purity: in patches of one type, learning (by look) and the lasting states (by place) do the same job, which
 bushes here are poison, so a lineage keeps one. Next idea (discussed with the user): a world in which they answer
 different questions, as in the worm (dwelling: how much food is here; aversive learning: which food is bad).
+
+## v45 (2026-10-17, night): stage 1.8 affect redefined and frozen; chapter 1 final
+
+Stage `1.8` = brain `B18S` (the lasting states adding up over bites), world `W18S` (= the 2.1 world: 256 x 256,
+density 0.3, patches 70% their own type), chapter 1 eyes, from the frozen 1.7 seed 0 (all three seeds, as in
+chapter 1), 100 generations, weight mutation 0.1, learning rates mutating multiplicatively (`eta_log_std` 0.3).
+Control: the drives brain in the same world (`sum_affect_init` now leaves a brain without the new cells alone; the
+first control run stopped on it). Run directories `s1_8_affect2*`. The first affect stage is `1.8old`; it, 2.0 and
+2.1 stay frozen off the chain. Book export (`--evaluate --jobs 3`, 8 worlds, 19 minutes):
+
+| | seed 0 | seed 1 | seed 2 | mean |
+|---|---|---|---|---|
+| last 50 generations, main - control | -11 | +221 | +215 | +142 +-76 |
+| re-evaluated, main / control | 1222 / 1421 | 1483 / 1150 | 1501 / 1080 | +185 +-194 |
+| head to head, main - control | +32 | +478 | +138 | +216 +-135 |
+| flee off, % | 86 | 77 | 88 | |
+| fed off / settle off, % | 94 / 86 | 89 / 89 | 86 / 83 | |
+| rest off, % | 62 | 39 | 51 | |
+| plasticity off, % | 98 | 105 | 100 | |
+| cold / warm_seek off, % | 102 | 100 | 102 | |
+| learning rate, main / control | 0.23 / 0.40 | 0.11 / 0.24 | 0.13 / 0.13 | |
+
+Every new circuit is used in every seed; main is ahead of control in two seeds and level in seed 0 (behind in its
+own worlds, slightly ahead in shared ones). Learning is unused but kept (no rate near 0), as agreed: the pallium
+stage is to make it pay. Chapter 1 frozen again (tag `chapter-1-v2`); the book page of affect rewritten, "Preparing
+the ground" removed.

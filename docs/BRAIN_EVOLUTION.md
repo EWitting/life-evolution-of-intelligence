@@ -109,7 +109,7 @@ rule. One tick is about a second, so it behaves like behavioural-timescale plast
 | 1 | habituation | all animals | adapting look inputs | M4 | a dud bush type with a new look every life | built |
 | 1 | association | early bilaterians | pain as the teacher of look -> aversive synapses | US-gated learning, M1, M2 | novel foods with a new look every life | built |
 | 1 | drives | early bilaterians | `cold`, `hungry`, warmth by kinesis | need cells select modes | cold, few hot springs | built |
-| 1 | affect | early bilaterians | lasting states after pain (`alarm`) and a meal (`serotonin`) that add up over bites | modulators with receptors | berry types in patches 70% their own kind | being redone (2026-10-17) |
+| 1 | affect | early bilaterians | lasting states after pain (`alarm`) and a meal (`serotonin`) that add up over bites | modulators with receptors | berry types in patches 70% their own kind | built |
 | 2 | pallium | ~520 Mya, early vertebrates | sparse expansion of the look | fixed per-life random projection, M5 | look-alikes | next |
 | 2 | dopamine | early vertebrates | critic: opponent value cells, dopamine cell, habenula | TD error as teacher | cues that predict food | planned |
 | 2 | hands | early vertebrates | pick, hold, eat | none | food can be held | planned |
@@ -204,13 +204,15 @@ The affect stage moves to 256 x 256, the world chapter 2 starts in.
 - **World.** 256 x 256 (four times the area of the earlier worlds; at 128 crowding hides most of what a better
   forager gains), more food, berry types in patches that are 70% their own kind: mixed enough that a bush must
   be known by its look, pure enough that a meal or a poison bite says something about the neighbours.
-- **Why this world.** In patches of one type learning goes idle and its rate drifts up (a lesson then spreads to
-  good food); in open country or evenly mixed patches the lasting states go idle. States released in full by one
-  bite left the 70% world on a knife edge (seeds went three ways); states that add up use everything in every
-  seed (STAGE_LOG v34, v40-v42).
-- **Status.** Being redone from the drives population in this world (trial `x.affect2`, 2026-10-17). It replaces
-  the first affect stage (one type per patch) and the two tuning steps that followed it (`2.0`, `2.1`), which
-  are kept as a side path.
+- **Why this world.** In patches of one type learning has nothing to do (the first bite tells the animal about
+  every bush around it); in open country or evenly mixed patches the lasting states have nothing to do. At 70%
+  both have some work, but they answer the same question (which bushes here are poison), one by look and one by
+  place, so a lineage leans on one of them. In this stage it leans on the lasting states; learning stays weak but
+  its rate is not lost, and the pallium is what should make it pay again (STAGE_LOG v34, v40-v45).
+- **Evolution settings this stage introduced** (standard from here on): 100 generations; learning rates mutate
+  multiplicatively. With the additive step an idle learning rate is clipped to 0 and stays there.
+- **The first affect stage** (`1.8old`: states released in full by one bite, one berry type per patch) and the two
+  tuning steps after it (`2.0` camera eyes in open country, `2.1` the chapter 2 world) are frozen as a side path.
 - **Confidence.** High for the phenomenon; medium for the exact neuromodulator mapping in the ancestor.
 
 #### Left out of chapter 1

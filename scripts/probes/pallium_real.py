@@ -13,7 +13,7 @@ World and input options (environment): SIM=<x> novel similarity, XOR=1 XOR looks
 only for the 1.8 world; STRENGTHS=0,0.5,1 the adapted look recomputed offline at several adaptation strengths
 (look minus strength x its slow average; the animals behave as recorded, with their own strength).
 
-    STAGE=1.8 [COLS=vis+0] [RAW=1] [LIVES=2] [SIM=0.6] [XOR=1] [STRENGTHS=0,0.5,1] uv run python scripts/probes/pallium_real.py"""
+    STAGE=1.8 [COLS=vis+0] [MAG=64/16/4,64/0/0] [RAW=1] [LIVES=2] [SIM=0.6] [XOR=1] [STRENGTHS=0,0.5,1] uv run python scripts/probes/pallium_real.py"""
 import os, fnmatch
 from dataclasses import replace
 import jax, numpy as np
@@ -53,9 +53,36 @@ def pallium(n, fan, k):
     return code
 
 
+def magnified(sizes, fan, kfrac):
+    """Cortical magnification: sizes[r] cells (k-WTA keeps kfrac of them) for the eye columns r steps from the
+    centre (0 = none)."""
+    rank = [sorted(set(abs(float(c[3:])) for c in cols)).index(abs(float(c[3:]))) for c in cols]
+    nets = [(c, pallium_one(sizes[r], fan, max(1, round(kfrac * sizes[r])))) for c, r in enumerate(rank) if sizes[r] > 0]
+    return lambda v: np.concatenate([f(v[..., c, :]) for c, f in nets], -1)
+
+
+def pallium_one(n, fan, k):
+    """One column's pallium: v [..., K] -> [..., n]."""
+    w = np.zeros((n, K))
+    for i in range(n):
+        w[i, rng.choice(K, fan, replace=False)] = rng.normal(size=fan)
+    def code(v):
+        h = v @ w.T
+        out = np.zeros_like(h)
+        top = np.argsort(-h, axis=-1)[..., :k]
+        np.put_along_axis(out, top, np.maximum(np.tanh(np.take_along_axis(h, top, -1)), 0), -1)
+        return out
+    return code
+
+
 NETS = {"look itself": lambda v: v.reshape(*v.shape[:-2], -1)}
-for spec in ((64, 3, 4), (64, 3, 8), (64, 4, 8), (128, 3, 16)):
-    NETS[f"pallium N={spec[0]} fan={spec[1]} k={spec[2]}"] = pallium(*spec)
+if os.environ.get("MAG"):   # MAG=64/16/4,64/0/0: magnified pallia (cells per column by distance from the centre)
+    for m_ in os.environ["MAG"].split(","):
+        for kf in (1 / 16, 1 / 8):
+            NETS[f"pallium {m_} fan=3 k={kf:.3f}"] = magnified([int(a_) for a_ in m_.split("/")], 3, kf)
+else:
+    for spec in ((64, 3, 4), (64, 3, 8), (64, 4, 8), (128, 3, 16)):
+        NETS[f"pallium N={spec[0]} fan={spec[1]} k={spec[2]}"] = pallium(*spec)
 
 res = {(st_, nm): {"same poison": [], "other poison": [], "good": [], "sum poison": [], "sum good": []}
        for st_ in STRENGTHS for nm in NETS}
@@ -98,7 +125,7 @@ for life in range(int(os.environ.get("LIVES", "2"))):
     ate = np.asarray(rec["ate"]); T, N = ate.shape
     x0 = np.asarray(rec["x"][:, :, :L.n_in], np.float32)
     # undo the adaptation: obs = raw - a tr, tr' = tau tr + (1 - tau) raw (tr = 0 at birth), a = Genome.adapt
-    a0, tau = np.asarray(pop.adapt, np.float32)[:N], exp.brain.in_trace_tau      # [N, 1]: each animal's strength
+    a0, tau = np.repeat(np.asarray(pop.adapt, np.float32), N // pop.adapt.shape[0], 0), exp.brain.in_trace_tau   # [N, 1]: each animal's strength (siblings share a genome)
     tr = np.zeros_like(x0[0]); raw = np.zeros_like(x0)
     for t in range(T):
         raw[t] = x0[t] + a0 * tr * np.asarray(L.in_adapt)

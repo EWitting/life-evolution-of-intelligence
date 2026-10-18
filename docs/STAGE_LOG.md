@@ -2532,3 +2532,19 @@ New: `BrainConfig.in_adapt_strength` (default 1), `berry_world(novel_xor=...)` /
 (chance `tune_prob`, factor exp(`tune_std` N)), within [0.02, 1]; from either parent; carried over by remapping only
 between layouts where it evolves. Stored populations get the designed strength (1), so the frozen stages behave as
 before. On from the pallium stage on.
+
+**Magnified pallia** (`pallium_real.py MAG=...`: cells per eye column by distance from the centre, centre / next /
+outer; fan 3; k-WTA 1/16 or 1/8 per column; summed good / poison, best of the two k; user's question whether a
+fovea-like density would serve later stages):
+
+| cells | 1.8 world, strength 0.5 / 1 | XOR 0.6, strength 0.5 / 1 |
+|---|---|---|
+| 64 / 0 / 0 (eye ahead) | 0.21 / 0.40 | 0.41 / 0.43 |
+| 64 / 8 / 2 | 0.50 / 0.47 | 0.53 / 0.53 |
+| 64 / 16 / 4 | 0.48 / 0.36 | 0.59 / 0.59 |
+| 64 / 32 / 16 | 0.65 / 0.68 | 0.57 / 0.68 |
+| 64 / 64 / 64 | 0.66 / 0.72 | 0.67 / 0.73 |
+
+Even a few side cells undo much of what the eye ahead gains: whatever they see at a bite is taught too. Decided
+(user): the pallium reads the eye ahead only. Peripheral identity may come back when a stage chooses between visible
+targets (the actor), better as a selection of one location (tectum-like) than as a density gradient.

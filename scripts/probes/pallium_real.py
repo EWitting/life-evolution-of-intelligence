@@ -76,10 +76,11 @@ def pallium_one(n, fan, k):
 
 
 NETS = {"look itself": lambda v: v.reshape(*v.shape[:-2], -1)}
+FAN = int(os.environ.get("FAN", 3))   # inputs per cell of the magnified pallia
 if os.environ.get("MAG"):   # MAG=64/16/4,64/0/0: magnified pallia (cells per column by distance from the centre)
     for m_ in os.environ["MAG"].split(","):
-        for kf in (1 / 16, 1 / 8):
-            NETS[f"pallium {m_} fan=3 k={kf:.3f}"] = magnified([int(a_) for a_ in m_.split("/")], 3, kf)
+        for kf in [float(a_) for a_ in os.environ.get("KFRAC", "0.0625,0.125").split(",")]:
+            NETS[f"pallium {m_} fan={FAN} k={kf:.3f}"] = magnified([int(a_) for a_ in m_.split("/")], FAN, kf)
 else:
     for spec in ((64, 3, 4), (64, 3, 8), (64, 4, 8), (128, 3, 16)):
         NETS[f"pallium N={spec[0]} fan={spec[1]} k={spec[2]}"] = pallium(*spec)

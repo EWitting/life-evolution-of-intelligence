@@ -5,7 +5,7 @@ lesson_curve.py): the share of its active pallium cells that were active at an e
 by what the bush is (the poison type of that lesson, the other poison type, a good type); and the drive of the
 learned pallium -> aversive weights onto the aversive cells at encounters, early and late in the life.
 
-    STAGE=2.2 [RUN=<run dir>] uv run python scripts/probes/lesson_code.py"""
+    STAGE=2.2 [RUN=<run dir>] [RULE_RESET=1] [LOOK_OFF=1] uv run python scripts/probes/lesson_code.py"""
 import os
 import jax, numpy as np
 from life.experiments import stages as S
@@ -15,6 +15,15 @@ s = S.STAGES[os.environ.get("STAGE", "2.2")]
 exp = S.make_exp(s, s.brain, "lesson_code", 1, 0)
 L = make_layout(exp)
 pop = load_population(os.environ.get("RUN") or latest_run(s.name), exp, seed=0)
+if os.environ.get("RULE_RESET"):   # the learned projections' rule genes back to the design (A, B, C, D = 0, 1, 0, 0)
+    import jax.numpy as jnp
+    _pl = jnp.asarray((np.asarray(L.rule) > 0) & (np.asarray(L.proj_id) >= 0))[None]
+    pop = pop._replace(A=jnp.where(_pl, 0.0, pop.A), B=jnp.where(_pl, 1.0, pop.B), C=jnp.where(_pl, 0.0, pop.C),
+                       D=jnp.where(_pl, 0.0, pop.D))
+if os.environ.get("LOOK_OFF"):   # no learning on the look synapses
+    import jax.numpy as jnp
+    _lk = np.asarray(L.proj_id) == list(L.proj_names).index("in->valence_av[vis*.app*]")
+    pop = pop._replace(eta=jnp.where(jnp.asarray(_lk)[None], 0.0, pop.eta))
 rs, fn = s.build(exp)
 sim = make_simulate(exp, record=True)
 DIRS = np.array([[-1, 0], [0, 1], [1, 0], [0, -1]])

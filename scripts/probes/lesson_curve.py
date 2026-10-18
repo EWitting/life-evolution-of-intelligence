@@ -8,7 +8,7 @@ poison type; the aversive cells' activity and the grasp programme's on the next 
 bush); and whether it bites that bush type within 6 ticks. Rows by lessons of the same type (for a poison bush) or
 of both types together (for a good bush).
 
-    STAGE=2.2 [RUN=<run dir>] [OFF='pallium->valence_av;in->valence_av[vis*.app*]'] uv run python scripts/probes/lesson_curve.py"""
+    STAGE=2.2 [RUN=<run dir>] [PAL_ETA=0.3] [RULE_RESET=1] [OFF='pallium->valence_av;in->valence_av[vis*.app*]'] uv run python scripts/probes/lesson_curve.py"""
 import os
 import jax, jax.numpy as jnp, numpy as np
 from life.experiments import stages as S
@@ -23,8 +23,15 @@ sim = make_simulate(exp, record=True)
 DIRS = np.array([[-1, 0], [0, 1], [1, 0], [0, -1]])
 bush = {v: rs.local(S.variant(v)[S.BUSH]) for v in S.NOVEL}
 berry = {v: rs.local(S.variant(v)[S.BERRY]) for v in S.NOVEL}
-conds = [("learning on", pop)]
 pid = np.asarray(L.proj_id)
+if os.environ.get("PAL_ETA"):   # the pallium synapses' learning rate set to this value in every genome
+    _pal = pid == list(L.proj_names).index("pallium->valence_av")
+    pop = pop._replace(eta=jnp.where(jnp.asarray(_pal)[None], float(os.environ["PAL_ETA"]), pop.eta))
+if os.environ.get("RULE_RESET"):   # the learned projections' rule genes back to the design (A, B, C, D = 0, 1, 0, 0)
+    _pl = jnp.asarray((np.asarray(L.rule) > 0) & (pid >= 0))[None]
+    pop = pop._replace(A=jnp.where(_pl, 0.0, pop.A), B=jnp.where(_pl, 1.0, pop.B), C=jnp.where(_pl, 0.0, pop.C),
+                       D=jnp.where(_pl, 0.0, pop.D))
+conds = [("learning on", pop)]
 for grp in [g for g in os.environ.get("OFF", "pallium->valence_av").split(";") if g]:
     off = np.isin(pid, [list(L.proj_names).index(n) for n in grp.split(",")])
     conds.append((f"{grp} off", pop._replace(eta=jnp.where(jnp.asarray(off)[None], 0.0, pop.eta))))

@@ -2674,3 +2674,14 @@ Dale's law should hold here too.
 
 **CPU benchmark** (`bench.py`, 2.2, two other processes running): 256 animals 6.1 s per 1000 ticks, 512 17.8,
 1024 24.7, 2048 38.9 (19-35 us per animal-tick). WSL2 is not installed yet (needs the user: admin + reboot).
+
+## v49 (2026-10-18): the GPU
+
+WSL2 + CUDA set up (`docs/SETUP.md`). Benchmark `bench.py` (stage 2.2, animals and world area scaled together, s per
+1000 ticks): at first GPU 3.1 / 9.0 / 14.4 for 256 / 1024 / 2048 animals against CPU 5.9 / 14.3 / 21.4, the GPU at
+about 10% use. The USE step ran one agent after another (`lax.scan` over agents, ADR-003); now in rounds by rank among
+the agents on the same cell (same order within a cell, identical results): GPU **0.61 / 1.38 / 2.09**, CPU unchanged
+(5.6 / 14.1 / 20.5): about 10x. Memory: siblings no longer get full copies of every N x N gene (`brain.block_genome`;
+states built at birth per genome); eligibility and depression only for the plastic block; patch placement as a running
+minimum. All identical bit for bit (generation statistics) and tested. 4096 animals still exceed 8 GB: the per-animal
+weight matrix (1 GB) and the fixed weights copied to siblings (0.7 GB) remain.

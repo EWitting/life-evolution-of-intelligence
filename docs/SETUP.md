@@ -25,7 +25,20 @@ git sparse-checkout add sprites ground
 
 To refresh: `git -C data/ohol pull --depth 1`.
 
-## WSL2 + CUDA (GPU, scale) - to be done by the user, needs admin + reboot
+## WSL2 + CUDA (GPU, scale) - set up 2026-10-18
+
+Done on this laptop: Ubuntu-24.04 under WSL2, `build-essential`, uv, the environment `~/.venvs/life` (JAX 0.11.2,
+`jax[cuda12]`, CudaDevice), the project installed editable from `/mnt/c/...`. `%USERPROFILE%\.wslconfig` caps WSL at
+6 GB with `autoMemoryReclaim=gradual`. Run from Windows:
+
+    wsl.exe -d Ubuntu-24.04 -- bash -lc 'cd /mnt/c/Users/emiel/Documents/Projects/Life && XLA_PYTHON_CLIENT_PREALLOCATE=false ~/.venvs/life/bin/python -m life.experiments.stages ...'
+
+`XLA_PYTHON_CLIENT_PREALLOCATE=false`: JAX otherwise reserves 75% of the GPU at start, which fails with the display
+using about 1.2 GB. Speed (`scripts/probes/bench.py`, stage 2.2, s per 1000 ticks, animals and area scaled together):
+256 animals 0.61 (CPU 5.6), 1024 1.38 (CPU 14.1), 2048 2.09 (CPU 20.5). 4096 does not fit in 8 GB yet: every animal
+carries its full weight matrix (`BrainState.w`); only the plastic block changes within a life.
+
+Original setup steps:
 
 1. In an **elevated** PowerShell: `wsl --install -d Ubuntu-24.04`, then reboot and finish the Ubuntu user setup.
 2. The Windows NVIDIA driver (595.95 is installed) already exposes the GPU inside WSL2. Do **not** install a Linux display driver inside WSL. Check with `nvidia-smi` inside Ubuntu.

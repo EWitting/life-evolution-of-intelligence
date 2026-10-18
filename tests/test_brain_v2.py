@@ -384,3 +384,17 @@ def test_adaptation_strength_is_a_gene():
     ge = brain.init_genome(jax.random.PRNGKey(0), Le)
     vals = [float(mutate(jax.random.PRNGKey(k), ge, ecfg, Le).adapt[0]) for k in range(20)]
     assert all(ADAPT_MIN <= v <= 1.0 for v in vals) and len(set(np.round(vals, 4))) > 10
+
+
+def test_remap_onto_the_same_layout_changes_nothing():
+    """Evolved weights of an evolvable projection with a designed start, and a fixed random projection (no design
+    value, e.g. the pallium's input), both carry over (until 2026-10-18 both were replaced on every remap)."""
+    cfg = BrainConfig(regions=(R("a", 4, sign="exc", alpha=1.0), R("p", 6, sign="exc", alpha=1.0)),
+                      projections=(P("in", "p", density=1.0, evolve=False), P("a", "p", density=1.0, w_init=0.0),
+                                   P("in", "a", density=1.0)))
+    L = brain.build_layout(cfg, n_in=3, n_out=A.NUM_ACTIONS)
+    pop = jax.vmap(lambda k: brain.init_genome(k, L))(jax.random.split(jax.random.PRNGKey(0), 3))
+    pop = pop._replace(w0=pop.w0.at[:, L.region("a"), L.region("p")].set(0.7))     # 'evolved' away from the design
+    out = brain.remap_genomes(pop, L, L, jax.random.PRNGKey(9))
+    for k in pop._fields:
+        assert np.array_equal(np.asarray(getattr(pop, k)), np.asarray(getattr(out, k))), k

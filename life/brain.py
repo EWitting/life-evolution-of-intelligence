@@ -539,7 +539,13 @@ def remap_genomes(pop: Genome, old: Layout, new: Layout, key: jax.Array) -> Geno
     carried = np.zeros((new.n, new.n), bool)
     carried[np.ix_(inn, inn)] = old_allowed[np.ix_(io, io)] > 0
     carried &= new_allowed > 0
-    hard = ~np.isnan(np.asarray(new.w_init)) | (np.asarray(new.evolve_w) == 0)
+    # hard-wired = not evolvable. An evolvable projection with a designed start (w_init) is not hard-wired: where it
+    # existed before its evolved weights carry over; only where it is new it starts at the design value. (Until
+    # 2026-10-18 it counted as hard-wired, and every remap reset e.g. the evolved hungry -> feeding synapses.)
+    # A fixed random projection (not evolvable, no design value, e.g. the input of the pallium) belongs to the genome
+    # too: it carries over, or the evolved weights that read it would read a new random code.
+    hard = np.asarray(new.evolve_w) == 0
+    designed = ~np.isnan(np.asarray(new.w_init))
 
     def mat(fresh_a, old_a, where):
         out = np.array(fresh_a)
@@ -550,10 +556,10 @@ def remap_genomes(pop: Genome, old: Layout, new: Layout, key: jax.Array) -> Geno
         out[np.ix_(np.arange(P), inn, inn)] = blk
         return out
 
-    carry_w = carried & ~hard
+    carry_w = carried & ~(hard & designed)
     w0 = mat(fresh.w0, pop.w0, carry_w)
     mask = mat(fresh.mask, pop.mask, carry_w)
-    silent = (new_allowed > 0) & ~carried & ~hard
+    silent = (new_allowed > 0) & ~carried & ~hard & ~designed
     w0 = np.where(silent[None], 0.0, w0)
     tuned = np.zeros((new.n, new.n), bool)   # hard-wired strengths tuned by evolution carry over
     tuned[np.ix_(inn, inn)] = (np.asarray(old.tune)[np.ix_(io, io)] > 0) & (np.asarray(new.tune)[np.ix_(inn, inn)] > 0)

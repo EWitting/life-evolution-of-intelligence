@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Run stage jobs on the GPU in WSL, at most JOBS at a time, each logging to runs/logs/<name>.log.
 # Every line of the job file: <log name>|<arguments of life.experiments.stages>.
-#   wsl.exe -d Ubuntu-24.04 -- bash scripts/gpu_queue.sh <job file> [JOBS, default 2]
+#   wsl.exe -d Ubuntu-24.04 -- bash scripts/gpu_queue.sh <job file> [JOBS, default 3]
 set -u
 cd "$(dirname "$0")/.."
-JOBS=${2:-2}    # three runs finishing together can exceed the 6 GB of WSL while writing their recordings
+JOBS=${2:-3}    # runs record one at a time (life.run.recording_lock); three evolving together fit in 6 GB
 export XLA_PYTHON_CLIENT_PREALLOCATE=false     # several processes share the GPU; JAX would reserve 75% for each
 mkdir -p runs/logs
 run() {

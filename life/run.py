@@ -8,7 +8,10 @@ recording.npz, dashboard.html}. A later experiment can warm-start from populatio
 from __future__ import annotations
 import csv
 import json
+import os
+import tempfile
 import time
+from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 from typing import Callable
@@ -200,6 +203,38 @@ def load_population(run_dir: Path | str, exp: ExperimentConfig | None = None, se
     return brain.remap_genomes(pop, old, new, jax.random.PRNGKey(seed))
 
 
+@contextmanager
+def recording_lock(verbose: bool = True):
+    """Only one process on this machine records at a time: a run needs little memory while it evolves, but recording
+    the last generation and writing the dashboard briefly needs several times that, and runs finishing together ran
+    out of memory. A lock file in the system temp directory (per OS: WSL and Windows each have their own)."""
+    path = Path(tempfile.gettempdir()) / "life-recording.lock"
+    with open(path, "a+b") as f:
+        t0 = time.time()
+        if os.name == "nt":
+            import msvcrt
+            f.seek(0)
+            while True:
+                try:
+                    msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
+                    break
+                except OSError:
+                    time.sleep(2)
+        else:
+            import fcntl
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        if verbose and time.time() - t0 > 1:
+            print(f"waited {time.time() - t0:.0f} s for another run's recording", flush=True)
+        try:
+            yield
+        finally:
+            if os.name == "nt":
+                f.seek(0)
+                msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+
+
 def save_recording(out_dir: Path, exp: ExperimentConfig, ruleset: Ruleset, layout: brain.Layout, pop: brain.Genome,
                    recs: dict, best: int, rows: list[dict] | None = None, dashboard: bool = True,
                    appearance=None):
@@ -300,7 +335,6 @@ def run_evolution(exp: ExperimentConfig, ruleset: Ruleset, fitness_fn: Callable[
             if exp_rec is not exp:   # every (N / ra)-th agent of the fitness ranking, best first
                 pick = jnp.argsort(-fit)[:: max(1, n_genomes // ra)][:ra]   # one individual per genome shown
                 pop_rec, best_rec = jax.tree_util.tree_map(lambda x: x[pick], pop), 0
-            _, recs = sim_rec(rules0, pop_rec, ep_keys[0])   # episode 0 again with recording on
             np.savez(out_dir / "best_genome.npz", **{k: np.asarray(v[best]) for k, v in pop._asdict().items()})
             np.savez_compressed(out_dir / "population.npz", **{k: np.asarray(v) for k, v in pop._asdict().items()})
         else:
@@ -311,7 +345,11 @@ def run_evolution(exp: ExperimentConfig, ruleset: Ruleset, fitness_fn: Callable[
         w.writerows(rows)
     rules_last = jax.tree_util.tree_map(lambda x: x[0], rules)
     app = rules_last.appearance if rules_last.appearance.ndim == 2 else rules_last.appearance[0]
-    save_recording(out_dir, exp, ruleset, layout, pop_rec, recs, best_rec, rows, dashboard=dashboard, appearance=app)
+    with recording_lock(verbose):   # the population is saved already; the recording needs much more memory
+        _, recs = sim_rec(rules0, pop_rec, ep_keys[0])   # episode 0 of the last generation again, recording on
+        save_recording(out_dir, exp, ruleset, layout, pop_rec, recs, best_rec, rows, dashboard=dashboard,
+                       appearance=app)
+        del recs
     if verbose:
         print(f"wrote {out_dir}" + ("  (open dashboard.html in a browser)" if dashboard else ""))
     return dict(out_dir=out_dir, rows=rows, pop=pop, stats=stats)

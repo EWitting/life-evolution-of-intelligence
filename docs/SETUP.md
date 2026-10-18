@@ -54,4 +54,9 @@ Original setup steps:
    "no kernel image is available", upgrade jax; if you see the CPU device only, check `nvidia-smi` in WSL first.
 4. For speed, keep the repo on the Linux filesystem (`~/Life`) instead of `/mnt/c` when doing long runs; `/mnt/c` file IO is slow but code runs fine.
 
+Several runs: `scripts/gpu_queue.sh <job file> [JOBS]` (default 3). A run evolves in about 1.5 GB but recording the
+last generation and writing the dashboard briefly takes several times that, so runs take turns there
+(`life.run.recording_lock`, a lock file in the temp directory of each OS); before that, three runs finishing
+together ran out of memory.
+
 The same code runs unchanged on both; JAX picks the GPU automatically when present.

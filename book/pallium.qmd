@@ -76,17 +76,19 @@ The control is the brain of the affect stage in this world: it learns from pain 
 
 <div data-life="summary" data-stage="2.2"></div>
 
-The animals with a pallium are ahead of the control on average, but one life per animal makes every measure
-noisy, and the seeds differ much more from each other than the two brains do. Compared on the same sixteen worlds,
-with the same world for both, they are ahead in every seed.
+The animals with a pallium are ahead of the control in every seed, by about an eighth over the last fifty
+generations. In the same worlds as the control, half of each population, they are ahead in every seed as well, by
+about a quarter. Measured apart, each population in sixteen worlds of its own, one seed is level: one life per
+animal makes every measure noisy, and the seeds differ more from each other than the two brains do.
 
 ### Is the circuit used?
 
 <div data-life="lesions" data-stage="2.2"></div>
 
-The pallium is used in every seed, and learning as a whole even more: switching all learning off costs more than
-silencing the pallium, because the look still learns as well. The states of the affect stage are used less than in
-their own world. In mixed patches the place says little about a bush; its look says more.
+The pallium is used in every seed: silencing it costs about a tenth. Switching all learning off costs about a
+quarter, more than the pallium alone, because the look still learns as well. Of the states of the affect stage only
+the one that settles the animal at food is still used, a little; fleeing and being fed no longer matter. In mixed
+patches the place says little about a bush; its look says more.
 
 Getting here took two changes to the world, and one to the pallium.
 
@@ -106,8 +108,9 @@ each bush again.
 <div data-life="table" data-stage="2.2" data-example="xor_lab"></div>
 
 Learning on the look alone lowers the bites at all four bushes alike: it cannot tell the kinds apart, so it makes the
-animal shy of all of them. Learning through the pallium stops the bites at the poison bushes and leaves the good
-ones as they were, clearly in two seeds; in the third the animals bite little at anything before the meals.
+animal shy of all of them. Learning through the pallium more than halves the bites at the poison bushes and leaves the good
+ones about as they were, in every seed. With both routes learning, as in the world, the animal is shy of the good
+bushes too, but less than of the poison ones.
 
 ## The runs behind this page
 

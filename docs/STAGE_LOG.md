@@ -2732,3 +2732,44 @@ chapter 1 before 1.8. Fixed (only non-evolvable designed weights take the design
 remapping onto the same layout is now the identity, tested). The 2.2 runs are rerun with the fixed warm start; the
 head to head of 1.8 (frozen) is re-evaluated, its runs are not rerun. The 2.2 numbers above (v48-v50) that came from
 probes or the head to head are affected.
+
+## v51 (2026-10-18, night): 2.2 after the remap fix; the head to head checked; a larger pallium
+
+The six 2.2 runs rerun with the fixed warm start (`runs/*/20261018-18*`), evaluated on the GPU (export 16 worlds).
+
+| | seed 0 | seed 1 | seed 2 | mean |
+|---|---|---|---|---|
+| training, last 50: main / control | 920 / 837 | 899 / 754 | 980 / 889 | +106 +-20 |
+| re-evaluated apart (16 worlds each): main / control | 913 / 927 | 964 / 813 | 977 / 894 | +73 +-48 |
+| head to head (same worlds, half each) | +184 | +288 | +214 | **+229 +-31** |
+| lesion pallium (% of intact) | 90 | 88 | 92 | 90 +-1 |
+| no plasticity | 77 | 67 | 87 | 77 +-6 |
+| settle / flee / fed | 96 / 101 / 100 | 94 / 99 / 101 | 91 / 97 / 99 | |
+| lab, only the pallium learns: bites poison / good (before 0.38 / 0.39) | 0.16 / 0.47 | 0.20 / 0.41 | 0.11 / 0.23 | 0.16 / 0.37 |
+| lab, only the look learns | 0.44 / 0.45 | 0.14 / 0.13 | 0.07 / 0.11 | 0.22 / 0.23 |
+
+Within a life the poison share of bites falls from 0.14 (first quarter) to 0.08 (last). The pallium is discriminative
+in every seed (the look alone shies from both kinds alike, as XOR predicts). `flee` and `fed` are not used in mixed
+patches; `settle` a little.
+
+**Noise** (`noise.py`, 16 paired worlds, separate evaluation): main - control +46 +-55, +191 +-36, +52 +-37;
+resolvable 13%, 8%, 8% of main; sd between genomes in one world 570-630 against 100-200 between worlds. Same
+picture as v50: one life per genome dominates, and 16 worlds are not enough to separate two populations by 5%.
+
+**The head to head is fair now** (`scripts/probes/versus_check.py`): each control population alone, in its own layout
+and in main's layout with the regions it lacks silenced (as `versus` runs it), in the same 8 worlds: equal to within
+1 point for 2.2 and 1.8. Main's lead there is its own. That the head to head shows more than separate evaluation is
+expected: the halves compete for the same bushes, and the better forager also takes food away from the other half.
+
+**1.8 re-evaluated** (frozen, not rerun): head to head +178 +-66 (+82, +304, +147), before the fix +216 +-135; the
+lesions as before (rest 60 39 52, hungry 23 10 21, flee 85 77 87, fed 92 89 86, settle 86 89 82). The bias
+of the old head to head was small; the frozen verdict stands.
+
+**A larger pallium** (backup check, `pallium_real.py COLS=vis+0 FAN=8 MAG=N/0/0`, the 2.2 populations, two recorded
+lives): transfer of the summed lessons to good bites (good / poison) 0.13 at 128 cells with 2 active (the stage);
+256 cells: 0.03-0.12, 512: 0.06-0.21, no trend with size or k. The look itself 0.68. Transfer is far below the
+napkin threshold of about 0.3 (v46) already; what is left is the spread of the read-out from one poison bite to the
+next (sd about 0.85 of its mean). A larger pallium is not worth its cost.
+
+Also: runs take turns for the recording at the end (`life.run.recording_lock`, a lock file per OS); three runs at
+a time on the GPU again.

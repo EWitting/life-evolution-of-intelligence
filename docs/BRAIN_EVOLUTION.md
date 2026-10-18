@@ -272,6 +272,10 @@ Region names from here on: `pallium`, `striatum`, `gpi`, `snc` (dopamine), `habe
 - **Control.** The affect brain, with the adaptation gene.
 - **Metric.** Lesions of the pallium and of learning; the lab test (bites on the poison and the good bushes after
   meals, pallium and look learning on and off).
+- **Result** (v51, after the remap fix). Pallium lesion 90%, all learning off 77%; main ahead of control in every
+  seed (training +106 +-20, head to head +229 +-31). In the lab the pallium alone cuts bites at the poison bushes
+  from 0.38 to 0.16 and leaves the good ones (0.37); the look alone lowers both alike. A larger pallium (256, 512
+  cells) does not lower the transfer to good food further (0.13 at 128).
 - **Confidence.** High that the vertebrate pallium began as sensory association cortex; the expansion function
   in early vertebrates is a model inference.
 

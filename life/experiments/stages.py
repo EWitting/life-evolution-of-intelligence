@@ -80,6 +80,7 @@ class Stage:
                                   # their weight, the others start at 0); an absent synapse could not learn
     adapt_init: Callable | None = None   # (population, layout) -> population: a change to the warm-start population
                                   # after it is remapped onto this stage's layout (e.g. interpolate_eyes)
+    control_brain: BrainConfig | None = None   # the control's brain if not the parent's (e.g. with a new gene)
     notes: str = ""
 
 
@@ -1141,6 +1142,37 @@ stage(Stage("1.8", "s1_8_affect2", "1.7", B18S, W18S, VISION_CH1, BODY_17,
             notes="two lasting states that add up over bites: alarm after poison bites (keep going), serotonin after "
                   "good bites (stay); 256 x 256, berry types in patches 70% their own kind"))
 
+# 2.2 pallium (STAGE_LOG v46; ADR-025): a sparse random expansion of the look, as the oldest pallium (piriform-like
+# cortex) and the insect mushroom body do it. 128 cells read the eye ahead only (a fovea after orienting: at a bite
+# the side eyes see the neighbouring bushes, and whatever they see is taught too; even a few side cells undo most of
+# the gain, v46), each from all 8 look features, with fixed random weights (drawn per genome, inherited, never
+# mutated); k-WTA keeps the 4 strongest (3%: with XOR looks at 0.6, larger and sparser separates better, v46). The pain teacher of the association stage teaches pallium -> aversive
+# as it teaches look -> aversive. World: the 1.8 world with XOR looks: the four novel types are the corners
+# (+-u1 +-u2) / sqrt2 of two colour directions drawn per life, poison ++ and --, good +- and -+, so no weighted sum of
+# the look tells them apart and a lesson on one poison clears the other; the pallium can. Novel similarity lowered to
+# make up for it (PALLIUM_SIM). From here on the adaptation strength is a gene (user, 2026-10-18), in main and control.
+PALLIUM_N, PALLIUM_K, PALLIUM_FAN = 128, 4, 8
+PALLIUM_ETA = 0.1     # starting learning rate of pallium -> aversive: 4 cells near 1 carry a lesson; at 0.3 the aversive
+                      # cells saturate for good food as well after two rounds of meals (assay_xor.py)
+PALLIUM_SIM = 0.6     # novel similarity of the pallium world (0.8 before); XOR at 0.8 was too hard even for the pallium
+_GENE = dict(in_adapt_evolve=True)
+B22P = extend(B18S, regions=(R("pallium", PALLIUM_N, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False,
+                               kwta=PALLIUM_K, group="forebrain/pallium"),),
+              projections=(P("in", "pallium", src_select=("vis+0.app*",), density=PALLIUM_FAN / APPEARANCE, evolve=False),
+                           P("pallium", "valence_av", rule="hebb", modulator=CS_MOD["valence_av"], eta_init=PALLIUM_ETA,
+                             elig_tau=CS_ELIG["valence_av"], abcd=(0.0, 1.0, 0.0, 0.0), density=1.0)), **_GENE)
+
+
+def pallium_world(exp, novel_sim: float | None = None, xor: bool = True):
+    return learning_world(exp, springs=SPRINGS_17, berries=LEARN_BERRIES, novel_xor=xor,
+                          novel_sim=PALLIUM_SIM if novel_sim is None else novel_sim)
+
+
+stage(Stage("2.2", "s2_2_pallium", "1.8", B22P, W18S, VISION_CH1, BODY_17, pallium_world, **{**_S15, "generations": 100},
+            evolution=(("eta_log_std", 0.3),), control_brain=replace(B18S, **_GENE),
+            notes="pallium: a sparse random expansion of the eye ahead (128 cells, k-WTA 4) taught by pain onto the "
+                  "aversive cells; XOR looks; the adaptation strength evolves"))
+
 # ------------------------------------------------------------------ running
 
 EVOLUTION_OVERRIDES: dict = {}   # set from the command line (--mutation-prob), applied to every stage
@@ -1165,7 +1197,7 @@ def run_stage(key: str, generations: int | None = None, control: bool = False, i
     gens = generations or s.generations
     if control:
         assert s.parent, "stage has no parent, so no control"
-        brain, name = STAGES[s.parent].brain, s.name + "_control"
+        brain, name = s.control_brain or STAGES[s.parent].brain, s.name + "_control"
     else:
         brain, name = s.brain, s.name
     name += suffix

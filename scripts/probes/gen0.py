@@ -3,7 +3,8 @@ it), in this stage's world, with learning on and off in the same worlds. No evol
 straight away, or at least not hurt.
     STAGE=1.5 uv run python scripts/probes/gen0.py [FIELD=value ...] <variant> [...]
 variants: see variants.py. lower-case field=value overrides a WorldConfig field (hunger_per_tick=0.02), upper-case
-NAME=value a constant of life.experiments.stages (NOVEL_WEIGHT=1.0). STAGE defaults to 1.5."""
+NAME=value a constant of life.experiments.stages (NOVEL_WEIGHT=1.0). STAGE defaults to 1.5. OFF=<projection>[,...]: a
+third condition with only the learning of those projections off."""
 import os, sys
 from dataclasses import replace
 import jax, jax.numpy as jnp, numpy as np
@@ -34,7 +35,12 @@ for v in args:
     rs, fn = s.build(exp)
     sim = make_simulate(exp, record=False)
     berry = [rs.local(S.variant(t)[S.BERRY]) for t in range(6)]
-    for label, g in (("learning on ", pop), ("learning off", pop._replace(eta=jnp.zeros_like(pop.eta)))):
+    conds = [("learning on ", pop), ("learning off", pop._replace(eta=jnp.zeros_like(pop.eta)))]
+    if os.environ.get("OFF"):   # OFF=pallium->valence_av: one more condition with only that projection's learning off
+        from life.run import make_layout as _ml
+        _L = _ml(exp); _off = np.isin(np.asarray(_L.proj_id), [list(_L.proj_names).index(n) for n in os.environ["OFF"].split(",")])
+        conds.insert(1, (f"{os.environ['OFF']} off", pop._replace(eta=jnp.where(jnp.asarray(_off)[None], 0.0, pop.eta))))
+    for label, g in conds:
         acc = []
         for k in jax.random.split(jax.random.PRNGKey(31), WORLDS):
             kr, ks = jax.random.split(k)

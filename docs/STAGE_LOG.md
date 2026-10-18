@@ -2548,3 +2548,32 @@ fovea-like density would serve later stages):
 Even a few side cells undo much of what the eye ahead gains: whatever they see at a bite is taught too. Decided
 (user): the pallium reads the eye ahead only. Peripheral identity may come back when a stage chooses between visible
 targets (the actor), better as a selection of one location (tectum-like) than as a density gradient.
+
+## v47 (2026-10-18): the pallium stage defined (2.2)
+
+Stage `2.2` (`s2_2_pallium`, from 1.8 seed 0): brain `B22P` = the affect brain + region `pallium` (128 cells, k-WTA
+4) reading only the eye ahead (`vis+0.app*`, all 8 features, fixed random weights per genome) + learned
+`pallium -> valence_av` (the pain teacher, eligibility 0.5, starting rate `PALLIUM_ETA` 0.1); the adaptation
+strength evolves (main and control: `Stage.control_brain`). World: the 1.8 world with XOR looks at similarity 0.6
+(`pallium_world`).
+
+- **Size and sparseness** (`pallium_sep.py`, XOR at 0.6, discrimination unadapted / half adapted): 64 cells, fan 3,
+  k 8: 0.62 / 0.44; 128, all 8 features, k 4: 0.23 / 0.10; 256, fan 8, k 2-4: 0.10-0.17 / 0.03-0.05. Larger and
+  sparser is better; 128 / 4 chosen for cost.
+- **Assay** (`assay_xor.py`, 24 agents of 1.8, two rounds of meals of each type; aversive activity / P(bite) after,
+  poison ++, --, good +-, -+; before 0.03-0.06 / 0.34-0.57):
+
+  | | starting rate 0.3 | 0.1 | 0.03 |
+  |---|---|---|---|
+  | pallium learns only | 0.99 0.98 0.33 0.47 / 0.00 0.00 0.27 0.12 | 0.53 0.52 0.10 0.14 / 0.00 0.04 0.36 0.29 | 0.14 0.13 0.04 0.05 / 0.31 0.13 0.45 0.37 |
+  | look learns only | 0.15 0.12 0.14 0.12 / 0.27 0.18 0.21 0.36 | | |
+
+  The look synapses cannot tell XOR poison from good (they only make the animal shyer of all four); the pallium
+  can. At 0.3 the aversive cells saturate for good food too (4 active cells near 1 carry a big step).
+- **What there is to learn** (`lessons.py`, learning off): lifetime 1964 in the 1.8 world, with XOR looks 1650
+  (similarity 0.8), 1323 (0.6), 1244 (0.5): less alike novel bushes look less like food to the 1.8 animals. A
+  perfect learner would save 10% of intake at each.
+- **Generation 0** (`gen0.py OFF=pallium->valence_av`, 8 worlds, paired): learning on 1020 +-121, pallium learning
+  off 999 +-122, all learning off 1016 +-110 (good berries 65.4 / 65.4 / 70.0 in the first half, poison 7.3 / 7.6 /
+  8.6). Neutral, as a diagnostic: the pallium adds a little, the inherited look learning costs good food as much as
+  it saves.

@@ -2643,3 +2643,12 @@ User (2026-10-18): do not switch evolution off where it turns a feature down; fi
 and genuine flaws of the genetic algorithm may be changed). So: evolve at 0.5, where learning paid (paired test),
 and find what makes lessons spread. The 0.5 main run (stopped at generation 65 for a change that was reverted) was
 restarted; seed 1 runs alongside.
+
+**What makes lessons spread** (`lesson_code.py`, the same recorded life, rule reset, look learning off). The brain
+learns faithfully: the learned drive (weights now minus at birth) and an ideal learner that adds the pallium code of
+every poison bite spread alike (5+ lessons: good / poison 0.60 / 1.79 learned, 2.66 / 7.80 ideal). The spread is in
+the codes: per lesson, a lesson reaches good bushes at 0.21 of its strength on its own poison with k-WTA 4. Codes
+recomputed from the recorded input (k=4 reproduces the recorded code exactly) with other sizes: k 1 / 2 / 4 / 8:
+0.06 / 0.14 / 0.21 / 0.26. Set: k-WTA 2, starting pallium rate 0.2 (half the drive per lesson). Assay at 0.5
+(`assay_xor.py`, pallium alone, two rounds): poisons 0.63 / 0.59 aversion, P(bite) 0.00 / 0.04; good 0.07 / 0.11,
+P(bite) 0.38 / 0.33 (before 0.46 / 0.42). The two main runs restarted with it (controls have no pallium and stand).

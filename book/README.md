@@ -40,6 +40,17 @@ After a rerun, also read the page's text. Most of it describes the mechanism and
 callout that describes a *result* (for example "What did not work" on the 1.1 page) may no longer match the
 figures and has to be rewritten by hand.
 
+## Brain diagram layout
+
+The diagrams place the regions from `data/brain_layout.json`: one grid position per region, shared by all stages
+(empty rows and columns of a stage are left out), so that a region stays where the reader saw it in earlier
+chapters. The senses and motor neurons are blocks with a socket per sense and per group of actions. The file is
+made with `tools/brain_layout` (`python tools/brain_layout/serve.py`, then http://localhost:8765): it optimises the
+layout over the chain of stages with tunable weights and writes the file on Save. A stage that the file does not
+have (a new stage) gets the old layout in columns by depth until the tool is run again; use its forward mode, or
+pin the existing regions, so that the earlier diagrams do not change. Dashboards exported after the file exists
+offer the same layout (link "book layout" under the architecture diagram).
+
 ## Preview and publish
 
     quarto preview book                          # local preview in the browser, reloads on save

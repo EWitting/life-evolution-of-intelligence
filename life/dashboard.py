@@ -18,6 +18,22 @@ from .ruleset import appearance_for
 from . import actions as A
 
 TEMPLATE = Path(__file__).with_name("dashboard.html")
+BOOK_LAYOUT = Path(__file__).resolve().parent.parent / "book" / "data" / "brain_layout.json"
+
+
+def book_layout(names: list[str]) -> dict | None:
+    """The book's diagram layout of a brain with these regions (tools/brain_layout writes it): the stage there with
+    exactly these regions, else the smallest stage that has them all; None when there is none."""
+    if not BOOK_LAYOUT.exists():
+        return None
+    stages = json.loads(BOOK_LAYOUT.read_text(encoding="utf-8")).get("stages", {})
+    want = set(names)
+    fits = [(len(s["pos"]), k, s) for k, s in stages.items() if want <= set(s["pos"])]
+    if not fits:
+        return None
+    exact = [f for f in fits if {n for n in f[2]["pos"] if ":" not in n} == want]
+    n, key, s = min(exact or fits, key=lambda f: f[0])
+    return {"stage": key, "cols": s["cols"], "pos": {r: s["pos"][r] for r in names}}
 
 
 def _b64(a: np.ndarray, dtype) -> dict:
@@ -85,7 +101,8 @@ def build_data(run_dir: Path, light: bool = False) -> dict:
                  "appearance": appearance, "food_value": rs["food_value"], "actions": A.NAMES, "layout": layout,
                  "vision": cfg["vision"], "world": cfg["world"], "brain": cfg["brain"], "w_max": w_max,
                  "eta_max": eta_max, "snap_every": int(x.shape[0] // max(1, rec["w_snap"].shape[0])),
-                 "fitness": fitness, "config": cfg, "run": run_dir.name, "experiment": cfg["name"]},
+                 "fitness": fitness, "config": cfg, "run": run_dir.name, "experiment": cfg["name"],
+                 "book_layout": book_layout(layout["names"])},
         "grid": _b64(rec["grid"], np.int16), "pos": _b64(rec["pos"], np.int16), "dir": _b64(rec["dir"], np.int8),
         "alive": _b64(rec["alive"], np.uint8), "held": _b64(rec["held"], np.int16), "food": _b64(rec["food"], np.float32),
         "pain": _b64(rec["pain"], np.float32), "action": _b64(rec["action"], np.int8),

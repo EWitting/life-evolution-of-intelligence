@@ -1,0 +1,564 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Brain layout</title>
+<style>
+  body { font: 13px system-ui, sans-serif; margin: 0; display: flex; height: 100vh; color: #222; background: #fafafa; }
+  #side { width: 310px; padding: 10px; overflow-y: auto; border-right: 1px solid #ccc; background: #fff; flex: none; }
+  #main { flex: 1; overflow: auto; padding: 10px; }
+  .w { display: grid; grid-template-columns: 110px 1fr 40px; gap: 4px; align-items: center; margin: 2px 0; }
+  .w input[type=range] { width: 100%; }
+  .w span { text-align: right; font-variant-numeric: tabular-nums; }
+  .w label, label[title] { text-decoration: underline dotted; cursor: help; }
+  h3 { margin: 12px 0 4px; font-size: 13px; }
+  button { margin: 2px 2px 2px 0; }
+  #panels { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-start; }
+  .panel { background: #fff; border: 1px solid #ccc; padding: 4px; }
+  .panel b { display: block; margin-bottom: 2px; }
+  table { border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 11px; }
+  td { padding: 1px 3px; text-align: right; } td:first-child { text-align: left; }
+  #bar { height: 4px; background: #4a7; width: 0; }
+  .hint { color: #666; font-size: 12px; }
+  .warn { color: #b40; font-size: 12px; }
+  svg text { font-size: 11px; pointer-events: none; }
+</style></head>
+<body>
+<div id="side">
+  <div id="bar"></div>
+  <div id="warn" class="warn"></div>
+  <h3>Run</h3>
+  <button id="scratch">Optimise from scratch</button><button id="refine">Refine</button><br>
+  <label><input type="checkbox" id="live" checked> refine on every change</label><br>
+  <label>mode <select id="mode">
+    <option value="foresight">foresight: all stages at once</option>
+    <option value="forward">forward: old modules pinned</option></select></label><br>
+  <label title="One socket per sense (vis, taste, skin, ...) on the senses block, from the projections' input selection. Off: every input edge ends on the block itself."><input type="checkbox" id="splitIn" checked> split input by sense</label><br>
+  <label title="One socket per group of actions (forward, turn_left/turn_right, use, ...) on the motor block, from the projections' output range. Projections onto all of out end on the block itself."><input type="checkbox" id="splitOut" checked> split output by action</label><br>
+  <label title="Keep the top-to-bottom order of the sockets as it is: the optimiser does not swap them. New sockets of a later stage are still placed."><input type="checkbox" id="lockSockets"> lock socket order</label><br>
+  <label>seed <input id="seed" type="number" value="1" style="width:46px"></label>
+  <label>iterations <input id="iters" type="number" value="8000" step="1000" style="width:60px"></label>
+  <span class="hint">(refine: a quarter)</span>
+  <h3>Connections (weight × length)</h3><div id="wConn"></div>
+  <h3>Shape</h3><div id="wShape"></div>
+  <button id="reset">Reset weights to defaults</button>
+  <h3>Energy</h3><div id="energy"></div>
+  <h3>Layout file</h3>
+  <button id="save">Save atlas.json</button><button id="download">Download</button><button id="unpin">Unpin all</button>
+  <div id="msg" class="hint"></div>
+  <p class="hint">Top panel: the layout grid with every module of every stage. Drag a module to move it (it gets
+    pinned); click to pin or unpin. Pinned modules (thick border) never move. Below, each stage as the reader sees
+    it: only its own modules, empty rows and columns removed. Orange border: new in that stage. The senses block
+    (left) and motor block (right) are not on the grid: their sockets sit beside what they connect to, in one
+    order shared by all stages. Edges are routed as in the book: curves that bend around the boxes in their way.</p>
+</div>
+<div id="main"><div id="panels"></div></div>
+<script>
+const DATA = /*DATA*/null;
+const GC = 10, GR = 14;                       // inner modules: columns 1..GC, rows 0..GR-1 of the layout grid
+const BW = 122, BH = 38, CW = BW + 110, CHP = BH + 26;   // box size and column / row pitch in px, as in book/js/life-book.js
+const SW = 112, SH = 20, SGAP = 24 / CHP;      // sockets on the senses / motor blocks, and their spacing in rows
+const MX = BW / 2 + 6, MY = BH / 2 + 6, FS = [0.2, 0.35, 0.5, 0.65, 0.8];   // the book's box test for routing
+const NSEG = 6;                                // segments per curve for length, box and crossing tests
+
+// [key, label, default, min, max, tooltip]
+const WEIGHTS = {
+  conn: [
+    ['proj', 'projection', 1, 0, 5, 'Cost per column-width of (curved) length of a projection between two modules (not from input, not to out). Higher: connected modules sit closer together.'],
+    ['in', 'from input', 0.5, 0, 5, 'Cost per length of a projection from the senses block (from its socket when input is split). Higher: modules that read raw input move towards the left edge, near their sense.'],
+    ['out', 'to output', 2, 0, 5, 'Cost per length of a projection to the motor block (to its socket when output is split). Higher: modules that drive actions move towards the right edge, near their action.'],
+    ['mod', 'modulator→receptor', 0.4, 0, 5, 'Cost per length from the module that releases a modulator (e.g. us_pain for alarm) to each module with a receptor for it.'],
+    ['modproj', 'modulator→modulated projection', 0.3, 0, 5, 'Cost per length from the module that releases a modulator to the midpoint of each projection whose learning it gates (e.g. us_av on pallium→valence_av).'],
+  ],
+  shape: [
+    ['flow', 'flow (leftward edge)', 2, 0, 10, 'Cost per column that a projection between modules runs right-to-left. Keeps the reading direction senses → actions; edges within a column are free.'],
+    ['group', 'group: empty cell', 2, 0, 10, 'For each top-level group (ganglion, valence, hypothalamus, ...): cost per empty grid cell inside the bounding box of its members. Higher: groups become compact blocks without holes.'],
+    ['foreign', 'group: foreign module', 6, 0, 20, 'For each top-level group: cost per module of another group that sits inside the bounding box of its members. Higher: groups do not interleave, so the group boxes the book draws do not overlap other modules.'],
+    ['sub', 'subgroup factor', 0.5, 0, 2, 'Nested groups such as valence/gates or forebrain/pallium pay the same two costs (empty cell, foreign module), times this factor: keeps a subgroup together inside its group. Only counts subgroups with two or more members in a stage.'],
+    ['through', 'edge through box', 1.5, 0, 10, 'Edges are routed as in the book: a curve that bends further (up to 10 steps) until it misses the boxes in its way. Cost per box the final curve still passes through.'],
+    ['bend', 'bend (curving around boxes)', 0.3, 0, 5, 'Cost per box height that a curve bulges out of the straight line, beyond the small fixed bend that separates a projection from its reverse. A little curving reads well; long detours do not.'],
+    ['cross', 'edge crossing', 0.3, 0, 5, 'Cost per pair of curves that cross (edges sharing a module or socket, and the dotted modulator→projection lines, do not count).'],
+    ['area', 'area', 0.5, 0, 3, 'Cost per area of a stage diagram (width × height in column widths). Higher: denser diagrams, fewer half-empty rows.'],
+    ['aspect', 'aspect penalty', 10, 0, 40, 'Cost for a diagram whose width/height (in pixels, senses and motor blocks included) differs from the target below: weight × log(ratio / target)². Higher: forces the shape towards the target, e.g. wide rather than a tall column.'],
+    ['target', 'target width/height', 2.2, 0.5, 5, 'The width/height ratio the aspect penalty aims at. 2.2 is about a book page column; lower allows taller diagrams.'],
+    ['later', 'extra weight on later stages', 0, 0, 5, 'Foresight mode: the last stage counts (1 + this) times, the first once, linear in between. Higher: the big late brains look best, early ones may get a less ideal layout.'],
+    ['temp', 'temperature', 3, 0.1, 20, 'Simulated annealing start temperature: how readily the optimiser accepts a worse move early on. Higher explores more (from scratch); refine uses a tenth of it.'],
+  ],
+};
+const W = {};
+for (const [k, , v] of [...WEIGHTS.conn, ...WEIGHTS.shape]) W[k] = v;
+const $ = id => document.getElementById(id);
+const opt = {splitIn: true, splitOut: true, lockSockets: false, mode: 'foresight'};
+let P = {}, pinned = new Set(), G = null;   // P: grid cell [col, row] of every inner module
+let order = {in: [], out: []};              // top-to-bottom socket order, shared by all stages
+
+if (DATA.atlas) {
+  Object.assign(W, DATA.atlas.weights || {}); Object.assign(opt, DATA.atlas.options || {});
+  for (const [n, c] of Object.entries(DATA.atlas.cells || {})) P[n] = c.slice();
+  pinned = new Set(DATA.atlas.pinned || []);
+  if (DATA.atlas.sockets) order = {in: [...(DATA.atlas.sockets.in || [])], out: [...(DATA.atlas.sockets.out || [])]};
+}
+if (DATA.stages.some(s => !s.actions)) $('warn').textContent = 'The server is an older version without action names: restart serve.py.';
+
+// ---------- the graph of every stage ----------
+// node kinds: 'inner' (a region on the grid), 'block' ('in' = senses, 'out' = motor), 'sock' (a socket on a block)
+const topGroup = g => g ? g.split('/')[0] : '';
+function srcEnds(p) {
+  if (p.src !== 'in') return [p.src];
+  if (!opt.splitIn || !p.src_select || !p.src_select.length) return ['in'];
+  return [...new Set(p.src_select.map(s => 'in:' + (/^[a-z_]+/i.exec(s) || ['?'])[0]))];
+}
+function dstEnd(p, actions) {
+  if (p.dst !== 'out') return p.dst;
+  if (!opt.splitOut || !p.dst_range || !p.dst_range.length) return 'out';
+  const [lo, hi] = p.dst_range;
+  if (!actions.length) return `out:${lo}-${hi}`;
+  if (lo === 0 && hi >= actions.length) return 'out';
+  return 'out:' + actions.slice(lo, hi).map(a => a.toLowerCase()).join('/');
+}
+function stageGraph(s, si, nodes) {
+  const names = [], edges = [], seen = new Set();
+  const add = (n, kind, group) => {
+    if (!nodes.has(n)) nodes.set(n, {name: n, kind, group: group || '', top: topGroup(group), first: si,
+      side: kind === 'sock' ? n.split(':')[0] : kind === 'block' ? n : ''});
+    if (!names.includes(n)) names.push(n);
+  };
+  const edge = (e) => { const k = e.a + '>' + e.b + '>' + (e.b0 || '') + e.t; if (e.a !== e.b && !seen.has(k)) { seen.add(k); edges.push(e); } };
+  add('in', 'block'); add('out', 'block');
+  for (const r of s.regions) if (r.name !== 'in' && r.name !== 'out') add(r.name, 'inner', r.group);
+  for (const p of s.projections) {
+    const as = srcEnds(p), b = dstEnd(p, s.actions || []);
+    for (const n of [...as, b]) if (n.includes(':')) add(n, 'sock');
+    for (const a of as) edge({a, b, t: p.src === 'in' ? 'in' : p.dst === 'out' ? 'out' : 'proj'});
+  }
+  for (const m of s.modulators) {
+    if (!names.includes(m.pos)) continue;
+    for (const r of s.regions) for (const rc of r.receptors || []) if (rc[0] === m.name) edge({a: m.pos, b: r.name, t: 'mod'});
+    for (const p of s.projections) if (p.modulator === m.name) edge({a: m.pos, b: dstEnd(p, s.actions || []), b0: srcEnds(p)[0], t: 'modproj'});
+  }
+  return {key: s.key, names, edges};
+}
+function index(st) {
+  const node = n => G.nodes.get(n);
+  st.set = new Set(st.names);
+  st.inner = st.names.filter(n => node(n).kind === 'inner');
+  st.edges.sort((a, b) => (a.t === 'modproj') - (b.t === 'modproj'));   // a modulated projection is routed before the line to it
+  st.pairs = new Set(st.edges.filter(e => e.t !== 'mod' && e.t !== 'modproj').map(e => e.a + '>' + e.b));
+  // what each socket's height follows: the inner modules it connects to
+  st.link = {};
+  for (const n of st.names) if (node(n).kind === 'sock') st.link[n] = [];
+  for (const e of st.edges) if (e.t !== 'modproj') {
+    if (st.link[e.a] && node(e.b).kind === 'inner') st.link[e.a].push(e.b);
+    if (st.link[e.b] && node(e.a).kind === 'inner') st.link[e.b].push(e.a);
+  }
+  st.groups = [];
+  for (const [key, w] of [['top', 'group'], ['group', 'sub']]) {
+    const by = new Map();
+    for (const n of st.inner) { const g = node(n)[key]; if (g && (key === 'top' || g.includes('/'))) (by.get(g) || by.set(g, []).get(g)).push(n); }
+    for (const [g, mem] of by) if (mem.length > 1) st.groups.push({w, mem, others: st.inner.filter(n => node(n)[key] !== g)});
+  }
+}
+function build() {
+  const nodes = new Map();
+  G = {nodes, stages: []};
+  DATA.stages.forEach((s, si) => {
+    const st = stageGraph(s, si, nodes), prev = G.stages[si - 1];
+    st.isNew = new Set(st.names.filter(n => nodes.get(n).first === si && si > 0));
+    st.dup = !!prev && JSON.stringify([st.names, st.edges]) === JSON.stringify([prev.names, prev.edges]);  // same brain as its parent
+    G.stages.push(st);
+  });
+  G.stages.forEach(index);
+  // the layout grid view: every module, every connection of every stage
+  const all = {key: 'all', names: [...nodes.keys()], edges: []}, seen = new Set();
+  for (const st of G.stages) for (const e of st.edges) { const k = JSON.stringify(e); if (!seen.has(k)) { seen.add(k); all.edges.push(e); } }
+  index(all); G.all = all;
+  const rnd = rng(+$('seed').value || 1);
+  for (const n of nodes.values()) if (n.kind === 'inner' && !(P[n.name] && P[n.name][0] >= 1 && P[n.name][0] <= GC && P[n.name][1] < GR)) P[n.name] = freeCell(n.name, rnd);
+  for (const k of Object.keys(P)) if (!nodes.has(k)) delete P[k];
+  // socket order: the saved one, sockets that are gone dropped, new ones appended (placed by the optimiser)
+  for (const side of ['in', 'out']) {
+    const socks = [...nodes.values()].filter(n => n.kind === 'sock' && n.side === side).map(n => n.name);
+    order[side] = order[side].filter(n => socks.includes(n)).concat(socks.filter(n => !order[side].includes(n)));
+  }
+}
+function occupant(c, except) {
+  for (const k in P) if (k !== except && P[k][0] === c[0] && P[k][1] === c[1]) return k;
+  return null;
+}
+function freeCell(n, rnd) {
+  for (let t = 0; t < 1000; t++) { const c = [1 + Math.floor(rnd() * GC), Math.floor(rnd() * GR)]; if (!occupant(c, n)) return c; }
+  return [1, 0];
+}
+function rng(seed) { let s = seed >>> 0 || 1; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
+
+// ---------- one stage as the reader sees it ----------
+// inner modules: empty grid rows and columns removed. Senses block in column 0, motor block in the last column;
+// their sockets in the shared order, each as near as the order allows to the mean row of the modules it connects to
+function place(st, raw) {
+  const X = {}, Y = {}, blk = {};
+  let ncols, nrows;
+  if (raw) {
+    for (const n of st.inner) { X[n] = P[n][0]; Y[n] = P[n][1]; }
+    ncols = GC + 2; nrows = GR;
+  } else {
+    const cu = new Int16Array(GC + 2), ru = new Int16Array(GR);
+    for (const n of st.inner) { cu[P[n][0]] = 1; ru[P[n][1]] = 1; }
+    for (let i = 1; i < cu.length; i++) cu[i] += cu[i - 1];
+    for (let i = 1; i < ru.length; i++) ru[i] += ru[i - 1];
+    for (const n of st.inner) { X[n] = cu[P[n][0]]; Y[n] = ru[P[n][1]] - 1; }
+    ncols = cu[GC + 1] + 2; nrows = Math.max(1, ru[GR - 1]);
+  }
+  let top = -0.5, bottom = nrows - 0.5;
+  for (const side of ['in', 'out']) {
+    const x = side === 'in' ? 0 : ncols - 1, socks = order[side].filter(n => st.set.has(n));
+    let y = -1e9, sw = 0, sy = 0;
+    for (const n of socks) {
+      const l = st.link[n], want = l.length ? l.reduce((a, m) => a + Y[m], 0) / l.length : (nrows - 1) / 2;
+      y = Math.max(want, y + SGAP); Y[n] = y; X[n] = x; sw += want; sy += y;
+    }
+    const shift = socks.length ? (sy - sw) / socks.length : 0;
+    for (const n of socks) Y[n] -= shift;
+    const b = socks.length ? [Y[socks[0]] - 0.45, Y[socks[socks.length - 1]] + 0.45] : [-0.3, nrows - 0.7];
+    if (b[1] - b[0] < 0.9) { const c = (b[0] + b[1]) / 2; b[0] = c - 0.45; b[1] = c + 0.45; }
+    blk[side] = b; X[side] = x; Y[side] = (b[0] + b[1]) / 2;
+    top = Math.min(top, b[0] - 0.3); bottom = Math.max(bottom, b[1]);
+  }
+  return {X, Y, blk, ncols, nrows, y0: top + 0.5, height: bottom - top};
+}
+// where an edge attaches, in px: box centre, socket on the block's inner edge, or the block's inner edge at the other
+// end's height
+function endPt(pl, n, otherY) {
+  const node = G.nodes.get(n), x = pl.X[n] * CW;
+  if (node.kind === 'inner') return [x, pl.Y[n] * CHP];
+  const dx = node.side === 'in' ? BW / 2 : -BW / 2;
+  if (node.kind === 'sock') return [x + dx, pl.Y[n] * CHP];
+  const [b0, b1] = pl.blk[n];
+  return [x + dx, Math.min(b1, Math.max(b0, otherY)) * CHP];
+}
+
+// ---------- edge routing, as geom() / modGeom() in book/js/life-book.js ----------
+// a quadratic curve; it bends away from a reverse projection (or, for a modulator line, from a projection between
+// the same two modules), and further in steps of 0.4 box heights, alternating sides, until it misses the boxes in
+// between (tested at five points), for at most 10 steps
+function sampled(r, pts) {   // r plus the curve through the Bézier control points pts sampled at NSEG + 1 points
+  const xs = new Float64Array(NSEG + 1), ys = new Float64Array(NSEG + 1);
+  let L = 0, bx0 = 1e9, bx1 = -1e9, by0 = 1e9, by1 = -1e9;
+  for (let k = 0; k <= NSEG; k++) {
+    const t = k / NSEG, u = 1 - t;
+    const w = pts.length === 3 ? [u * u, 2 * u * t, t * t] : [u * u * u, 3 * u * u * t, 3 * u * t * t, t * t * t];
+    let x = 0, y = 0;
+    for (let i = 0; i < pts.length; i++) { x += w[i] * pts[i][0]; y += w[i] * pts[i][1]; }
+    xs[k] = x; ys[k] = y;
+    if (x < bx0) bx0 = x; if (x > bx1) bx1 = x; if (y < by0) by0 = y; if (y > by1) by1 = y;
+    if (k) L += Math.hypot(x - xs[k - 1], y - ys[k - 1]);
+  }
+  return Object.assign(r, {xs, ys, L, lx: bx0, hx: bx1, ly: by0, hy: by1});
+}
+function route(pl, st, e, mids) {
+  const [x1, y1] = endPt(pl, e.a, pl.Y[e.b]);
+  let [x2, y2] = endPt(pl, e.b, pl.Y[e.a]);
+  if (e.t === 'mod' && Math.abs(x2 - x1) < 1 && Math.abs(y2 - y1) < 2.5 * BH) {
+    // neighbours in one column: the book draws a loop around their right side (a cubic curve)
+    const x = x1 + BW / 2, b = 44, pts = [[x, y1], [x + b, y1], [x + b, y2], [x + 5, y2]];
+    return sampled({e, pts, x1: x, y1, cx: x + b, cy: y2, x2: x + 5, y2, bend: 0, hits: 0}, pts);
+  }
+  if (e.t === 'modproj') { const m = mids[e.b0 + '>' + e.b]; if (m) [x2, y2] = m; }
+  const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy) || 1, nx = -dy / len, ny = dx / len;
+  const R = 5 * BH, lx = Math.min(x1, x2) - R, hx = Math.max(x1, x2) + R, ly = Math.min(y1, y2) - R, hy = Math.max(y1, y2) + R;
+  const near = [];
+  for (const n of st.inner) if (n !== e.a && (n !== e.b || e.t === 'modproj')) {
+    const bx = pl.X[n] * CW, by = pl.Y[n] * CHP;
+    if (bx > lx && bx < hx && by > ly && by < hy) near.push(bx, by);
+  }
+  const hits = b => {
+    let h = 0;
+    for (let i = 0; i < near.length; i += 2) for (const f of FS) {
+      const px = x1 + dx * f + nx * 4 * f * (1 - f) * b, py = y1 + dy * f + ny * 4 * f * (1 - f) * b;
+      if (Math.abs(px - near[i]) < MX && Math.abs(py - near[i + 1]) < MY) { h++; break; }
+    }
+    return h;
+  };
+  const base = e.t === 'mod' ? (st.pairs.has(e.a + '>' + e.b) || st.pairs.has(e.b + '>' + e.a) ? 24 : 0)
+    : e.t === 'modproj' ? 0 : st.pairs.has(e.b + '>' + e.a) ? 14 : 0;
+  let bend = base, h = hits(bend);
+  for (let k = 1; k <= 10 && h; k++) {
+    const sg = base ? Math.sign(base) : (k % 2 ? 1 : -1);
+    bend = base + sg * Math.ceil(k / (base ? 1 : 2)) * 0.4 * BH; h = hits(bend);
+  }
+  const cx = (x1 + x2) / 2 + nx * 2 * bend, cy = (y1 + y2) / 2 + ny * 2 * bend;
+  return sampled({e, x1, y1, cx, cy, x2, y2, bend: Math.abs(bend - base), hits: h}, [[x1, y1], [cx, cy], [x2, y2]]);
+}
+function routes(pl, st) {
+  const mids = {}, out = [];
+  for (const e of st.edges) {
+    const r = route(pl, st, e, mids);
+    if (e.t !== 'mod' && e.t !== 'modproj') mids[e.a + '>' + e.b] = [(r.x1 + 2 * r.cx + r.x2) / 4, (r.y1 + 2 * r.cy + r.y2) / 4];
+    out.push(r);
+  }
+  return out;
+}
+
+// ---------- energy ----------
+const orient = (ax, ay, bx, by, cx, cy) => (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
+function curvesCross(r, s) {
+  for (let i = 0; i < NSEG; i++) for (let j = 0; j < NSEG; j++) {
+    const ax = r.xs[i], ay = r.ys[i], bx = r.xs[i + 1], by = r.ys[i + 1], cx = s.xs[j], cy = s.ys[j], dx = s.xs[j + 1], dy = s.ys[j + 1];
+    if (Math.max(ax, bx) < Math.min(cx, dx) || Math.max(cx, dx) < Math.min(ax, bx) || Math.max(ay, by) < Math.min(cy, dy) || Math.max(cy, dy) < Math.min(ay, by)) continue;
+    if (orient(ax, ay, bx, by, cx, cy) * orient(ax, ay, bx, by, dx, dy) < 0 && orient(cx, cy, dx, dy, ax, ay) * orient(cx, cy, dx, dy, bx, by) < 0) return true;
+  }
+  return false;
+}
+const TERMS = ['wire', 'flow', 'empty', 'foreign', 'through', 'bend', 'cross', 'area', 'aspect'];
+function stageEnergy(st, parts) {
+  const pl = place(st), {X, Y, ncols, height} = pl, rs = routes(pl, st);
+  for (const r of rs) {
+    const e = r.e;
+    parts.wire += W[e.t] * r.L / CW;
+    parts.through += W.through * r.hits;
+    parts.bend += W.bend * r.bend / BH;
+    if (e.t === 'proj' && X[e.a] > X[e.b]) parts.flow += W.flow * (X[e.a] - X[e.b]);
+  }
+  for (const g of st.groups) {   // wasted cells and foreign modules inside a group's bounding box
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    for (const n of g.mem) { x0 = Math.min(x0, X[n]); x1 = Math.max(x1, X[n]); y0 = Math.min(y0, Y[n]); y1 = Math.max(y1, Y[n]); }
+    let intr = 0;
+    for (const n of g.others) if (X[n] >= x0 && X[n] <= x1 && Y[n] >= y0 && Y[n] <= y1) intr++;
+    const f = g.w === 'sub' ? W.sub : 1;
+    parts.empty += f * W.group * ((x1 - x0 + 1) * (y1 - y0 + 1) - g.mem.length - intr);
+    parts.foreign += f * W.foreign * intr;
+  }
+  parts.area += W.area * ncols * height * CHP / CW;
+  parts.aspect += W.aspect * Math.log(ncols * CW / (height * CHP) / W.target) ** 2;   // width / height in pixels
+  if (W.cross) {
+    const cs = rs.filter(r => r.e.t !== 'modproj');
+    for (let i = 0; i < cs.length; i++) for (let j = i + 1; j < cs.length; j++) {
+      const r = cs[i], s = cs[j];
+      if (r.hx < s.lx || s.hx < r.lx || r.hy < s.ly || s.hy < r.ly) continue;
+      if (r.e.a === s.e.a || r.e.a === s.e.b || r.e.b === s.e.a || r.e.b === s.e.b) continue;
+      if (curvesCross(r, s)) parts.cross += W.cross;
+    }
+  }
+}
+const zero = () => Object.fromEntries(TERMS.map(t => [t, 0]));
+function energy(only, breakdown) {
+  let tot = 0; const S = G.stages.length;
+  G.stages.forEach((st, si) => {
+    if (only !== undefined ? si !== only : st.dup && !breakdown) return;
+    const p = zero(); stageEnergy(st, p);
+    let e = 0; for (const t of TERMS) e += p[t];
+    e *= 1 + W.later * si / Math.max(1, S - 1);
+    if (breakdown) breakdown.push({key: st.key, parts: p, e, dup: st.dup});
+    if (!st.dup || only !== undefined) tot += e;
+  });
+  return tot;
+}
+
+// ---------- simulated annealing on the grid: move a module a few cells or swap it with the one there, or swap
+// two neighbouring sockets ----------
+let job = 0;
+async function anneal(movable, swapSockets, iters, T0, only, rnd, token) {
+  if (!movable.length && !swapSockets) return true;
+  const can = new Set(movable), sides = ['in', 'out'].filter(s => order[s].length > 1);
+  let E = energy(only), t = performance.now();
+  for (let it = 0; it < iters; it++) {
+    if (token !== job) return false;
+    const T = T0 * Math.pow(1e-3, it / iters);
+    let undo;
+    if (swapSockets && sides.length && (!movable.length || rnd() < 0.15)) {
+      const o = order[sides[Math.floor(rnd() * sides.length)]], i = Math.floor(rnd() * (o.length - 1));
+      [o[i], o[i + 1]] = [o[i + 1], o[i]];
+      undo = () => { [o[i], o[i + 1]] = [o[i + 1], o[i]]; };
+    } else {
+      const n = movable[Math.floor(rnd() * movable.length)], c = P[n];
+      const d = () => Math.round((rnd() * 2 - 1) * 3);
+      const nc = [Math.min(GC, Math.max(1, c[0] + d())), Math.min(GR - 1, Math.max(0, c[1] + d()))];
+      if (nc[0] === c[0] && nc[1] === c[1]) continue;
+      const o = occupant(nc, n);
+      if (o && !can.has(o)) continue;
+      P[n] = nc; if (o) P[o] = c;
+      undo = () => { P[n] = c; if (o) P[o] = nc; };
+    }
+    const E2 = energy(only);
+    if (E2 <= E || rnd() < Math.exp((E - E2) / T)) E = E2; else undo();
+    if (performance.now() - t > 30) { $('bar').style.width = (100 * it / iters) + '%'; await new Promise(r => setTimeout(r)); t = performance.now(); }
+  }
+  return true;
+}
+function insertSockets(si) {   // forward mode: put each socket that is new in stage si at its best place in the order
+  for (const side of ['in', 'out']) for (const n of order[side].filter(n => G.nodes.get(n).first === si)) {
+    const o = order[side]; o.splice(o.indexOf(n), 1);
+    let best = 0, bestE = Infinity;
+    for (let i = 0; i <= o.length; i++) { o.splice(i, 0, n); const e = energy(si); if (e < bestE) { bestE = e; best = i; } o.splice(i, 1); }
+    o.splice(best, 0, n);
+  }
+}
+async function run(scratch) {
+  const token = ++job, rnd = rng(+$('seed').value || 1);
+  const iters = (+$('iters').value || 8000) / (scratch ? 1 : 4), T0 = scratch ? W.temp : W.temp / 10;
+  if (scratch) {
+    for (const k of Object.keys(P)) if (!pinned.has(k)) delete P[k];
+    if (!opt.lockSockets) order = {in: [], out: []};
+    build();
+  }
+  const t = performance.now();
+  if (opt.mode === 'foresight') {
+    if (!await anneal(Object.keys(P).filter(n => !pinned.has(n)), !opt.lockSockets, iters, T0, undefined, rnd, token)) return;
+  } else {
+    for (let si = 0; si < G.stages.length; si++) {
+      const fresh = G.stages[si].inner.filter(n => G.nodes.get(n).first === si && !pinned.has(n));
+      insertSockets(si);
+      if (!await anneal(fresh, false, Math.ceil(iters / G.stages.length), T0, si, rnd, token)) return;
+      insertSockets(si);
+    }
+  }
+  $('bar').style.width = '0';
+  $('msg').textContent = `${scratch ? 'optimised' : 'refined'} in ${((performance.now() - t) / 1000).toFixed(1)} s`;
+  render();
+}
+
+// ---------- drawing ----------
+const hue = s => { let h = 0; for (const ch of s) h = (h * 31 + ch.charCodeAt(0)) % 360; return h; };
+const fill = n => n.top ? `hsl(${hue(n.top)},55%,86%)` : '#f3f3f3';
+const STYLE = {proj: ['#555', ''], in: ['#7aa6d6', ''], out: ['#555', ''], mod: ['#9b4dca', '5 3'], modproj: ['#e08a1e', '2 3']};
+const f1 = v => v.toFixed(1);
+function svgEl(tag, attrs, parent) {
+  const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+const clipBox = (cx, cy, dx, dy) => { const s = Math.min(dx ? (BW / 2 + 4) / Math.abs(dx) : 1e9, dy ? (BH / 2 + 4) / Math.abs(dy) : 1e9); return [cx + dx * s, cy + dy * s]; };
+function drawPanel(title, st, pl, raw) {
+  const {X, Y, blk, ncols, y0, height} = pl;
+  const div = document.createElement('div'); div.className = 'panel';
+  div.innerHTML = `<b>${title}</b>`;
+  const w = ncols * CW, h = height * CHP;
+  const svg = svgEl('svg', {width: w * 0.5, height: h * 0.5, viewBox: `${-CW / 2} ${y0 * CHP - CHP / 2} ${w} ${h}`}, div);
+  if (raw) for (let c = 1; c <= GC; c++) for (let r = 0; r < GR; r++)
+    svgEl('rect', {x: c * CW - BW / 2, y: r * CHP - BH / 2, width: BW, height: BH, fill: 'none', stroke: '#eee'}, svg);
+  else for (const g of st.groups) if (g.w === 'group') {   // group boxes
+    const nm = G.nodes.get(g.mem[0]).top, xs = g.mem.map(n => X[n] * CW), ys = g.mem.map(n => Y[n] * CHP);
+    const x0 = Math.min(...xs) - BW / 2 - 8, yy = Math.min(...ys) - BH / 2 - 14;
+    svgEl('rect', {x: x0, y: yy, width: Math.max(...xs) - Math.min(...xs) + BW + 16, height: Math.max(...ys) - Math.min(...ys) + BH + 22,
+      rx: 8, fill: `hsla(${hue(nm)},50%,80%,0.25)`, stroke: `hsl(${hue(nm)},40%,60%)`}, svg);
+    svgEl('text', {x: x0 + 4, y: yy + 10, fill: `hsl(${hue(nm)},40%,35%)`}, svg).textContent = nm;
+  }
+  // senses and motor blocks with their sockets
+  for (const side of ['in', 'out']) {
+    const [b0, b1] = blk[side], x = X[side] * CW;
+    svgEl('rect', {x: x - BW / 2, y: b0 * CHP, width: BW, height: (b1 - b0) * CHP, rx: 6, fill: side === 'in' ? '#e6eef8' : '#ececec', stroke: '#666'}, svg);
+    svgEl('text', {x: x + (side === 'in' ? -BW / 2 + 4 : BW / 2 - 4), y: b0 * CHP - 4, 'text-anchor': side === 'in' ? 'start' : 'end', 'font-weight': 'bold'}, svg)
+      .textContent = side === 'in' ? 'senses' : 'motor';
+    for (const n of order[side].filter(n => st.set.has(n))) {
+      const fresh = st.isNew && st.isNew.has(n), sx = side === 'in' ? x + BW / 2 - SW : x - BW / 2;
+      svgEl('rect', {x: sx, y: Y[n] * CHP - SH / 2, width: SW, height: SH, rx: 4, fill: '#fff', stroke: fresh ? '#e07b00' : '#888', 'stroke-width': fresh ? 2.5 : 1}, svg);
+      svgEl('text', {x: sx + SW / 2, y: Y[n] * CHP + 4, 'text-anchor': 'middle', 'font-size': 10}, svg).textContent = n.split(':')[1];
+    }
+  }
+  for (const r of routes(pl, st)) {
+    const e = r.e, [col, dash] = STYLE[e.t], inner = n => G.nodes.get(n).kind === 'inner';
+    const [sx, sy] = !r.pts && inner(e.a) ? clipBox(r.x1, r.y1, r.cx - r.x1, r.cy - r.y1) : [r.x1, r.y1];
+    const [ex, ey] = !r.pts && e.t !== 'modproj' && inner(e.b) ? clipBox(r.x2, r.y2, r.cx - r.x2, r.cy - r.y2) : [r.x2, r.y2];
+    const d = r.pts ? `M${r.pts.map(p => p.map(f1).join(',')).join(' ').replace(' ', ' C')}`
+      : `M${f1(sx)},${f1(sy)} Q${f1(r.cx)},${f1(r.cy)} ${f1(ex)},${f1(ey)}`;
+    svgEl('path', {d, fill: 'none', stroke: col,
+      'stroke-dasharray': dash, 'stroke-width': r.hits ? 2.5 : 1.5, opacity: 0.75}, svg);
+    if (e.t !== 'modproj') {   // arrowhead along the curve's end direction
+      const L = Math.hypot(ex - r.cx, ey - r.cy) || 1, ux = (ex - r.cx) / L, uy = (ey - r.cy) / L;
+      svgEl('path', {d: `M${f1(ex)},${f1(ey)} L${f1(ex - 8 * ux - 4 * uy)},${f1(ey - 8 * uy + 4 * ux)} L${f1(ex - 8 * ux + 4 * uy)},${f1(ey - 8 * uy - 4 * ux)}Z`, fill: col}, svg);
+    }
+  }
+  for (const n of st.inner) {
+    const node = G.nodes.get(n), x = X[n] * CW, y = Y[n] * CHP;
+    const g = svgEl('g', {transform: `translate(${x},${y})`}, svg);
+    const fresh = st.isNew && st.isNew.has(n);
+    svgEl('rect', {x: -BW / 2, y: -BH / 2, width: BW, height: BH, rx: 6, fill: fill(node),
+      stroke: fresh ? '#e07b00' : '#666', 'stroke-width': pinned.has(n) ? 4 : fresh ? 3 : 1}, g);
+    svgEl('text', {x: 0, y: 4, 'text-anchor': 'middle'}, g).textContent = n;
+    if (raw) { g.style.cursor = 'grab'; g.addEventListener('pointerdown', ev => startDrag(ev, n, svg)); }
+  }
+  return div;
+}
+function render() {
+  const panels = $('panels'); panels.innerHTML = '';
+  panels.appendChild(drawPanel('layout grid: every module (drag to move, click to pin)', G.all, place(G.all, true), true));
+  const br = []; energy(undefined, br);
+  G.stages.forEach((st, si) => {
+    const pl = place(st);
+    panels.appendChild(drawPanel(`${st.key}: ${pl.ncols - 2} columns × ${pl.nrows} rows, E ${br[si].e.toFixed(1)}${st.dup ? ' (same brain as parent)' : ''}`, st, pl));
+  });
+  let html = '<table><tr><td>stage</td>' + TERMS.map(t => `<td>${t}</td>`).join('') + '<td>total</td></tr>';
+  const sum = zero(); let tot = 0;
+  for (const b of br) {
+    if (!b.dup) { for (const t of TERMS) sum[t] += b.parts[t]; tot += b.e; }
+    html += `<tr${b.dup ? ' style="color:#aaa"' : ''}><td>${b.key}</td>` + TERMS.map(t => `<td>${b.parts[t].toFixed(1)}</td>`).join('') + `<td>${b.e.toFixed(1)}</td></tr>`;
+  }
+  html += '<tr><td><b>sum</b></td>' + TERMS.map(t => `<td><b>${sum[t].toFixed(0)}</b></td>`).join('') + `<td><b>${tot.toFixed(0)}</b></td></tr></table>`;
+  $('energy').innerHTML = html;
+}
+function startDrag(ev, n, svg) {
+  ev.preventDefault();
+  const pt = e => { const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(svg.getScreenCTM().inverse()); return [Math.round(p.x / CW), Math.round(p.y / CHP)]; };
+  const start = pt(ev);
+  const up = e => {
+    removeEventListener('pointerup', up);
+    const c = pt(e);
+    if (c[0] === start[0] && c[1] === start[1]) { pinned.has(n) ? pinned.delete(n) : pinned.add(n); render(); return; }
+    const to = [Math.min(GC, Math.max(1, c[0])), Math.min(GR - 1, Math.max(0, c[1]))];
+    const o = occupant(to, n);
+    if (o && pinned.has(o)) { $('msg').textContent = `${o} is pinned there`; return; }
+    if (o) P[o] = P[n];
+    P[n] = to; pinned.add(n); changed();
+  };
+  addEventListener('pointerup', up);
+}
+
+// ---------- controls ----------
+let timer = null;
+const sliders = {};
+function changed() { render(); if ($('live').checked) { clearTimeout(timer); timer = setTimeout(() => run(false), 250); } }
+for (const [box, list] of [['wConn', WEIGHTS.conn], ['wShape', WEIGHTS.shape]]) for (const [k, label, , lo, hi, tip] of list) {
+  const d = document.createElement('div'); d.className = 'w'; d.title = tip;
+  d.innerHTML = `<label>${label}</label><input type="range" min="${lo}" max="${hi}" step="0.05" value="${W[k]}"><span>${W[k]}</span>`;
+  const inp = d.querySelector('input'), sp = d.querySelector('span');
+  inp.addEventListener('input', () => { W[k] = +inp.value; sp.textContent = inp.value; changed(); });
+  sliders[k] = [inp, sp];
+  $(box).appendChild(d);
+}
+$('reset').addEventListener('click', () => {
+  for (const [k, , v] of [...WEIGHTS.conn, ...WEIGHTS.shape]) { W[k] = v; sliders[k][0].value = v; sliders[k][1].textContent = v; }
+  changed();
+});
+$('mode').value = opt.mode;
+$('mode').addEventListener('change', () => { opt.mode = $('mode').value; });
+for (const k of ['splitIn', 'splitOut', 'lockSockets']) {
+  $(k).checked = opt[k];
+  $(k).addEventListener('change', () => { opt[k] = $(k).checked; if (k !== 'lockSockets') build(); changed(); });
+}
+$('scratch').addEventListener('click', () => run(true));
+$('refine').addEventListener('click', () => run(false));
+$('unpin').addEventListener('click', () => { pinned.clear(); render(); });
+function atlas() {
+  const stages = {};
+  for (const st of G.stages) {
+    const pl = place(st);
+    stages[st.key] = {cols: pl.ncols, rows: pl.nrows, blocks: pl.blk,
+      pos: Object.fromEntries(st.names.map(n => [n, [pl.X[n], +pl.Y[n].toFixed(3)]]))};
+  }
+  return {about: 'brain diagram layout. cells: grid cell [col, row] of every module in the layout grid. sockets: ' +
+    'top-to-bottom order of the sockets on the senses block (in:<sense>) and motor block (out:<actions>), shared by ' +
+    'all stages. stages: per stage the position [col, row] a diagram uses: empty rows and columns removed, the ' +
+    'blocks in the first and last column with their row extent, sockets at fractional rows. Written by tools/brain_layout.',
+    saved: new Date().toISOString(), chain: G.stages.map(s => s.key), weights: W, options: opt,
+    cells: P, pinned: [...pinned], sockets: order, stages};
+}
+$('save').addEventListener('click', async () => {
+  const r = await fetch('/save', {method: 'POST', body: JSON.stringify(atlas())});
+  $('msg').textContent = r.ok ? 'saved tools/brain_layout/atlas.json' : 'save failed';
+});
+$('download').addEventListener('click', () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(atlas(), null, 1)], {type: 'application/json'}));
+  a.download = 'atlas.json'; a.click();
+});
+build();
+if (DATA.atlas) render(); else run(true);
+</script>
+</body></html>

@@ -1226,6 +1226,19 @@ $('archLegend').innerHTML = `<span class="item"><i class="k" style="background:v
   + (MODS.length ? `<span class="item"><i class="k mod"></i>modulator: released by one cell, acts on a cell or on the learning of a projection</span>` : '')
   + `<br>Dotted = gain (multiplicative) projection. Green blocks = excitatory, red = inhibitory (Dale's law). Modulators: ${(M.brain.modulators || []).map(m => `<b>${m.name}</b> = ${m.source === 'region' ? `${m.scale}·(${m.pos}${m.neg ? ' − ' + m.neg : ''} − ${m.baseline})` : m.source}`).join(', ') || (M.brain.modulator || 'none')}. Line width = summed |w| per target neuron at the current snapshot. Cells = the focused agent's activations at this tick. Drag blocks, or a group by its box or name, to arrange them; <a href="#" id="archReset">reset layout</a>.`;
 $('archReset').addEventListener('click', e => { e.preventDefault(); try { localStorage.removeItem(LSKEY); } catch (err) {} autoLayout(); renderArch(); archFit(); });
+// the book's layout of this brain (book/data/brain_layout.json, from tools/brain_layout), when the export found one:
+// the regions at the book's grid positions, in and out at the middle of the book's senses and motor blocks
+function bookLayout() {
+  const B = M.book_layout, rows = Object.values(B.pos).map(p => p[1]), top = Math.min(...rows), CW = BW + 80, STEP = BH + 30;
+  SVGW = Math.max(700, 40 + BW + (B.cols - 1) * CW);
+  AR.H = Math.max(160, (Math.max(...rows) - top) * STEP + BH + 60);
+  for (const [n, [c, r]] of Object.entries(B.pos)) AR.pos[n] = [20 + BW / 2 + c * CW, 30 + BH / 2 + (r - top) * STEP];
+}
+if (M.book_layout) {
+  const a = document.createElement('a'); a.href = '#'; a.textContent = `book layout (stage ${M.book_layout.stage})`;
+  $('archReset').after(' · ', a);
+  a.addEventListener('click', e => { e.preventDefault(); bookLayout(); savePos(); renderArch(); archFit(); });
+}
 autoLayout(); loadPos(); updateStats(); renderArch(); renderArchDetail(); archFit(true);
 new ResizeObserver(() => { if (AR.view) setView(); }).observe($('archWrap'));
 

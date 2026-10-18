@@ -80,6 +80,7 @@
 /* brain diagram */
 .lb-brain .lb-exc { fill: var(--lb-exc); } .lb-brain .lb-inh { fill: var(--lb-inh); } .lb-brain .lb-io { fill: var(--lb-io); }
 .lb-reg rect { stroke: var(--lb-axis); stroke-width: 1; }
+.lb-reg rect.lb-sock { fill: var(--lb-surface); stroke: var(--lb-ink2); stroke-width: 0.8; }
 .lb-reg.lb-isnew rect { stroke: var(--lb-new); stroke-width: 2; }
 .lb-regname { font-size: 12.5px; fill: var(--lb-ink); font-weight: 600; }
 .lb-regsub { font-size: 10px; fill: var(--lb-ink2); }

@@ -361,3 +361,26 @@ def test_pain_teaches_only_the_aversive_synapses():
     assert d_av > 0.01 and abs(d_app) < 1e-6              # a poisoning: more aversion, appetite untouched
     d_app, d_av = after()
     assert abs(d_app) < 1e-6 and abs(d_av) < 1e-6         # no outcome: nothing is learned
+
+
+def test_adaptation_strength_is_a_gene():
+    from life.evolution import mutate, ADAPT_MIN
+    base = dict(regions=(R("a", 2, sign="exc", alpha=1.0),), projections=(P("in", "a", density=1.0),),
+                in_adapt=("*",), in_trace_tau=0.5)
+    obs = [1.0, 0.5, 0.0]
+    # a constant input passes on input - strength x its slow average
+    for s_ in (1.0, 0.5):
+        L, g, st = run(BrainConfig(**base, in_adapt_strength=s_), obs, n=20)
+        assert np.allclose(np.asarray(g.adapt), s_)
+        assert np.allclose(np.asarray(st.x[:3]), (1 - s_) * np.asarray(obs), atol=1e-3)
+    # the gene sets the strength, not the design value
+    L, g, _ = run(BrainConfig(**base), obs, n=1)
+    _, _, st = run(BrainConfig(**base), obs, n=20, g=g._replace(adapt=jnp.full((1,), 0.25)))
+    assert np.allclose(np.asarray(st.x[:3]), 0.75 * np.asarray(obs), atol=1e-3)
+    # it mutates only when evolvable, multiplicatively and within [ADAPT_MIN, 1]
+    ecfg = EvolutionConfig(tune_prob=1.0, tune_std=0.5)
+    assert np.allclose(np.asarray(mutate(jax.random.PRNGKey(0), g, ecfg, L).adapt), 1.0)
+    Le = brain.build_layout(BrainConfig(**base, in_adapt_strength=0.5, in_adapt_evolve=True), n_in=3, n_out=A.NUM_ACTIONS)
+    ge = brain.init_genome(jax.random.PRNGKey(0), Le)
+    vals = [float(mutate(jax.random.PRNGKey(k), ge, ecfg, Le).adapt[0]) for k in range(20)]
+    assert all(ADAPT_MIN <= v <= 1.0 for v in vals) and len(set(np.round(vals, 4))) > 10

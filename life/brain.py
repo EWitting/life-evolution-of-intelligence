@@ -32,6 +32,8 @@ class Genome(NamedTuple):
     C: jnp.ndarray
     D: jnp.ndarray
     clear: jnp.ndarray  # [M] per modulator: the fraction of it left after a tick (ModulatorSpec.decay; evolvable when > 0)
+    adapt: jnp.ndarray  # [1] adaptation strength of the adapting inputs (BrainConfig.in_adapt_strength; evolvable with
+                        # BrainConfig.in_adapt_evolve)
 
 
 class BrainState(NamedTuple):
@@ -88,8 +90,10 @@ class Layout(NamedTuple):
     eta_init: jnp.ndarray   # [N, N]
     abcd_init: jnp.ndarray  # [4, N, N]
     centred: jnp.ndarray    # [N, N] 1 where the rule's presynaptic term is activity minus the neuron's slow average
-    in_adapt: jnp.ndarray   # [n_in] BrainConfig.in_adapt_strength for adapting inputs (BrainConfig.in_adapt), else 0
+    in_adapt: jnp.ndarray   # [n_in] 1 for adapting inputs (BrainConfig.in_adapt), else 0; the strength is Genome.adapt
     has_adapt: bool
+    adapt_design: float     # static: BrainConfig.in_adapt_strength
+    adapt_evolve: bool      # static: BrainConfig.in_adapt_evolve
     has_gain: bool
     has_elig: bool
     has_dep: bool
@@ -254,8 +258,9 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
                   mod_idx=j(mod_idx), elig=j(elig), gain=j(gain), evolve_w=j(evolve_w), tune=j(tune * allowed), w_init=j(w_init),
                   dep_U=j(dep_U), dep_rec=j(dep_rec), decay=j(decay), teacher=j(teacher), eta_init=j(eta_init), abcd_init=j(abcd),
                   centred=j(centred),
-                  in_adapt=j(cfg.in_adapt_strength * np.array([float(any(fnmatch.fnmatch(nm, pat) for pat in cfg.in_adapt)) for nm in in_names], np.float32)),
-                  has_adapt=bool(cfg.in_adapt),
+                  in_adapt=j(np.array([float(any(fnmatch.fnmatch(nm, pat) for pat in cfg.in_adapt)) for nm in in_names], np.float32)),
+                  has_adapt=bool(cfg.in_adapt), adapt_design=float(cfg.in_adapt_strength),
+                  adapt_evolve=bool(cfg.in_adapt and cfg.in_adapt_evolve),
                   has_gain=bool(gain.any()), has_elig=bool((elig > 0).any()), has_dep=bool((dep_U > 0).any()),
                   has_decay=bool((decay > 0).any()), groups=tuple(r.group for r in regions),
                   rec_gain=j(rec_gain), rec_bias=j(rec_bias), has_receptors=bool(rec_gain.any() or rec_bias.any()),
@@ -285,14 +290,17 @@ def init_genome(key: jax.Array, layout: Layout) -> Genome:
     b = jnp.where(jnp.isnan(layout.bias_init), 0.1 * jax.random.normal(k3, (n,)), jnp.nan_to_num(layout.bias_init))
     return Genome(w0=w0, mask=mask, b=b, eta=layout.eta_init * layout.allowed, A=layout.abcd_init[0],
                   B=layout.abcd_init[1], C=layout.abcd_init[2], D=layout.abcd_init[3],
-                  clear=jnp.asarray(layout.mod_decay, jnp.float32))
+                  clear=jnp.asarray(layout.mod_decay, jnp.float32), adapt=jnp.full((1,), layout.adapt_design, jnp.float32))
 
 
 def genome_from_npz(f, layout: Layout) -> Genome:
-    """A stored population. Files written before Genome.clear existed get the designed decay of every modulator."""
+    """A stored population. Files written before Genome.clear existed get the designed decay of every modulator, those
+    before Genome.adapt the designed adaptation strength."""
     g = {k: jnp.asarray(f[k]) for k in Genome._fields if k in f}
     if "clear" not in g:
         g["clear"] = jnp.tile(jnp.asarray(layout.mod_decay, jnp.float32), (g["b"].shape[0], 1))
+    if "adapt" not in g:
+        g["adapt"] = jnp.full((g["b"].shape[0], 1), layout.adapt_design, jnp.float32)
     return Genome(**g)
 
 
@@ -370,7 +378,7 @@ def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, ob
     w, tr, e, u, mod, g = state.w, state.tr, state.e, state.u, state.mod, state.g
     raw = obs
     if layout.has_adapt:   # adapting inputs pass on the input minus its slow average (tr holds the average of the raw input)
-        obs = obs - layout.in_adapt * tr[:n_in]
+        obs = obs - layout.in_adapt * genome.adapt[0] * tr[:n_in]
     x = state.x.at[:n_in].set(obs)
     plastic = bool(layout.pl_rows)
     if plastic:   # everything that changes within a life sits in the block [R, C] (usually a small part of w)
@@ -504,5 +512,6 @@ def remap_genomes(pop: Genome, old: Layout, new: Layout, key: jax.Array) -> Geno
     for i, m in enumerate(new.mod_names):
         if m in old.mod_names and new.mod_decay[i] > 0 and old.mod_decay[old.mod_names.index(m)] > 0:
             clear[:, i] = np.asarray(pop.clear)[:, old.mod_names.index(m)]
+    adapt = np.asarray(pop.adapt) if (old.adapt_evolve and new.adapt_evolve) else np.asarray(fresh.adapt)   # an evolved strength carries over
     return Genome(w0=jnp.asarray(w0 * mask), mask=jnp.asarray(mask), b=jnp.asarray(b), clear=jnp.asarray(clear),
-                  **{k: jnp.asarray(v) for k, v in genes.items()})
+                  adapt=jnp.asarray(adapt), **{k: jnp.asarray(v) for k, v in genes.items()})

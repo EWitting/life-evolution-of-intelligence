@@ -97,13 +97,13 @@ for life in range(int(os.environ.get("LIVES", "2"))):
     st, rec = sim(rules, pop, ks)
     ate = np.asarray(rec["ate"]); T, N = ate.shape
     x0 = np.asarray(rec["x"][:, :, :L.n_in], np.float32)
-    # undo the adaptation: obs = raw - a tr, tr' = tau tr + (1 - tau) raw (tr = 0 at birth), a = the brain's strength
-    a0, tau = float(np.asarray(L.in_adapt).max()), exp.brain.in_trace_tau
+    # undo the adaptation: obs = raw - a tr, tr' = tau tr + (1 - tau) raw (tr = 0 at birth), a = Genome.adapt
+    a0, tau = np.asarray(pop.adapt, np.float32)[:N], exp.brain.in_trace_tau      # [N, 1]: each animal's strength
     tr = np.zeros_like(x0[0]); raw = np.zeros_like(x0)
     for t in range(T):
-        raw[t] = x0[t] + a0 * tr * (np.asarray(L.in_adapt) > 0)
+        raw[t] = x0[t] + a0 * tr * np.asarray(L.in_adapt)
         tr = tau * tr + (1 - tau) * raw[t]
-    trs = raw - x0 if a0 == 0 else (raw - x0) / a0
+    trs = (raw - x0) / np.maximum(a0, 1e-9)
     for st_ in STRENGTHS:
         overlaps(raw if RAW else x0 if st_ is None else raw - st_ * trs, ate, pain, st_)
 

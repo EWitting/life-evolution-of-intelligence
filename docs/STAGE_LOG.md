@@ -2526,3 +2526,9 @@ centres). XOR at 0.8 is too hard even for a random pallium; at 0.6 it brings 0.6
 napkin's limit for a transfer that still pays (0.3-0.4 with the other poison untouched).
 
 New: `BrainConfig.in_adapt_strength` (default 1), `berry_world(novel_xor=...)` / `learning_world(novel_xor=...)`.
+
+**Adaptation strength as a gene** (user, 2026-10-18: so that habituation cannot hold back later stages): `Genome.adapt`
+(one per genome), on with `BrainConfig.in_adapt_evolve`, starting at `in_adapt_strength`; mutates like a fade time
+(chance `tune_prob`, factor exp(`tune_std` N)), within [0.02, 1]; from either parent; carried over by remapping only
+between layouts where it evolves. Stored populations get the designed strength (1), so the frozen stages behave as
+before. On from the pallium stage on.

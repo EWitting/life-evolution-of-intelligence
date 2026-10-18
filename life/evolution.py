@@ -7,6 +7,8 @@ import jax.numpy as jnp
 from .brain import Genome, Layout, constrain
 from .config import EvolutionConfig
 
+ADAPT_MIN = 0.02   # lowest evolvable adaptation strength (a multiplicative step cannot leave 0)
+
 
 def mutate(key: jax.Array, g: Genome, cfg: EvolutionConfig, layout: Layout) -> Genome:
     """Weights, presence and biases mutate per synapse/neuron, except where the layout hard-wires them.
@@ -41,8 +43,15 @@ def mutate(key: jax.Array, g: Genome, cfg: EvolutionConfig, layout: Layout) -> G
     tau0 = 1.0 / jnp.maximum(1.0 - design, 1e-6)
     tau = 1.0 / jnp.maximum(1.0 - g.clear, 1e-6) * jnp.exp(hit_c * cfg.tune_std * jax.random.normal(kc2, design.shape))
     clear = jnp.where(design > 0, 1.0 - 1.0 / jnp.clip(tau, jnp.maximum(tau0 / cfg.tune_range, 1.0), tau0 * cfg.tune_range), g.clear)
+    # the adaptation strength mutates the same way, within [ADAPT_MIN, 1]
+    if layout.adapt_evolve:
+        ka1, ka2 = jax.random.split(jax.random.fold_in(key, 10))
+        hit_a = jax.random.uniform(ka1, g.adapt.shape) < cfg.tune_prob
+        adapt = jnp.clip(g.adapt * jnp.exp(hit_a * cfg.tune_std * jax.random.normal(ka2, g.adapt.shape)), ADAPT_MIN, 1.0)
+    else:
+        adapt = g.adapt
     if not cfg.plastic:
-        return g._replace(w0=w0, mask=mask, b=b, clear=clear)
+        return g._replace(w0=w0, mask=mask, b=b, clear=clear, adapt=adapt)
     plastic = (layout.rule > 0) & (layout.proj_id >= 0)
     hit = jax.random.uniform(k[4], (P,)) < cfg.eta_mutation_prob
     per = lambda kk, std: jnp.where(plastic, (hit * std * jax.random.normal(kk, (P,)))[pid], 0.0)
@@ -53,7 +62,7 @@ def mutate(key: jax.Array, g: Genome, cfg: EvolutionConfig, layout: Layout) -> G
         eta = jnp.clip(g.eta + per(k[5], 0.3 * cfg.eta_max), 0.0, cfg.eta_max) * plastic
     ka, kb, kc, kd = jax.random.split(k[6], 4)
     return Genome(w0=w0, mask=mask, b=b, eta=eta, A=g.A + per(ka, cfg.mutation_std), B=g.B + per(kb, cfg.mutation_std),
-                  C=g.C + per(kc, cfg.mutation_std), D=g.D + per(kd, 0.1 * cfg.mutation_std), clear=clear)
+                  C=g.C + per(kc, cfg.mutation_std), D=g.D + per(kd, 0.1 * cfg.mutation_std), clear=clear, adapt=adapt)
 
 
 def crossover(key: jax.Array, a: Genome, b: Genome, layout: Layout, blend: bool = False) -> Genome:
@@ -65,10 +74,11 @@ def crossover(key: jax.Array, a: Genome, b: Genome, layout: Layout, blend: bool 
         half = lambda x, y: 0.5 * (x + y)
         return Genome(w0=half(a.w0 * a.mask, b.w0 * b.mask), mask=jnp.maximum(a.mask, b.mask), b=half(a.b, b.b),
                       eta=half(a.eta, b.eta), A=half(a.A, b.A), B=half(a.B, b.B), C=half(a.C, b.C), D=half(a.D, b.D),
-                      clear=half(a.clear, b.clear))
+                      clear=half(a.clear, b.clear), adapt=half(a.adapt, b.adapt))
     n = a.b.shape[0]
     k1, k2 = jax.random.split(key)
     clear_a = jax.random.bernoulli(jax.random.fold_in(key, 9), 0.5, a.clear.shape)
+    adapt_a = jax.random.bernoulli(jax.random.fold_in(key, 10), 0.5, a.adapt.shape)
     from_a = jax.random.bernoulli(k1, 0.5, (n,))
     P = max(1, len(layout.proj_names))
     pid = jnp.where(layout.proj_id >= 0, layout.proj_id, 0)
@@ -78,7 +88,7 @@ def crossover(key: jax.Array, a: Genome, b: Genome, layout: Layout, blend: bool 
     return Genome(w0=jnp.where(layout.tune > 0, per_proj(a.w0, b.w0), jnp.where(col, a.w0, b.w0)),
                   mask=jnp.where(col, a.mask, b.mask), b=jnp.where(from_a, a.b, b.b), eta=per_proj(a.eta, b.eta),
                   A=per_proj(a.A, b.A), B=per_proj(a.B, b.B), C=per_proj(a.C, b.C), D=per_proj(a.D, b.D),
-                  clear=jnp.where(clear_a, a.clear, b.clear))
+                  clear=jnp.where(clear_a, a.clear, b.clear), adapt=jnp.where(adapt_a, a.adapt, b.adapt))
 
 
 def next_generation(key: jax.Array, pop: Genome, fitness: jnp.ndarray, cfg: EvolutionConfig, layout: Layout) -> Genome:

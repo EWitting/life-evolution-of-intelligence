@@ -123,6 +123,7 @@ World: look-alike and per-life appearances, dud bushes, OHOL temperature and hot
 gradient sense, delayed sickness, taste, patches, variety bonus, mid-life rule switch, appearance noise, movement
 and (optional) neural metabolic cost, regrowth tied to the metabolic rate, multi-clone OHOL slicing.
 Evolution: one life per individual, siblings, elitism + tournament, recombination, per-projection plasticity and
+adaptation-strength genes (`Genome.adapt`, from the pallium stage on),
 strength genes.
 Tools: stage runner and chain, replicate, summary, lesion(s), versus, respond, compare, dashboard (architecture
 view with hard-wired projections drawn dark; a 64-agent sample of large populations), probes (`scripts/probes/`).

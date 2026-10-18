@@ -88,7 +88,7 @@ class Layout(NamedTuple):
     eta_init: jnp.ndarray   # [N, N]
     abcd_init: jnp.ndarray  # [4, N, N]
     centred: jnp.ndarray    # [N, N] 1 where the rule's presynaptic term is activity minus the neuron's slow average
-    in_adapt: jnp.ndarray   # [n_in] 1 for adapting inputs (BrainConfig.in_adapt)
+    in_adapt: jnp.ndarray   # [n_in] BrainConfig.in_adapt_strength for adapting inputs (BrainConfig.in_adapt), else 0
     has_adapt: bool
     has_gain: bool
     has_elig: bool
@@ -254,7 +254,7 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
                   mod_idx=j(mod_idx), elig=j(elig), gain=j(gain), evolve_w=j(evolve_w), tune=j(tune * allowed), w_init=j(w_init),
                   dep_U=j(dep_U), dep_rec=j(dep_rec), decay=j(decay), teacher=j(teacher), eta_init=j(eta_init), abcd_init=j(abcd),
                   centred=j(centred),
-                  in_adapt=j(np.array([float(any(fnmatch.fnmatch(nm, pat) for pat in cfg.in_adapt)) for nm in in_names], np.float32)),
+                  in_adapt=j(cfg.in_adapt_strength * np.array([float(any(fnmatch.fnmatch(nm, pat) for pat in cfg.in_adapt)) for nm in in_names], np.float32)),
                   has_adapt=bool(cfg.in_adapt),
                   has_gain=bool(gain.any()), has_elig=bool((elig > 0).any()), has_dep=bool((dep_U > 0).any()),
                   has_decay=bool((decay > 0).any()), groups=tuple(r.group for r in regions),

@@ -127,7 +127,7 @@ def berry_world(exp: ExperimentConfig, n_types: int = 4, poison: tuple = (), per
                 poison_pain: float = 1.0, reverse: bool = False, per_life_sets: tuple = (),
                 appearance_mode: str = "lookalike", novel_looks: tuple = (), novel_sim: float | None = None,
                 weights: dict | None = None, duds: tuple = (), berries: int | None = None,
-                shared_colour: bool = False):
+                shared_colour: bool = False, novel_xor: bool = False):
     """Several berry-bush types (the OHOL gooseberry and colour look-alikes; all behave like the gooseberry:
     6 berries, then empty, regrowing after regrow_ticks(exp)), optional wild onions and hot springs.
     poison: types whose berries always drain food and hurt (an inheritable fact). per_life_pool/per_life_k:
@@ -201,9 +201,22 @@ def berry_world(exp: ExperimentConfig, n_types: int = 4, poison: tuple = (), per
 
     shared = jnp.asarray(np.linalg.qr(np.column_stack([b for b, _ in basis] + [np.eye(K)]))[0][:, 3:K].T)   # [K-3, K]
 
-    def novel_appearance(key):   # [E, types, 3 objects, K]
-        u = jax.random.normal(key, (E, len(novel_looks), K - 3 if shared_colour else K - 1))
-        u = u / jnp.linalg.norm(u, axis=-1, keepdims=True)
+    if novel_xor:   # corner signs [variant, novel type, 2]: poisons of the variant ++ and --, the others +- and -+
+        assert len(novel_looks) == 4 and all(len(set(c) & set(novel_looks)) == 2 for c in combos)
+        corners = np.zeros((len(combos), 4, 2), np.float32)
+        for vi, c in enumerate(combos):
+            bad = [i for i, v in enumerate(novel_looks) if v in c]; good = [i for i in range(4) if i not in bad]
+            for i, sg in zip(bad + good, ((1, 1), (-1, -1), (1, -1), (-1, 1))):
+                corners[vi, i] = sg
+        corners = jnp.asarray(corners)
+
+    def novel_appearance(key, pick):   # [E, types, 3 objects, K]
+        if novel_xor:
+            q, _ = jnp.linalg.qr(jax.random.normal(key, (E, K - 3 if shared_colour else K - 1, 2)))   # [E, D, 2]
+            u = jnp.einsum("etj,edj->etd", corners[pick], q) / np.sqrt(2)
+        else:
+            u = jax.random.normal(key, (E, len(novel_looks), K - 3 if shared_colour else K - 1))
+            u = u / jnp.linalg.norm(u, axis=-1, keepdims=True)
         if shared_colour:
             return nsim * bases[None, None] + np.sqrt(1 - nsim ** 2) * (u @ shared)[:, :, None, :]
         return nsim * bases[None, None] + np.sqrt(1 - nsim ** 2) * jnp.einsum("enc,ock->enok", u, comps)
@@ -218,7 +231,7 @@ def berry_world(exp: ExperimentConfig, n_types: int = 4, poison: tuple = (), per
         else:
             rules = jax.tree_util.tree_map(lambda a: a[pick], stacked)
         if novel_looks:
-            new = novel_appearance(ka)
+            new = novel_appearance(ka, pick)
             app = rules.appearance
             app = app.at[:, :, novel_ids].set(new[:, None]) if reverse else app.at[:, novel_ids].set(new)
             rules = rules._replace(appearance=app)
@@ -663,14 +676,14 @@ ANC_POISON_WEIGHT = 0.0   # spawn weight of the ancestral poison type (0: none)
 
 
 def learning_world(exp, reverse: bool = False, springs: float = 0.0, berries: int | None = None,
-                   shared_colour: bool = False, novel_sim: float | None = None):
+                   shared_colour: bool = False, novel_sim: float | None = None, novel_xor: bool = False):
     """Four novel berry types (two of them poison, drawn per life, with a look drawn per life), one ancestral good
     and one ancestral poison type, no onions. NOVEL_WEIGHT sets how much of the supply is novel: familiar food
     should keep a non-learner alive, novel food should be worth trying."""
     return berry_world(exp, 6, poison=(4,), per_life_pool=NOVEL, per_life_k=2, springs=springs, reverse=reverse,
                        novel_looks=NOVEL, novel_sim=NOVEL_SIM if novel_sim is None else novel_sim, poison_food=POISON_FOOD, onions=False,
                        weights={0: STAPLE_WEIGHT, 4: ANC_POISON_WEIGHT, **{v: NOVEL_WEIGHT for v in NOVEL}},
-                       berries=berries, shared_colour=shared_colour)
+                       berries=berries, shared_colour=shared_colour, novel_xor=novel_xor)
 
 
 _S15 = dict(row_extra=poison_metrics, plastic=True, generations=40, ticks=LIFE_15, eta_max=1.0, dense_plastic=True)

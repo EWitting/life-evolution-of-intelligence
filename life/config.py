@@ -188,6 +188,7 @@ class BrainConfig:
                                      # input neuron passes on its input minus the slow average of that input
                                      # (sensory adaptation). Everything downstream, transmission and learning, sees
                                      # what is unusual; a look that stays in view fades (habituation)
+    in_adapt_strength: float = 1.0   # fraction of the slow average that an adapting input subtracts (1 = all of it)
     out_phase: int = 0               # RegionSpec.phase of the output region (set above every other phase so the
                                      # action uses this tick's activity)
     w_max: float = 4.0               # plastic weights are clipped to [-w_max, w_max] (inherited, non-plastic

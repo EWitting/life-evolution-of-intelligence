@@ -2494,3 +2494,35 @@ aversion to a good type relative to that to a poison, 0 = perfect, 1 = none; bes
 The more alike the looks, the more the expansion adds over a partly adapted look (real lives at 0.8 sit near
 "adapted 0.5": 0.24 measured against 0.22). With XOR looks no linear read-out discriminates at all, adapted or not
 (with an ideal habituation the two lessons cancel); the pallium does, and better on the adapted look than on the raw.
+
+**What makes learning worth it** (`learn_worth.py`, napkin model: visit counts of 1.8; aversion = eta x sum of
+lessons x transfer; bite with sigmoid(3 (appetite - aversion)); best appetite and eta by grid, as evolution could
+set them; gain over the best non-learner in % of intake; good visits worth their food or a half or a quarter of it):
+
+- Without spread from bite to bite, learning pays up to a transfer to good food of about 0.3 (9%, 18%, 37%), less by
+  0.5 and nothing by 0.8: one strong lesson per poison type is enough, then the poison is refused and lessons stop.
+- With the spread of the 1.8 world (overlap sd about 1 relative to its mean on the same poison) learning is worth
+  at most 0.6% even at transfer 0; at spread 0.5, 2-4% at transfer up to 0.2. This is why 1.8 leaves learning idle.
+- With XOR looks the plain look makes a lesson on one poison clear the other (T_o -0.5 to -1): nothing left above a
+  transfer of 0.1.
+
+**Real lives, all five eye columns** (`pallium_real.py`; 'summed' = all lessons so far read against later bites,
+good / poison, once both poison types have taught): 0.40-0.76 in the 1.8 world, 0.77-1.05 with XOR looks at 0.8,
+0.58-0.93 at 0.6, pallium or not. The side columns see neighbouring bushes at a bite and carry most of the spread.
+
+**Real lives, the eye ahead only** (`COLS=vis+0`; summed good / poison, lower is better; adaptation strength
+recomputed offline, the animals behave as recorded; one random pallium per setting):
+
+| world | look, strength 0 / 0.5 / 1 | best pallium, strength 0 / 0.5 / 1 |
+|---|---|---|
+| 1.8 (random looks, 0.8) | 0.60 / 0.46 / 0.33 | 0.06 / 0.21 / 0.38 |
+| XOR looks, 0.8 | 1.02 / 0.93 / 0.84 | 0.63 / 0.63 / 0.66 |
+| XOR looks, 0.6 | 0.90 / 0.78 / 0.65 | 0.49 / 0.41 / 0.43 |
+
+The lesson must be about what is at the mouth: with the eye ahead the same poison overlaps itself 0.9-1.0 (sd 0.05
+at strength 0, 0.5-1.2 at strength 1). On that eye the pallium separates well, best on a look adapted at most half:
+full adaptation makes the code of one type depend on its surroundings. For the plain look, adaptation helps (it
+centres). XOR at 0.8 is too hard even for a random pallium; at 0.6 it brings 0.65-0.90 down to about 0.45, near the
+napkin's limit for a transfer that still pays (0.3-0.4 with the other poison untouched).
+
+New: `BrainConfig.in_adapt_strength` (default 1), `berry_world(novel_xor=...)` / `learning_world(novel_xor=...)`.

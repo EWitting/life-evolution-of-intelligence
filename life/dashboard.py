@@ -3,7 +3,7 @@
     python -m life.dashboard runs/<exp>/<timestamp>        # (re)generate dashboard.html, then open it in a browser
     python -m life.dashboard runs/<exp>/<timestamp> --light   # dashboard_light.html: a few MB, for publishing
 
-The page embeds the recording as base64 typed arrays, OHOL sprites, player bodies and a grassland ground texture if available, the layout (regions) and the
+The page embeds the recording as base64 typed arrays, OHOL sprites, dressed player bodies and a grassland ground texture if available, the layout (regions) and the
 fitness curve. See life/dashboard.html for the page itself (plain HTML + JS, no build step).
 """
 from __future__ import annotations
@@ -74,7 +74,7 @@ def build_data(run_dir: Path, light: bool = False) -> dict:
         from .sprites import sprite_data_urls, ground_data_url, person_data_urls
         sprites = {str(i): url for i, url in sprite_data_urls(rs["ohol_id"]).items()}
         ground = ground_data_url(0)   # single biome (grassland) for now
-        people = person_data_urls(int(rec["pos"].shape[1]))
+        people = person_data_urls(min(int(rec["pos"].shape[1]), 64))   # dressed bodies, reused round-robin
     except Exception as e:   # sprites are optional
         print(f"sprites skipped: {e}")
         sprites, ground, people = {}, None, []

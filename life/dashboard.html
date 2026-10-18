@@ -2,96 +2,315 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Life dashboard</title>
+<script id="plotlyjs" src="https://cdn.jsdelivr.net/npm/plotly.js-basic-dist-min@2.35.2/plotly-basic.min.js" async onerror="window.PLOTLY_FAILED = true"></script>
 <style>
-  :root { --bg:#f6f6f4; --panel:#fff; --ink:#222; --muted:#777; --line:#ddd; --accent:#c8102e; }
-  body { margin:0; font:13px/1.4 system-ui, sans-serif; background:var(--bg); color:var(--ink); }
-  header { display:flex; flex-wrap:wrap; gap:12px; align-items:center; padding:8px 14px; background:var(--panel); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:2; }
-  header h1 { font-size:15px; margin:0 12px 0 0; }
-  header input[type=range] { width:320px; }
-  button, select { font:inherit; padding:2px 8px; }
-  main { display:grid; grid-template-columns: minmax(420px, 640px) 1fr; gap:12px; padding:12px; }
-  .panel { background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:8px 10px; }
-  .panel h2 { font-size:13px; margin:0 0 6px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
-  #world { image-rendering:pixelated; cursor:crosshair; display:block; max-width:100%; }
-  #tip { position:fixed; pointer-events:none; background:#222; color:#fff; padding:4px 8px; border-radius:4px; font-size:12px; display:none; z-index:5; white-space:pre; }
-  .right { display:flex; flex-direction:column; gap:12px; }
-  .row { display:flex; gap:16px; flex-wrap:wrap; align-items:flex-start; }
-  .kv { display:grid; grid-template-columns:auto auto; gap:2px 10px; }
-  .kv b { color:var(--muted); font-weight:500; }
-  .bar { height:8px; background:#eee; border-radius:4px; width:120px; display:inline-block; vertical-align:middle; }
-  .bar i { display:block; height:100%; border-radius:4px; background:#4a8; }
-  canvas.heat { display:block; max-width:100%; image-rendering:pixelated; }
-  canvas.zoomed { cursor:grab; } canvas.zoomed:active { cursor:grabbing; }
-  #legend { color:var(--muted); font-size:12px; }
-  details { font-size:12px; } pre { max-height:300px; overflow:auto; background:#fafafa; padding:6px; }
-  #archSvg { display:block; user-select:none; touch-action:none; }
-  #archSvg .reg { cursor:move; } #archSvg .edge { cursor:pointer; }
+  :root {
+    color-scheme: light;
+    --bg:#f3f4f6; --panel:#fff; --ink:#1d2330; --ink2:#3a4252; --muted:#6b7280; --line:#e2e5ea; --line2:#eef0f3;
+    --accent:#c8102e; --blue:#1b3a6b; --blue2:#3b6fd1; --green:#2a9d6a; --hover:#f5f6f8;
+    --radius:12px; --shadow:0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.04);
+    --hdr:96px; --left:46%;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+  }
+  * { box-sizing:border-box; }
+  html, body { margin:0; background:var(--bg); color:var(--ink); }
+  body { font:13px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing:antialiased; }
+  button, select, input { font:inherit; color:inherit; }
+  a { color:var(--blue2); text-decoration:none; } a:hover { text-decoration:underline; }
+  .muted { color:var(--muted); } .mono { font-family:var(--mono); font-variant-numeric:tabular-nums; }
+  .small { color:var(--muted); font-size:12px; }
+
+  /* loader */
+  #loader { position:fixed; inset:0; display:flex; flex-direction:column; gap:14px; align-items:center; justify-content:center; background:var(--bg); z-index:100; color:var(--muted); transition:opacity .25s; }
+  #loader.done { opacity:0; pointer-events:none; }
+  .spin { width:34px; height:34px; border:3px solid var(--line); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* header */
+  header { position:sticky; top:0; z-index:20; background:rgba(255,255,255,.92); backdrop-filter:saturate(1.4) blur(8px); border-bottom:1px solid var(--line); }
+  .bar1 { display:flex; align-items:center; gap:12px; padding:10px 16px 4px; }
+  .brand { display:flex; align-items:center; gap:10px; min-width:0; }
+  .logo { width:28px; height:28px; border-radius:8px; background:linear-gradient(135deg, #c8102e, #1b3a6b); flex:none; display:grid; place-items:center; color:#fff; font-weight:700; font-size:14px; }
+  #title { font-size:15px; font-weight:650; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #subtitle { font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .spacer { flex:1; }
+  .transport { display:flex; align-items:center; gap:8px; padding:6px 16px 10px; flex-wrap:wrap; }
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; height:30px; min-width:30px; padding:0 10px; border:1px solid var(--line); border-radius:8px; background:#fff; cursor:pointer; transition:background .12s, border-color .12s, box-shadow .12s; }
+  .btn:hover { background:var(--hover); border-color:#d3d7de; }
+  .btn:active { transform:translateY(.5px); }
+  .btn:focus-visible, select:focus-visible, input:focus-visible { outline:2px solid var(--blue2); outline-offset:1px; }
+  .btn.icon { padding:0; width:30px; }
+  .btn.primary { background:var(--ink); color:#fff; border-color:var(--ink); width:38px; height:34px; border-radius:10px; }
+  .btn.primary:hover { background:#000; }
+  .btn svg { width:16px; height:16px; }
+  .btn.on { background:#eef3fc; border-color:#b9cbef; color:var(--blue); }
+  select { height:30px; border:1px solid var(--line); border-radius:8px; background:#fff; padding:0 6px; cursor:pointer; }
+  .field { display:inline-flex; align-items:center; gap:6px; color:var(--muted); font-size:12px; }
+  .field select { color:var(--ink); font-size:13px; }
+  .timeline { position:relative; flex:1 1 320px; min-width:200px; height:34px; }
+  .timeline canvas { position:absolute; left:0; top:3px; width:100%; height:28px; border-radius:6px; background:var(--line2); }
+  #tickProgress { position:absolute; left:0; top:3px; height:28px; border-radius:6px 0 0 6px; background:rgba(27,58,107,.10); pointer-events:none; }
+  #tick { position:absolute; inset:0; width:100%; height:34px; margin:0; background:transparent; -webkit-appearance:none; appearance:none; cursor:pointer; }
+  #tick::-webkit-slider-runnable-track { height:34px; background:transparent; }
+  #tick::-moz-range-track { height:34px; background:transparent; }
+  #tick::-webkit-slider-thumb { -webkit-appearance:none; width:4px; height:34px; border-radius:2px; background:var(--accent); box-shadow:0 0 0 2px rgba(255,255,255,.9); }
+  #tick::-moz-range-thumb { width:4px; height:34px; border:0; border-radius:2px; background:var(--accent); }
+  #tickLabel { min-width:150px; font-size:12px; color:var(--ink2); }
+  .switch { display:inline-flex; align-items:center; gap:6px; cursor:pointer; color:var(--ink2); font-size:12px; user-select:none; }
+  .switch input { appearance:none; -webkit-appearance:none; width:30px; height:18px; border-radius:9px; background:#cfd4dc; position:relative; cursor:pointer; transition:background .15s; margin:0; }
+  .switch input::after { content:""; position:absolute; top:2px; left:2px; width:14px; height:14px; border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.25); transition:left .15s; }
+  .switch input:checked { background:var(--blue2); } .switch input:checked::after { left:14px; }
+
+  /* layout */
+  main { display:grid; grid-template-columns:minmax(340px, var(--left)) 10px minmax(0, 1fr); gap:0; padding:14px 16px 40px; align-items:start; }
+  #left { position:sticky; top:calc(var(--hdr) + 14px); }
+  #right { display:flex; flex-direction:column; gap:12px; min-width:0; }
+  #split { align-self:stretch; cursor:col-resize; position:relative; }
+  #split::after { content:""; position:absolute; left:4px; top:0; bottom:0; width:2px; border-radius:1px; background:transparent; transition:background .15s; }
+  #split:hover::after, #split.drag::after { background:#b9cbef; }
+  @media (max-width: 1050px) {
+    main { grid-template-columns:minmax(0, 1fr); gap:12px; padding:12px; }
+    #left { position:static; } #split { display:none; }
+    #tickLabel { min-width:0; }
+  }
+  @media (max-width: 700px) { header { position:static; } }
+
+  /* cards */
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); min-width:0; }
+  .card-h { display:flex; align-items:center; gap:8px; padding:9px 10px 9px 12px; cursor:pointer; user-select:none; border-radius:var(--radius); }
+  .card-h:hover { background:#fafbfc; }
+  .card-h h2 { font-size:13px; font-weight:650; margin:0; white-space:nowrap; }
+  .card-h .info { color:var(--muted); font-size:12px; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .card-h .tools { display:flex; gap:4px; align-items:center; cursor:default; }
+  .card-h .tools .btn { height:26px; min-width:26px; border-radius:7px; }
+  .card-h .tools .btn.icon { width:26px; }
+  .card-h .tools select { height:26px; font-size:12px; }
+  .chev { width:16px; height:16px; color:var(--muted); transition:transform .15s; flex:none; }
+  .card.collapsed .chev { transform:rotate(-90deg); }
+  .card.collapsed .card-h .tools > :not(.keep) { display:none; }
+  .card-b { padding:2px 12px 12px; }
+  .card.collapsed .card-b { display:none; }
+  .card.nofold .card-h { cursor:default; } .card.nofold .card-h:hover { background:none; }
+  .card.max { position:fixed; inset:14px; z-index:60; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(16,24,40,.25); }
+  .card.max .card-b { flex:1; min-height:0; overflow:auto; display:flex; flex-direction:column; }
+  .card.max .grow { flex:1; min-height:0; overflow:hidden; }
+  #backdrop { position:fixed; inset:0; background:rgba(16,24,40,.35); z-index:55; display:none; }
+  body.has-max #backdrop { display:block; } body.has-max { overflow:hidden; }
+
+  .cwrap { position:relative; width:100%; }
+  canvas { display:block; }
+  #world { touch-action:none; cursor:crosshair; border-radius:8px; }
+  .zoomable { cursor:crosshair; } .zoomable.zoomed { cursor:grab; } .zoomable.panning { cursor:grabbing; }
+  .hint { color:var(--muted); font-size:12px; margin:8px 0 0; }
+  .toast { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); background:rgba(29,35,48,.82); color:#fff; padding:8px 14px; border-radius:8px; font-size:12px; pointer-events:none; opacity:0; transition:opacity .2s; white-space:nowrap; z-index:3; }
+  .toast.show { opacity:1; }
+  .legend { display:flex; flex-wrap:wrap; gap:4px 6px; margin-top:8px; }
+  .chip { display:inline-flex; align-items:center; gap:6px; padding:2px 8px 2px 4px; border:1px solid var(--line); border-radius:999px; font-size:12px; color:var(--ink2); background:#fff; }
+  .chip img { width:18px; height:18px; object-fit:contain; }
+  .chip i { width:10px; height:10px; border-radius:3px; border:1px solid rgba(0,0,0,.2); display:inline-block; }
+  .chip .muted { font-size:11px; }
+
+  /* agent */
+  .agent-grid { display:grid; grid-template-columns:minmax(200px, 260px) 1fr; gap:16px; }
+  @media (max-width: 700px) { .agent-grid { grid-template-columns:1fr; } }
+  .kv { display:grid; grid-template-columns:auto 1fr; gap:3px 12px; align-content:start; }
+  .kv b { color:var(--muted); font-weight:500; white-space:nowrap; }
+  .kv span { font-variant-numeric:tabular-nums; }
+  .bar { height:8px; background:#edf0f3; border-radius:4px; width:110px; display:inline-block; vertical-align:middle; margin-right:6px; overflow:hidden; }
+  .bar i { display:block; height:100%; background:linear-gradient(90deg, #3aa876, #2a9d6a); }
+  .sub-h { color:var(--muted); font-size:12px; margin:0 0 4px; }
+  #body { display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
+  #body span { background:#f5f6f8; border-radius:6px; padding:1px 7px; font-size:12px; font-variant-numeric:tabular-nums; }
+  #body b { color:var(--muted); font-weight:500; margin-right:4px; }
+  .note { background:#fff8e6; border:1px solid #f1dfae; color:#6b5313; border-radius:8px; padding:8px 10px; font-size:12px; margin-bottom:10px; }
+  .note a { color:#8a5a00; font-weight:600; }
+
+  /* architecture */
+  .arch-wrap { position:relative; height:520px; min-height:200px; resize:vertical; overflow:hidden; border:1px solid var(--line2); border-radius:10px; background:
+      radial-gradient(circle, #e6e9ee 1px, transparent 1.2px) 0 0 / 18px 18px, #fcfcfd; }
+  .card.max .arch-main { display:grid; grid-template-columns:minmax(0, 1fr) minmax(320px, 34%); gap:16px; }
+  .card.max .arch-wrap { height:auto; resize:none; }
+  .card.max .arch-side { overflow:auto; min-height:0; }
+  .card.max #archLegend { margin-top:0; }
+  #archSvg { display:block; width:100%; height:100%; user-select:none; touch-action:none; cursor:grab; }
+  #archSvg.panning { cursor:grabbing; }
+  #archSvg .reg { cursor:move; } #archSvg .edge { cursor:pointer; } #archSvg .edge:hover path:nth-child(1) { filter:brightness(1.3); }
   #archSvg text { font:12px system-ui, sans-serif; fill:var(--ink); }
   #archSvg text.sub { font-size:10px; fill:var(--muted); }
   #archSvg text.elab { paint-order:stroke; stroke:#fff; stroke-width:3px; }
-  .small { color:var(--muted); font-size:12px; }
-  #archDetail a, #archLegend a, #noBrain a { color:#1b3a6b; }
+  #archLegend { margin-top:8px; line-height:1.7; }
+  #archLegend i { display:inline-block; width:18px; height:3px; vertical-align:middle; margin-right:4px; border-radius:2px; }
+  #archDetail { margin-top:10px; border-top:1px solid var(--line2); padding-top:10px; }
+  #archDetail canvas { image-rendering:pixelated; border-radius:4px; }
+  .heat { image-rendering:pixelated; }
+
+  #wRegions { font-size:12px; color:var(--muted); line-height:1.6; margin-top:8px; } #wRegions b { font-weight:500; color:var(--ink2); }
+  .wrow { display:flex; flex-direction:column; }
+  .wrow .cwrap { max-width:640px; }
+  .card.max .wrow { flex:1; } .card.max .wrow .cwrap { max-width:none; height:100%; }
+  #fit { width:100%; height:300px; }
+  .card.max #fit { height:100%; flex:1; }
+  pre { max-height:420px; overflow:auto; background:#f7f8fa; border:1px solid var(--line2); border-radius:8px; padding:10px; margin:0; font:12px/1.5 var(--mono); }
+
+  #tip { position:fixed; pointer-events:none; background:rgba(22,27,38,.94); color:#fff; padding:6px 9px; border-radius:7px; font-size:12px; line-height:1.45; display:none; z-index:90; white-space:pre; box-shadow:0 4px 14px rgba(0,0,0,.18); max-width:460px; }
+
+  dialog { border:0; border-radius:14px; padding:0; max-width:640px; width:calc(100% - 32px); box-shadow:0 24px 70px rgba(16,24,40,.3); color:var(--ink); }
+  dialog::backdrop { background:rgba(16,24,40,.4); }
+  .dlg-h { display:flex; align-items:center; padding:14px 18px; border-bottom:1px solid var(--line); }
+  .dlg-h h3 { margin:0; font-size:15px; flex:1; }
+  .dlg-b { padding:14px 18px 18px; max-height:70vh; overflow:auto; }
+  .dlg-b h4 { margin:14px 0 6px; font-size:13px; } .dlg-b h4:first-child { margin-top:0; }
+  .keys { display:grid; grid-template-columns:auto 1fr; gap:6px 14px; }
+  kbd { justify-self:start; font:11px var(--mono); background:#f3f4f6; border:1px solid #d9dde3; border-bottom-width:2px; border-radius:5px; padding:1px 6px; white-space:nowrap; }
 </style>
 </head>
 <body>
-<header>
-  <h1 id="title">Life</h1>
-  <button id="play">Play</button>
-  <button id="back">&lt;</button><button id="fwd">&gt;</button>
-  <input type="range" id="tick" min="0" value="0">
-  <span id="tickLabel"></span>
-  <label>speed <select id="speed"><option value="1">1x</option><option value="2">2x</option><option value="5">5x</option><option value="10">10x</option><option value="25" selected>25x</option><option value="50">50x</option><option value="100">100x</option><option value="250">250x</option></select></label>
-  <label>agent <select id="agent"></select></label>
-  <label><input type="checkbox" id="useSprites" checked> sprites</label>
-  <span id="legend"></span>
+<div id="loader"><div class="spin"></div><div>Loading the recording…</div></div>
+<header id="top">
+  <div class="bar1">
+    <div class="brand"><div class="logo">L</div><div style="min-width:0"><div id="title">Life</div><div id="subtitle" class="muted"></div></div></div>
+    <div class="spacer"></div>
+    <label class="switch" title="OHOL sprites, or plain shapes"><input type="checkbox" id="useSprites" checked> Sprites</label>
+    <button class="btn icon" id="helpBtn" title="Help and keyboard shortcuts (?)"></button>
+  </div>
+  <div class="transport">
+    <button class="btn primary" id="play" title="Play / pause (space)"></button>
+    <button class="btn icon" id="back" title="Step back (←, shift = 10 ticks)"></button>
+    <button class="btn icon" id="fwd" title="Step forward (→, shift = 10 ticks)"></button>
+    <div class="timeline" title="Agents alive over the recording; the red mark is when the focused agent dies">
+      <canvas id="spark"></canvas><div id="tickProgress"></div>
+      <input type="range" id="tick" min="0" value="0" aria-label="tick">
+    </div>
+    <span id="tickLabel" class="mono"></span>
+    <label class="field">Speed <select id="speed"><option value="1">1×</option><option value="2">2×</option><option value="5">5×</option><option value="10">10×</option><option value="25" selected>25×</option><option value="50">50×</option><option value="100">100×</option><option value="250">250×</option></select></label>
+    <label class="field">Agent <select id="agent"></select></label>
+  </div>
 </header>
 <main>
-  <div class="panel">
-    <h2>World <span id="worldInfo" style="text-transform:none;font-weight:400"></span></h2>
-    <canvas id="world"></canvas>
-    <div id="legendObjects" style="margin-top:6px"></div>
-  </div>
-  <div class="right">
-    <div class="panel small" id="noBrain" style="display:none"></div>
-    <div class="panel">
-      <h2>Architecture <span id="archInfo" style="text-transform:none;font-weight:400"></span></h2>
-      <svg id="archSvg" width="100%"></svg>
-      <div id="archLegend" class="small"></div>
-      <div id="archDetail" style="margin-top:8px"></div>
-    </div>
-    <div class="panel">
-      <h2>Agent <span id="agentTitle" style="text-transform:none;font-weight:400"></span></h2>
-      <div class="row">
-        <div class="kv" id="agentKv"></div>
-        <div><div style="color:var(--muted)">retina (colour = appearance, height = closeness, A = agent, | = wall)</div>
-          <canvas id="retina" class="heat" width="360" height="70"></canvas>
-          <div style="color:var(--muted)">body inputs</div><div id="body"></div></div>
+  <section id="left">
+    <article class="card nofold" id="c-world" data-part="world">
+      <div class="card-h"><h2>World</h2><span class="info" id="worldInfo"></span>
+        <div class="tools"><button class="btn icon" data-zoom="-1" title="Zoom out"></button><button class="btn icon" data-zoom="1" title="Zoom in"></button><button class="btn icon" data-zoom="0" title="Fit (double-click the map)"></button><button class="btn icon" data-follow title="Keep the focused agent in view"></button><button class="btn icon keep" data-max title="Maximise (Esc to close)"></button></div></div>
+      <div class="card-b">
+        <div class="cwrap grow" id="worldWrap"><canvas id="world" class="zoomable"></canvas><div class="toast"></div></div>
+        <div id="legendObjects" class="legend"></div>
+        <p class="hint" id="legend"></p>
       </div>
-    </div>
-    <div class="panel">
-      <h2>Activations over time (rows = neurons by region, blue -1 .. red +1) <span id="actRange" style="text-transform:none;font-weight:400"></span></h2>
-      <canvas id="act" class="heat"></canvas>
-      <div id="actLegend" style="color:var(--muted);font-size:12px"></div>
-    </div>
-    <div class="panel">
-      <h2>Weights <select id="wmode"><option value="w">w at nearest snapshot</option><option value="dw">w - w0 (lifetime change)</option><option value="w0">w0 (genome)</option><option value="eta">learning rate eta</option></select>
-        <span id="wInfo" style="text-transform:none;font-weight:400"></span></h2>
-      <div class="row"><canvas id="wmat" class="heat"></canvas><div id="wRegions" style="font-size:12px;color:var(--muted)"></div></div>
-    </div>
-    <div class="panel">
-      <h2>Fitness over generations (mean, max, net food eaten)</h2>
-      <canvas id="fit" class="heat" width="700" height="160"></canvas>
-    </div>
-    <div class="panel"><details><summary>Config</summary><pre id="config"></pre></details></div>
-  </div>
+    </article>
+  </section>
+  <div id="split" title="Drag to resize, double-click to reset"></div>
+  <section id="right">
+    <article class="card" id="c-agent" data-part="agent">
+      <div class="card-h"><span class="chev"></span><h2>Agent</h2><span class="info" id="agentTitle"></span><div class="tools"></div></div>
+      <div class="card-b">
+        <div class="note" id="noBrain" style="display:none"></div>
+        <div class="agent-grid">
+          <div class="kv" id="agentKv"></div>
+          <div style="min-width:0">
+            <p class="sub-h">Retina (colour = appearance, height = closeness, A = agent, | = wall)</p>
+            <div class="cwrap" id="retinaWrap"><canvas id="retina"></canvas></div>
+            <p class="sub-h" style="margin-top:8px">Body inputs</p><div id="body"></div>
+          </div>
+        </div>
+      </div>
+    </article>
+    <article class="card" id="c-arch" data-part="arch">
+      <div class="card-h"><span class="chev"></span><h2>Architecture</h2><span class="info" id="archInfo"></span>
+        <div class="tools"><button class="btn icon" data-azoom="-1" title="Zoom out"></button><button class="btn icon" data-azoom="1" title="Zoom in"></button><button class="btn icon" data-azoom="0" title="Fit (double-click the background)"></button><button class="btn icon keep" data-max title="Maximise (Esc to close)"></button></div></div>
+      <div class="card-b">
+        <div class="arch-main grow">
+          <div class="arch-wrap" id="archWrap"><svg id="archSvg"></svg><div class="toast"></div></div>
+          <div class="arch-side"><div id="archLegend" class="small"></div><div id="archDetail"></div></div>
+        </div>
+      </div>
+    </article>
+    <article class="card" id="c-act" data-part="act">
+      <div class="card-h"><span class="chev"></span><h2>Activations over time</h2><span class="info" id="actRange"></span>
+        <div class="tools"><button class="btn icon" data-zfor="act" data-zoom="0" title="Reset zoom"></button><button class="btn icon keep" data-max title="Maximise (Esc to close)"></button></div></div>
+      <div class="card-b">
+        <p class="sub-h">Rows = neurons by region, blue −1 … red +1; the green line is the current tick. Click to jump to a tick.</p>
+        <div class="cwrap grow" id="actWrap"><canvas id="act" class="zoomable"></canvas><div class="toast"></div></div>
+        <div id="actLegend" class="small" style="margin-top:6px"></div>
+      </div>
+    </article>
+    <article class="card" id="c-w" data-part="w">
+      <div class="card-h"><span class="chev"></span><h2>Weights</h2><span class="info" id="wInfo"></span>
+        <div class="tools"><select id="wmode"><option value="w">w at nearest snapshot</option><option value="dw">w − w0 (lifetime change)</option><option value="w0">w0 (genome)</option><option value="eta">learning rate eta</option></select><button class="btn icon" data-zfor="w" data-zoom="0" title="Reset zoom"></button><button class="btn icon keep" data-max title="Maximise (Esc to close)"></button></div></div>
+      <div class="card-b">
+        <div class="wrow grow"><div class="cwrap" id="wWrap"><canvas id="wmat" class="zoomable"></canvas><div class="toast"></div></div><div id="wRegions"></div></div>
+      </div>
+    </article>
+    <article class="card" id="c-fit" data-part="fit">
+      <div class="card-h"><span class="chev"></span><h2>Fitness over generations</h2><span class="info">mean, median, best; a second measure on the right axis</span>
+        <div class="tools"><label class="field">right axis <select id="fitY2"></select></label><button class="btn icon keep" data-max title="Maximise (Esc to close)"></button></div></div>
+      <div class="card-b"><div id="fit" class="grow"></div></div>
+    </article>
+    <article class="card collapsed" id="c-config" data-part="config">
+      <div class="card-h"><span class="chev"></span><h2>Config</h2><span class="info">the run's full configuration</span>
+        <div class="tools"><button class="btn" id="copyConfig" title="Copy the configuration as JSON">Copy</button></div></div>
+      <div class="card-b"><pre id="config"></pre></div>
+    </article>
+  </section>
 </main>
+<div id="backdrop"></div>
 <div id="tip"></div>
+<dialog id="help">
+  <div class="dlg-h"><h3>Using this dashboard</h3><button class="btn icon" id="helpClose" title="Close (Esc)"></button></div>
+  <div class="dlg-b">
+    <h4>What you see</h4>
+    <p style="margin:0 0 6px">One recorded generation: every agent's life in the world on the left, and the brain of one agent (the <b>focused</b> agent, ringed in red) on the right. Pick an agent by clicking it in the world or from the list.</p>
+    <p class="small" id="helpAbout" style="margin:0"></p>
+    <h4>Keyboard</h4>
+    <div class="keys">
+      <kbd>Space</kbd><span>play / pause</span>
+      <kbd>← →</kbd><span>one tick back / forward (with Shift: 10 ticks)</span>
+      <kbd>Home End</kbd><span>first / last tick</span>
+      <kbd>[ ]</kbd><span>slower / faster</span>
+      <kbd>, .</kbd><span>previous / next agent with a brain view</span>
+      <kbd>F</kbd><span>keep the focused agent in view</span>
+      <kbd>?</kbd><span>this help</span>
+      <kbd>Esc</kbd><span>close a maximised panel or this help</span>
+    </div>
+    <h4>Mouse</h4>
+    <div class="keys">
+      <span>World</span><span>scroll to zoom, drag to pan, double-click to fit; click an agent to focus it</span>
+      <span>Plots, architecture</span><span>Ctrl + scroll (or pinch) to zoom, drag to pan, double-click to reset; in a maximised panel plain scrolling zooms. Activations: Shift zooms the neurons instead of time.</span>
+      <span>Architecture</span><span>drag blocks to arrange them; click a block or an arrow for details; drag the bottom-right corner to resize</span>
+      <span>Fitness</span><span>drag to zoom, double-click to reset, hover for values, click a legend entry to hide it</span>
+      <span>Panels</span><span>click a header to fold it; the divider between the columns can be dragged</span>
+    </div>
+  </div>
+</dialog>
 <script>
 const DATA = /*__DATA__*/null;
+const ICON = {
+  play: '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M4.5 2.8v10.4c0 .6.6.9 1.1.6l8-5.2c.5-.3.5-.9 0-1.2l-8-5.2c-.5-.3-1.1 0-1.1.6z"/></svg>',
+  pause: '<svg viewBox="0 0 16 16" fill="currentColor"><rect x="3.5" y="2.5" width="3" height="11" rx="1"/><rect x="9.5" y="2.5" width="3" height="11" rx="1"/></svg>',
+  prev: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3.5 5.5 8l4.5 4.5"/></svg>',
+  next: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5 10.5 8 6 12.5"/></svg>',
+  plus: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M8 3.5v9M3.5 8h9"/></svg>',
+  minus: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M3.5 8h9"/></svg>',
+  fit: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6V3.5a1 1 0 0 1 1-1H6M10 2.5h2.5a1 1 0 0 1 1 1V6M13.5 10v2.5a1 1 0 0 1-1 1H10M6 13.5H3.5a1 1 0 0 1-1-1V10"/></svg>',
+  max: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h4v4M13.5 2.5 9 7M6.5 13.5h-4v-4M2.5 13.5 7 9"/></svg>',
+  min: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 6.5h-4v-4M9.5 6.5 14 2M2.5 9.5h4v4M6.5 9.5 2 14"/></svg>',
+  follow: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="4.5"/><circle cx="8" cy="8" r="1.4" fill="currentColor"/><path d="M8 1v2.5M8 12.5V15M1 8h2.5M12.5 8H15" stroke-linecap="round"/></svg>',
+  help: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6.2"/><path d="M6.3 6.2a1.8 1.8 0 1 1 2.6 1.6c-.6.3-.9.7-.9 1.3v.4"/><circle cx="8" cy="11.6" r=".5" fill="currentColor"/></svg>',
+  close: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="m4 4 8 8M12 4l-8 8"/></svg>',
+  chev: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l4 4 4-4"/></svg>',
+};
+// let the loader paint before the heavy decoding starts
+requestAnimationFrame(() => setTimeout(() => {
+  try { main(); } catch (e) { document.getElementById('loader').innerHTML = `<div style="color:#c8102e">Could not load this recording: ${e.message}</div>`; throw e; }
+}, 20));
+
+function main() {
 const M = DATA.meta;
 const T = M.T, N = M.N, H = M.H, W = M.W, L = M.layout;
 const NN = L.n, NIN = L.n_in;
+const $ = id => document.getElementById(id);
+const DPR = () => window.devicePixelRatio || 1;
 function decode(d) {
   const bin = atob(d.data); const buf = new ArrayBuffer(bin.length); const u8 = new Uint8Array(buf);
   for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
@@ -108,186 +327,338 @@ function expandGrid() {
 const grid = DATA.grid ? decode(DATA.grid) : expandGrid(), pos = decode(DATA.pos), dir = decode(DATA.dir), alive = decode(DATA.alive);
 const held = decode(DATA.held), food = decode(DATA.food), pain = decode(DATA.pain), action = decode(DATA.action);
 const mod = decode(DATA.mod), X = decode(DATA.x), WS = decode(DATA.w_snap), W0 = decode(DATA.w0), ETA = decode(DATA.eta);
-const SNAPS = WS.shape[0];
 // light export: activations and weights are stored for the agents in M.brain_agents only. BI[agent] = its row in
 // those arrays, -1 = no brain view; NBR = rows per tick. A full export stores every agent (BI[i] = i).
 const BA = M.brain_agents || null, NBR = BA ? BA.length : N;
 const BI = Array.from({length: N}, (_, i) => BA ? BA.indexOf(i) : i);
 const brainRow = () => BI[focus] >= 0 ? BI[focus] : BI[M.best];   // weights shown when the focused agent has none
 const NMOD = mod.shape[2] || 1, MODN = (L.mod_names && L.mod_names.length) ? L.mod_names : ['modulator'];
+const loaded = im => im && im.complete && im.naturalWidth;
 const sprites = {};
 for (const [oid, url] of Object.entries(DATA.sprites)) { const im = new Image(); im.src = url; sprites[oid] = im; }
-const ground = DATA.ground ? new Image() : null; let groundPat = null;   // OHOL grassland, tiled like the game: one texture per 4x4 cells
+const ground = DATA.ground ? new Image() : null;   // OHOL grassland, tiled like the game: one texture per 4x4 cells
 if (ground) ground.src = DATA.ground;
-const people = (DATA.people || []).map(url => { const im = new Image(); im.src = url; return im; });   // OHOL bodies, facing right
+const people = (DATA.people || []).map(url => { const im = new Image(); im.src = url; return im; });   // OHOL bodies (dressed), facing right
 const objColour = M.colours.map(c => `rgb(${c.map(v => Math.round(v * 255)).join(',')})`);
 function appColour(v) { return `rgb(${[0,1,2].map(i => Math.round(255 * (0.5 + 0.45 * (v[i] || 0)))).join(',')})`; }
+const store = {get(k, d) { try { const v = localStorage.getItem('life-dash:' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+               set(k, v) { try { localStorage.setItem('life-dash:' + k, JSON.stringify(v)); } catch (e) {} }};
 
-let t = 0, focus = M.best, playing = false;
-const $ = id => document.getElementById(id);
-$('title').textContent = `${M.experiment} / ${M.run}`;
-$('tick').max = T - 1;
-for (let i = 0; i < N; i++) { const o = document.createElement('option'); o.value = i; o.textContent = i + (i === M.best ? ' (best)' : '') + (BA && BI[i] >= 0 ? ' · brain view' : ''); $('agent').appendChild(o); }
-$('agent').value = focus;
-$('config').textContent = JSON.stringify(M.config, null, 1);
-$('legendObjects').innerHTML = M.names.map((n, i) => i ? `<span style="display:inline-block;margin:0 8px 2px 0"><i style="display:inline-block;width:10px;height:10px;background:${objColour[i]};border:1px solid #999;vertical-align:middle"></i> ${n}${M.food_value[i] ? ' (food ' + M.food_value[i] + ')' : ''}</span>` : '').join('');
+let t = 0, focus = M.best, playing = false, followOn = store.get('follow', true);
 
-// ---------- zoom / pan: wheel zooms at the cursor, drag pans, double-click resets ----------
-// Content coords are canvas pixels at zoom 1 (the whole plot); canvas = (content - o) * s. The view never leaves the content.
-function zoomable(cv, axis, redraw, max = 16) {
-  const z = {sx: 1, sy: 1, ox: 0, oy: 0, dragged: false};
+// ---------- chrome: icons, title, folding, maximising, splitter, help ----------
+$('play').innerHTML = ICON.play; $('back').innerHTML = ICON.prev; $('fwd').innerHTML = ICON.next;
+$('helpBtn').innerHTML = ICON.help; $('helpClose').innerHTML = ICON.close;
+document.querySelectorAll('.chev').forEach(el => el.innerHTML = ICON.chev);
+document.querySelectorAll('[data-max]').forEach(el => el.innerHTML = ICON.max);
+document.querySelectorAll('[data-zoom="1"],[data-azoom="1"]').forEach(el => el.innerHTML = ICON.plus);
+document.querySelectorAll('[data-zoom="-1"],[data-azoom="-1"]').forEach(el => el.innerHTML = ICON.minus);
+document.querySelectorAll('[data-zoom="0"],[data-azoom="0"]').forEach(el => el.innerHTML = ICON.fit);
+document.querySelectorAll('[data-follow]').forEach(el => { el.innerHTML = ICON.follow; el.classList.toggle('on', followOn); });
+$('title').textContent = M.experiment;
+$('subtitle').textContent = `run ${M.run} · ${N} agents · ${T} ticks${BA ? ' · light export' : ''}`;
+document.title = `${M.experiment} · Life dashboard`;
+
+const cardOf = part => document.querySelector(`.card[data-part="${part}"]`);
+const isOpen = part => { const c = cardOf(part); return !c || !c.classList.contains('collapsed'); };
+const folded = store.get('folded', null);
+if (folded) document.querySelectorAll('#right .card').forEach(c => c.classList.toggle('collapsed', !!folded[c.dataset.part]));
+document.querySelectorAll('.card-h').forEach(h => h.addEventListener('click', e => {
+  const card = h.closest('.card');
+  if (card.classList.contains('nofold') || card.classList.contains('max') || e.target.closest('.tools')) return;
+  card.classList.toggle('collapsed');
+  const f = {}; document.querySelectorAll('#right .card').forEach(c => f[c.dataset.part] = c.classList.contains('collapsed')); store.set('folded', f);
+  if (!card.classList.contains('collapsed')) { relayout(); invalidate(card.dataset.part); }
+}));
+let maxCard = null;
+function setMax(card) {
+  if (maxCard) { maxCard.classList.remove('max'); maxCard.querySelector('[data-max]').innerHTML = ICON.max; }
+  maxCard = card && card !== maxCard ? card : null;
+  if (maxCard) { maxCard.classList.remove('collapsed'); maxCard.classList.add('max'); maxCard.querySelector('[data-max]').innerHTML = ICON.min; }
+  document.body.classList.toggle('has-max', !!maxCard);
+  relayout(); invalidate('world', 'agent', 'arch', 'act', 'w', 'fit');
+  if (card && card.dataset.part === 'arch') requestAnimationFrame(() => archFit(!maxCard));
+}
+document.querySelectorAll('[data-max]').forEach(b => b.addEventListener('click', () => setMax(b.closest('.card'))));
+$('backdrop').addEventListener('click', () => setMax(null));
+const inMax = el => !!(maxCard && maxCard.contains(el));
+
+// splitter between the columns
+(() => {
+  const sp = $('split'), mainEl = document.querySelector('main'), saved = store.get('left', null);
+  if (saved) mainEl.style.setProperty('--left', saved + 'px');
+  let drag = false;
+  sp.addEventListener('pointerdown', e => { drag = true; sp.classList.add('drag'); sp.setPointerCapture(e.pointerId); });
+  sp.addEventListener('pointermove', e => {
+    if (!drag) return; const r = mainEl.getBoundingClientRect();
+    const px = Math.max(340, Math.min(r.width - 440, e.clientX - r.left - 16));
+    mainEl.style.setProperty('--left', px + 'px'); relayout(); invalidate('world', 'agent', 'act', 'w', 'fit');
+  });
+  sp.addEventListener('pointerup', () => { if (!drag) return; drag = false; sp.classList.remove('drag'); store.set('left', parseFloat(getComputedStyle(mainEl).getPropertyValue('--left'))); });
+  sp.addEventListener('dblclick', () => { mainEl.style.removeProperty('--left'); store.set('left', null); relayout(); invalidate('world', 'agent', 'act', 'w', 'fit'); });
+})();
+$('helpBtn').addEventListener('click', () => $('help').showModal());
+$('helpClose').addEventListener('click', () => $('help').close());
+$('help').addEventListener('click', e => { if (e.target === $('help')) $('help').close(); });
+
+// tooltip and the "Ctrl + scroll" hint
+function showTip(e, s) {
+  const tp = $('tip'); tp.style.display = 'block'; tp.textContent = s;
+  const w = tp.offsetWidth, h = tp.offsetHeight;
+  tp.style.left = Math.min(e.clientX + 14, innerWidth - w - 8) + 'px';
+  tp.style.top = (e.clientY + 16 + h > innerHeight ? e.clientY - h - 10 : e.clientY + 16) + 'px';
+}
+function hideTip() { $('tip').style.display = 'none'; }
+function toast(wrap, s) {
+  const el = wrap.querySelector('.toast'); if (!el) return;
+  el.textContent = s; el.classList.add('show'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 1100);
+}
+const ZOOM_HINT = /Mac|iPhone|iPad/.test(navigator.platform) ? 'Use ⌘ + scroll to zoom' : 'Use Ctrl + scroll to zoom';
+
+// ---------- redraws are batched into animation frames ----------
+const dirty = new Set(); let raf = 0;
+const DRAW = {};
+function invalidate(...parts) { parts.forEach(p => dirty.add(p)); if (!raf) raf = requestAnimationFrame(frame); }
+let lastFrame = 0, tickAcc = 0;
+function frame(now) {
+  raf = 0;
+  if (playing) {
+    // playback runs on wall-clock time: speed Nx = N game seconds per real second, one game second = ticks_per_ohol_second ticks
+    if (lastFrame) tickAcc += Math.min(0.25, (now - lastFrame) / 1000) * (+$('speed').value) * TPS;   // cap the step after a hidden tab
+    lastFrame = now;
+    const n = Math.floor(tickAcc); if (n) { tickAcc -= n; setTick(t + n, true); }
+    if (t >= T - 1) setPlaying(false);
+  }
+  const parts = [...dirty]; dirty.clear();
+  for (const p of parts) if (DRAW[p] && (isOpen(p) || p === 'world')) DRAW[p]();
+  if (playing && !raf) raf = requestAnimationFrame(frame);
+}
+
+// ---------- canvas sizing and zoom / pan ----------
+function sizeCanvas(cv, w, h) {
+  w = Math.max(20, Math.floor(w)); h = Math.max(20, Math.floor(h));
+  cv.style.width = w + 'px'; cv.style.height = h + 'px';
+  const d = DPR(), bw = Math.round(w * d), bh = Math.round(h * d);
+  if (cv.width !== bw || cv.height !== bh) { cv.width = bw; cv.height = bh; }
+}
+// A plot maps content (cw x ch units, e.g. ticks x neurons) into the canvas minus a padding (css px) for axes.
+// Zoom sx, sy >= 1 and offset (ox, oy) in content units; the view never leaves the content.
+// Wheel: plain for `freeWheel` canvases (and any canvas in a maximised panel), else Ctrl/Cmd + wheel. Drag pans, double-click resets.
+function plotView(cv, o) {
+  const z = {sx: 1, sy: 1, ox: 0, oy: 0, dragged: false, cw: o.cw, ch: o.ch};
+  z.rect = () => { const d = DPR(), p = o.pad || {}; const l = (p.l || 0) * d, tp = (p.t || 0) * d; return {x: l, y: tp, w: cv.width - l - (p.r || 0) * d, h: cv.height - tp - (p.b || 0) * d}; };
+  z.kx = () => z.rect().w / z.cw * z.sx; z.ky = () => z.rect().h / z.ch * z.sy;
+  z.X = x => z.rect().x + (x - z.ox) * z.kx(); z.Y = y => z.rect().y + (y - z.oy) * z.ky();
   const clamp = () => {
-    z.sx = Math.max(1, Math.min(max, z.sx)); z.sy = Math.max(1, Math.min(max, z.sy));
-    z.ox = Math.max(0, Math.min(cv.width - cv.width / z.sx, z.ox)); z.oy = Math.max(0, Math.min(cv.height - cv.height / z.sy, z.oy));
+    const mx = o.max || 16, my = o.maxY || mx;
+    z.sx = Math.max(1, Math.min(mx, z.sx)); z.sy = Math.max(1, Math.min(my, z.sy));
+    z.ox = Math.max(0, Math.min(z.cw - z.cw / z.sx, z.ox)); z.oy = Math.max(0, Math.min(z.ch - z.ch / z.sy, z.oy));
     cv.classList.toggle('zoomed', z.sx > 1 || z.sy > 1);
   };
   z.clamp = clamp;
+  const toCanvas = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; };
+  z.toContent = e => { const [cx, cy] = toCanvas(e), R = z.rect(); return [z.ox + (cx - R.x) / z.kx(), z.oy + (cy - R.y) / z.ky()]; };
+  z.apply = ctx => { const R = z.rect(), kx = z.kx(), ky = z.ky(); ctx.setTransform(kx, 0, 0, ky, R.x - z.ox * kx, R.y - z.oy * ky); };
+  z.visible = () => [z.ox, z.oy, z.ox + z.cw / z.sx, z.oy + z.ch / z.sy];
   // keep content point (x, y) out of the outer `m` fraction of the view by shifting the view as little as possible
   z.follow = (x, y, m = 0.2) => {
-    const vw = cv.width / z.sx, vh = cv.height / z.sy;
+    const vw = z.cw / z.sx, vh = z.ch / z.sy;
     z.ox = Math.min(Math.max(z.ox, x - vw * (1 - m)), x - vw * m); z.oy = Math.min(Math.max(z.oy, y - vh * (1 - m)), y - vh * m); clamp();
   };
-  const toCanvas = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; };
-  z.toContent = e => { const [cx, cy] = toCanvas(e); return [z.ox + cx / z.sx, z.oy + cy / z.sy]; };
-  z.x = x => (x - z.ox) * z.sx; z.y = y => (y - z.oy) * z.sy;   // content -> canvas
-  z.apply = ctx => ctx.setTransform(z.sx, 0, 0, z.sy, -z.ox * z.sx, -z.oy * z.sy);
-  cv.addEventListener('wheel', e => {
-    e.preventDefault();
-    const [cx, cy] = toCanvas(e), [x, y] = z.toContent(e), f = Math.exp(-(e.deltaY || e.deltaX) * 0.0015), ax = axis(e);
+  z.zoomAt = (f, x, y, ax = 'xy') => {   // zoom by f keeping content point (x, y) in place
+    const R = z.rect(), px = (x - z.ox) * z.kx(), py = (y - z.oy) * z.ky();
     if (ax.includes('x')) z.sx *= f; if (ax.includes('y')) z.sy *= f; clamp();
-    z.ox = x - cx / z.sx; z.oy = y - cy / z.sy; clamp(); redraw();
+    z.ox = x - px / z.kx(); z.oy = y - py / z.ky(); clamp(); o.redraw();
+  };
+  z.zoomBy = f => { const [x0, y0, x1, y1] = z.visible(); z.zoomAt(f, (x0 + x1) / 2, (y0 + y1) / 2, o.axis ? o.axis({}) : 'xy'); };
+  z.reset = () => { z.sx = z.sy = 1; z.ox = z.oy = 0; clamp(); o.redraw(); };
+  cv.addEventListener('wheel', e => {
+    if (!o.freeWheel && !inMax(cv) && !e.ctrlKey && !e.metaKey) { toast(cv.parentElement, ZOOM_HINT); return; }
+    e.preventDefault();
+    const [x, y] = z.toContent(e), f = Math.exp(-(e.deltaY || e.deltaX) * (e.ctrlKey && !e.deltaMode ? 0.01 : 0.0015));
+    z.zoomAt(f, x, y, o.axis ? o.axis(e) : 'xy');
   }, {passive: false});
   let drag = null;
-  cv.addEventListener('mousedown', e => { drag = toCanvas(e); z.dragged = false; });
-  window.addEventListener('mousemove', e => {
+  cv.addEventListener('pointerdown', e => { if (e.button) return; drag = toCanvas(e); z.dragged = false; cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener('pointermove', e => {
     if (!drag) return; const [cx, cy] = toCanvas(e);
-    if (Math.abs(cx - drag[0]) + Math.abs(cy - drag[1]) > 3) z.dragged = true;
+    if (Math.abs(cx - drag[0]) + Math.abs(cy - drag[1]) > 4 * DPR()) { z.dragged = true; cv.classList.add('panning'); hideTip(); }
     if (!z.dragged) return;
-    z.ox -= (cx - drag[0]) / z.sx; z.oy -= (cy - drag[1]) / z.sy; drag = [cx, cy]; clamp(); redraw();
+    z.ox -= (cx - drag[0]) / z.kx(); z.oy -= (cy - drag[1]) / z.ky(); drag = [cx, cy]; clamp(); o.redraw();
   });
-  window.addEventListener('mouseup', () => { drag = null; });
-  cv.addEventListener('dblclick', () => { z.sx = z.sy = 1; z.ox = z.oy = 0; clamp(); redraw(); });
+  const end = () => { drag = null; cv.classList.remove('panning'); setTimeout(() => { z.dragged = false; }, 0); };   // after the click that ends a drag
+  cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
+  cv.addEventListener('dblclick', () => z.reset());
   return z;
+}
+function niceStep(range, n) {
+  const raw = range / Math.max(1, n), p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p;
+  return (f < 1.5 ? 1 : f < 3.5 ? 2 : f < 7.5 ? 5 : 10) * p;
 }
 
 // ---------- world ----------
 const wc = $('world'), wctx = wc.getContext('2d');
-const CELL = Math.max(8, Math.floor(Math.min(620 / W, 620 / H)));
-wc.width = W * CELL; wc.height = H * CELL;
-const zw = zoomable(wc, () => 'xy', () => drawWorld());
-function drawWorld() {
-  const g = grid.a, base = t * H * W, useS = $('useSprites').checked;
+const zw = plotView(wc, {cw: W, ch: H, max: Math.max(4, Math.max(W, H) / 5), freeWheel: true, redraw: () => invalidate('world')});
+const CC = 8;   // cache resolution: pixels per cell. The cache holds ground + objects; changed cells are repainted per tick
+let cache = null, cacheCtx = null, cacheGrid = null, cacheMode = null, cachePat = null;
+function groundPattern(ctx, k) {   // OHOL tiles one ground texture across 4x4 cells; k = pixels per unit of ctx
+  if (!loaded(ground)) return null;
+  const p = ctx.createPattern(ground, 'repeat'), s = 4 * k / ground.naturalWidth;
+  if (p.setTransform) p.setTransform(new DOMMatrix([s, 0, 0, s, 0, 0]));
+  return p;
+}
+function paintObject(ctx, x, y, o, useS) {   // in cell units
+  const im = useS ? sprites[String(M.ohol_id[o])] : null;
+  if (loaded(im)) {
+    const s = 0.95, r = Math.min(s / im.naturalWidth, s / im.naturalHeight), dw = im.naturalWidth * r, dh = im.naturalHeight * r;
+    ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.beginPath(); ctx.ellipse(x + 0.5, y + 0.92, dw * 0.42, 0.08, 0, 0, 7); ctx.fill();
+    ctx.drawImage(im, x + (1 - dw) / 2, y + 0.97 - dh, dw, dh);
+  } else { ctx.fillStyle = objColour[o]; ctx.fillRect(x + 0.1, y + 0.1, 0.8, 0.8); }
+}
+function syncCache(useS) {
+  const g = grid.a, base = t * H * W, mode = useS ? 'sprites' : 'plain';
+  const full = !cache || cacheMode !== mode;
+  if (full) {
+    if (!cache) { cache = document.createElement('canvas'); cache.width = W * CC; cache.height = H * CC; cacheCtx = cache.getContext('2d'); cacheGrid = new Int16Array(H * W); }
+    cachePat = useS ? groundPattern(cacheCtx, CC) : null; cacheMode = mode;
+    cacheCtx.setTransform(1, 0, 0, 1, 0, 0); cacheCtx.fillStyle = cachePat || '#e9e3d2'; cacheCtx.fillRect(0, 0, cache.width, cache.height);
+    cacheCtx.setTransform(CC, 0, 0, CC, 0, 0);
+    for (let i = 0; i < H * W; i++) { const o = g[base + i]; cacheGrid[i] = o; if (o) paintObject(cacheCtx, i % W, (i / W) | 0, o, useS); }
+    return;
+  }
+  for (let i = 0; i < H * W; i++) {
+    const o = g[base + i]; if (o === cacheGrid[i]) continue;
+    cacheGrid[i] = o; const x = i % W, y = (i / W) | 0;
+    cacheCtx.setTransform(1, 0, 0, 1, 0, 0); cacheCtx.fillStyle = cachePat || '#e9e3d2'; cacheCtx.fillRect(x * CC, y * CC, CC, CC);
+    if (o) { cacheCtx.setTransform(CC, 0, 0, CC, 0, 0); paintObject(cacheCtx, x, y, o, useS); }
+  }
+}
+function lastFacingLeft(i, d) {   // OHOL bodies only face left/right: keep the last horizontal facing while moving up/down
+  if (d % 2) return d === 3;
+  for (let tt = t - 1; tt >= Math.max(0, t - 200); tt--) { const dd = dir.a[tt * N + i]; if (dd % 2) return dd === 3; }
+  return false;
+}
+DRAW.world = function drawWorld() {
+  const g = grid.a, base = t * H * W, useS = $('useSprites').checked, k = zw.kx(), px = 1 / k;
+  wctx.setTransform(1, 0, 0, 1, 0, 0); wctx.clearRect(0, 0, wc.width, wc.height);
+  const [vx0, vy0, vx1, vy1] = zw.visible(), x0 = Math.max(0, Math.floor(vx0) - 1), y0 = Math.max(0, Math.floor(vy0) - 1), x1 = Math.min(W, Math.ceil(vx1) + 1), y1 = Math.min(H, Math.ceil(vy1) + 1);
   zw.apply(wctx);
-  if (useS && ground && ground.complete && ground.naturalWidth && !groundPat) {
-    groundPat = wctx.createPattern(ground, 'repeat'); const k = 4 * CELL / ground.naturalWidth;
-    if (groundPat.setTransform) groundPat.setTransform(new DOMMatrix([k, 0, 0, k, 0, 0]));
+  if (k <= CC * 1.25) {   // zoomed out: blit the cache
+    syncCache(useS); wctx.imageSmoothingEnabled = true; wctx.imageSmoothingQuality = 'high'; wctx.drawImage(cache, 0, 0, W, H);
+  } else {               // zoomed in: draw the visible cells directly, sharp at any zoom
+    wctx.fillStyle = (useS && groundPattern(wctx, 1)) || '#e9e3d2'; wctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+    for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) { const o = g[base + y * W + x]; if (o) paintObject(wctx, x, y, o, useS); }
   }
-  wctx.fillStyle = useS && groundPat ? groundPat : '#e9e3d2'; wctx.fillRect(0, 0, wc.width, wc.height);
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const o = g[base + y * W + x]; if (!o) continue;
-    const im = useS ? sprites[String(M.ohol_id[o])] : null;
-    if (im && im.complete && im.naturalWidth) {
-      const s = CELL * 0.95, r = Math.min(s / im.naturalWidth, s / im.naturalHeight);
-      const dw = im.naturalWidth * r, dh = im.naturalHeight * r;
-      wctx.fillStyle = 'rgba(0,0,0,0.18)'; wctx.beginPath(); wctx.ellipse(x * CELL + CELL / 2, y * CELL + CELL - 2, dw * 0.42, CELL * 0.1, 0, 0, 7); wctx.fill();
-      wctx.drawImage(im, x * CELL + (CELL - dw) / 2, y * CELL + CELL - dh - 1, dw, dh);
-    } else { wctx.fillStyle = objColour[o]; wctx.fillRect(x * CELL + 1, y * CELL + 1, CELL - 2, CELL - 2); }
-  }
-  const pb = t * N * 2;
-  for (let i = 0; i < N; i++) {
+  const pb = t * N * 2, small = k < 7;
+  const order = Array.from({length: N}, (_, i) => i).sort((a, b) => (a === focus) - (b === focus));   // focused agent on top
+  for (const i of order) {
     const y = pos.a[pb + 2 * i], x = pos.a[pb + 2 * i + 1], d = dir.a[t * N + i], al = alive.a[t * N + i];
-    const cx = x * CELL + CELL / 2, cy = y * CELL + CELL / 2, r = CELL * 0.38, col = al ? (i === focus ? '#c8102e' : '#1b3a6b') : '#bbb';
+    if (x < x0 - 1 || x > x1 || y < y0 - 1 || y > y1) continue;
+    const cx = x + 0.5, cy = y + 0.5, col = al ? (i === focus ? '#c8102e' : '#1b3a6b') : '#a0a4ab';
     const body = useS && people.length ? people[i % people.length] : null;
-    wctx.save(); wctx.translate(cx, cy);
-    if (body && body.complete && body.naturalWidth) {
-      // OHOL bodies only face left/right: flip for left, keep the last horizontal facing while moving up/down
-      let left = d === 3; if (d % 2 === 0) for (let tt = t - 1; tt >= Math.max(0, t - 200); tt--) { const dd = dir.a[tt * N + i]; if (dd % 2) { left = dd === 3; break; } }
-      const s = CELL * 1.05 / body.naturalHeight, bw = body.naturalWidth * s, bh = body.naturalHeight * s;
-      wctx.globalAlpha = al ? 1 : 0.35;
-      wctx.fillStyle = 'rgba(0,0,0,0.18)'; wctx.beginPath(); wctx.ellipse(0, CELL / 2 - 2, bw * 0.5, CELL * 0.1, 0, 0, 7); wctx.fill();
-      if (left) wctx.scale(-1, 1);
-      wctx.drawImage(body, -bw / 2, CELL / 2 - bh - 1, bw, bh);
-      // held item in front of the hand, roughly where OHOL puts it (heldOffset: right of and below the body centre); mirrors with the body
-      const h = held.a[t * N + i];
-      if (h) {
-        const him = useS ? sprites[String(M.ohol_id[h])] : null, hs = CELL * 0.45, hx = bw * 0.3, hy = CELL / 2 - bh * 0.42;
-        if (him && him.complete && him.naturalWidth) {
-          const k = hs / Math.max(him.naturalWidth, him.naturalHeight), iw = him.naturalWidth * k, ih = him.naturalHeight * k;
-          wctx.drawImage(him, hx - iw / 2, hy - ih / 2, iw, ih);
-        } else { wctx.fillStyle = objColour[h]; wctx.fillRect(hx - hs / 4, hy - hs / 4, hs / 2, hs / 2); }
-      }
-      if (left) wctx.scale(-1, 1);
-      // facing chevron at the cell edge
-      const a = Math.max(3, CELL * 0.2);
-      wctx.rotate(d * Math.PI / 2); wctx.beginPath(); wctx.moveTo(0, -CELL / 2 - a * 0.4); wctx.lineTo(a, -CELL / 2 + a * 0.6); wctx.lineTo(-a, -CELL / 2 + a * 0.6); wctx.closePath();
-      wctx.fillStyle = col; wctx.fill(); wctx.strokeStyle = 'rgba(255,255,255,0.9)'; wctx.lineWidth = 1; wctx.stroke();
+    if (small) {   // zoomed out: a dot of fixed screen size reads better than a 3-pixel body
+      const r = (i === focus ? 4.5 : 2.6) * DPR() * px;
+      wctx.globalAlpha = al ? 1 : 0.5; wctx.fillStyle = col; wctx.beginPath(); wctx.arc(cx, cy, r, 0, 7); wctx.fill();
+      wctx.strokeStyle = '#fff'; wctx.lineWidth = 1.2 * DPR() * px; wctx.stroke(); wctx.globalAlpha = 1;
     } else {
-      wctx.rotate(d * Math.PI / 2);
-      wctx.beginPath(); wctx.moveTo(0, -r); wctx.lineTo(r * 0.8, r); wctx.lineTo(-r * 0.8, r); wctx.closePath();
-      wctx.fillStyle = col; wctx.fill();
-      wctx.strokeStyle = 'rgba(255,255,255,0.8)'; wctx.lineWidth = 1; wctx.stroke();
-      const h = held.a[t * N + i];   // held item: a square in its legend colour inside the triangle
-      if (h) { wctx.fillStyle = objColour[h]; wctx.fillRect(-r * 0.3, r * 0.1, r * 0.6, r * 0.6); wctx.strokeRect(-r * 0.3, r * 0.1, r * 0.6, r * 0.6); }
+      wctx.save(); wctx.translate(cx, cy);
+      if (loaded(body)) {
+        const left = lastFacingLeft(i, d), s = 1.05 / body.naturalHeight, bw = body.naturalWidth * s, bh = body.naturalHeight * s;
+        wctx.globalAlpha = al ? 1 : 0.35;
+        wctx.fillStyle = 'rgba(0,0,0,0.18)'; wctx.beginPath(); wctx.ellipse(0, 0.42, bw * 0.5, 0.08, 0, 0, 7); wctx.fill();
+        if (left) wctx.scale(-1, 1);
+        wctx.drawImage(body, -bw / 2, 0.5 - bh - 0.03, bw, bh);
+        // held item in front of the hand, roughly where OHOL puts it (heldOffset: right of and below the body centre); mirrors with the body
+        const h = held.a[t * N + i];
+        if (h) {
+          const him = useS ? sprites[String(M.ohol_id[h])] : null, hs = 0.45, hx = bw * 0.3, hy = 0.5 - bh * 0.42;
+          if (loaded(him)) { const q = hs / Math.max(him.naturalWidth, him.naturalHeight), iw = him.naturalWidth * q, ih = him.naturalHeight * q; wctx.drawImage(him, hx - iw / 2, hy - ih / 2, iw, ih); }
+          else { wctx.fillStyle = objColour[h]; wctx.fillRect(hx - hs / 4, hy - hs / 4, hs / 2, hs / 2); }
+        }
+        if (left) wctx.scale(-1, 1);
+        wctx.globalAlpha = 1;
+        // facing chevron at the cell edge
+        const a = Math.max(3 * px, 0.2);
+        wctx.rotate(d * Math.PI / 2); wctx.beginPath(); wctx.moveTo(0, -0.5 - a * 0.4); wctx.lineTo(a, -0.5 + a * 0.6); wctx.lineTo(-a, -0.5 + a * 0.6); wctx.closePath();
+        wctx.fillStyle = col; wctx.fill(); wctx.strokeStyle = 'rgba(255,255,255,0.9)'; wctx.lineWidth = px; wctx.stroke();
+      } else {
+        const r = 0.38;
+        wctx.rotate(d * Math.PI / 2);
+        wctx.beginPath(); wctx.moveTo(0, -r); wctx.lineTo(r * 0.8, r); wctx.lineTo(-r * 0.8, r); wctx.closePath();
+        wctx.fillStyle = col; wctx.fill(); wctx.strokeStyle = 'rgba(255,255,255,0.8)'; wctx.lineWidth = px; wctx.stroke();
+        const h = held.a[t * N + i];   // held item: a square in its legend colour inside the triangle
+        if (h) { wctx.fillStyle = objColour[h]; wctx.fillRect(-r * 0.3, r * 0.1, r * 0.6, r * 0.6); wctx.strokeRect(-r * 0.3, r * 0.1, r * 0.6, r * 0.6); }
+      }
+      wctx.restore();
     }
-    wctx.restore();
-    if (i === focus) { wctx.strokeStyle = '#c8102e'; wctx.lineWidth = 2; wctx.beginPath(); wctx.arc(cx, cy, CELL * 0.6, 0, 7); wctx.stroke(); }
-    else if (BA && BI[i] >= 0 && al) { wctx.strokeStyle = '#1b3a6b'; wctx.lineWidth = 1; wctx.beginPath(); wctx.arc(cx, cy, CELL * 0.6, 0, 7); wctx.stroke(); }
+    const ring = small ? 9 * DPR() * px : 0.62;
+    if (i === focus) { wctx.strokeStyle = '#c8102e'; wctx.lineWidth = 2 * DPR() * px; wctx.beginPath(); wctx.arc(cx, cy, ring, 0, 7); wctx.stroke(); }
+    else if (BA && BI[i] >= 0 && al && !small) { wctx.strokeStyle = 'rgba(27,58,107,.8)'; wctx.lineWidth = DPR() * px; wctx.beginPath(); wctx.arc(cx, cy, ring, 0, 7); wctx.stroke(); }
   }
   wctx.setTransform(1, 0, 0, 1, 0, 0);
   let na = 0; for (let i = 0; i < N; i++) na += alive.a[t * N + i];
-  $('worldInfo').textContent = `tick ${t}, alive ${na}/${N}`;
+  $('worldInfo').textContent = `${W} × ${H} cells · ${na} of ${N} alive` + (zw.sx > 1 ? ` · zoom ${zw.sx.toFixed(1)}×` : '');
+};
+function agentsNear(cx, cy, rad) {
+  const pb = t * N * 2, out = [];
+  for (let i = 0; i < N; i++) { const d = Math.hypot(pos.a[pb + 2 * i + 1] + 0.5 - cx, pos.a[pb + 2 * i] + 0.5 - cy); if (d <= rad) out.push([d - (alive.a[t * N + i] ? 1 : 0) * 0.01, i]); }
+  return out.sort((a, b) => a[0] - b[0]).map(q => q[1]);
 }
-function worldCell(e) { const [cx, cy] = zw.toContent(e); return [Math.floor(cx / CELL), Math.floor(cy / CELL)]; }
-wc.addEventListener('click', e => {
-  if (zw.dragged) return;
-  const [x, y] = worldCell(e);
-  const pb = t * N * 2;
-  for (let i = 0; i < N; i++) if (pos.a[pb + 2 * i] === y && pos.a[pb + 2 * i + 1] === x) { setFocus(i); return; }
-});
+const pickRadius = () => Math.max(0.75, 10 * DPR() / zw.kx());   // at least 10 screen pixels
+wc.addEventListener('click', e => { if (zw.dragged) return; const [cx, cy] = zw.toContent(e), a = agentsNear(cx, cy, pickRadius()); if (a.length) setFocus(a[0]); });
 wc.addEventListener('mousemove', e => {
-  const [x, y] = worldCell(e);
+  if (zw.dragged) return;
+  const [cx, cy] = zw.toContent(e), x = Math.floor(cx), y = Math.floor(cy);
   if (x < 0 || y < 0 || x >= W || y >= H) return hideTip();
-  const o = grid.a[t * H * W + y * W + x]; const ags = [];
-  const pb = t * N * 2; for (let i = 0; i < N; i++) if (pos.a[pb + 2 * i] === y && pos.a[pb + 2 * i + 1] === x) ags.push(i);
-  showTip(e, `(${y},${x}) ${o ? M.names[o] : 'empty'}${ags.length ? '\nagents: ' + ags.join(', ') : ''}`);
+  const o = grid.a[t * H * W + y * W + x], ags = agentsNear(cx, cy, pickRadius());
+  wc.style.cursor = ags.length ? 'pointer' : '';
+  const al = ags.slice(0, 4).map(i => `agent #${i}${i === focus ? ' (focused)' : ''}: ${alive.a[t * N + i] ? `food ${food.a[t * N + i].toFixed(1)}, ${M.actions[action.a[t * N + i]]}` : 'dead'}`);
+  showTip(e, `cell (${y}, ${x}): ${o ? M.names[o] + (M.food_value[o] ? ` (food ${M.food_value[o]})` : '') : 'empty'}${al.length ? '\n' + al.join('\n') + (ags.length > 4 ? `\n+${ags.length - 4} more` : '') + '\nclick to focus' : ''}`);
 });
-wc.addEventListener('mouseleave', hideTip);
-function showTip(e, s) { const tp = $('tip'); tp.style.display = 'block'; tp.textContent = s; tp.style.left = (e.clientX + 12) + 'px'; tp.style.top = (e.clientY + 12) + 'px'; }
-function hideTip() { $('tip').style.display = 'none'; }
+wc.addEventListener('mouseleave', () => { hideTip(); wc.style.cursor = ''; });
+document.querySelectorAll('#c-world [data-zoom]').forEach(b => b.addEventListener('click', () => { const v = +b.dataset.zoom; v ? zw.zoomBy(v > 0 ? 1.6 : 1 / 1.6) : zw.reset(); }));
+document.querySelectorAll('[data-follow]').forEach(b => b.addEventListener('click', () => toggleFollow()));
+function toggleFollow() { followOn = !followOn; store.set('follow', followOn); document.querySelectorAll('[data-follow]').forEach(el => el.classList.toggle('on', followOn)); if (followOn) setTick(t, true); }
+$('legendObjects').innerHTML = M.names.map((n, i) => {
+  if (!i) return '';
+  const url = DATA.sprites[String(M.ohol_id[i])];
+  return `<span class="chip" title="retina colour of ${n}">${url ? `<img src="${url}" alt="">` : ''}<i style="background:${objColour[i]}"></i>${n}${M.food_value[i] ? ` <span class="muted">food ${M.food_value[i]}</span>` : ''}</span>`;
+}).join('');
 
 // ---------- agent panel ----------
 const V = M.vision, FV = 4 + V.appearance_dim, NV = V.columns * FV, NB = NIN - NV - 1;
 const INN = L.in_names || [];
 function xval(tt, i, j) { const b = BI[i]; return b < 0 ? 0 : X.a[(tt * NBR + b) * NN + j] / 127; }
-function drawAgent() {
+DRAW.agent = function drawAgent() {
   const i = focus, f = food.a[t * N + i], p = pain.a[t * N + i], h = held.a[t * N + i];
-  $('agentTitle').textContent = `#${i} ${alive.a[t * N + i] ? 'alive' : 'dead'}`;
+  $('agentTitle').textContent = `#${i}${i === M.best ? ' (best)' : ''} · ${alive.a[t * N + i] ? 'alive' : 'dead'}`;
   const nb = $('noBrain'); nb.style.display = BI[i] < 0 ? 'block' : 'none';
   if (BI[i] < 0) nb.innerHTML = `This light export stores the brain (activations, weights) of ${BA.length} of the ${N} agents. Agent #${i} is not one of them: its retina, inputs and activations below are empty, and the weights are those of agent #${M.best}. Agents with a brain view (ringed in the world): ` + BA.map(a => `<a href="#" data-a="${a}">#${a}</a>`).join(' ');
-  const kv = [['food', `<span class="bar"><i style="width:${Math.max(0, 100 * f / M.world.max_food)}%"></i></span> ${f.toFixed(1)}`],
-    ['pain', p.toFixed(2)], ['held', h ? M.names[h] : '-'], ['action', M.actions[action.a[t * N + i]]],
+  const kv = [['food', `<span class="bar"><i style="width:${Math.max(0, Math.min(100, 100 * f / M.world.max_food))}%"></i></span>${f.toFixed(1)}`],
+    ['pain', p.toFixed(2)], ['held', h ? M.names[h] : '–'], ['action', M.actions[action.a[t * N + i]]],
     ...MODN.map((nm, k) => ['mod ' + nm, mod.a[(t * N + i) * NMOD + k].toFixed(2)]), ['pos', `(${pos.a[(t * N + i) * 2]}, ${pos.a[(t * N + i) * 2 + 1]}) facing ${['up', 'right', 'down', 'left'][dir.a[t * N + i]]}`]];
   $('agentKv').innerHTML = kv.map(([k, v]) => `<b>${k}</b><span>${v}</span>`).join('');
-  const rc = $('retina'), ctx = rc.getContext('2d'); ctx.clearRect(0, 0, rc.width, rc.height);
-  const cw = rc.width / V.columns;
+  const rc = $('retina'), ctx = rc.getContext('2d'), d = DPR(), rw = rc.width / d, rh = rc.height / d;
+  ctx.setTransform(d, 0, 0, d, 0, 0); ctx.clearRect(0, 0, rw, rh);
+  const cw = rw / V.columns, bh = rh - 14;
   for (let c = 0; c < V.columns; c++) {
     const b = c * FV, hit = xval(t, i, b), close = xval(t, i, b + 1), isA = xval(t, i, b + 2), isW = xval(t, i, b + 3);
     const app = [0, 1, 2].map(k => xval(t, i, b + 4 + k));
-    ctx.fillStyle = '#eee'; ctx.fillRect(c * cw + 1, 0, cw - 2, rc.height - 14);
-    if (hit > 0.5) { const hh = Math.max(3, close * (rc.height - 14)); ctx.fillStyle = isW > 0.5 ? '#555' : appColour(app); ctx.fillRect(c * cw + 1, rc.height - 14 - hh, cw - 2, hh); }
-    ctx.fillStyle = '#333'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText(isA > 0.5 ? 'A' : isW > 0.5 ? '|' : '', c * cw + cw / 2, rc.height - 3);
+    ctx.fillStyle = '#eef0f3'; ctx.fillRect(c * cw + 1, 0, cw - 2, bh);
+    if (hit > 0.5) { const hh = Math.max(3, close * bh); ctx.fillStyle = isW > 0.5 ? '#555' : appColour(app); ctx.fillRect(c * cw + 1, bh - hh, cw - 2, hh); }
+    ctx.fillStyle = '#333'; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(isA > 0.5 ? 'A' : isW > 0.5 ? '|' : '', c * cw + cw / 2, rh - 3);
   }
   const bn = INN.length ? INN.slice(NV, NV + NB) : ['food', 'age', 'pain', 'held?'].concat(Array.from({length: V.appearance_dim}, (_, k) => 'held app ' + k));
-  $('body').innerHTML = bn.map((n, k) => `<span style="display:inline-block;margin-right:10px"><b style="color:#777;font-weight:500">${n}</b> ${xval(t, i, NV + k).toFixed(2)}</span>`).join('') + `<span><b style="color:#777;font-weight:500">sound</b> ${xval(t, i, NV + NB).toFixed(2)}</span>`;
-}
+  $('body').innerHTML = bn.map((n, k) => `<span><b>${n}</b>${xval(t, i, NV + k).toFixed(2)}</span>`).join('') + `<span><b>sound</b>${xval(t, i, NV + NB).toFixed(2)}</span>`;
+};
+$('noBrain').addEventListener('click', e => { const a = e.target.closest('[data-a]'); if (a) { e.preventDefault(); setFocus(+a.dataset.a); } });
 
 // ---------- activations ----------
 const ac = $('act'), actx = ac.getContext('2d');
-const RH = NN > 200 ? 1 : 2, TW = Math.max(1, Math.floor(700 / T));
-ac.width = T * TW; ac.height = NN * RH;
+const ACT_PAD = {l: 92, b: 20, r: 4, t: 2};
+const zact = plotView(ac, {cw: T, ch: NN, pad: ACT_PAD, axis: e => e.shiftKey ? 'y' : 'x', max: Math.max(16, T / 40), maxY: Math.max(4, NN / 4), redraw: () => invalidate('act')});
 const actOff = document.createElement('canvas'); actOff.width = T; actOff.height = NN;   // one pixel per (tick, neuron)
-const zact = zoomable(ac, e => e.shiftKey ? 'y' : 'x', () => drawAct(), 64);
 let actFocus = -1;
 function heat(v) { v = Math.max(-1, Math.min(1, v)); return v < 0 ? [255 * (1 + v), 255 * (1 + v), 255] : [255, 255 * (1 - v), 255 * (1 - v)]; }
 function buildAct() {
@@ -296,29 +667,52 @@ function buildAct() {
     const [r, g, b] = heat(xval(tt, focus, j)), k = 4 * (j * T + tt); d[k] = r; d[k + 1] = g; d[k + 2] = b; d[k + 3] = 255;
   }
   octx.putImageData(img, 0, 0); actFocus = focus;
-  $('actLegend').textContent = L.names.map((n, k) => `${n}: rows ${L.offsets[k]}-${L.offsets[k] + L.sizes[k] - 1}`).join('   |   ');
 }
-function drawAct() {
+$('actLegend').textContent = L.names.map((n, k) => `${n}: rows ${L.offsets[k]}-${L.offsets[k] + L.sizes[k] - 1}`).join('   |   ');
+function drawTimeAxis(ctx, z, R, d) {
+  const [x0, , x1] = z.visible(), step = niceStep(x1 - x0, Math.max(2, R.w / (90 * d)));
+  ctx.fillStyle = '#6b7280'; ctx.strokeStyle = '#c9ced6'; ctx.font = `${11 * d}px system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (let v = Math.ceil(x0 / step) * step; v <= x1; v += step) {
+    const x = Math.round(z.X(v)) + 0.5; ctx.beginPath(); ctx.moveTo(x, R.y + R.h); ctx.lineTo(x, R.y + R.h + 4 * d); ctx.stroke();
+    ctx.fillText(String(Math.round(v)), x, R.y + R.h + 6 * d);
+  }
+}
+function drawRegionLabels(ctx, z, R, d, vertical) {   // region names in the left gutter (rows) or top gutter (columns)
+  ctx.fillStyle = '#3a4252'; ctx.font = `${11 * d}px system-ui, sans-serif`; ctx.textBaseline = 'middle';
+  for (let k = 0; k < L.names.length; k++) {
+    if (vertical) {
+      const a = Math.max(R.y, z.Y(L.offsets[k])), b = Math.min(R.y + R.h, z.Y(L.offsets[k] + L.sizes[k]));
+      if (b - a < 9 * d) continue;
+      ctx.textAlign = 'right'; ctx.fillText(L.names[k].length > 13 ? L.names[k].slice(0, 12) + '…' : L.names[k], R.x - 6 * d, (a + b) / 2);
+    } else {
+      const a = Math.max(R.x, z.X(L.offsets[k])), b = Math.min(R.x + R.w, z.X(L.offsets[k] + L.sizes[k]));
+      if (b - a < 6 * d * L.names[k].length) continue;
+      ctx.textAlign = 'center'; ctx.fillText(L.names[k], (a + b) / 2, R.y - 8 * d);
+    }
+  }
+}
+DRAW.act = function drawAct() {
   if (actFocus !== focus) buildAct();
-  actx.setTransform(1, 0, 0, 1, 0, 0); actx.imageSmoothingEnabled = false;
-  zact.apply(actx); actx.drawImage(actOff, 0, 0, ac.width, ac.height); actx.setTransform(1, 0, 0, 1, 0, 0);
-  // lines at least one screen pixel wide: the canvas is wider than its on-screen size and pixelated downscaling drops 1px lines
-  const lw = Math.max(1, Math.ceil(ac.width / (ac.getBoundingClientRect().width || ac.width)));
-  actx.fillStyle = '#000';
-  for (let k = 1; k < L.names.length; k++) actx.fillRect(0, Math.round(zact.y(L.offsets[k] * RH)), ac.width, lw);
-  actx.fillStyle = 'rgba(0,170,0,0.8)'; actx.fillRect(Math.round(zact.x(t * TW)), 0, Math.max(lw, TW * zact.sx), ac.height);
-  const t0 = Math.floor(zact.ox / TW), t1 = Math.min(T, Math.ceil((zact.ox + ac.width / zact.sx) / TW)) - 1;
-  $('actRange').textContent = zact.sx > 1 || zact.sy > 1 ? `ticks ${t0}-${t1}` : '';
-}
-function actCell(e) { const [cx, cy] = zact.toContent(e); return [Math.floor(cx / TW), Math.floor(cy / RH)]; }
-ac.addEventListener('click', e => { if (!zact.dragged) setTick(actCell(e)[0]); });
-ac.addEventListener('mousemove', e => { const [tt, j] = actCell(e); if (j >= 0 && j < NN && tt >= 0 && tt < T) showTip(e, `tick ${tt} ${neuronName(j)} = ${xval(tt, focus, j).toFixed(2)}`); });
+  const d = DPR(), R = zact.rect();
+  actx.setTransform(1, 0, 0, 1, 0, 0); actx.clearRect(0, 0, ac.width, ac.height);
+  actx.save(); actx.beginPath(); actx.rect(R.x, R.y, R.w, R.h); actx.clip();
+  zact.apply(actx); actx.imageSmoothingEnabled = zact.kx() < 1; actx.drawImage(actOff, 0, 0, T, NN); actx.restore();
+  actx.fillStyle = 'rgba(0,0,0,.75)';
+  for (let k = 1; k < L.names.length; k++) { const y = Math.round(zact.Y(L.offsets[k])); if (y > R.y && y < R.y + R.h) actx.fillRect(R.x, y, R.w, Math.max(1, d * 0.75)); }
+  const cx = zact.X(t); if (cx >= R.x - 1 && cx <= R.x + R.w) { actx.fillStyle = 'rgba(0,170,0,0.85)'; actx.fillRect(Math.round(cx), R.y, Math.max(1.5 * d, zact.kx()), R.h); }
+  drawRegionLabels(actx, zact, R, d, true); drawTimeAxis(actx, zact, R, d);
+  const [x0, y0, x1, y1] = zact.visible();
+  $('actRange').textContent = (zact.sx > 1 || zact.sy > 1) ? `ticks ${Math.floor(x0)}–${Math.ceil(x1) - 1}${zact.sy > 1 ? `, neurons ${Math.floor(y0)}–${Math.ceil(y1) - 1}` : ''}` : `${NN} neurons × ${T} ticks`;
+};
+function actCell(e) { const [cx, cy] = zact.toContent(e); return [Math.floor(cx), Math.floor(cy)]; }
+ac.addEventListener('click', e => { if (zact.dragged) return; const [tt, j] = actCell(e); if (tt >= 0 && tt < T && j >= 0) setTick(tt); });
+ac.addEventListener('mousemove', e => { if (zact.dragged) return; const [tt, j] = actCell(e); if (j >= 0 && j < NN && tt >= 0 && tt < T) showTip(e, `tick ${tt}\n${neuronName(j)} = ${xval(tt, focus, j).toFixed(2)}`); else hideTip(); });
 ac.addEventListener('mouseleave', hideTip);
 function neuronName(j) { if (j < NIN && INN.length) return `in[${j}] ${INN[j]}`; for (let k = L.names.length - 1; k >= 0; k--) if (j >= L.offsets[k]) return `${L.names[k]}[${j - L.offsets[k]}]` + (L.names[k] === 'out' ? ' ' + M.actions[j - L.offsets[k]] : ''); }
 
 // ---------- weights ----------
 const wm = $('wmat'), wctx2 = wm.getContext('2d');
-const PX = NN > 200 ? 1 : NN > 100 ? 3 : 4; wm.width = NN * PX; wm.height = NN * PX;
+const W_PAD = {l: 92, t: 18, r: 2, b: 2};
 function wget(mode, s, i, pre, post) {
   i = BI[i] >= 0 ? BI[i] : BI[M.best];   // row in the weight arrays
   const k = (i * NN + pre) * NN + post;
@@ -328,44 +722,91 @@ function wget(mode, s, i, pre, post) {
   return mode === 'dw' ? (wv - W0.a[k] / 127) : wv;
 }
 const wOff = document.createElement('canvas'); wOff.width = NN; wOff.height = NN;   // one pixel per (pre, post)
-const zwm = zoomable(wm, () => 'xy', () => drawW(), 32);
+const zwm = plotView(wm, {cw: NN, ch: NN, pad: W_PAD, max: Math.max(4, NN / 6), redraw: () => invalidate('w')});
 let wKey = '';
-function drawW() {
-  const mode = $('wmode').value, s = Math.floor((t + 1) / M.snap_every) - 1, key = `${mode} ${s} ${focus}`;
+const snapIndex = () => Math.floor((t + 1) / M.snap_every) - 1;
+DRAW.w = function drawW() {
+  const mode = $('wmode').value, s = snapIndex(), key = `${mode} ${s} ${focus}`, d = DPR();
   if (key !== wKey) {
-    const octx = wOff.getContext('2d'), img = octx.createImageData(NN, NN), d = img.data;
+    const octx = wOff.getContext('2d'), img = octx.createImageData(NN, NN), dd = img.data;
     for (let pre = 0; pre < NN; pre++) for (let post = 0; post < NN; post++) {
       const v = wget(mode, s, focus, pre, post);
       const [r, g, b] = mode === 'eta' ? [255 * (1 - v), 255 * (1 - 0.5 * v), 255] : heat(mode === 'dw' ? v * 4 : v);
-      const k = 4 * (pre * NN + post); d[k] = r; d[k + 1] = g; d[k + 2] = b; d[k + 3] = 255;
+      const k = 4 * (pre * NN + post); dd[k] = r; dd[k + 1] = g; dd[k + 2] = b; dd[k + 3] = 255;
     }
     octx.putImageData(img, 0, 0); wKey = key;
   }
-  wctx2.setTransform(1, 0, 0, 1, 0, 0); wctx2.imageSmoothingEnabled = false;
-  zwm.apply(wctx2); wctx2.drawImage(wOff, 0, 0, wm.width, wm.height); wctx2.setTransform(1, 0, 0, 1, 0, 0);
-  wctx2.strokeStyle = '#000'; wctx2.lineWidth = 1;
+  const R = zwm.rect();
+  wctx2.setTransform(1, 0, 0, 1, 0, 0); wctx2.clearRect(0, 0, wm.width, wm.height);
+  wctx2.save(); wctx2.beginPath(); wctx2.rect(R.x, R.y, R.w, R.h); wctx2.clip();
+  zwm.apply(wctx2); wctx2.imageSmoothingEnabled = zwm.kx() < 1; wctx2.drawImage(wOff, 0, 0, NN, NN); wctx2.restore();
+  wctx2.fillStyle = 'rgba(0,0,0,.7)'; const lw = Math.max(1, d * 0.75);
   for (let k = 1; k < L.names.length; k++) {
-    const px = Math.round(zwm.x(L.offsets[k] * PX)) + 0.5, py = Math.round(zwm.y(L.offsets[k] * PX)) + 0.5;
-    wctx2.beginPath(); wctx2.moveTo(0, py); wctx2.lineTo(wm.width, py); wctx2.moveTo(px, 0); wctx2.lineTo(px, wm.height); wctx2.stroke();
+    const x = Math.round(zwm.X(L.offsets[k])), y = Math.round(zwm.Y(L.offsets[k]));
+    if (y > R.y && y < R.y + R.h) wctx2.fillRect(R.x, y, R.w, lw);
+    if (x > R.x && x < R.x + R.w) wctx2.fillRect(x, R.y, lw, R.h);
   }
+  wctx2.strokeStyle = '#d5d9df'; wctx2.lineWidth = d; wctx2.strokeRect(R.x, R.y, R.w, R.h);
+  drawRegionLabels(wctx2, zwm, R, d, true); drawRegionLabels(wctx2, zwm, R, d, false);
   $('wInfo').textContent = mode === 'w' || mode === 'dw' ? (s < 0 ? '(before first snapshot: showing w0)' : `snapshot at tick ${(s + 1) * M.snap_every}`) : '';
-  $('wRegions').innerHTML = 'rows = pre, columns = post<br>' + L.names.map((n, k) => `${n}: ${L.offsets[k]}-${L.offsets[k] + L.sizes[k] - 1}`).join('<br>') + `<br>scale: w in [-${M.w_max}, ${M.w_max}], dw x4, eta in [0, ${M.eta_max}]`;
-}
-wm.addEventListener('mousemove', e => { const [cx, cy] = zwm.toContent(e), pre = Math.floor(cy / PX), post = Math.floor(cx / PX); if (pre >= 0 && pre < NN && post >= 0 && post < NN) { const mode = $('wmode').value, s = Math.floor((t + 1) / M.snap_every) - 1; const v = wget(mode, s, focus, pre, post); showTip(e, `${neuronName(pre)} -> ${neuronName(post)}\n${mode} = ${(mode === 'eta' ? v * M.eta_max : v * M.w_max).toFixed(3)}`); } });
+  $('wRegions').innerHTML = `<b>rows = pre, columns = post</b> · scale: w in [-${M.w_max}, ${M.w_max}], dw x4, eta in [0, ${M.eta_max}]<br>` + L.names.map((n, k) => `<span style="white-space:nowrap">${n}: ${L.offsets[k]}-${L.offsets[k] + L.sizes[k] - 1}</span>`).join(' · ');
+};
+wm.addEventListener('mousemove', e => { if (zwm.dragged) return; const [cx, cy] = zwm.toContent(e), pre = Math.floor(cy), post = Math.floor(cx); if (pre >= 0 && pre < NN && post >= 0 && post < NN) { const mode = $('wmode').value, v = wget(mode, snapIndex(), focus, pre, post); showTip(e, `${neuronName(pre)} → ${neuronName(post)}\n${mode} = ${(mode === 'eta' ? v * M.eta_max : v * M.w_max).toFixed(3)}`); } else hideTip(); });
 wm.addEventListener('mouseleave', hideTip);
-$('wmode').addEventListener('change', drawW);
+$('wmode').addEventListener('change', () => invalidate('w'));
+document.querySelectorAll('[data-zfor]').forEach(b => b.addEventListener('click', () => (b.dataset.zfor === 'act' ? zact : zwm).reset()));
 
 // ---------- fitness ----------
-function drawFit() {
-  const fc = $('fit'), ctx = fc.getContext('2d'); ctx.clearRect(0, 0, fc.width, fc.height);
-  const F = M.fitness; if (!F.length) { ctx.fillText('no fitness.csv (lab session)', 10, 20); return; }
-  const series = [['fit_mean', '#1b3a6b'], ['fit_max', '#c8102e'], ['eaten', '#4a8']];
+const FLABEL = {fit_mean: 'mean fitness', fit_median: 'median fitness', fit_max: 'best fitness', alive_ticks: 'lifetime (ticks)', eaten: 'food eaten',
+  pain: 'pain', fed: 'well-fed ticks', fed_meal: 'well-fed from first meal', survivors: 'alive at the end', seconds: 'seconds per generation',
+  temp_mean: 'mean temperature', poison_frac: 'poison share of bites', poison_frac_early: 'poison share, early life', poison_frac_late: 'poison share, late life', berries: 'berries eaten'};
+const F = M.fitness, FCOLS = F.length ? Object.keys(F[0]).filter(k => k !== 'gen') : [];
+const FPRIM = [['fit_mean', '#1b3a6b'], ['fit_median', '#7d9be0'], ['fit_max', '#c8102e']].filter(([k]) => FCOLS.includes(k));
+const FY2 = FCOLS.filter(k => !FPRIM.some(([p]) => p === k));
+$('fitY2').innerHTML = '<option value="">none</option>' + FY2.map(k => `<option value="${k}">${FLABEL[k] || k}</option>`).join('');
+$('fitY2').value = store.get('fitY2', FY2.includes('eaten') ? 'eaten' : '') || '';
+if (!FY2.includes($('fitY2').value)) $('fitY2').value = '';
+$('fitY2').addEventListener('change', () => { store.set('fitY2', $('fitY2').value); fitDrawn = false; invalidate('fit'); });
+let fitDrawn = false;
+DRAW.fit = function drawFit() {
+  const el = $('fit');
+  if (!F.length) { el.innerHTML = '<p class="small">No fitness.csv (lab session).</p>'; el.style.height = 'auto'; return; }
+  const gens = F.map((r, g) => r.gen !== undefined ? r.gen : g), y2 = $('fitY2').value;
+  if (window.Plotly) {
+    if (fitDrawn) { Plotly.Plots.resize(el); return; }
+    const tr = FPRIM.map(([k, c]) => ({x: gens, y: F.map(r => r[k]), name: FLABEL[k] || k, type: 'scatter', mode: 'lines', line: {color: c, width: k === 'fit_mean' ? 2.4 : 1.6},
+      hovertemplate: '%{y:,.1f}<extra>' + (FLABEL[k] || k) + '</extra>'}));
+    if (y2) tr.push({x: gens, y: F.map(r => r[y2]), name: FLABEL[y2] || y2, yaxis: 'y2', type: 'scatter', mode: 'lines', line: {color: '#2a9d6a', width: 1.4, dash: 'dot'},
+      hovertemplate: '%{y:,.3~f}<extra>' + (FLABEL[y2] || y2) + '</extra>'});
+    const ax = {gridcolor: '#eef0f3', zerolinecolor: '#d5d9df', linecolor: '#d5d9df', tickfont: {size: 11, color: '#6b7280'}, title: {font: {size: 12, color: '#3a4252'}}};
+    Plotly.react(el, tr, {
+      margin: {l: 64, r: y2 ? 70 : 18, t: 8, b: 44}, paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+      font: {family: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif', size: 12, color: '#1d2330'},
+      hovermode: 'x unified', hoverlabel: {bgcolor: '#fff', bordercolor: '#e2e5ea', font: {size: 12}},
+      legend: {orientation: 'h', x: 0, y: 1.02, yanchor: 'bottom', font: {size: 12}},
+      xaxis: {...ax, title: {...ax.title, text: 'generation'}, showspikes: true, spikemode: 'across', spikethickness: 1, spikecolor: '#9aa1ad', spikedash: 'dot'},
+      yaxis: {...ax, title: {...ax.title, text: 'fitness'}, rangemode: 'tozero', separatethousands: true},
+      ...(y2 ? {yaxis2: {...ax, title: {...ax.title, text: FLABEL[y2] || y2, font: {size: 12, color: '#2a9d6a'}}, overlaying: 'y', side: 'right', showgrid: false, rangemode: 'tozero'}} : {}),
+    }, {displaylogo: false, responsive: true, modeBarButtonsToRemove: ['select2d', 'lasso2d', 'autoScale2d'], toImageButtonOptions: {filename: `${M.experiment}_fitness`, scale: 2}});
+    fitDrawn = true; return;
+  }
+  // fallback without Plotly (offline): a plain chart with axes
+  let cv = el.querySelector('canvas'); if (!cv) { el.innerHTML = '<canvas></canvas>'; cv = el.querySelector('canvas'); }
+  sizeCanvas(cv, el.clientWidth || 600, el.clientHeight || 300);
+  const ctx = cv.getContext('2d'), d = DPR(), cw = cv.width / d, ch = cv.height / d, P = {l: 56, r: 16, t: 26, b: 34};
+  ctx.setTransform(d, 0, 0, d, 0, 0); ctx.clearRect(0, 0, cw, ch);
+  const series = FPRIM.length ? FPRIM : [[FCOLS[0], '#1b3a6b']];
   const all = series.flatMap(([k]) => F.map(r => r[k])), lo = Math.min(0, ...all), hi = Math.max(...all) || 1;
-  const px = g => 30 + g * (fc.width - 40) / Math.max(1, F.length - 1), py = v => fc.height - 18 - (v - lo) * (fc.height - 28) / (hi - lo);
-  ctx.strokeStyle = '#ccc'; ctx.beginPath(); ctx.moveTo(30, py(0)); ctx.lineTo(fc.width - 10, py(0)); ctx.stroke();
-  ctx.font = '11px sans-serif'; ctx.fillStyle = '#777'; ctx.fillText(hi.toFixed(1), 2, 12); ctx.fillText(lo.toFixed(1), 2, fc.height - 18);
-  series.forEach(([k, c], si) => { ctx.strokeStyle = c; ctx.beginPath(); F.forEach((r, g) => g ? ctx.lineTo(px(g), py(r[k])) : ctx.moveTo(px(g), py(r[k]))); ctx.stroke(); ctx.fillStyle = c; ctx.fillText(k, 40 + si * 80, fc.height - 4); });
-}
+  const gx = g => P.l + (g - gens[0]) * (cw - P.l - P.r) / Math.max(1, gens[gens.length - 1] - gens[0]), gy = v => ch - P.b - (v - lo) * (ch - P.t - P.b) / (hi - lo);
+  ctx.font = '11px system-ui, sans-serif'; ctx.fillStyle = '#6b7280'; ctx.strokeStyle = '#eef0f3'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  const ys = niceStep(hi - lo, 5); for (let v = Math.ceil(lo / ys) * ys; v <= hi; v += ys) { ctx.beginPath(); ctx.moveTo(P.l, gy(v)); ctx.lineTo(cw - P.r, gy(v)); ctx.stroke(); ctx.fillText(v.toLocaleString(), P.l - 6, gy(v)); }
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  const xs = niceStep(gens[gens.length - 1] - gens[0], 8); for (let g = Math.ceil(gens[0] / xs) * xs; g <= gens[gens.length - 1]; g += xs) ctx.fillText(String(g), gx(g), ch - P.b + 6);
+  ctx.fillText('generation', P.l + (cw - P.l - P.r) / 2, ch - 14);
+  series.forEach(([k, c], si) => { ctx.strokeStyle = c; ctx.lineWidth = 1.6; ctx.beginPath(); F.forEach((r, g) => g ? ctx.lineTo(gx(gens[g]), gy(r[k])) : ctx.moveTo(gx(gens[g]), gy(r[k]))); ctx.stroke();
+    ctx.fillStyle = c; ctx.textAlign = 'left'; ctx.fillText(FLABEL[k] || k, P.l + si * 120, 6); });
+};
+if (!window.Plotly && !window.PLOTLY_FAILED) $('plotlyjs').addEventListener('load', () => { fitDrawn = false; invalidate('fit'); });
 
 // ---------- architecture: regions as blocks, projections as arrows (region level, not per synapse) ----------
 // Block cells = activations of the focused agent at the current tick. Arrow colour = rule, dashed = modulated,
@@ -404,8 +845,7 @@ function inferProjections() {   // runs recorded before regions/projections exis
 }
 const BW = 124, BH = 50, svg = $('archSvg');
 let SVGW = 700;   // widened by autoLayout when there are many columns
-const AR = {pos: {}, H: 160, sel: null, statsKey: '', stats: [], drag: null, cells: [], mode: 'w'};
-const snapIndex = () => Math.floor((t + 1) / M.snap_every) - 1;
+const AR = {pos: {}, H: 160, sel: null, statsKey: '', stats: [], drag: null, pan: null, cells: [], mode: 'w', view: null};
 function autoLayout() {
   // group-aware: every top-level group (or ungrouped region) is a card with its members stacked (subgroups kept
   // together); cards sit in columns by the mean shortest-path depth of their members from 'in'; 'out' is last
@@ -436,7 +876,7 @@ const LSKEY = 'life-arch:' + M.experiment + ':' + L.names.join(',');
 function loadPos() { try { const s = JSON.parse(localStorage.getItem(LSKEY) || 'null'); if (s) for (const r of REG) if (s[r.name]) AR.pos[r.name] = s[r.name]; } catch (e) {} }
 function savePos() { try { localStorage.setItem(LSKEY, JSON.stringify(AR.pos)); } catch (e) {} }
 function projStats(p, s) {
-  const a = regOf(p.src), b = regOf(p.dst), fb = brainRow();
+  const fb = brainRow();
   let n = 0, sw = 0, sdw = 0, np = 0;
   for (const i of p.rows) for (const j of p.cols) {
     const k = (fb * NN + i) * NN + j, w0 = W0.a[k];
@@ -475,9 +915,25 @@ function edgeGeom(p) {
   const [sx, sy] = clipBox(x1, y1, cx - x1, cy - y1), [ex, ey] = clipBox(x2, y2, cx - x2, cy - y2);
   return {d: `M${f1(sx)},${f1(sy)} Q${f1(cx)},${f1(cy)} ${f1(ex)},${f1(ey)}`, lx: 0.25 * sx + 0.5 * cx + 0.25 * ex, ly: 0.25 * sy + 0.5 * cy + 0.25 * ey};
 }
+// the view: a viewBox that zooms (wheel at the cursor) and pans (drag the background) over the diagram
+function archBounds() {
+  const ps = Object.values(AR.pos), xs = ps.map(p => p[0]), ys = ps.map(p => p[1]);
+  const x0 = Math.min(...xs) - BW / 2 - 30, x1 = Math.max(...xs) + BW / 2 + 60, y0 = Math.min(...ys) - BH / 2 - 50, y1 = Math.max(...ys) + BH / 2 + 50;
+  return {x: x0, y: y0, w: x1 - x0, h: y1 - y0};
+}
+// fit the whole diagram, or (readable) fit its width at no more than 1:1 and start at the top: tall diagrams stay legible and pan down
+function archFit(readable = false) {
+  const b = archBounds(), wr = $('archWrap'), W_ = wr.clientWidth || 800, H_ = wr.clientHeight || 500, s = Math.min(1, W_ / b.w);
+  AR.view = readable && Math.min(W_ / b.w, H_ / b.h) < 0.75 * s ? {x: b.x - (W_ / s - b.w) / 2, y: b.y, w: W_ / s, h: H_ / s} : b;
+  setView();
+}
+function setView() { const v = AR.view; svg.setAttribute('viewBox', `${v.x.toFixed(1)} ${v.y.toFixed(1)} ${v.w.toFixed(1)} ${v.h.toFixed(1)}`); }
+function archZoomAt(f, x, y) {
+  const v = AR.view, b = archBounds(), w = Math.max(b.w / 10, Math.min(b.w * 4, v.w * f)), k = w / v.w;
+  AR.view = {x: x - (x - v.x) * k, y: y - (y - v.y) * k, w: v.w * k, h: v.h * k}; setView();
+}
+function archScale() { const m = svg.getScreenCTM(); return m ? 1 / m.a : 1; }   // svg units per screen pixel
 function renderArch() {
-  const H = Math.max(AR.H, ...Object.values(AR.pos).map(p => p[1] + BH / 2 + 14));
-  svg.setAttribute('viewBox', `0 0 ${SVGW} ${H}`); svg.style.maxWidth = (SVGW * 1.25) + 'px';
   const maxDrive = Math.max(1e-6, ...AR.stats.map(s => s.drive));
   let h = '<defs>' + Object.entries(RULE_COL).map(([r, c]) => `<marker id="ah-${ruleKey(r)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="${c}"/></marker>`).join('') + '</defs>';
   PROJ.forEach((p, i) => {
@@ -485,8 +941,9 @@ function renderArch() {
     const sel = AR.sel && AR.sel.type === 'proj' && AR.sel.i === i;
     const mname = p.modulator || (p.modulated ? MODN[0] : ''), isGain = p.kind === 'gain';
     const lab = (isGain ? 'gain ' : '') + (rk !== 'fixed' && rk !== 'hard' && rk !== 'u' ? p.rule : '') + (mname ? ' ×' + mname : '');
-    h += `<g class="edge" data-p="${i}">` + (sel ? `<path d="${g.d}" fill="none" stroke="#c8102e" stroke-opacity=".35" stroke-width="${(w + 6).toFixed(1)}"/>` : '')
+    h += `<g class="edge" data-p="${i}">`
       + `<path d="${g.d}" fill="none" stroke="${c}" stroke-width="${w.toFixed(1)}"${isGain ? ' stroke-dasharray="1 4" stroke-linecap="round"' : mname ? ' stroke-dasharray="6 3"' : ''} marker-end="url(#ah-${rk})"/>`
+      + (sel ? `<path d="${g.d}" fill="none" stroke="#c8102e" stroke-opacity=".35" stroke-width="${(w + 6).toFixed(1)}"/>` : '')
       + `<path d="${g.d}" fill="none" stroke="transparent" stroke-width="12"/>`
       + (lab ? `<text x="${g.lx.toFixed(1)}" y="${(g.ly - 4).toFixed(1)}" text-anchor="middle" class="sub elab">${lab}</text>` : '') + '</g>';
   });
@@ -509,7 +966,6 @@ function renderArch() {
     const srcs = [m.pos, m.neg, ...(m.terms || []).map(t => t[0])].filter(Boolean);
     const src = AR.pos[srcs[0]]; if (!src) return;
     const mx = src[0] + 18 * (mi % 3) - 18, my = src[1] + BH / 2 + 22;
-    AR.modpos = AR.modpos || {}; AR.modpos[m.name] = [mx, my];
     h += `<line x1="${src[0]}" y1="${src[1] + BH / 2}" x2="${mx}" y2="${my - 7}" stroke="#b07a00" stroke-dasharray="3 2"/>`;
     srcs.slice(1).forEach(r => { if (AR.pos[r]) h += `<line x1="${AR.pos[r][0]}" y1="${AR.pos[r][1] + BH / 2}" x2="${mx}" y2="${my - 7}" stroke="#b07a00" stroke-dasharray="3 2" opacity=".6"/>`; });
     REG.filter(r => r.receptors.some(rc => rc[0] === m.name)).forEach(r => {
@@ -523,8 +979,8 @@ function renderArch() {
     const [x, y] = AR.pos[r.name], sel = AR.sel && AR.sel.type === 'region' && AR.sel.name === r.name;
     const nc = Math.min(r.size, 56), cw = (BW - 12) / nc;
     h += `<g class="reg" data-r="${r.name}" transform="translate(${(x - BW / 2).toFixed(1)},${(y - BH / 2).toFixed(1)})">`
-      + `<rect width="${BW}" height="${BH}" rx="5" fill="${r.sign > 0 ? '#f3faf3' : r.sign < 0 ? '#fbf1f1' : '#fff'}" stroke="${sel ? '#c8102e' : '#999'}" stroke-width="${sel ? 2 : 1}"/>`
-      + `<text x="6" y="15">${r.name}</text><text x="${BW - 6}" y="15" text-anchor="end" class="sub">${r.sign > 0 ? 'exc ' : r.sign < 0 ? 'inh ' : ''}${r.size}</text>`;
+      + `<rect width="${BW}" height="${BH}" rx="6" fill="${r.sign > 0 ? '#f3faf3' : r.sign < 0 ? '#fbf1f1' : '#fff'}" stroke="${sel ? '#c8102e' : '#a3a9b3'}" stroke-width="${sel ? 2 : 1}" style="filter:drop-shadow(0 1px 1.5px rgba(16,24,40,.08))"/>`
+      + `<text x="6" y="15" style="font-weight:600">${r.name}</text><text x="${BW - 6}" y="15" text-anchor="end" class="sub">${r.sign > 0 ? 'exc ' : r.sign < 0 ? 'inh ' : ''}${r.size}</text>`;
     for (let c = 0; c < nc; c++) {
       const lo = r.off + Math.floor(c * r.size / nc), hi = r.off + Math.floor((c + 1) * r.size / nc);
       h += `<rect class="cell" data-lo="${lo}" data-hi="${hi}" x="${(6 + c * cw).toFixed(2)}" y="21" width="${(cw + 0.3).toFixed(2)}" height="16"/>`;
@@ -555,14 +1011,14 @@ function renderArchDetail() {
   const idx = f => PROJ.map((p, i) => f(p) ? i : -1).filter(i => i >= 0);
   if (sel.type === 'region') {
     const r = regOf(sel.name), a = r.spec.alpha, ins = idx(p => p.dst === r.name), outs = idx(p => p.src === r.name);
-    el.innerHTML = `<div><b>${r.name}</b> <span class="small">${r.size} neurons (${r.off}-${r.off + r.size - 1})${a !== undefined && r.name !== 'in' ? `, alpha ${a} (time constant ~${(1 / a).toFixed(1)} steps)` : ''}${r.spec.trace_tau !== undefined ? `, trace_tau ${r.spec.trace_tau}` : ''}</span> <a href="#" id="archZoom">zoom the activation plot to this region</a></div>`
-      + `<div class="small" style="margin-top:4px">activations over time (rows = neurons, click = go to tick)</div><canvas id="archAct" class="heat" style="width:100%"></canvas>`
-      + `<div style="margin-top:4px"><span class="small">inputs</span><br>${ins.map(i => projLine(i)).join('<br>') || '<span class="small">none</span>'}</div>`
-      + `<div style="margin-top:4px"><span class="small">outputs</span><br>${outs.map(i => projLine(i)).join('<br>') || '<span class="small">none</span>'}</div>`;
+    el.innerHTML = `<div><b>${r.name}</b> <span class="small">${r.size} neurons (${r.off}-${r.off + r.size - 1})${a !== undefined && r.name !== 'in' ? `, alpha ${a} (time constant ~${(1 / a).toFixed(1)} steps)` : ''}${r.spec.trace_tau !== undefined ? `, trace_tau ${r.spec.trace_tau}` : ''}</span> · <a href="#" id="archZoom">zoom the activation plot to this region</a></div>`
+      + `<div class="small" style="margin-top:4px">activations over time (rows = neurons, click = go to tick)</div><canvas id="archAct" class="heat" style="width:100%;cursor:pointer"></canvas>`
+      + `<div style="margin-top:6px"><span class="small">inputs</span><br>${ins.map(i => projLine(i)).join('<br>') || '<span class="small">none</span>'}</div>`
+      + `<div style="margin-top:6px"><span class="small">outputs</span><br>${outs.map(i => projLine(i)).join('<br>') || '<span class="small">none</span>'}</div>`;
     const cv = $('archAct'); cv.width = T; cv.height = r.size; cv.style.height = Math.min(260, Math.max(30, r.size * 5)) + 'px';
   } else {
     const p = PROJ[sel.i], a = regOf(p.src), b = regOf(p.dst), opt = [['w', 'w at nearest snapshot'], ['dw', 'w - w0 (lifetime change)'], ['w0', 'w0 (genome)'], ['eta', 'learning rate eta']];
-    el.innerHTML = `<div>${projLine(sel.i, false)}</div><div class="small" style="margin:4px 0">rows = pre (${a.name}${p.rows.length < a.size ? ', selected features' : ''}), columns = post (${b.name}) <select id="archMode">${opt.map(([v, n]) => `<option value="${v}"${v === AR.mode ? ' selected' : ''}>${n}</option>`).join('')}</select></div><canvas id="archW" class="heat"></canvas>`;
+    el.innerHTML = `<div>${projLine(sel.i, false)}</div><div class="small" style="margin:6px 0">rows = pre (${a.name}${p.rows.length < a.size ? ', selected features' : ''}), columns = post (${b.name}) <select id="archMode">${opt.map(([v, n]) => `<option value="${v}"${v === AR.mode ? ' selected' : ''}>${n}</option>`).join('')}</select></div><canvas id="archW" class="heat"></canvas>`;
     const nr = p.rows.length, nc = p.cols.length, cv = $('archW'), kx = Math.max(1, Math.min(24, Math.floor(360 / nc))), ky = Math.max(1, Math.min(24, Math.floor(360 / nr)));
     cv.width = nc; cv.height = nr; cv.style.width = nc * kx + 'px'; cv.style.height = nr * ky + 'px';
   }
@@ -581,7 +1037,7 @@ function drawArchDetail() {
     ctx.fillStyle = 'rgba(0,170,0,0.9)'; ctx.fillRect(t, 0, Math.max(1, Math.ceil(T / (cv.getBoundingClientRect().width || T))), r.size);
   } else {
     const cv = $('archW'); if (!cv) return;
-    const p = PROJ[sel.i], a = regOf(p.src), b = regOf(p.dst), mode = AR.mode, s = snapIndex(), key = `p ${sel.i} ${mode} ${s} ${focus}`;
+    const p = PROJ[sel.i], mode = AR.mode, s = snapIndex(), key = `p ${sel.i} ${mode} ${s} ${focus}`;
     if (key === detKey) return;
     const nc = p.cols.length, ctx = cv.getContext('2d'), img = ctx.createImageData(nc, p.rows.length), d = img.data;
     for (let i = 0; i < p.rows.length; i++) for (let j = 0; j < nc; j++) {
@@ -592,7 +1048,7 @@ function drawArchDetail() {
     ctx.putImageData(img, 0, 0); detKey = key;
   }
 }
-function drawArch() { if (updateStats()) { renderArch(); if (AR.sel) { renderArchDetail(); detKey = ''; } } else updateArchActivity(); drawArchDetail(); }
+DRAW.arch = function drawArch() { if (updateStats()) { renderArch(); if (AR.sel) { renderArchDetail(); detKey = ''; } } else updateArchActivity(); drawArchDetail(); };
 function svgPt(e) { const m = svg.getScreenCTM().inverse(); return [e.clientX * m.a + e.clientY * m.c + m.e, e.clientX * m.b + e.clientY * m.d + m.f]; }
 function archTip(e) {
   const c = e.target.closest('.cell');
@@ -615,17 +1071,27 @@ function archTip(e) {
   hideTip();
 }
 svg.addEventListener('pointerdown', e => {
-  const g = e.target.closest('.reg'); if (!g) return;
-  AR.drag = {name: g.dataset.r, start: svgPt(e), orig: AR.pos[g.dataset.r].slice(), moved: false};
-  svg.setPointerCapture(e.pointerId); hideTip();
+  if (e.button) return;
+  const g = e.target.closest('.reg');
+  if (g) { AR.drag = {name: g.dataset.r, start: svgPt(e), orig: AR.pos[g.dataset.r].slice(), moved: false}; svg.setPointerCapture(e.pointerId); hideTip(); return; }
+  if (e.target.closest('.edge, .modnode')) return;
+  AR.pan = {x: e.clientX, y: e.clientY, view: {...AR.view}, moved: false}; svg.setPointerCapture(e.pointerId);
 });
 svg.addEventListener('pointermove', e => {
+  const pn = AR.pan;
+  if (pn) {
+    const s = archScale(), dx = e.clientX - pn.x, dy = e.clientY - pn.y;
+    if (Math.abs(dx) + Math.abs(dy) > 3) { pn.moved = true; svg.classList.add('panning'); hideTip(); }
+    if (pn.moved) { AR.view = {...pn.view, x: pn.view.x - dx * s, y: pn.view.y - dy * s}; setView(); }
+    return;
+  }
   const dr = AR.drag; if (!dr) return archTip(e);
   const [x, y] = svgPt(e), dx = x - dr.start[0], dy = y - dr.start[1];
   if (Math.abs(dx) + Math.abs(dy) > 3) dr.moved = true;
-  if (dr.moved) { AR.pos[dr.name] = [Math.max(BW / 2, Math.min(SVGW - BW / 2, dr.orig[0] + dx)), Math.max(BH / 2 + 36, dr.orig[1] + dy)]; renderArch(); }
+  if (dr.moved) { AR.pos[dr.name] = [dr.orig[0] + dx, dr.orig[1] + dy]; renderArch(); }
 });
 svg.addEventListener('pointerup', () => {
+  if (AR.pan) { AR.pan = null; svg.classList.remove('panning'); return; }
   const dr = AR.drag; AR.drag = null; if (!dr) return;
   if (dr.moved) savePos();
   else selectArch(AR.sel && AR.sel.type === 'region' && AR.sel.name === dr.name ? null : {type: 'region', name: dr.name});
@@ -634,13 +1100,23 @@ svg.addEventListener('click', e => {
   const ed = e.target.closest('.edge'); if (!ed) return;
   const i = +ed.dataset.p; selectArch(AR.sel && AR.sel.type === 'proj' && AR.sel.i === i ? null : {type: 'proj', i});
 });
+svg.addEventListener('dblclick', e => { if (!e.target.closest('.reg, .edge, .modnode')) archFit(); });
+svg.addEventListener('wheel', e => {
+  if (!inMax(svg) && !e.ctrlKey && !e.metaKey) { toast($('archWrap'), ZOOM_HINT); return; }
+  e.preventDefault(); const [x, y] = svgPt(e); archZoomAt(Math.exp((e.deltaY || e.deltaX) * (e.ctrlKey && !e.deltaMode ? 0.01 : 0.0015)), x, y);
+}, {passive: false});
 svg.addEventListener('pointerleave', hideTip);
+document.querySelectorAll('[data-azoom]').forEach(b => b.addEventListener('click', () => {
+  const v = +b.dataset.azoom; if (!v) return archFit();
+  archZoomAt(v > 0 ? 1 / 1.4 : 1.4, AR.view.x + AR.view.w / 2, AR.view.y + AR.view.h / 2);
+}));
 $('archDetail').addEventListener('click', e => {
   const a = e.target.closest('[data-p]');
   if (a) { e.preventDefault(); return selectArch({type: 'proj', i: +a.dataset.p}); }
   if (e.target.id === 'archZoom') {
-    e.preventDefault(); const r = regOf(AR.sel.name);
-    zact.sy = Math.max(1, NN / r.size); zact.clamp(); zact.oy = r.off * RH; zact.clamp(); drawAct(); ac.scrollIntoView({block: 'nearest'});
+    e.preventDefault(); const r = regOf(AR.sel.name), c = cardOf('act');
+    if (c.classList.contains('collapsed')) c.querySelector('.card-h').click();
+    zact.sy = Math.max(1, NN / r.size); zact.clamp(); zact.oy = r.off; zact.clamp(); invalidate('act'); c.scrollIntoView({block: 'nearest', behavior: 'smooth'});
   }
   if (e.target.id === 'archAct') { const rc = e.target.getBoundingClientRect(); setTick(Math.floor((e.clientX - rc.left) / rc.width * T)); }
 });
@@ -649,49 +1125,106 @@ $('archDetail').addEventListener('mousemove', e => {
   const id = e.target.id; if (id !== 'archAct' && id !== 'archW') return hideTip();
   const rc = e.target.getBoundingClientRect(), fx = (e.clientX - rc.left) / rc.width, fy = (e.clientY - rc.top) / rc.height;
   if (id === 'archAct') { const r = regOf(AR.sel.name), tt = Math.floor(fx * T), j = r.off + Math.floor(fy * r.size); return showTip(e, `tick ${tt} ${neuronName(j)} = ${xval(tt, focus, j).toFixed(2)}`); }
-  const p = PROJ[AR.sel.i], b = regOf(p.dst), pre = p.rows[Math.min(p.rows.length - 1, Math.floor(fy * p.rows.length))], post = p.cols[Math.min(p.cols.length - 1, Math.floor(fx * p.cols.length))];
+  const p = PROJ[AR.sel.i], pre = p.rows[Math.min(p.rows.length - 1, Math.floor(fy * p.rows.length))], post = p.cols[Math.min(p.cols.length - 1, Math.floor(fx * p.cols.length))];
   const v = wget(AR.mode, snapIndex(), focus, pre, post);
   showTip(e, `${neuronName(pre)} -> ${neuronName(post)}\n${AR.mode} = ${(AR.mode === 'eta' ? v * M.eta_max : v * M.w_max).toFixed(3)}`);
 });
 $('archDetail').addEventListener('mouseleave', hideTip);
 $('archInfo').textContent = `${REG.length} regions, ${PROJ.length} projections, ${NN} neurons, modulators: ${MODN.join(', ')}${M.brain.projections ? '' : ' (projections inferred from weights)'}`;
-$('archLegend').innerHTML = Object.entries(RULE_COL).filter(([r]) => r !== '?').map(([r, c]) => `<span style="margin-right:10px"><i style="display:inline-block;width:18px;height:3px;background:${c};vertical-align:middle"></i> ${RULE_LABEL[r] || r}</span>`).join('')
-  + ` dashed = plasticity gated by a modulator (×name), dotted = gain (multiplicative) projection. Green blocks = excitatory, red = inhibitory (Dale's law). Modulators: ${(M.brain.modulators || []).map(m => `<b>${m.name}</b> = ${m.source === 'region' ? `${m.scale}·(${m.pos}${m.neg ? ' − ' + m.neg : ''} − ${m.baseline})` : m.source}`).join(', ') || (M.brain.modulator || 'none')}. Line width = summed |w| per target neuron at the current snapshot. Cells = the focused agent's activations at this tick. Drag blocks to arrange (remembered in this browser), <a href="#" id="archReset">reset layout</a>.`;
-$('archReset').addEventListener('click', e => { e.preventDefault(); try { localStorage.removeItem(LSKEY); } catch (err) {} autoLayout(); renderArch(); });
-autoLayout(); loadPos(); updateStats(); renderArch(); renderArchDetail();
+$('archLegend').innerHTML = Object.entries(RULE_COL).filter(([r]) => r !== '?').map(([r, c]) => `<span style="margin-right:10px;white-space:nowrap"><i style="background:${c}"></i>${RULE_LABEL[r] || r}</span>`).join('')
+  + `<br>Dashed = plasticity gated by a modulator (×name), dotted = gain (multiplicative) projection. Green blocks = excitatory, red = inhibitory (Dale's law). Modulators: ${(M.brain.modulators || []).map(m => `<b>${m.name}</b> = ${m.source === 'region' ? `${m.scale}·(${m.pos}${m.neg ? ' − ' + m.neg : ''} − ${m.baseline})` : m.source}`).join(', ') || (M.brain.modulator || 'none')}. Line width = summed |w| per target neuron at the current snapshot. Cells = the focused agent's activations at this tick. Drag blocks to arrange (remembered in this browser), <a href="#" id="archReset">reset layout</a>.`;
+$('archReset').addEventListener('click', e => { e.preventDefault(); try { localStorage.removeItem(LSKEY); } catch (err) {} autoLayout(); renderArch(); archFit(); });
+autoLayout(); loadPos(); updateStats(); renderArch(); renderArchDetail(); archFit(true);
+new ResizeObserver(() => { if (AR.view) setView(); }).observe($('archWrap'));
+
+// ---------- layout of the canvases ----------
+function relayout() {
+  const hdr = $('top').offsetHeight; document.documentElement.style.setProperty('--hdr', hdr + 'px');
+  // world: square cells, as large as the column allows while the whole card stays on screen
+  const ww = $('worldWrap'), stacked = innerWidth <= 1050, maxed = inMax(ww);
+  const availH = maxed ? ww.clientHeight : stacked ? innerHeight * 0.75 : innerHeight - hdr - 150 - $('legendObjects').offsetHeight;
+  const s = Math.max(240 / Math.max(W, H), Math.min(ww.clientWidth / W, Math.max(200, availH) / H));
+  sizeCanvas(wc, W * s, H * s); wc.style.margin = '0 auto';
+  zw.clamp();
+  const rw = $('retinaWrap'); sizeCanvas($('retina'), Math.min(rw.clientWidth || 360, 520), 76);
+  const aw = $('actWrap'); sizeCanvas(ac, aw.clientWidth || 600, inMax(aw) ? aw.clientHeight : Math.max(200, Math.min(460, NN * 2.4)) + ACT_PAD.b);
+  const mw = $('wWrap'), side = inMax(mw) ? Math.min(mw.clientWidth, mw.parentElement.clientHeight - $('wRegions').offsetHeight - 10) : Math.min(mw.clientWidth || 400, 640);
+  sizeCanvas(wm, side, side - W_PAD.l + W_PAD.t);
+  // the timeline: agents alive per tick
+  const sp = $('spark'); sp.width = Math.round(sp.clientWidth * DPR()) || 300; sp.height = Math.round(28 * DPR()); drawSpark();   // css width stays 100%
+}
+let aliveCount = null;
+function drawSpark() {
+  const sp = $('spark'), ctx = sp.getContext('2d'), d = DPR(), w = sp.width, h = sp.height;
+  if (!aliveCount) { aliveCount = new Float32Array(T); for (let tt = 0; tt < T; tt++) { let n = 0; for (let i = 0; i < N; i++) n += alive.a[tt * N + i]; aliveCount[tt] = n / N; } }
+  ctx.clearRect(0, 0, w, h); ctx.fillStyle = 'rgba(59,111,209,.22)'; ctx.beginPath(); ctx.moveTo(0, h);
+  for (let x = 0; x <= w; x++) ctx.lineTo(x, h - 2 * d - aliveCount[Math.min(T - 1, Math.floor(x / w * T))] * (h - 4 * d));
+  ctx.lineTo(w, h); ctx.closePath(); ctx.fill();
+  let death = -1; for (let tt = 1; tt < T; tt++) if (alive.a[(tt - 1) * N + focus] && !alive.a[tt * N + focus]) { death = tt; break; }
+  if (death >= 0) { ctx.fillStyle = '#c8102e'; ctx.fillRect(Math.round(death / (T - 1) * w) - d, 0, 2 * d, h); }
+}
+const ro = new ResizeObserver(() => { relayout(); invalidate('world', 'agent', 'act', 'w', 'fit'); });
+ro.observe(document.querySelector('main')); ro.observe(document.querySelector('.timeline'));
+addEventListener('resize', () => { relayout(); invalidate('world', 'agent', 'act', 'w', 'fit'); });
 
 // ---------- control ----------
+const TPS = M.world.ticks_per_ohol_second || 1;
+function fmtTime(sec) { const m = Math.floor(sec / 60), s = Math.floor(sec % 60); return `${m}:${String(s).padStart(2, '0')}`; }
 // follow = keep the focused agent (world) and the current tick (activations) inside zoomed views; used by playback and stepping
 function setTick(v, follow = false) {
-  t = Math.max(0, Math.min(T - 1, v));
-  if (follow) { zw.follow((pos.a[(t * N + focus) * 2 + 1] + 0.5) * CELL, (pos.a[(t * N + focus) * 2] + 0.5) * CELL); zact.follow((t + 0.5) * TW, zact.oy + ac.height / zact.sy / 2); } $('tick').value = t; $('tickLabel').textContent = `${t} / ${T - 1} (${fmtTime(t / TPS)})`; drawWorld(); drawAgent(); drawAct(); drawW(); drawArch();
+  t = Math.max(0, Math.min(T - 1, Math.round(v)));
+  if (follow && followOn) zw.follow(pos.a[(t * N + focus) * 2 + 1] + 0.5, pos.a[(t * N + focus) * 2] + 0.5);
+  if (follow) zact.follow(t + 0.5, zact.oy + NN / zact.sy / 2);
+  $('tick').value = t; $('tickProgress').style.width = (100 * t / Math.max(1, T - 1)) + '%';
+  $('tickLabel').textContent = `tick ${t.toLocaleString()} / ${(T - 1).toLocaleString()} · ${fmtTime(t / TPS)}`;
+  invalidate('world', 'agent', 'act', 'w', 'arch');
 }
-function fmtTime(sec) { const m = Math.floor(sec / 60), s = Math.floor(sec % 60); return `${m}:${String(s).padStart(2, '0')}`; }
-function setFocus(i) { focus = i; $('agent').value = i; setTick(t, true); }
+function setFocus(i) { focus = i; $('agent').value = i; drawSpark(); setTick(t, true); }
+function setPlaying(p) {
+  playing = p; $('play').innerHTML = p ? ICON.pause : ICON.play; $('play').title = p ? 'Pause (space)' : 'Play (space)';
+  if (p) { if (t >= T - 1) setTick(0); lastFrame = 0; tickAcc = 0; invalidate(); }
+}
+for (let i = 0; i < N; i++) { const o = document.createElement('option'); o.value = i; o.textContent = `#${i}` + (i === M.best ? ' (best)' : '') + (BA && BI[i] >= 0 ? ' · brain view' : ''); $('agent').appendChild(o); }
+$('agent').value = focus;
+$('config').textContent = JSON.stringify(M.config, null, 1);
+$('copyConfig').addEventListener('click', () => { navigator.clipboard && navigator.clipboard.writeText(JSON.stringify(M.config, null, 2)).then(() => { $('copyConfig').textContent = 'Copied'; setTimeout(() => $('copyConfig').textContent = 'Copy', 1200); }); });
+$('tick').max = T - 1;
 $('tick').addEventListener('input', e => setTick(+e.target.value));
 $('agent').addEventListener('change', e => setFocus(+e.target.value));
-$('noBrain').addEventListener('click', e => { const a = e.target.closest('[data-a]'); if (a) { e.preventDefault(); setFocus(+a.dataset.a); } });
-$('useSprites').addEventListener('change', drawWorld);
+$('useSprites').addEventListener('change', () => invalidate('world'));
 $('back').addEventListener('click', () => setTick(t - 1, true));
 $('fwd').addEventListener('click', () => setTick(t + 1, true));
-// playback runs on wall-clock time: speed Nx = N game seconds per real second, one game second = ticks_per_ohol_second ticks
-const TPS = M.world.ticks_per_ohol_second || 1;
-$('speed').title = `1x = real time (${TPS} tick${TPS === 1 ? '' : 's'} per second)`;
-let lastFrame = 0, tickAcc = 0;
-$('play').addEventListener('click', () => { playing = !playing; $('play').textContent = playing ? 'Pause' : 'Play'; if (playing) { if (t >= T - 1) setTick(0); lastFrame = 0; tickAcc = 0; requestAnimationFrame(loop); } });
-function loop(now) {
-  if (!playing) return;
-  if (lastFrame) tickAcc += Math.min(0.25, (now - lastFrame) / 1000) * (+$('speed').value) * TPS;   // cap the step after a hidden tab
-  lastFrame = now;
-  const n = Math.floor(tickAcc); if (n) { tickAcc -= n; setTick(t + n, true); }
-  if (t >= T - 1) { playing = false; $('play').textContent = 'Play'; return; }
-  requestAnimationFrame(loop);
-}
-document.addEventListener('keydown', e => { if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return; if (e.key === ' ') { e.preventDefault(); $('play').click(); } else if (e.key === 'ArrowLeft') setTick(t - (e.shiftKey ? 10 : 1), true); else if (e.key === 'ArrowRight') setTick(t + (e.shiftKey ? 10 : 1), true); });
-$('legend').textContent = (BA ? `Light export: brain views for agents ${BA.join(', ')}. ` : '') + `${N} agents, ${T} ticks, ${NN} neurons, weight snapshots every ${M.snap_every} ticks. Keys: space, arrows (shift = 10). Click an agent to focus; zoomed views follow it during playback. Speed is relative to real time. Zoom: mouse wheel (activations: time, shift+wheel = neurons), drag to pan, double-click to reset.`;
-drawFit(); setTick(0);
+$('speed').title = `1× = real time (${TPS} tick${TPS === 1 ? '' : 's'} per second)`;
+$('play').addEventListener('click', () => setPlaying(!playing));
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' && e.target.type !== 'range' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA' || e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key, step = e.shiftKey ? 10 : 1;
+  if (k === ' ') { e.preventDefault(); setPlaying(!playing); }
+  else if (k === 'ArrowLeft') { e.preventDefault(); setTick(t - step, true); }
+  else if (k === 'ArrowRight') { e.preventDefault(); setTick(t + step, true); }
+  else if (k === 'Home') { e.preventDefault(); setTick(0, true); }
+  else if (k === 'End') { e.preventDefault(); setTick(T - 1, true); }
+  else if (k === '[' || k === ']') { const s = $('speed'); s.selectedIndex = Math.max(0, Math.min(s.options.length - 1, s.selectedIndex + (k === ']' ? 1 : -1))); toast($('worldWrap'), `speed ${s.value}×`); }
+  else if (k === ',' || k === '.') {
+    const list = BA || Array.from({length: N}, (_, i) => i), n = list.length, at = list.indexOf(focus);
+    setFocus(at < 0 ? list[k === '.' ? 0 : n - 1] : list[(at + (k === '.' ? 1 : n - 1)) % n]);
+  }
+  else if (k === 'f' || k === 'F') toggleFollow();
+  else if (k === '?') $('help').open ? $('help').close() : $('help').showModal();
+  else if (k === 'Escape' && maxCard) setMax(null);
+});
+const about = (BA ? `Light export: brain views for agents ${BA.join(', ')}. ` : '') + `${N} agents, ${T} ticks, ${NN} neurons, weight snapshots every ${M.snap_every} ticks. Keys: space, arrows (shift = 10). Click an agent to focus; zoomed views follow it during playback. Speed is relative to real time. Zoom: mouse wheel on the world, Ctrl + wheel on the plots (activations: time, shift = neurons), drag to pan, double-click to reset.`;
+$('legend').innerHTML = (BA ? `Light export: brain views for agents ${BA.join(', ')} (ringed). ` : '') + `${N} agents, ${T} ticks, ${NN} neurons, weight snapshots every ${M.snap_every} ticks. Scroll to zoom, drag to pan, click an agent to focus it; zoomed views follow it during playback. Speed is relative to real time. <a href="#" id="helpLink">All controls</a>`;
+$('helpLink').addEventListener('click', e => { e.preventDefault(); $('help').showModal(); });
+$('helpAbout').textContent = about;
+
+relayout(); setTick(0); invalidate('fit');
+// sprites decode asynchronously: rebuild the world cache once they are in
 const imgs = Object.values(sprites).concat(ground ? [ground] : [], people);
-let pending = imgs.length; imgs.forEach(im => { im.onload = () => { if (--pending <= 0) drawWorld(); }; });
+let pending = imgs.filter(im => !loaded(im)).length;
+imgs.forEach(im => { if (!loaded(im)) im.onload = () => { if (--pending <= 0) { cacheMode = null; invalidate('world'); } }; });
+$('loader').classList.add('done'); setTimeout(() => $('loader').remove(), 400);
+}
 </script>
 </body>
 </html>

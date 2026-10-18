@@ -78,7 +78,9 @@ remapping the stored populations and freezing again.
    (with the additive step an idle rate is trapped at 0); 100 generations; compare populations and lesions in 16
    shared worlds with standard errors (`trial_lesion.py`), never by the training curve (new worlds every
    generation); at most three JAX processes with the laptop in use, started a few minutes apart; check older
-   circuits with lesions after every stage.
+   circuits with lesions after every stage. In patches of one type, learning and the lasting states do the same
+   job and a lineage leans on one of them: a world gives two mechanisms each a job only if they answer different
+   questions.
 2. Cheaper evaluations (user, 2026-10-12): the export runs in parallel (`--jobs`), prints a line per finished
    task and silences only the regions of the stage and its parent (`--lesions recent`, default); four worlds for a
    routine check (`--worlds 4`), seed 0 first. A stage run writes its 150 MB dashboard only with `--dashboard`.

@@ -2577,3 +2577,26 @@ strength evolves (main and control: `Stage.control_brain`). World: the 1.8 world
   off 999 +-122, all learning off 1016 +-110 (good berries 65.4 / 65.4 / 70.0 in the first half, poison 7.3 / 7.6 /
   8.6). Neutral, as a diagnostic: the pallium adds a little, the inherited look learning costs good food as much as
   it saves.
+
+## v48 (2026-10-18): the pallium stage at 0.6 is not used; what learning does in its world
+
+Seed 0 of 2.2 (100 generations, XOR looks at 0.6): last 50 generations main 1182 +-30, control 1289 +-35. Lesions (16
+shared worlds): pallium 98 +-2, no_plasticity 98 +-2. Learning rates: pallium 0.10 -> 0.18, look 0.23 -> 0.10 (control
+0.08); adaptation strength 0.92 (control 0.88). Seeds 1 and 2 stopped (user: too weak to go on; investigate first).
+Brain step optimised meanwhile (fixed weights computed at birth, input columns never multiplied): a generation of
+2.2 is 1.7x faster, same lives.
+
+**Paired, the evolved seed-0 population** (`gen0.py RUN=<2.2 run> OFF=...`, 8 worlds; fitness relative to all
+learning on):
+
+| world | all on | pallium off | look off | all off |
+|---|---|---|---|---|
+| as defined (XOR 0.6) | 1150 | -22 +-28 | +3 +-9 | -2 +-19 |
+| poison twice as costly (`POISON_FOOD` -6) | 719 | +10 +-22 | +21 +-18 | +6 +-19 |
+| similarity 0.5 | 1071 | -63 +-22 | -43 +-15 | -69 +-17 |
+
+At 0.6 no learning is used; a costlier poison makes poison rarer (about 4 berries a life) and learning useless. At
+0.5 learning is used, but the gain is not fewer poison bites (4.5 / 1.9 per half with learning, 4.7 / 1.8 without):
+it is more good food late in life (25.3 against 22.6) and longer lives. Inside a life at 0.6 (`pallium_life.py`):
+at bites the pallium's 4 winners fire at 0.62 for poison and good alike; with nothing ahead about 3 cells stay
+weakly active (0.23), the k-WTA baseline.

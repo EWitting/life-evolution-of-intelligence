@@ -3,8 +3,9 @@ it), in this stage's world, with learning on and off in the same worlds. No evol
 straight away, or at least not hurt.
     STAGE=1.5 uv run python scripts/probes/gen0.py [FIELD=value ...] <variant> [...]
 variants: see variants.py. lower-case field=value overrides a WorldConfig field (hunger_per_tick=0.02), upper-case
-NAME=value a constant of life.experiments.stages (NOVEL_WEIGHT=1.0). STAGE defaults to 1.5. OFF=<projection>[,...]: a
-third condition with only the learning of those projections off."""
+NAME=value a constant of life.experiments.stages (NOVEL_WEIGHT=1.0). STAGE defaults to 1.5. OFF=<projection>[,...][;...]:
+one more condition per ';'-group with only the learning of those projections off. Every condition is also given as
+the paired difference from the first (learning on) over the same worlds."""
 import os, sys
 from dataclasses import replace
 import jax, jax.numpy as jnp, numpy as np
@@ -36,10 +37,13 @@ for v in args:
     sim = make_simulate(exp, record=False)
     berry = [rs.local(S.variant(t)[S.BERRY]) for t in range(6)]
     conds = [("learning on ", pop), ("learning off", pop._replace(eta=jnp.zeros_like(pop.eta)))]
-    if os.environ.get("OFF"):   # OFF=pallium->valence_av: one more condition with only that projection's learning off
+    if os.environ.get("OFF"):   # OFF=a,b;c: one more condition per ';'-group with only those projections' learning off
         from life.run import make_layout as _ml
-        _L = _ml(exp); _off = np.isin(np.asarray(_L.proj_id), [list(_L.proj_names).index(n) for n in os.environ["OFF"].split(",")])
-        conds.insert(1, (f"{os.environ['OFF']} off", pop._replace(eta=jnp.where(jnp.asarray(_off)[None], 0.0, pop.eta))))
+        _L = _ml(exp)
+        for grp in reversed(os.environ["OFF"].split(";")):
+            _off = np.isin(np.asarray(_L.proj_id), [list(_L.proj_names).index(n) for n in grp.split(",")])
+            conds.insert(1, (f"{grp} off", pop._replace(eta=jnp.where(jnp.asarray(_off)[None], 0.0, pop.eta))))
+    first = None
     for label, g in conds:
         acc = []
         for k in jax.random.split(jax.random.PRNGKey(31), WORLDS):
@@ -53,5 +57,8 @@ for v in args:
             acc.append([float((s.fitness or S.default_fitness)(st).mean()), float(st["alive_ticks"].mean()), tot(0, good), tot(0, bad), tot(1, good), tot(1, bad),
                         float(st["pain"].mean())])
         m = np.mean(acc, 0); se = np.std(acc, 0, ddof=1) / np.sqrt(WORLDS)
-        print(f"{v:22s} {label}: fitness {m[0]:4.0f} +-{se[0]:.0f}  lifetime {m[1]:4.0f}  good / poison berries per agent: first half "
+        acc = np.array(acc); first = acc if first is None else first
+        d = acc[:, 0] - first[:, 0]
+        paired = f"  vs first {d.mean():+5.0f} +-{d.std(ddof=1) / np.sqrt(WORLDS):.0f}" if acc is not first else ""
+        print(f"{v:22s} {label}: fitness {m[0]:4.0f} +-{se[0]:.0f}{paired}  lifetime {m[1]:4.0f}  good / poison berries per agent: first half "
               f"{m[2]:5.1f} / {m[3]:4.1f}, second half {m[4]:5.1f} / {m[5]:4.1f}  pain {m[6]:.1f}", flush=True)

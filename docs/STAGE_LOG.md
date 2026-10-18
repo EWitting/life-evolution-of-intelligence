@@ -2479,3 +2479,18 @@ On the frozen 1.8 population (seed 0) in its own world:
   depends on what the animal has been looking at (in a patch 70% of one type, the local type fades).
 - Open: whether the gain of learning at novel similarity 0.5 (v44) comes from less spreading or from a more
   consistent adapted look; the pallium as planned (ADR-025) has no job in this world as it stands.
+
+**Harder looks** (`pallium_sep.py`, same measure; second number: after one lesson on each of two poison types, the
+aversion to a good type relative to that to a poison, 0 = perfect, 1 = none; best pallium of N=64, fan 2-4, k 4-16):
+
+| looks | look, raw | pallium, raw | look, adapted 0.5 | pallium, adapted 0.5 |
+|---|---|---|---|---|
+| random, similarity 0.8 | 0.77 | 0.56 | 0.35 | 0.27 |
+| random, similarity 0.9 | 0.90 | 0.70 | 0.65 | 0.42 |
+| random, similarity 0.95 | 0.95 | 0.81 | 0.82 | 0.64 |
+| XOR (poison ++ and --, good +- and -+), 0.8 | 1.00 | 0.63 | 1.00 | 0.37 |
+| XOR, 0.9 | 1.00 | 0.79 | 1.00 | 0.59 |
+
+The more alike the looks, the more the expansion adds over a partly adapted look (real lives at 0.8 sit near
+"adapted 0.5": 0.24 measured against 0.22). With XOR looks no linear read-out discriminates at all, adapted or not
+(with an ideal habituation the two lessons cancel); the pallium does, and better on the adapted look than on the raw.

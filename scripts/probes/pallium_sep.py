@@ -12,20 +12,30 @@ Pallium: N cells, each reading `fan` random look features with weights N(0, 1) (
 imposed: an adapted feature below its average already acts as inhibition), k-WTA keeps the k strongest, rate
 tanh(h) of the winners.
 
-    uv run python scripts/probes/pallium_sep.py [sim ...]        default 0.8 0.5"""
+XOR looks (argument xor<sim>): four types sim * gooseberry + sqrt(1 - sim^2) * (+-a +-b) / sqrt(2) on two random
+colour directions a, b; the poisons are ++ and --, the good types +- and -+. No linear read-out of the look can
+avoid both poisons without avoiding the good types too; a non-linear code can.
+Second number per cell (both designs): after one lesson on each of two poison types, the aversion to a good type
+relative to the aversion to a poison type (0 = perfect, 1 = no discrimination, < 0 = good types look safer).
+
+    uv run python scripts/probes/pallium_sep.py [sim | xor<sim> ...]        default 0.8 0.5"""
 import sys
 import numpy as np
 from life.experiments import stages as S
 
 K = S.APPEARANCE
-SIMS = [float(a) for a in sys.argv[1:]] or [S.NOVEL_SIM, 0.5]
 LIVES, NETS = 200, 8
 base, rest = S.colour_basis(S.BUSH, K)
 rng = np.random.default_rng(0)
 
 
-def looks(sim, n=4):
-    u = rng.normal(size=(n, K - 1)); u /= np.linalg.norm(u, axis=1, keepdims=True)
+def looks(sim, n=4, xor=False):
+    """Rows 0, 1 poison, 2, 3 good."""
+    if xor:
+        q, _ = np.linalg.qr(rng.normal(size=(K - 1, 2)))
+        u = np.array([[1, 1], [-1, -1], [1, -1], [-1, 1]]) @ q.T / np.sqrt(2)
+    else:
+        u = rng.normal(size=(n, K - 1)); u /= np.linalg.norm(u, axis=1, keepdims=True)
     return sim * base + np.sqrt(1 - sim ** 2) * (u @ rest)
 
 
@@ -49,21 +59,25 @@ def transfer(c):
     return t[~np.eye(len(c), dtype=bool)].mean()
 
 
+def discrimination(c):
+    """Lessons on types 0 and 1 (poison): aversion to the good types 2, 3 relative to that to the poisons."""
+    r = c @ (c[0] + c[1])
+    return r[2:].mean() / max(r[:2].mean(), 1e-9)
+
+
 INPUTS = {"raw": 0.0, "adapted 0.5": 0.5, "adapted 1": 1.0}
 NETWORKS = [("look itself", None)] + [(f"N={n:3d} fan={f} k={k:2d}", (n, f, k))
                                        for n in (32, 64, 128) for f in (2, 3, 4) for k in (n // 16, n // 8, n // 4)]
-for sim in SIMS:
-    lv = [looks(sim) for _ in range(LIVES)]
-    print(f"\nnovel similarity {sim}: transfer of a lesson to another novel type (mean over {LIVES} lives"
+for arg in sys.argv[1:] or ["0.8", "0.5"]:
+    xor = arg.startswith("xor"); sim = float(arg[3:] if xor else arg)
+    lv = [looks(sim, xor=xor) for _ in range(LIVES)]
+    print(f"\n{'XOR looks' if xor else 'novel'} similarity {sim}: transfer / discrimination (mean over {LIVES} lives"
           f"{f', {NETS} random pallia' if NETS else ''})")
-    print(f"  {'':24s}" + "".join(f"{nm:>13s}" for nm in INPUTS))
+    print(f"  {'':24s}" + "".join(f"{nm:>15s}" for nm in INPUTS))
     for name, spec in NETWORKS:
         row = []
         for a in INPUTS.values():
             xs = [x - a * x.mean(0) for x in lv]
-            if spec is None:
-                row.append(np.mean([transfer(x) for x in xs]))
-            else:
-                codes = [pallium(*spec) for _ in range(NETS)]
-                row.append(np.mean([transfer(cd(x)) for cd in codes for x in xs[:LIVES // 4]]))
-        print(f"  {name:24s}" + "".join(f"{v:13.2f}" for v in row))
+            cs = [x for x in xs] if spec is None else [cd(x) for cd in [pallium(*spec) for _ in range(NETS)] for x in xs[:LIVES // 4]]
+            row.append((np.mean([transfer(c) for c in cs]), np.mean([discrimination(c) for c in cs])))
+        print(f"  {name:24s}" + "".join(f"{a:8.2f} /{b:5.2f}" for a, b in row))

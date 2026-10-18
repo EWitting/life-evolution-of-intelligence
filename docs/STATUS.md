@@ -81,7 +81,12 @@ remapping the stored populations and freezing again.
    one life per genome is the largest noise (genomes in one world spread by about 600 around a mean of about 850,
    four times the spread between worlds), so consider more siblings per genome or more genomes now that the GPU
    makes it cheap (1024 animals in 512 x 512: 1.4 s per 1000 ticks); keep three seeds (seeds differ more than one
-   comparison's error). Raise `life.book export --worlds` accordingly. Confirmed after the fix (v51): 16 paired worlds resolve 8-13%.
+   comparison's error). Raise `life.book export --worlds` accordingly. Confirmed after the fix (v51): 16 paired worlds resolve 8-13%. Repeatability (`scripts/probes/repeatability.py`, final
+   2.2 populations of seed 0, 8 worlds): a genome's score from its 4 siblings correlates 0.05 (main) / 0.14 (control)
+   between worlds; one life 0.01 / 0.04: at the end of a run selection acts almost only on luck. `siblings` splits
+   the fixed 256 animals (more siblings = fewer genomes, not more lives); more lives per genome come from
+   `evolution.episodes` (independent worlds, already vmapped, unused at 1) or a larger world. GPU cost: 4x the
+   animals about 2.3x the time, 8x about 3.4x. Candidate for the next stage: episodes 4 (16 lives per genome).
    **Runs: use the GPU** (`docs/SETUP.md`): `wsl.exe -d Ubuntu-24.04 -- bash -lc 'cd /mnt/c/.../Life && bash
    scripts/gpu_queue.sh <job file> 3'` (job file lines: `<log name>|<stage arguments>`), logs in `runs/logs/`;
    book export and probes the same way with `XLA_PYTHON_CLIENT_PREALLOCATE=false ~/.venvs/life/bin/python ...`.

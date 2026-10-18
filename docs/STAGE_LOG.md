@@ -2773,3 +2773,9 @@ next (sd about 0.85 of its mean). A larger pallium is not worth its cost.
 
 Also: runs take turns for the recording at the end (`life.run.recording_lock`, a lock file per OS); three runs at
 a time on the GPU again.
+
+**Repeatability** (`repeatability.py`, seed 0, 8 worlds): sd between genomes in one world 591 (main) / 574 (control),
+of the genome means over 8 worlds 246 / 290. Correlation of the genome scores (4 siblings) between worlds 0.05 /
+0.14, one life 0.01 / 0.04 (Spearman-Brown); 32 lives would reach 0.29 / 0.57. In a converged population genetic
+differences are small, so most of the spread is luck. `siblings` divides the fixed 256 animals into genomes;
+`episodes` (parallel worlds, vmapped) adds lives per genome at about 2.3x the time for 4x (GPU benchmark v49).

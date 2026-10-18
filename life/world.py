@@ -183,20 +183,23 @@ def step_world(cfg: WorldConfig, rules: RuleArrays, state: WorldState, actions: 
     inb = ((front >= 0) & (front <= bounds)).all(axis=1)
     fc = jnp.clip(front, 0, bounds)
 
-    # --- USE on the faced cell (sequential over agents, ADR-003) ---
+    # --- USE on the faced cell (in order of agent index, ADR-003) ---
     # The agents act in order of their index, and one that faces the same cell as an earlier one sees what that
-    # one left. The loop carries the faced cells only (one slot per cell: the slot of the first agent facing it),
-    # not the map: with the three maps in the carry every agent's turn copied them, which made a tick cost
-    # agents x cells and was most of the simulation time at 256 animals.
+    # one left. Only agents on the same cell interact, so the agents act in rounds: in round r every agent that is
+    # the r-th to use its cell, all cells at once (usually one to three rounds, not one step per agent; on a GPU the
+    # step per agent was most of the time). The loop carries the faced cells only (one slot per cell: the slot of
+    # the first agent facing it), not the map.
     cell = fc[:, 0] * W + fc[:, 1]
     slot = jnp.argmax(cell[None, :] == cell[:, None], axis=1)
     fy, fx = fc[:, 0], fc[:, 1]
 
-    def use_one(carry, i):
+    def use_round(carry, r):
+        """Every agent of rank r (the r-th agent, by index, that uses a cell) acts at once; there is at most one per
+        cell, so the order within a cell is the sequential one and cells do not interact."""
         cobj, cuses, ctimer, held = carry
-        s = slot[i]
-        do = (actions[i] == A.USE) & inb[i]
-        h, t, u = held[i], cobj[s], cuses[s]
+        s = slot
+        do = use & (rank == r)
+        h, t, u = held, cobj[s], cuses[s]
         ti = rules.use_table[h, t]
         li = rules.last_use_table[h, t]
         has = ti >= 0
@@ -215,13 +218,18 @@ def step_world(cfg: WorldConfig, rules: RuleArrays, state: WorldState, actions: 
         new_uses = jnp.where(changed, rules.num_uses[nt], u_after)
         new_timer = jnp.where(changed, rules.decay_ticks[nt], ctimer[s])
         na = jnp.where(do, na, h)
-        nt = jnp.where(do, nt, t)
-        new_uses = jnp.where(do, new_uses, u)
-        new_timer = jnp.where(do, new_timer, ctimer[s])
-        return (cobj.at[s].set(nt), cuses.at[s].set(new_uses), ctimer.at[s].set(new_timer), held.at[i].set(na)), None
+        dst = jnp.where(do, s, N)           # agents not acting this round write to a slot past the end (dropped)
+        return (cobj.at[dst].set(nt, mode="drop"), cuses.at[dst].set(new_uses, mode="drop"),
+                ctimer.at[dst].set(new_timer, mode="drop"), na)
 
-    (cobj, cuses, ctimer, held), _ = lax.scan(
-        use_one, (grid0[fy, fx], uses0[fy, fx], timer[fy, fx], state.held), jnp.arange(N))
+    use = (actions == A.USE) & inb
+    # rank of an acting agent among the acting agents that face the same cell and come before it
+    same = (cell[None, :] == cell[:, None]) & use[None, :] & use[:, None]
+    rank = jnp.sum(jnp.tril(same, k=-1), axis=1)
+    carry = (grid0[fy, fx], uses0[fy, fx], timer[fy, fx], state.held)
+    _, (cobj, cuses, ctimer, held) = lax.while_loop(
+        lambda c: c[0] <= jnp.max(jnp.where(use, rank, -1)),
+        lambda c: (c[0] + 1, use_round(c[1], c[0])), (jnp.int32(0), carry))
     # every agent writes its cell's final state back (agents sharing a cell write the same values)
     grid = grid0.at[fy, fx].set(cobj[slot])
     uses = uses0.at[fy, fx].set(cuses[slot])

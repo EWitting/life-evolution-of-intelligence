@@ -2441,3 +2441,41 @@ Every new circuit is used in every seed; main is ahead of control in two seeds a
 own worlds, slightly ahead in shared ones). Learning is unused but kept (no rate near 0), as agreed: the pallium
 stage is to make it pay. Chapter 1 frozen again (tag `chapter-1-v2`); the book page of affect rewritten, "Preparing
 the ground" removed.
+
+## v46 (2026-10-18): before the pallium, what is there to learn and does an expansion separate the looks?
+
+On the frozen 1.8 population (seed 0) in its own world:
+
+- **What there is to learn** (`lessons.py`, learning off, two lives): lifetime 1964 of 4000; 23.9 good visits (7.6
+  bites each) and 15.4 poison visits (1.3 bites) per life; 17.2 of 19.0 poison bites come after the first of their
+  type: a perfect learner would save 34.5 food units, **9% of intake**.
+- **Bites on a full stomach** (`supply.py 1.8`): **71%** of bites land on a stomach over 90% full; edible bushes are
+  75-80% full from mid-life on (no shortage of food).
+- **Separation, brain-free** (`pallium_sep.py`, looks as the world draws them, one eye column; transfer = the
+  aversion a lesson on one novel type leaves on another, relative to itself):
+
+  | input to the learned synapses | look itself | best random pallium (N 32-128, fan 2-4, k-WTA) |
+  |---|---|---|
+  | raw look, similarity 0.8 | 0.64 | 0.35-0.45 |
+  | look minus half the mean of the four types | 0.22 | 0.16-0.18 |
+  | look minus the mean (ideal habituation) | -0.33 | 0.05 |
+
+  A sparse code is non-negative, so it cannot say "less like the poison than the average": once the look is
+  centred, the plain linear read-out separates better than any expansion.
+- **Separation on real lives** (`pallium_real.py`, two recorded lives, learning as evolved; overlap of the look
+  inputs, all five eye columns, at a poison bite with those at every later bite of the same animal, relative to
+  itself):
+
+  | | same poison | other poison | good | good / same |
+  |---|---|---|---|---|
+  | adapted look (as the synapses see it) | 0.31 | 0.16 | 0.08 | **0.24** |
+  | pallium on the adapted look (4 settings) | 0.39-0.43 | 0.21-0.29 | 0.18-0.24 | 0.46-0.58 |
+  | look before adaptation (reconstructed) | 0.64 | 0.51 | 0.40 | 0.63 |
+  | pallium on the look before adaptation | 0.62-0.67 | 0.43-0.49 | 0.27-0.41 | 0.43-0.63 |
+
+  Habituation already does what the pallium was planned for, and better: a lesson lands on good food at a quarter
+  of its strength on the poison itself. A random expansion on top of it doubles the spreading. What limits a
+  lesson here is rather that **the same poison looks different from bite to bite** (overlap 0.31): the adapted look
+  depends on what the animal has been looking at (in a patch 70% of one type, the local type fades).
+- Open: whether the gain of learning at novel similarity 0.5 (v44) comes from less spreading or from a more
+  consistent adapted look; the pallium as planned (ADR-025) has no job in this world as it stands.

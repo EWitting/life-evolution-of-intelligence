@@ -2600,3 +2600,13 @@ At 0.6 no learning is used; a costlier poison makes poison rarer (about 4 berrie
 it is more good food late in life (25.3 against 22.6) and longer lives. Inside a life at 0.6 (`pallium_life.py`):
 at bites the pallium's 4 winners fire at 0.62 for poison and good alike; with nothing ahead about 3 cells stay
 weakly active (0.23), the k-WTA baseline.
+
+More paired variants (same population and test): XOR 0.5 with patches 40% their own type: all on 818, pallium off
+-26 +-16, look off -42 +-25, all off -53 +-26 (more poison: 6.1 in the first half); XOR 0.4: all on 912, pallium off
+-31 +-18, look off -16 +-10, all off -36 +-18. Poison bites hardly change with learning in any of them.
+
+**Is the k-WTA needed?** (brain-free, XOR, 128 cells, all 8 features; discrimination unadapted / half adapted at 0.5):
+k-WTA 4 0.20 / 0.10; no k-WTA (rectified tanh, 64 cells active) 0.87 / 0.82; a fixed threshold 1.5 0.25 / 0.09 (6-9
+cells), 2.0 0.13 / 0.02 (1-3 cells). Sparseness is what separates; a threshold does it as well when it gives as few
+cells, but its sparseness follows the strength of the input. k-WTA stays (a stand-in for global feedback
+inhibition, the APL neuron of the mushroom body).

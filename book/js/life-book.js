@@ -320,6 +320,27 @@
     s += '</svg>';
     const anyNew = REG.some(r => r.new);
     root.innerHTML = s + `<div class="lb-legend lb-brainlegend"><span><i class="lb-key lb-hardkey"></i>hard-wired (designed; evolution tunes only the strength)</span><span><i class="lb-key lb-evokey"></i>evolved</span>${PROJ.some(p => p.rule !== 'fixed') ? '<span><i class="lb-key lb-learnkey"></i>learned within a life</span>' : ''}<span>▸ excites</span><span>⊣ inhibits</span><span>● senses, mixed signs</span>${MODS.length ? '<span><i class="lb-key lb-modkey"></i>modulator: released by one cell, acts on a cell or on the learning of a projection</span>' : ''}${anyNew ? '<span><i class="lb-key lb-newkey"></i>added in this stage</span>' : ''}<span class="lb-muted">line width = total synaptic strength arriving at one target neuron, mean of the final population</span></div>`;
+    // "new circuit": only what this stage added and what it connects to directly: new projections, projections into
+    // or out of a new region, and the modulator lines of a new modulator or of a new region; a modulator line onto a
+    // projection brings that projection along. Regions stay in place; the ones none of it touches are faded.
+    const newReg = new Set(REG.filter(r => r.new).map(r => r.name));
+    const showP = new Set(PROJ.map((p, i) => p.new || newReg.has(p.src) || newReg.has(p.dst) ? i : -1).filter(i => i >= 0));
+    const showM = new Set(MODS.map((l, i) => l.m.new || newReg.has(l.src) || newReg.has(l.dst) || (l.proj && showP.has(PROJ.indexOf(l.proj))) ? i : -1).filter(i => i >= 0));
+    for (const i of showM) if (MODS[i].proj) showP.add(PROJ.indexOf(MODS[i].proj));
+    if (showP.size || showM.size) {
+      const used = new Set(newReg);
+      for (const i of showP) used.add(PROJ[i].src).add(PROJ[i].dst);
+      for (const i of showM) { used.add(MODS[i].src); if (MODS[i].dst) used.add(MODS[i].dst); }
+      root.querySelectorAll('.lb-edge').forEach(g => g.classList.toggle('lb-ctx', !showP.has(+g.dataset.p)));
+      root.querySelectorAll('.lb-mod').forEach(g => g.classList.toggle('lb-ctx', !showM.has(+g.dataset.m)));
+      root.querySelectorAll('.lb-reg').forEach(g => g.classList.toggle('lb-ctx', !used.has(g.dataset.r)));
+      const svg = root.querySelector('.lb-brain'), bar = el('div', 'lb-focusbar', '<span class="lb-muted">Show</span>'
+        + '<button type="button" data-f="1" title="only what this stage added and what it connects to directly">new circuit</button>'
+        + '<button type="button" data-f="0" title="every region and connection of this brain">everything</button>');
+      const set = on => { svg.classList.toggle('lb-focus', on); bar.querySelectorAll('button').forEach(b => b.classList.toggle('lb-on', (b.dataset.f === '1') === on)); };
+      bar.addEventListener('click', e => { if (e.target.dataset.f) set(e.target.dataset.f === '1'); });
+      root.insertBefore(bar, svg); set(true);
+    }
     const sel = p => p.src_select.length ? ` [${p.src_select.join(', ')}]` : '';
     root.querySelectorAll('.lb-edge').forEach(g => {
       const p = PROJ[+g.dataset.p];

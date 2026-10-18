@@ -85,6 +85,12 @@
 .lb-regname { font-size: 12.5px; fill: var(--lb-ink); font-weight: 600; }
 .lb-regsub { font-size: 10px; fill: var(--lb-ink2); }
 .lb-group { fill: rgba(120, 130, 150, 0.06); stroke: var(--lb-axis); stroke-dasharray: 4 3; }
+/* "new circuit" view: other connections hidden, regions they alone touch faded */
+.lb-focusbar { display: flex; align-items: center; gap: 6px; margin: 0 0 4px; font-size: 0.82rem; }
+.lb-focusbar button { font: inherit; padding: 1px 9px; border: 1px solid var(--lb-axis); border-radius: 999px; background: transparent; color: var(--lb-ink2); cursor: pointer; }
+.lb-focusbar button.lb-on { background: var(--lb-ink2); color: var(--lb-surface); border-color: var(--lb-ink2); }
+.lb-brain.lb-focus .lb-edge.lb-ctx, .lb-brain.lb-focus .lb-mod.lb-ctx { display: none; }
+.lb-brain.lb-focus .lb-reg.lb-ctx { opacity: 0.4; }
 /* the colour of a region and of its top-level group's box: the group's hue (--h, set per element) */
 .lb-brain .lb-cell { fill: hsl(var(--h) 55% 90%); }
 .lb-brain .lb-gtop { fill: hsl(var(--h) 50% 75% / 0.16); stroke: hsl(var(--h) 35% 55%); }

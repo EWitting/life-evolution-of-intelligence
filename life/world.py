@@ -56,7 +56,14 @@ def init_world(cfg: WorldConfig, rules: RuleArrays, key: jax.Array) -> WorldStat
         k1 = kc[0]
         cen = jax.random.randint(kc[1], (cfg.patches, 2), 0, jnp.array([H, W]))
         yy, xx = jnp.meshgrid(jnp.arange(H), jnp.arange(W), indexing="ij")
-        d2 = ((yy[None] - cen[:, 0, None, None]) ** 2 + (xx[None] - cen[:, 1, None, None]) ** 2).min(axis=0)
+
+        def nearest_step(c, k):   # running minimum over the patches: one map in memory instead of one per patch
+            d = (yy - cen[k, 0]) ** 2 + (xx - cen[k, 1]) ** 2
+            closer = d < c[0]     # strictly: on a tie the first patch stays, as argmin would choose
+            return (jnp.where(closer, d, c[0]), jnp.where(closer, k, c[1])), None
+
+        (d2, nearest), _ = lax.scan(nearest_step, (jnp.full((H, W), jnp.iinfo(jnp.int32).max, jnp.int32),
+                                                   jnp.zeros((H, W), jnp.int32)), jnp.arange(cfg.patches))
         inside = d2 <= cfg.patch_radius ** 2
         density = jnp.where(inside, cfg.spawn_density * H * W / jnp.maximum(inside.sum(), 1), 0.0)
     place = (jax.random.uniform(k1, (H, W)) < density) & (total > 0)
@@ -70,7 +77,6 @@ def init_world(cfg: WorldConfig, rules: RuleArrays, key: jax.Array) -> WorldStat
         we = w - wc
         cdf = jnp.cumsum(wc) / jnp.maximum(wc.sum(), 1e-9)
         patch_type = jnp.searchsorted(cdf, (jnp.arange(cfg.patches) + 0.5) / cfg.patches)
-        nearest = ((yy[None] - cen[:, 0, None, None]) ** 2 + (xx[None] - cen[:, 1, None, None]) ** 2).argmin(axis=0)
         own = patch_type[nearest]
         if cfg.patch_purity < 1.0:   # mostly one kind: the rest of a patch is drawn from all types
             k10, k11 = jax.random.split(jax.random.fold_in(key, 10))

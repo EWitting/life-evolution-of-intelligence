@@ -85,6 +85,11 @@
 .lb-regname { font-size: 12.5px; fill: var(--lb-ink); font-weight: 600; }
 .lb-regsub { font-size: 10px; fill: var(--lb-ink2); }
 .lb-group { fill: rgba(120, 130, 150, 0.06); stroke: var(--lb-axis); stroke-dasharray: 4 3; }
+/* the colour of a region and of its top-level group's box: the group's hue (--h, set per element) */
+.lb-brain .lb-cell { fill: hsl(var(--h) 55% 90%); }
+.lb-brain .lb-gtop { fill: hsl(var(--h) 50% 75% / 0.16); stroke: hsl(var(--h) 35% 55%); }
+.quarto-dark .lb-brain .lb-cell { fill: hsl(var(--h) 28% 21%); }
+.quarto-dark .lb-brain .lb-gtop { fill: hsl(var(--h) 35% 40% / 0.14); stroke: hsl(var(--h) 25% 42%); }
 .lb-grouplabel { font-size: 10px; fill: var(--lb-ink2); paint-order: stroke; stroke: var(--lb-surface); stroke-width: 4px; }
 .lb-hard { stroke: var(--lb-hard); } .lb-hard-fill { fill: var(--lb-hard); }
 .lb-evolved { stroke: var(--lb-evolved); } .lb-evolved-fill { fill: var(--lb-evolved); }

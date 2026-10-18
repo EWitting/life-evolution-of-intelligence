@@ -8,7 +8,8 @@ const html = fs.readFileSync(process.argv[2], 'utf8');
 const page = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]).sort((a, b) => b.length - a.length)[0];
 const end = page.lastIndexOf('}');
 const checks = `
-; setTick(Math.floor(T/2)); setFocus(1);
+; if (!AR.view || !svg.innerHTML) throw new Error('architecture not drawn at startup');
+setTick(Math.floor(T/2)); setFocus(1);
 for (const m of ['w', 'dw', 'w0', 'eta']) { document.getElementById('wmode').value = m; for (const p of Object.keys(DRAW)) DRAW[p](); }   // every panel, each weight mode
 if (M.book_layout) { bookLayout(); renderArch(); }
 console.log('ok', {T, N, NN, NIN, focus, t, book_layout: M.book_layout ? M.book_layout.stage : null, calls: Object.keys(calls).length, fillRect: calls.fillRect, putImageData: calls.putImageData});

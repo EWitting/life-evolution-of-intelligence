@@ -2631,3 +2631,15 @@ inhibition, the APL neuron of the mushroom body).
   pallium, whose lessons are specific but start 1.3 below threshold. A race between lesson strength and an
   inherited offset, which evolution tips one way or the other: why a small change of the world decides whether
   learning is used.
+
+**The rule genes.** The learned projections' rule genes evolved: pallium -> aversive A -0.85, B 0.86 (design 0, 1),
+look -> aversive A -0.17 (control -0.40); in 1.8 the look rule had stayed at A +0.01. The pain itself drives the
+aversive cells at a lesson (post near 1), so (A post + B) pre is about 0: lessons nulled. Not a flaw of the genetic
+algorithm (it happened in main and control, and not in 1.8): selection for 'learn only while not already averse'
+where lessons cost more than they save. With the rule reset to the design (`RULE_RESET=1`, look learning off), the
+pallium's drive onto the aversive cells at encounters rises with lessons for the learned poison 0.53 -> 2.09 (5+)
+and for good bushes 0.35 -> 0.93: specific, but with a spread that costs good food (good bushes bitten 0.64 -> 0.47).
+User (2026-10-18): do not switch evolution off where it turns a feature down; fix the reason it does (start values
+and genuine flaws of the genetic algorithm may be changed). So: evolve at 0.5, where learning paid (paired test),
+and find what makes lessons spread. The 0.5 main run (stopped at generation 65 for a change that was reverted) was
+restarted; seed 1 runs alongside.

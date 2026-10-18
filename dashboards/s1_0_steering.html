@@ -1251,7 +1251,8 @@ if (M.book_layout) {
   $('archReset').before(a, ' · ');
   a.addEventListener('click', e => { e.preventDefault(); bookLayout(); savePos(); renderArch(); archFit(); });
 }
-autoLayout(); if (M.book_layout) bookLayout(); loadPos(); updateStats();   // first visit: the book's layout renderArch(); renderArchDetail(); archFit(true);
+autoLayout(); if (M.book_layout) bookLayout();   // first visit: the book's layout
+loadPos(); updateStats(); renderArch(); renderArchDetail(); archFit(true);
 new ResizeObserver(() => { if (AR.view) setView(); }).observe($('archWrap'));
 
 // ---------- layout of the canvases ----------

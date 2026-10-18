@@ -744,5 +744,30 @@ def after_a_bite(s, main: list[Path], control: list[Path]):
                             "rows": [[label, _stat([x[k] for x in m])] + ([_stat([x[k] for x in c])] if c else []) for label, k in rows],
                             "caption": "From the recording of the last generation of every seed (a sample of 64 animals each)."}
 
+@extra("2.2")
+def xor_lab(s, main: list[Path], control: list[Path]):
+    """The lab experiment of the pallium stage (life.labtests.xor_meals): the evolved animals of every main seed eat
+    two rounds of meals of four novel bushes whose looks cannot be told apart by a weighted sum (poison ++ and --,
+    good +- and -+), then are shown each bush; chance of a bite, with the pallium's and the look's learning on/off."""
+    from .experiments import stages as S
+    from .labtests import xor_meals, XOR_TYPES
+    from .run import load_population
+    pal, look = "pallium->valence_av", "in->valence_av[vis*.app*]"
+    conds = {"Before the meals": [], "Pallium and look learn": [], "Only the pallium learns": [look],
+             "Only the look learns": [pal], "Neither learns": [look, pal]}
+    per = {c: ([], []) for c in conds}
+    for run in main:
+        exp = S.make_exp(s, s.brain, "book", 1, 0)
+        res = xor_meals(exp, load_population(run, exp), S.PALLIUM_SIM, conds)
+        for c in conds:
+            when = "before" if c == "Before the meals" else "after"
+            for j, kind in enumerate(("poison", "good")):
+                per[c][j].append(float(np.mean([np.mean(res[(c, when, t)], 0)[1] for t in XOR_TYPES if t.startswith(kind)])))
+    return "xor_lab", {"columns": ["Chance of a bite when shown the bush", "poison bush", "good bush"],
+                       "rows": [[c, _stat(per[c][0]), _stat(per[c][1])] for c in conds],
+                       "caption": "Lab test on 24 animals of the last generation of every seed: two rounds of meals of each "
+                                  "of four new bushes (two poison), then each bush shown with nothing learned since."}
+
+
 if __name__ == "__main__":
     main()

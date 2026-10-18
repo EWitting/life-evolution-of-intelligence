@@ -1,0 +1,112 @@
+# Pallium: telling look-alikes apart {#sec-pallium}
+
+<div data-life="status" data-stage="2.2"></div>
+
+Since the association stage the animal learns from pain which bushes to avoid. It learns that on the look of a
+bush, a handful of colour features, by strengthening the synapses from those features onto its aversive cells.
+That works as long as poison and good food differ in some feature, or in some weighted mix of features. It fails
+when what makes a bush poison is a *combination*. Here a bush is poison when its two colour features are both high
+or both low, and good when one is high and the other low. No weighting of the features can tell the two kinds
+apart: whatever a lesson teaches about one poison, it teaches the opposite about the other.
+
+This stage adds a new region in front of the learning, the **pallium**. It spreads the look of the bush ahead out
+over many cells, few of them active at a time, so that every kind of bush gets cells of its own. A lesson then
+lands on the cells of the bush that was eaten, and not on its look-alikes.
+
+<div data-life="brain" data-stage="2.2"></div>
+
+## The circuit
+
+- **`pallium`**, 128 cells. Each reads the colour features of the eye that points straight ahead, through
+  synapses with random strengths. The wiring is random and evolution does not shape it: what matters is that it
+  is different for every cell, not what it is.
+- **Few cells at a time.** Of the 128 cells only the two that receive the most input fire; the others are held
+  silent. The brain does this with inhibitory cells that every active cell excites; the model takes the shortcut
+  and keeps the strongest two (*k-winners-take-all*). Because so few cells fire, two kinds of bush that share most
+  of their look still share almost none of their active cells.
+- **The lesson.** Pain teaches the synapses from the pallium onto the aversive cells, by the same rule that has
+  taught the synapses from the look since the association stage: what was active just before the pain is
+  strengthened. The old route stays: the look itself still learns as before. Evolution sets how fast each route
+  learns.
+
+Only the eye ahead feeds the pallium. At a bite the side eyes see the neighbouring bushes, and whatever they see
+would be taught as well. An animal turns to a bush before it bites it, so the eye ahead sees the one that counts.
+
+From this stage on, how strongly the look inputs adapt (the habituation of chapter 1) is set by evolution too.
+
+## The biology: the oldest cortex
+
+The *pallium* is the roof of the forebrain of all vertebrates; in mammals most of it became the cerebral cortex.
+Its oldest part is olfactory: the piriform cortex, where every cell receives input from a random handful of the
+smell channels, and only a few percent of the cells respond to any one smell. Insects arrived at the same design
+on their own, in the *mushroom body*: about fifty smell channels fan out onto thousands of Kenyon cells, of which a
+few percent fire, held down by a single inhibitory cell that all of them excite. Such a random, sparse expansion
+separates inputs that overlap, which is why a fly can learn to avoid one smell and not its look-alike.
+
+Vision, too, identifies a thing best when it is looked at directly. A fish turns to its prey before it strikes;
+many fish have a patch of the retina with denser cells for this. The eye ahead of this model stands for that.
+
+That the first vertebrate pallium did this job for vision is a guess of the model; that it began as such a sensory
+association region is not.
+
+## The world: kinds that only a combination tells apart
+
+The world of the affect stage, with one change: the four new kinds of bush in every life now have looks that lie
+on the corners of a square. Two colour directions are drawn for every life; one poison is high in both, the other
+low in both, and the two good kinds are high in one and low in the other. Which kinds are poison is drawn anew in
+every life as well. The new kinds are also less alike than before, which makes up for the harder task.
+
+<div data-life="settings" data-stage="2.2"></div>
+
+## Results
+
+How to read the table and the charts: see [How a stage is judged](index.qmd#sec-judged).
+
+### Main against control
+
+The control is the brain of the affect stage in this world: it learns from pain on the look alone.
+
+<div data-life="curves" data-stage="2.2"></div>
+
+<div data-life="summary" data-stage="2.2"></div>
+
+When both populations live in one world together, the animals with a pallium come out ahead in every seed.
+Re-evaluated apart, each among its own kind, they are ahead in two seeds of three. Over the generations of evolution
+itself the two populations run about level.
+
+### Is the circuit used?
+
+<div data-life="lesions" data-stage="2.2"></div>
+
+In one seed of three the pallium is used. There it carries all of the learning: switching learning off costs as
+much as silencing the pallium, and the look's own learning has been turned down. In the other two seeds neither the
+pallium nor learning as a whole costs anything in the world. The states of the affect stage are still used in every
+seed.
+
+What holds the lessons back in the world is not the pallium's code. Followed through a life, the cells that fire at
+a bush the animal has learned about are mostly the cells that fired at its lesson, and hardly ever those of the
+other kinds. But two things stand in the way.
+
+- **A lesson saves little.** Pain already ends a visit to a poison bush after a bite or two, and the alarm of the
+  affect stage carries the animal off after a few. What knowing the poison by its look can still save is the first
+  bite at the next bush of that kind.
+- **Evolution damps aversion close up.** In every population, evolution has given the inputs that see a bush right
+  ahead synapses that hold the aversive cells down: approach what is in front of you. A lesson has to overcome that before it can stop a
+  bite. Where the lessons cost more good food than they save, evolution damps them further, and it can do so through
+  the learning rule itself, by making a lesson undo itself or erase the ones before.
+
+### In the lab
+
+One animal at a time, outside the world: it eats from four new bushes, two of each kind, twice, and is then shown
+each bush again.
+
+<div data-life="table" data-stage="2.2" data-example="xor_lab"></div>
+
+Learning on the look alone lowers the bites at all four bushes alike: it cannot tell the kinds apart, so it makes the
+animal shy of all of them. Learning through the pallium lowers the bites at the poison bushes and leaves the good
+ones alone, clearly in two seeds. In the third, evolution has turned the pallium's learning down. What the pallium
+does is what this stage set out to add; whether this world rewards it enough to keep it is the open point.
+
+## The runs behind this page
+
+<div data-life="runs" data-stage="2.2"></div>

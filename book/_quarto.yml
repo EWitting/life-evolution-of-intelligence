@@ -20,6 +20,9 @@ book:
         - 1-5-association.qmd
         - drives.qmd
         - affect.qmd
+    - part: "Chapter 2: reinforcing"
+      chapters:
+        - pallium.qmd
 
 format:
   html:

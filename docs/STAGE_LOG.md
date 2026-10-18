@@ -2610,3 +2610,24 @@ k-WTA 4 0.20 / 0.10; no k-WTA (rectified tanh, 64 cells active) 0.87 / 0.82; a f
 cells), 2.0 0.13 / 0.02 (1-3 cells). Sparseness is what separates; a threshold does it as well when it gives as few
 cells, but its sparseness follows the strength of the input. k-WTA stays (a stand-in for global feedback
 inhibition, the APL neuron of the mushroom body).
+
+**Why lessons do not cut poison bites** (seed-0 population of 2.2 at 0.6, tested at 0.5; `lesson_curve.py`,
+`lesson_code.py`, one recorded life):
+
+- P(bite) at a poison bush hardly falls with lessons of its type (0 / 1 / 2 / 3-4 / 5+: 0.40 0.37 0.44 0.47 0.34,
+  all learning off 0.37 0.50 0.49 0.39 0.48); pallium learning alone (look off) changes nothing; look learning lowers
+  bites on good bushes as much as on poison (5+ lessons: good 0.47 with it, 0.55-0.57 without). The lasting alarm
+  confounds counts: even with learning off, a poison not yet learned is bitten less as lessons of the other type
+  grow (0.44 -> 0.11).
+- The pallium code separates in real lives: of an encounter's active pallium cells, 62% were active at an earlier
+  lesson on the same poison, 1% for the other poison, 9% for a good type.
+- Its drive onto the aversive cells rises only for the learned poison (0 -> 5+ lessons: 0.37 -> 0.66; good bushes
+  0.31 -> 0.29), but the cells sit far below threshold when a bush is ahead: total input -0.92 (poison, no lesson)
+  to -0.04 (5+), bias -0.37. The negative part is inherited: `vis*.hit` / `vis*.near` -> aversive weights (sum
+  -0.69 in 1.8, -1.10 in 2.2 main, -1.23 in 2.2 control): 'do not be averse to what is in front of you'. Look
+  learning gains more drive than the pallium (+0.15 -> +0.73) but on everything.
+- Reading: in XOR worlds look learning spreads to all novel bushes; evolution answers in both populations by turning
+  aversion down whenever a bush is ahead (and the look rate down, 0.23 -> 0.10). In main the same offset mutes the
+  pallium, whose lessons are specific but start 1.3 below threshold. A race between lesson strength and an
+  inherited offset, which evolution tips one way or the other: why a small change of the world decides whether
+  learning is used.

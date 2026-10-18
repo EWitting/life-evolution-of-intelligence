@@ -44,6 +44,9 @@ class BrainState(NamedTuple):
     u: jnp.ndarray     # [N, N] short-term depression resource in [0, 1] (1 = fully recovered)
     mod: jnp.ndarray   # [M] modulator values computed at the end of the previous step
     g: jnp.ndarray     # [N] normalisation pool drive of the previous step (regions with norm_lag)
+    ws: tuple = ()     # per update phase [N, phase neurons]: the weights that never change within a life (everything
+                       # outside the plastic block), signed and without the gain part; computed once at birth
+    wg: tuple = ()     # the same for the gain part (projections with gain)
 
 
 class Layout(NamedTuple):
@@ -304,12 +307,38 @@ def genome_from_npz(f, layout: Layout) -> Genome:
     return Genome(**g)
 
 
-def init_state(genome: Genome, layout: Layout | None = None, w_max: float = 4.0) -> BrainState:
+def init_state(genome: Genome, layout: Layout, w_max: float = 4.0) -> BrainState:
     n = genome.b.shape[0]
-    m = len(layout.mod_names) if layout is not None else 0
-    return BrainState(x=jnp.zeros(n, jnp.float32), w=genome.w0 * genome.mask, tr=jnp.zeros(n, jnp.float32),
+    m = len(layout.mod_names)
+    w = genome.w0 * genome.mask
+    ws, wg = _fixed_weights(layout, w)
+    return BrainState(x=jnp.zeros(n, jnp.float32), w=w, tr=jnp.zeros(n, jnp.float32),
                       e=jnp.zeros((n, n), jnp.float32), u=jnp.ones((n, n), jnp.float32),
-                      mod=jnp.zeros(max(m, 1), jnp.float32), g=jnp.zeros(n, jnp.float32))
+                      mod=jnp.zeros(max(m, 1), jnp.float32), g=jnp.zeros(n, jnp.float32), ws=ws, wg=wg)
+
+
+def _fixed_weights(layout: Layout, w: jnp.ndarray) -> tuple:
+    """The part of the weights that stays as it is for a life: everything outside the plastic block (the block is
+    read from the state every tick). Signed, split into the additive and the gain part, and cut into the columns
+    of each update phase, so that the input neurons' columns (no synapse ends on an input) are never multiplied."""
+    assert not np.asarray(layout.allowed)[:, :layout.n_in].any(), "a projection ends on the input neurons"
+    if layout.pl_rows:
+        w = w.at[np.ix_(np.asarray(layout.pl_rows), np.asarray(layout.pl_cols))].set(0.0)
+    eff = effective(layout, w)
+    add = eff * (1.0 - layout.gain) if layout.has_gain else eff
+    ws = tuple(add[:, np.asarray(cols)] for cols in layout.phases)
+    wg = tuple((eff * layout.gain)[:, np.asarray(cols)] for cols in layout.phases) if layout.has_gain else ()
+    return ws, wg
+
+
+def _block_in_phases(layout: Layout) -> tuple:
+    """Static: per update phase, (positions in pl_cols, positions in the phase) of the plastic block's columns."""
+    out = []
+    for cols in layout.phases:
+        where = {c: i for i, c in enumerate(cols)}
+        sel = [j for j, c in enumerate(layout.pl_cols) if c in where]
+        out.append((np.asarray(sel, np.int32), np.asarray([where[layout.pl_cols[j]] for j in sel], np.int32)))
+    return tuple(out)
 
 
 def plasticity_rule(rule, A, B, C, D, w, x_pre, x_post, tr_pre, tr_post, target, centred=None):
@@ -392,13 +421,30 @@ def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, ob
         b_eta, b_mask, b_w0 = genome.eta[ix], genome.mask[ix], genome.w0[ix]
         b_A, b_B, b_C, b_D = genome.A[ix], genome.B[ix], genome.C[ix], genome.D[ix]
     h = None
+    blocks = _block_in_phases(layout) if plastic else ()
     for _ in range(cfg.steps_per_tick):
-        w_eff = effective(layout, w) * (u if layout.has_dep else 1.0)
+        if plastic:   # the plastic block as it is now (the rest of the weights is in state.ws / state.wg)
+            sR = np.asarray(layout.sign)[R][:, None]
+            eb = jnp.where(sR != 0, sR * w[ix], w[ix]) * (u[ix] if layout.has_dep else 1.0)
+            gb = np.asarray(layout.gain)[ix] if layout.has_gain else None
+            add_b = eb * (1.0 - gb) if layout.has_gain else eb
+
+        def drive(xin, pi):
+            """Input to the neurons of phase pi: additive part and (with gain) the log gain."""
+            hk = xin @ state.ws[pi]
+            lg = xin @ state.wg[pi] if layout.has_gain else 0.0
+            if plastic and len(blocks[pi][0]):
+                sel, pos = blocks[pi]
+                hk = hk.at[pos].add(xin[R] @ add_b[:, sel])
+                if layout.has_gain:
+                    lg = lg.at[pos].add(xin[R] @ (eb * gb)[:, sel])
+            return hk, lg
+
         if len(layout.phases) <= 1:   # synchronous: every neuron reads the previous tick
-            h = x @ (w_eff * (1.0 - layout.gain) if layout.has_gain else w_eff) + genome.b
-            log_gain = 0.0
-            if layout.has_gain:
-                log_gain = x @ (w_eff * layout.gain)
+            cols = np.asarray(layout.phases[0])
+            hk, lg = drive(x, 0)
+            h = genome.b.at[cols].add(hk)   # the input neurons get only their bias, as no synapse ends on them
+            log_gain = jnp.zeros_like(h).at[cols].set(lg) if layout.has_gain else 0.0
             if layout.has_receptors:   # broadcast neuromodulation via receptors of the target neurons
                 h = h + mod @ layout.rec_bias
                 log_gain = log_gain + mod @ layout.rec_gain
@@ -409,14 +455,11 @@ def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, ob
             f = _kwta(layout, jnp.maximum(jnp.tanh(h), 0.0))
             x_new = ((1.0 - layout.alpha) * x + layout.alpha * f).at[:n_in].set(obs)
         else:   # ordered: a phase reads this tick's activity of the phases before it
-            w_add = w_eff * (1.0 - layout.gain) if layout.has_gain else w_eff
             xc, h = x, jnp.zeros_like(x)
             for pi, cols in enumerate(layout.phases):
                 cols = np.asarray(cols)
-                hk = xc @ w_add[:, cols] + genome.b[cols]
-                lg = 0.0
-                if layout.has_gain:
-                    lg = xc @ (w_eff * layout.gain)[:, cols]
+                hk, lg = drive(xc, pi)
+                hk = hk + genome.b[cols]
                 if layout.has_receptors:
                     hk = hk + mod @ layout.rec_bias[:, cols]
                     lg = lg + mod @ layout.rec_gain[:, cols]
@@ -453,7 +496,7 @@ def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, ob
         action = jax.random.categorical(key, logits / cfg.action_temperature)
     else:
         action = jnp.argmax(logits)
-    return BrainState(x=x, w=w, tr=tr, e=e, u=u, mod=mod, g=g), action.astype(jnp.int32)
+    return BrainState(x=x, w=w, tr=tr, e=e, u=u, mod=mod, g=g, ws=state.ws, wg=state.wg), action.astype(jnp.int32)
 
 
 # ---------------------------------------------------------------- warm starts across layouts

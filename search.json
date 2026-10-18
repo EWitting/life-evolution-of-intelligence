@@ -74,7 +74,7 @@
     "href": "roadmap.html#chapter-2-reinforcing",
     "title": "Roadmap",
     "section": "Chapter 2: reinforcing",
-    "text": "Chapter 2: reinforcing\nThe brain of an early fish. The first vertebrates hunted in open water, and nearly all the parts of the vertebrate brain were already there. This chapter adds them in the following order.\n\nThe pallium. The first region whose wiring is not inherited at all. It spreads the look of a thing out over many cells, so that things that look alike can still be told apart. In chapter 1, what the animal learned about one food spread to the foods that resembled it.\nDopamine. A cell that fires when things turn out better than expected, and falls silent when they turn out worse. With it the animal learns what predicts food, and what predicts the thing that predicts food. It also learns to like, which chapter 1 could not do.\nHands. Until here the animal eats what it grasps. Now it can pick something up, hold it and eat it later, so that there is something to choose between.\nThe basal ganglia. The same dopamine signal teaches which action to take. This is learning by trial and error, as in a rat that learns to press a lever.\nCuriosity. New things become a little rewarding in themselves, so that the animal tries what it does not know yet.\n\nParked until these work: a map of places and the routes between them (the hippocampus), precise timing (the cerebellum), and modulators that set how fast the animal learns when its world is steady or changing.\nTwo things change in how the stages are done. The circuits are designed and tested before any evolution, and evolution then tunes them, in fewer generations than in chapter 1. And the learning stages get lab experiments: one animal in a scripted situation, as in an animal lab, to see whether it learns the way real animals do.",
+    "text": "Chapter 2: reinforcing\nThe brain of an early fish. The first vertebrates hunted in open water, and nearly all the parts of the vertebrate brain were already there. This chapter adds them in the following order.\n\nThe pallium (page). The first region whose wiring is random and not shaped by evolution. It spreads the look of a thing out over many cells, so that things that look alike can still be told apart, even when only a combination of features says which is which. In chapter 1, what the animal learned about one food spread to the foods that resembled it.\nDopamine. A cell that fires when things turn out better than expected, and falls silent when they turn out worse. With it the animal learns what predicts food, and what predicts the thing that predicts food. It also learns to like, which chapter 1 could not do.\nHands. Until here the animal eats what it grasps. Now it can pick something up, hold it and eat it later, so that there is something to choose between.\nThe basal ganglia. The same dopamine signal teaches which action to take. This is learning by trial and error, as in a rat that learns to press a lever.\nCuriosity. New things become a little rewarding in themselves, so that the animal tries what it does not know yet.\n\nParked until these work: a map of places and the routes between them (the hippocampus), precise timing (the cerebellum), and modulators that set how fast the animal learns when its world is steady or changing.\nTwo things change in how the stages are done. The circuits are designed and tested before any evolution, and evolution then tunes them, in fewer generations than in chapter 1. And the learning stages get lab experiments: one animal in a scripted situation, as in an animal lab, to see whether it learns the way real animals do.",
     "crumbs": [
       "Roadmap"
     ]
@@ -557,6 +557,72 @@
     "crumbs": [
       "Chapter 1: steering",
       "<span class='chapter-number'>6</span>  <span class='chapter-title'>Affect: states that last</span>"
+    ]
+  },
+  {
+    "objectID": "pallium.html",
+    "href": "pallium.html",
+    "title": "Pallium: telling look-alikes apart",
+    "section": "",
+    "text": "The circuit\nSince the association stage the animal learns from pain which bushes to avoid. It learns that on the look of a bush, a handful of colour features, by strengthening the synapses from those features onto its aversive cells. That works as long as poison and good food differ in some feature, or in some weighted mix of features. It fails when what makes a bush poison is a combination. Here a bush is poison when its two colour features are both high or both low, and good when one is high and the other low. No weighting of the features can tell the two kinds apart: whatever a lesson teaches about one poison, it teaches the opposite about the other.\nThis stage adds a new region in front of the learning, the pallium. It spreads the look of the bush ahead out over many cells, few of them active at a time, so that every kind of bush gets cells of its own. A lesson then lands on the cells of the bush that was eaten, and not on its look-alikes.\nOnly the eye ahead feeds the pallium. At a bite the side eyes see the neighbouring bushes, and whatever they see would be taught as well. An animal turns to a bush before it bites it, so the eye ahead sees the one that counts.\nFrom this stage on, how strongly the look inputs adapt (the habituation of chapter 1) is set by evolution too.",
+    "crumbs": [
+      "Chapter 2: reinforcing",
+      "<span class='chapter-number'>7</span>  <span class='chapter-title'>Pallium: telling look-alikes apart</span>"
+    ]
+  },
+  {
+    "objectID": "pallium.html#the-circuit",
+    "href": "pallium.html#the-circuit",
+    "title": "Pallium: telling look-alikes apart",
+    "section": "",
+    "text": "pallium, 128 cells. Each reads the colour features of the eye that points straight ahead, through synapses with random strengths. The wiring is random and evolution does not shape it: what matters is that it is different for every cell, not what it is.\nFew cells at a time. Of the 128 cells only the two that receive the most input fire; the others are held silent. The brain does this with inhibitory cells that every active cell excites; the model takes the shortcut and keeps the strongest two (k-winners-take-all). Because so few cells fire, two kinds of bush that share most of their look still share almost none of their active cells.\nThe lesson. Pain teaches the synapses from the pallium onto the aversive cells, by the same rule that has taught the synapses from the look since the association stage: what was active just before the pain is strengthened. The old route stays: the look itself still learns as before. Evolution sets how fast each route learns.",
+    "crumbs": [
+      "Chapter 2: reinforcing",
+      "<span class='chapter-number'>7</span>  <span class='chapter-title'>Pallium: telling look-alikes apart</span>"
+    ]
+  },
+  {
+    "objectID": "pallium.html#the-biology-the-oldest-cortex",
+    "href": "pallium.html#the-biology-the-oldest-cortex",
+    "title": "Pallium: telling look-alikes apart",
+    "section": "The biology: the oldest cortex",
+    "text": "The biology: the oldest cortex\nThe pallium is the roof of the forebrain of all vertebrates; in mammals most of it became the cerebral cortex. Its oldest part is olfactory: the piriform cortex, where every cell receives input from a random handful of the smell channels, and only a few percent of the cells respond to any one smell. Insects arrived at the same design on their own, in the mushroom body: about fifty smell channels fan out onto thousands of Kenyon cells, of which a few percent fire, held down by a single inhibitory cell that all of them excite. Such a random, sparse expansion separates inputs that overlap, which is why a fly can learn to avoid one smell and not its look-alike.\nVision, too, identifies a thing best when it is looked at directly. A fish turns to its prey before it strikes; many fish have a patch of the retina with denser cells for this. The eye ahead of this model stands for that.\nThat the first vertebrate pallium did this job for vision is a guess of the model; that it began as such a sensory association region is not.",
+    "crumbs": [
+      "Chapter 2: reinforcing",
+      "<span class='chapter-number'>7</span>  <span class='chapter-title'>Pallium: telling look-alikes apart</span>"
+    ]
+  },
+  {
+    "objectID": "pallium.html#the-world-kinds-that-only-a-combination-tells-apart",
+    "href": "pallium.html#the-world-kinds-that-only-a-combination-tells-apart",
+    "title": "Pallium: telling look-alikes apart",
+    "section": "The world: kinds that only a combination tells apart",
+    "text": "The world: kinds that only a combination tells apart\nThe world of the affect stage, with one change: the four new kinds of bush in every life now have looks that lie on the corners of a square. Two colour directions are drawn for every life; one poison is high in both, the other low in both, and the two good kinds are high in one and low in the other. Which kinds are poison is drawn anew in every life as well. The new kinds are also less alike than before, which makes up for the harder task.",
+    "crumbs": [
+      "Chapter 2: reinforcing",
+      "<span class='chapter-number'>7</span>  <span class='chapter-title'>Pallium: telling look-alikes apart</span>"
+    ]
+  },
+  {
+    "objectID": "pallium.html#results",
+    "href": "pallium.html#results",
+    "title": "Pallium: telling look-alikes apart",
+    "section": "Results",
+    "text": "Results\nHow to read the table and the charts: see How a stage is judged.\n\nMain against control\nThe control is the brain of the affect stage in this world: it learns from pain on the look alone.\n\n\n\n\n\n\nWhen both populations live in one world together, the animals with a pallium come out ahead in every seed. Re-evaluated apart, each among its own kind, they are ahead in two seeds of three. Over the generations of evolution itself the two populations run about level.\n\n\nIs the circuit used?\n\n\n\nIn one seed of three the pallium is used. There it carries all of the learning: switching learning off costs as much as silencing the pallium, and the look’s own learning has been turned down. In the other two seeds neither the pallium nor learning as a whole costs anything in the world. The states of the affect stage are still used in every seed.\nWhat holds the lessons back in the world is not the pallium’s code. Followed through a life, the cells that fire at a bush the animal has learned about are mostly the cells that fired at its lesson, and hardly ever those of the other kinds. But two things stand in the way.\n\nA lesson saves little. Pain already ends a visit to a poison bush after a bite or two, and the alarm of the affect stage carries the animal off after a few. What knowing the poison by its look can still save is the first bite at the next bush of that kind.\nEvolution damps aversion close up. In every population, evolution has given the inputs that see a bush right ahead synapses that hold the aversive cells down: approach what is in front of you. A lesson has to overcome that before it can stop a bite. Where the lessons cost more good food than they save, evolution damps them further, and it can do so through the learning rule itself, by making a lesson undo itself or erase the ones before.\n\n\n\nIn the lab\nOne animal at a time, outside the world: it eats from four new bushes, two of each kind, twice, and is then shown each bush again.\n\n\n\nLearning on the look alone lowers the bites at all four bushes alike: it cannot tell the kinds apart, so it makes the animal shy of all of them. Learning through the pallium lowers the bites at the poison bushes and leaves the good ones alone, clearly in two seeds. In the third, evolution has turned the pallium’s learning down. What the pallium does is what this stage set out to add; whether this world rewards it enough to keep it is the open point.",
+    "crumbs": [
+      "Chapter 2: reinforcing",
+      "<span class='chapter-number'>7</span>  <span class='chapter-title'>Pallium: telling look-alikes apart</span>"
+    ]
+  },
+  {
+    "objectID": "pallium.html#the-runs-behind-this-page",
+    "href": "pallium.html#the-runs-behind-this-page",
+    "title": "Pallium: telling look-alikes apart",
+    "section": "The runs behind this page",
+    "text": "The runs behind this page",
+    "crumbs": [
+      "Chapter 2: reinforcing",
+      "<span class='chapter-number'>7</span>  <span class='chapter-title'>Pallium: telling look-alikes apart</span>"
     ]
   }
 ]

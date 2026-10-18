@@ -1146,14 +1146,15 @@ stage(Stage("1.8", "s1_8_affect2", "1.7", B18S, W18S, VISION_CH1, BODY_17,
 # cortex) and the insect mushroom body do it. 128 cells read the eye ahead only (a fovea after orienting: at a bite
 # the side eyes see the neighbouring bushes, and whatever they see is taught too; even a few side cells undo most of
 # the gain, v46), each from all 8 look features, with fixed random weights (drawn per genome, inherited, never
-# mutated); k-WTA keeps the 4 strongest (3%: with XOR looks at 0.6, larger and sparser separates better, v46). The pain teacher of the association stage teaches pallium -> aversive
+# mutated); k-WTA keeps the 2 strongest (1.6%: sparser codes spread a lesson less to good food; in real lives a lesson
+# reaches good bushes at 0.14 of its strength on the poison with 2 cells, 0.21 with 4, v48). The pain teacher of the association stage teaches pallium -> aversive
 # as it teaches look -> aversive. World: the 1.8 world with XOR looks: the four novel types are the corners
 # (+-u1 +-u2) / sqrt2 of two colour directions drawn per life, poison ++ and --, good +- and -+, so no weighted sum of
 # the look tells them apart and a lesson on one poison clears the other; the pallium can. Novel similarity lowered to
 # make up for it (PALLIUM_SIM). From here on the adaptation strength is a gene (user, 2026-10-18), in main and control.
-PALLIUM_N, PALLIUM_K, PALLIUM_FAN = 128, 4, 8
-PALLIUM_ETA = 0.1     # starting learning rate of pallium -> aversive: 4 cells near 1 carry a lesson; at 0.3 the aversive
-                      # cells saturate for good food as well after two rounds of meals (assay_xor.py)
+PALLIUM_N, PALLIUM_K, PALLIUM_FAN = 128, 2, 8
+PALLIUM_ETA = 0.2     # starting learning rate of pallium -> aversive (2 cells carry a lesson; with 4 cells 0.1, at 0.3
+                      # the aversive cells saturated for good food as well after two rounds of meals, assay_xor.py)
 PALLIUM_SIM = 0.5     # novel similarity of the pallium world (0.8 before); XOR at 0.8 was too hard even for the pallium,
                       # at 0.6 no learning was used (v48)
 _GENE = dict(in_adapt_evolve=True)
@@ -1171,7 +1172,7 @@ def pallium_world(exp, novel_sim: float | None = None, xor: bool = True):
 
 stage(Stage("2.2", "s2_2_pallium", "1.8", B22P, W18S, VISION_CH1, BODY_17, pallium_world, **{**_S15, "generations": 100},
             evolution=(("eta_log_std", 0.3),), control_brain=replace(B18S, **_GENE),
-            notes="pallium: a sparse random expansion of the eye ahead (128 cells, k-WTA 4) taught by pain onto the "
+            notes="pallium: a sparse random expansion of the eye ahead (128 cells, k-WTA 2) taught by pain onto the "
                   "aversive cells; XOR looks; the adaptation strength evolves"))
 
 # ------------------------------------------------------------------ running

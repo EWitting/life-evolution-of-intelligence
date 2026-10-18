@@ -2652,3 +2652,9 @@ recomputed from the recorded input (k=4 reproduces the recorded code exactly) wi
 0.06 / 0.14 / 0.21 / 0.26. Set: k-WTA 2, starting pallium rate 0.2 (half the drive per lesson). Assay at 0.5
 (`assay_xor.py`, pallium alone, two rounds): poisons 0.63 / 0.59 aversion, P(bite) 0.00 / 0.04; good 0.07 / 0.11,
 P(bite) 0.38 / 0.33 (before 0.46 / 0.42). The two main runs restarted with it (controls have no pallium and stand).
+
+**2.2 with k-WTA 2, rate 0.2, XOR at 0.5, seed 0** (100 generations): last 50 generations main 1023 +-31, control
+1106 +-32 (poison share 0.090 both). Evolved: pallium rate 0.2 -> 0.52, its rule A +0.28 B 1.16 (Hebbian kept);
+look rate 0.23 -> 0.06 (control: 0.34); adaptation 0.89 (control 0.98). Lesions (16 worlds, % of intact): pallium
+**90 +-2** (poison share 0.092 -> 0.099), no_plasticity 90 +-2, flee 93 +-2, rest 58 +-1. The pallium carries the
+learning and is used.

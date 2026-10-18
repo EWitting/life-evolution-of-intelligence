@@ -40,8 +40,9 @@ class BrainState(NamedTuple):
     x: jnp.ndarray     # [N] activations (rates, >= 0 except inputs)
     w: jnp.ndarray     # [N, N] current (plastic) weights
     tr: jnp.ndarray    # [N] low-pass activity traces (for the 'trace' rule)
-    e: jnp.ndarray     # [N, N] eligibility traces (projections with elig_tau > 0)
-    u: jnp.ndarray     # [N, N] short-term depression resource in [0, 1] (1 = fully recovered)
+    e: jnp.ndarray     # [pl_rows, pl_cols] eligibility traces of the plastic block (projections with elig_tau > 0)
+    u: jnp.ndarray     # [pl_rows, pl_cols] short-term depression resource in [0, 1] (1 = fully recovered); only the
+                       # plastic block can depress, so the rest stays at 1 and is not stored
     mod: jnp.ndarray   # [M] modulator values computed at the end of the previous step
     g: jnp.ndarray     # [N] normalisation pool drive of the previous step (regions with norm_lag)
     ws: tuple = ()     # per update phase [N, phase neurons]: the weights that never change within a life (everything
@@ -313,7 +314,8 @@ def init_state(genome: Genome, layout: Layout, w_max: float = 4.0) -> BrainState
     w = genome.w0 * genome.mask
     ws, wg = _fixed_weights(layout, w)
     return BrainState(x=jnp.zeros(n, jnp.float32), w=w, tr=jnp.zeros(n, jnp.float32),
-                      e=jnp.zeros((n, n), jnp.float32), u=jnp.ones((n, n), jnp.float32),
+                      e=jnp.zeros((len(layout.pl_rows), len(layout.pl_cols)), jnp.float32),
+                      u=jnp.ones((len(layout.pl_rows), len(layout.pl_cols)), jnp.float32),
                       mod=jnp.zeros(max(m, 1), jnp.float32), g=jnp.zeros(n, jnp.float32), ws=ws, wg=wg)
 
 
@@ -425,7 +427,7 @@ def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, ob
     for _ in range(cfg.steps_per_tick):
         if plastic:   # the plastic block as it is now (the rest of the weights is in state.ws / state.wg)
             sR = np.asarray(layout.sign)[R][:, None]
-            eb = jnp.where(sR != 0, sR * w[ix], w[ix]) * (u[ix] if layout.has_dep else 1.0)
+            eb = jnp.where(sR != 0, sR * w[ix], w[ix]) * (u if layout.has_dep else 1.0)
             gb = np.asarray(layout.gain)[ix] if layout.has_gain else None
             add_b = eb * (1.0 - gb) if layout.has_gain else eb
 
@@ -477,8 +479,8 @@ def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, ob
             base = plasticity_rule(b_rule, b_A, b_B, b_C, b_D, wb, x[R], x_new[C], tr[R], tr[C], target,
                                    np.asarray(layout.centred)[ix] if np.asarray(layout.centred)[ix].any() else None)
             if layout.has_elig:
-                eb = jnp.where(b_elig > 0, b_elig * e[ix] + base, 0.0)
-                e = e.at[ix].set(eb)
+                eb = jnp.where(b_elig > 0, b_elig * e + base, 0.0)
+                e = eb
                 base = jnp.where(b_elig > 0, eb, base)
             wb = wb + b_eta * b_gate * base * b_mask
             if layout.has_decay:
@@ -486,8 +488,7 @@ def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, ob
             wb = jnp.where(b_signed, jnp.clip(wb, 0.0, cfg.w_max), jnp.clip(wb, -cfg.w_max, cfg.w_max))
             w = w.at[ix].set(wb)
             if layout.has_dep:
-                ub = u[ix]
-                u = u.at[ix].set(jnp.clip(ub + b_deprec * (1.0 - ub) - b_depU * ub * jnp.maximum(x[R], 0.0)[:, None], 0.0, 1.0))
+                u = jnp.clip(u + b_deprec * (1.0 - u) - b_depU * u * jnp.maximum(x[R], 0.0)[:, None], 0.0, 1.0)
         tr = layout.trace_tau * tr + (1.0 - layout.trace_tau) * (x_new.at[:n_in].set(raw) if layout.has_adapt else x_new)
         x = x_new
     mod = compute_modulators(layout, x, world_sig, mod, genome.clear)

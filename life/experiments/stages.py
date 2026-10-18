@@ -1154,7 +1154,8 @@ stage(Stage("1.8", "s1_8_affect2", "1.7", B18S, W18S, VISION_CH1, BODY_17,
 PALLIUM_N, PALLIUM_K, PALLIUM_FAN = 128, 4, 8
 PALLIUM_ETA = 0.1     # starting learning rate of pallium -> aversive: 4 cells near 1 carry a lesson; at 0.3 the aversive
                       # cells saturate for good food as well after two rounds of meals (assay_xor.py)
-PALLIUM_SIM = 0.6     # novel similarity of the pallium world (0.8 before); XOR at 0.8 was too hard even for the pallium
+PALLIUM_SIM = 0.5     # novel similarity of the pallium world (0.8 before); XOR at 0.8 was too hard even for the pallium,
+                      # at 0.6 no learning was used (v48)
 _GENE = dict(in_adapt_evolve=True)
 B22P = extend(B18S, regions=(R("pallium", PALLIUM_N, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False,
                                kwta=PALLIUM_K, group="forebrain/pallium"),),

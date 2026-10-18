@@ -1170,7 +1170,13 @@ def pallium_world(exp, novel_sim: float | None = None, xor: bool = True):
                           novel_sim=PALLIUM_SIM if novel_sim is None else novel_sim)
 
 
-stage(Stage("2.2", "s2_2_pallium", "1.8", B22P, W18S, VISION_CH1, BODY_17, pallium_world, **{**_S15, "generations": 100},
+# World: patches mixed evenly (purity 0.25 with four novel types: where a bush grows says nothing about its kind).
+# At purity 0.7 a poison bite told the animal about the bushes around it, the alarm carried it off, and a lesson by
+# look saved only the first bite at the next bush of a kind: learning was used in one seed of three. Paired, on the
+# evolved seed-0 population: all learning off costs 24% at purity 0.25 (pallium learning off 19%), against 6% at
+# 0.7 (STAGE_LOG v48). The lasting states lose part of their job; accepted (user, 2026-10-18).
+W22 = replace(W18S, patch_purity=0.25)
+stage(Stage("2.2", "s2_2_pallium", "1.8", B22P, W22, VISION_CH1, BODY_17, pallium_world, **{**_S15, "generations": 100},
             evolution=(("eta_log_std", 0.3),), control_brain=replace(B18S, **_GENE),
             notes="pallium: a sparse random expansion of the eye ahead (128 cells, k-WTA 2) taught by pain onto the "
                   "aversive cells; XOR looks; the adaptation strength evolves"))

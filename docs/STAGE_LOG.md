@@ -2658,3 +2658,19 @@ P(bite) 0.38 / 0.33 (before 0.46 / 0.42). The two main runs restarted with it (c
 look rate 0.23 -> 0.06 (control: 0.34); adaptation 0.89 (control 0.98). Lesions (16 worlds, % of intact): pallium
 **90 +-2** (poison share 0.092 -> 0.099), no_plasticity 90 +-2, flee 93 +-2, rest 58 +-1. The pallium carries the
 learning and is used.
+
+**Making learning pay** (user: reduce patch purity, accepting less use of the lasting states). Paired, the seed-0
+population evolved with k-WTA 2 (`gen0.py OFF=pallium->valence_av`, 8 worlds): patches mixed evenly (purity 0.25):
+all on 1016, pallium learning off -190 +-29, all off -242 +-32 (-24%); good berries in the second half 23.7 / 15.8 /
+14.1; poison bites per half hardly change (9.7 / 9.2 / 9.4), lives are longer. Mixed and half the bushes (density
+0.15): all on 546, pallium off -138 +-28, all off -156 +-21: harsher, learning not worth more. Set: `W22` = the 1.8
+world with purity 0.25. Rerun with three seeds.
+
+**Is vision -> pallium inhibitory?** No: the weights are mixed (46% positive, 54% negative, mean -0.009); the book's
+diagram took the sign of the mean and drew it as inhibitory (fixed: both signs common = mixed). Brain-free, XOR 0.5,
+128 cells, k-WTA 2, discrimination unadapted / half adapted: mixed 0.13 / 0.05, excitatory only 0.20 / 0.09, ON/OFF
+channels excitatory 0.26 / 0.17. Afferents are excitatory in the real pallium; excitatory-only is an option if
+Dale's law should hold here too.
+
+**CPU benchmark** (`bench.py`, 2.2, two other processes running): 256 animals 6.1 s per 1000 ticks, 512 17.8,
+1024 24.7, 2048 38.9 (19-35 us per animal-tick). WSL2 is not installed yet (needs the user: admin + reboot).

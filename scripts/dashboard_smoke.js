@@ -20,7 +20,7 @@ const elems = {};
 function el(id) { if (!elems[id]) elems[id] = { id, style: { setProperty: () => {}, removeProperty: () => {} }, dataset: {}, value: '0', textContent: '', innerHTML: '', checked: true, width: 100, height: 100, max: 0,
   clientWidth: 100, clientHeight: 100, offsetWidth: 100, offsetHeight: 100,
   getContext: () => ctxProxy, addEventListener: () => {}, setAttribute: () => {}, getAttribute: () => null, querySelectorAll: () => [], querySelector: () => el('_q' + nEl++),
-  classList: { toggle: () => {}, add: () => {}, remove: () => {}, contains: () => false }, appendChild: () => {}, append: () => {}, after: () => {}, remove: () => {},
+  classList: { toggle: () => {}, add: () => {}, remove: () => {}, contains: () => false }, appendChild: () => {}, append: () => {}, after: () => {}, before: () => {}, remove: () => {},
   closest: () => null, scrollIntoView: () => {}, getBoundingClientRect: () => ({ left: 0, top: 0, width: 100, height: 100 }), click: () => {} }; return elems[id]; }
 let nEl = 0;
 global.document = { getElementById: el, createElement: () => el('_new' + nEl++), createElementNS: () => el('_new' + nEl++), addEventListener: () => {},

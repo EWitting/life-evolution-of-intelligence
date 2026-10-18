@@ -74,8 +74,26 @@ def _light(data: dict, rec, x: np.ndarray, w_max: float, eta_max: float) -> dict
     return data
 
 
+WORLD_KEYS = ("grid", "pos", "dir", "alive", "held", "food", "pain")   # recorded after the tick's action
+BRAIN_KEYS = ("x", "action", "mod")                                    # the tick's observation, activity and choice
+
+
+def align(rec) -> dict:
+    """A recording holds, per tick, the world after the tick's action next to the brain state that chose it (from
+    the world before). Shift the brain by one tick, so that frame t is a world and the agent's response to it:
+    what it sees, its activity, the action it is about to take; the next frame shows the result. Drops one tick.
+    `lead` = recorded ticks the brain is ahead of the frame's index (for the weight snapshots)."""
+    r = {k: rec[k] for k in rec.files}
+    for k in WORLD_KEYS:
+        r[k] = r[k][:-1]
+    for k in BRAIN_KEYS:
+        r[k] = r[k][1:]
+    r["lead"] = 1
+    return r
+
+
 def build_data(run_dir: Path, light: bool = False) -> dict:
-    rec = np.load(run_dir / "recording.npz")
+    rec = align(np.load(run_dir / "recording.npz"))
     cfg = json.loads((run_dir / "config.json").read_text())
     rs = json.loads((run_dir / "ruleset.json").read_text())
     layout = json.loads((run_dir / "layout.json").read_text())
@@ -106,7 +124,8 @@ def build_data(run_dir: Path, light: bool = False) -> dict:
                  "best": int(rec["best"]), "names": rs["names"], "ohol_id": rs["ohol_id"], "colours": colours,
                  "appearance": appearance, "food_value": rs["food_value"], "actions": A.NAMES, "layout": layout,
                  "vision": cfg["vision"], "world": cfg["world"], "brain": cfg["brain"], "w_max": w_max,
-                 "eta_max": eta_max, "snap_every": int(x.shape[0] // max(1, rec["w_snap"].shape[0])),
+                 "eta_max": eta_max, "snap_every": int((x.shape[0] + rec["lead"]) // max(1, rec["w_snap"].shape[0])),
+                 "lead": rec["lead"],
                  "fitness": fitness, "config": cfg, "run": run_dir.name, "experiment": cfg["name"],
                  "book_layout": book_layout(layout["names"]), "group_hues": group_hues()},
         "grid": _b64(rec["grid"], np.int16), "pos": _b64(rec["pos"], np.int16), "dir": _b64(rec["dir"], np.int8),

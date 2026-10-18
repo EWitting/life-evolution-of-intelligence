@@ -178,6 +178,7 @@
   #archSvg text.grp { font-size:10px; fill:var(--a-grouptext); paint-order:stroke; stroke:var(--a-halo); stroke-width:4px; }
   #archSvg .modline { stroke:var(--a-mod); stroke-width:2; stroke-dasharray:5 4; fill:none; } #archSvg .modend { fill:var(--a-mod); }
   #archSvg text.modlabel { font-size:10.5px; font-style:italic; fill:var(--a-mod); paint-order:stroke; stroke:var(--a-halo); stroke-width:5px; }
+  #archSvg tspan.modval { font-style:normal; font-variant-numeric:tabular-nums; }
   #archSvg .mod { cursor:help; } #archSvg .mod:hover .modline { stroke-width:3; }
   #archLegend { margin-top:8px; line-height:1.8; }
   #archLegend .k { display:inline-block; width:18px; height:3px; vertical-align:middle; margin-right:5px; border-radius:2px; }
@@ -304,6 +305,7 @@
   <div class="dlg-b">
     <h4>What you see</h4>
     <p style="margin:0 0 6px">One recorded generation: every agent's life in the world on the left, and the brain of one agent (the <b>focused</b> agent, ringed in red) on the right. Pick an agent by clicking it in the world or from the list.</p>
+    <p style="margin:0 0 6px">A tick shows the world, what the agent sees in it, the brain's activity and modulators, and the action it is about to take. Step forward to see the result of that action.</p>
     <p class="small" id="helpAbout" style="margin:0"></p>
     <h4>Keyboard</h4>
     <div class="keys">
@@ -464,7 +466,8 @@ function showTip(e, s) {
   tp.style.left = Math.min(e.clientX + 14, innerWidth - w - 8) + 'px';
   tp.style.top = (e.clientY + 16 + h > innerHeight ? e.clientY - h - 10 : e.clientY + 16) + 'px';
 }
-function hideTip() { $('tip').style.display = 'none'; }
+function hideTip() { $('tip').style.display = 'none'; tipAgain = null; }
+let tipAgain = null;   // redraws the open tooltip when it shows the current tick (setTick calls it)
 function toast(wrap, s) {
   const el = wrap.querySelector('.toast'); if (!el) return;
   el.textContent = s; el.classList.add('show'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 1100);
@@ -662,15 +665,15 @@ function agentsNear(cx, cy, rad) {
 }
 const pickRadius = () => Math.max(0.75, 10 * DPR() / zw.kx());   // at least 10 screen pixels
 wc.addEventListener('click', e => { if (zw.dragged) return; const [cx, cy] = zw.toContent(e), a = agentsNear(cx, cy, pickRadius()); if (a.length) setFocus(a[0]); });
-wc.addEventListener('mousemove', e => {
-  if (zw.dragged) return;
+wc.addEventListener('mousemove', e => { if (zw.dragged) return; tipAgain = () => worldTip(e); worldTip(e); });
+function worldTip(e) {
   const [cx, cy] = zw.toContent(e), x = Math.floor(cx), y = Math.floor(cy);
   if (x < 0 || y < 0 || x >= W || y >= H) return hideTip();
   const o = grid.a[t * H * W + y * W + x], ags = agentsNear(cx, cy, pickRadius());
   wc.style.cursor = ags.length ? 'pointer' : '';
   const al = ags.slice(0, 4).map(i => `agent #${i}${i === focus ? ' (focused)' : ''}: ${alive.a[t * N + i] ? `food ${food.a[t * N + i].toFixed(1)}, ${M.actions[action.a[t * N + i]]}` : 'dead'}`);
   showTip(e, `cell (${y}, ${x}): ${o ? M.names[o] + (M.food_value[o] ? ` (food ${M.food_value[o]})` : '') : 'empty'}${al.length ? '\n' + al.join('\n') + (ags.length > 4 ? `\n+${ags.length - 4} more` : '') + '\nclick to focus' : ''}`);
-});
+}
 wc.addEventListener('mouseleave', () => { hideTip(); wc.style.cursor = ''; });
 document.querySelectorAll('#c-world [data-zoom]').forEach(b => b.addEventListener('click', () => { const v = +b.dataset.zoom; v ? zw.zoomBy(v > 0 ? 1.6 : 1 / 1.6) : zw.reset(); }));
 document.querySelectorAll('[data-follow]').forEach(b => b.addEventListener('click', () => toggleFollow()));
@@ -691,7 +694,7 @@ DRAW.agent = function drawAgent() {
   const nb = $('noBrain'); nb.style.display = BI[i] < 0 ? 'block' : 'none';
   if (BI[i] < 0) nb.innerHTML = `This light export stores the brain (activations, weights) of ${BA.length} of the ${N} agents. Agent #${i} is not one of them: its retina, inputs and activations below are empty, and the weights are those of agent #${M.best}. Agents with a brain view (ringed in the world): ` + BA.map(a => `<a href="#" data-a="${a}">#${a}</a>`).join(' ');
   const kv = [['food', `<span class="bar"><i style="width:${Math.max(0, Math.min(100, 100 * f / M.world.max_food))}%"></i></span>${f.toFixed(1)}`],
-    ['pain', p.toFixed(2)], ['held', h ? M.names[h] : '–'], ['action', M.actions[action.a[t * N + i]]],
+    ['pain', p.toFixed(2)], ['held', h ? M.names[h] : '–'], ['next action', M.actions[action.a[t * N + i]]],
     ...MODN.map((nm, k) => ['mod ' + nm, mod.a[(t * N + i) * NMOD + k].toFixed(2)]), ['pos', `(${pos.a[(t * N + i) * 2]}, ${pos.a[(t * N + i) * 2 + 1]}) facing ${['up', 'right', 'down', 'left'][dir.a[t * N + i]]}`]];
   $('agentKv').innerHTML = kv.map(([k, v]) => `<b>${k}</b><span>${v}</span>`).join('');
   const rc = $('retina'), ctx = rc.getContext('2d'), d = DPR(), rw = rc.width / d, rh = rc.height / d;
@@ -782,7 +785,8 @@ function wget(mode, s, i, pre, post) {
 const wOff = document.createElement('canvas'); wOff.width = NN; wOff.height = NN;   // one pixel per (pre, post)
 const zwm = plotView(wm, {cw: NN, ch: NN, pad: W_PAD, max: Math.max(4, NN / 6), redraw: () => invalidate('w')});
 let wKey = '';
-const snapIndex = () => Math.floor((t + 1) / M.snap_every) - 1;
+const LEAD = M.lead || 0;   // the brain of frame t was recorded at tick t + LEAD (dashboard.py align)
+const snapIndex = () => Math.floor((t + 1 + LEAD) / M.snap_every) - 1;
 DRAW.w = function drawW() {
   const mode = $('wmode').value, s = snapIndex(), key = `${mode} ${s} ${focus}`, d = DPR();
   if (key !== wKey) {
@@ -806,7 +810,7 @@ DRAW.w = function drawW() {
   }
   wctx2.strokeStyle = C.frame; wctx2.lineWidth = d; wctx2.strokeRect(R.x, R.y, R.w, R.h);
   drawRegionLabels(wctx2, zwm, R, d, true); drawRegionLabels(wctx2, zwm, R, d, false);
-  $('wInfo').textContent = mode === 'w' || mode === 'dw' ? (s < 0 ? '(before first snapshot: showing w0)' : `snapshot at tick ${(s + 1) * M.snap_every}`) : '';
+  $('wInfo').textContent = mode === 'w' || mode === 'dw' ? (s < 0 ? '(before first snapshot: showing w0)' : `snapshot at tick ${(s + 1) * M.snap_every - 1 - LEAD}`) : '';
   $('wRegions').innerHTML = `<b>rows = pre, columns = post</b> · scale: w in [-${M.w_max}, ${M.w_max}], dw x4, eta in [0, ${M.eta_max}]<br>` + L.names.map((n, k) => `<span style="white-space:nowrap">${n}: ${L.offsets[k]}-${L.offsets[k] + L.sizes[k] - 1}</span>`).join(' · ');
 };
 wm.addEventListener('mousemove', e => { if (zwm.dragged) return; const [cx, cy] = zwm.toContent(e), pre = Math.floor(cy), post = Math.floor(cx); if (pre >= 0 && pre < NN && post >= 0 && post < NN) { const mode = $('wmode').value, v = wget(mode, snapIndex(), focus, pre, post); showTip(e, `${neuronName(pre)} → ${neuronName(post)}\n${mode} = ${(mode === 'eta' ? v * M.eta_max : v * M.w_max).toFixed(3)}`); } else hideTip(); });
@@ -1059,7 +1063,7 @@ function renderArch() {
   AR.mods.forEach((l, i) => {
     const g = modGeom(l);
     h += `<g class="mod" data-m="${i}"><path class="modline" d="${g.d}"/><circle class="modend" cx="${f1(g.end[0])}" cy="${f1(g.end[1])}" r="4"/>`
-      + `<text class="modlabel" text-anchor="${g.anchor || 'middle'}" x="${f1(g.mid[0])}" y="${f1(g.mid[1] + 3.5)}">${l.m.name}</text><path d="${g.d}" fill="none" stroke="transparent" stroke-width="14"/></g>`;
+      + `<text class="modlabel" text-anchor="${g.anchor || 'middle'}" x="${f1(g.mid[0])}" y="${f1(g.mid[1] + 3.5)}">${l.m.name} <tspan class="modval" data-k="${MODN.indexOf(l.m.name)}"></tspan></text><path d="${g.d}" fill="none" stroke="transparent" stroke-width="14"/></g>`;
   });
   h += labels;
   for (const r of REG) {
@@ -1076,7 +1080,7 @@ function renderArch() {
     if (r.name === 'out') h += `<text x="6" y="47" class="sub" style="font-size:8px">${M.actions.map(a => a[0]).join(' ')}</text>`;
     h += '</g>';
   }
-  svg.innerHTML = h; AR.cells = [...svg.querySelectorAll('.cell')]; updateArchActivity();
+  svg.innerHTML = h; AR.cells = [...svg.querySelectorAll('.cell')]; AR.modvals = [...svg.querySelectorAll('.modval')]; updateArchActivity();
 }
 function updateArchActivity() {
   for (const el of AR.cells) {
@@ -1084,6 +1088,8 @@ function updateArchActivity() {
     for (let j = lo; j < hi; j++) s += xval(t, focus, j);
     const [r, g, b] = heat(s / (hi - lo)); el.setAttribute('fill', `rgb(${r | 0},${g | 0},${b | 0})`);
   }
+  // the modulators' current values, behind their names on the lines
+  for (const el of AR.modvals) { const k = +el.dataset.k; el.textContent = k >= 0 ? `(${mod.a[(t * N + focus) * NMOD + k].toFixed(2)})` : ''; }
 }
 function projLine(i, link = true) {
   const p = PROJ[i], s = AR.stats[i], name = p.label;
@@ -1179,7 +1185,7 @@ svg.addEventListener('pointermove', e => {
     if (pn.moved) { AR.view = {...pn.view, x: pn.view.x - dx * s, y: pn.view.y - dy * s}; setView(); }
     return;
   }
-  const dr = AR.drag; if (!dr) return archTip(e);
+  const dr = AR.drag; if (!dr) { tipAgain = () => archTip(e); return archTip(e); }
   const [x, y] = svgPt(e), dx = x - dr.start[0], dy = y - dr.start[1];
   if (Math.abs(dx) + Math.abs(dy) > 3) dr.moved = true;
   if (dr.moved) { for (const n of dr.names) AR.pos[n] = [dr.orig[n][0] + dx, dr.orig[n][1] + dy]; renderArch(); }
@@ -1230,8 +1236,8 @@ $('archLegend').innerHTML = `<span class="item"><i class="k" style="background:v
   + (PROJ.some(p => edgeClass(p) === 'learned') ? `<span class="item"><i class="k" style="background:var(--a-learned)"></i>learned within a life (rule on the arrow)</span>` : '')
   + `<span class="item">▸ excites</span><span class="item">⊣ inhibits</span><span class="item">● senses, mixed signs</span>`
   + (MODS.length ? `<span class="item"><i class="k mod"></i>modulator: released by one cell, acts on a cell or on the learning of a projection</span>` : '')
-  + `<br>Dotted = gain (multiplicative) projection. Block colour = top-level group (exc / inh and the arrowheads give the sign; Dale's law). Modulators: ${(M.brain.modulators || []).map(m => `<b>${m.name}</b> = ${m.source === 'region' ? `${m.scale}·(${m.pos}${m.neg ? ' − ' + m.neg : ''} − ${m.baseline})` : m.source}`).join(', ') || (M.brain.modulator || 'none')}. Line width = summed |w| per target neuron at the current snapshot. Cells = the focused agent's activations at this tick. Drag blocks, or a group by its box or name, to arrange them; <a href="#" id="archReset">reset layout</a>.`;
-$('archReset').addEventListener('click', e => { e.preventDefault(); try { localStorage.removeItem(LSKEY); } catch (err) {} autoLayout(); renderArch(); archFit(); });
+  + `<br>Dotted = gain (multiplicative) projection. Block colour = top-level group (exc / inh and the arrowheads give the sign; Dale's law). Modulators: ${(M.brain.modulators || []).map(m => `<b>${m.name}</b> = ${m.source === 'region' ? `${m.scale}·(${m.pos}${m.neg ? ' − ' + m.neg : ''} − ${m.baseline})` : m.source}`).join(', ') || (M.brain.modulator || 'none')}. Line width = summed |w| per target neuron at the current snapshot. Cells = the focused agent's activations at this tick. Drag blocks, or a group by its box or name, to arrange them; <a href="#" id="archReset">reset to ${M.book_layout ? 'flat ' : ''}layout</a>.`;
+$('archReset').addEventListener('click', e => { e.preventDefault(); autoLayout(); savePos(); renderArch(); archFit(); });
 // the book's layout of this brain (book/data/brain_layout.json, from tools/brain_layout), when the export found one:
 // the regions at the book's grid positions, in and out at the middle of the book's senses and motor blocks
 function bookLayout() {
@@ -1241,11 +1247,11 @@ function bookLayout() {
   for (const [n, [c, r]] of Object.entries(B.pos)) AR.pos[n] = [20 + BW / 2 + c * CW, 30 + BH / 2 + (r - top) * STEP];
 }
 if (M.book_layout) {
-  const a = document.createElement('a'); a.href = '#'; a.textContent = `book layout (stage ${M.book_layout.stage})`;
-  $('archReset').after(' · ', a);
+  const a = document.createElement('a'); a.href = '#'; a.textContent = `reset to book layout (stage ${M.book_layout.stage})`;
+  $('archReset').before(a, ' · ');
   a.addEventListener('click', e => { e.preventDefault(); bookLayout(); savePos(); renderArch(); archFit(); });
 }
-autoLayout(); loadPos(); updateStats(); renderArch(); renderArchDetail(); archFit(true);
+autoLayout(); if (M.book_layout) bookLayout(); loadPos(); updateStats();   // first visit: the book's layout renderArch(); renderArchDetail(); archFit(true);
 new ResizeObserver(() => { if (AR.view) setView(); }).observe($('archWrap'));
 
 // ---------- layout of the canvases ----------
@@ -1289,6 +1295,7 @@ function setTick(v, follow = false) {
   $('tick').value = t; $('tickProgress').style.width = (100 * t / Math.max(1, T - 1)) + '%';
   $('tickLabel').textContent = `tick ${t.toLocaleString()} / ${(T - 1).toLocaleString()} · ${fmtTime(t / TPS)}`;
   invalidate('world', 'agent', 'act', 'w', 'arch');
+  if (tipAgain) tipAgain();
 }
 function setFocus(i) { focus = i; $('agent').value = i; drawSpark(); setTick(t, true); }
 function setPlaying(p) {

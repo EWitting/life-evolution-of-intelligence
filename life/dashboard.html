@@ -168,9 +168,12 @@
   .e-evolved { stroke:var(--a-evolved); } .e-evolved-f { fill:var(--a-evolved); }
   .e-learned { stroke:var(--a-learned); } .e-learned-f { fill:var(--a-learned); }
   .reg-exc { fill:var(--a-exc); } .reg-inh { fill:var(--a-inh); } .reg-io { fill:var(--a-io); }
+  .reg-cell { fill:hsl(var(--h) 55% 90%); } :root[data-theme="dark"] .reg-cell { fill:hsl(var(--h) 28% 21%); }
   #archSvg .reg rect.box { stroke:var(--a-axis); stroke-width:1; } #archSvg .reg.sel rect.box { stroke:var(--accent); stroke-width:2; }
   #archSvg .grp { cursor:move; }
   #archSvg rect.grp { fill:var(--a-group); stroke:var(--a-groupline); stroke-dasharray:4 3; }
+  #archSvg rect.grp.gtop { fill:hsl(var(--h) 50% 75% / .16); stroke:hsl(var(--h) 35% 55%); }
+  :root[data-theme="dark"] #archSvg rect.grp.gtop { fill:hsl(var(--h) 35% 40% / .14); stroke:hsl(var(--h) 25% 42%); }
   #archSvg rect.grp:hover { stroke:var(--blue2); }
   #archSvg text.grp { font-size:10px; fill:var(--a-grouptext); paint-order:stroke; stroke:var(--a-halo); stroke-width:4px; }
   #archSvg .modline { stroke:var(--a-mod); stroke-width:2; stroke-dasharray:5 4; fill:none; } #archSvg .modend { fill:var(--a-mod); }
@@ -1021,6 +1024,9 @@ function archZoomAt(f, x, y) {
   AR.view = {x: x - (x - v.x) * k, y: y - (y - v.y) * k, w: v.w * k, h: v.h * k}; setView();
 }
 function archScale() { const m = svg.getScreenCTM(); return m ? 1 / m.a : 1; }   // svg units per screen pixel
+// a region and its top-level group's box take the group's colour: the hue the book uses (book/data/brain_layout.json),
+// else one from the group's name
+const hueOf = g => (M.group_hues || {})[g] !== undefined ? M.group_hues[g] : [...g].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 0);
 function renderArch() {
   const f1 = v => v.toFixed(1), G = PROJ.map(edgeGeom), maxDrive = Math.max(1e-6, ...AR.stats.map(s => s.drive));
   let h = '', labels = '';
@@ -1030,7 +1036,7 @@ function renderArch() {
     const mem = groupMembers(gp), pad = 8 + 8 * (Math.max(...mem.map(r => r.group.split('/').length)) - gp.split('/').length);
     const xs = mem.map(r => AR.pos[r.name][0]), ys = mem.map(r => AR.pos[r.name][1]);
     const x0 = Math.min(...xs) - BW / 2 - pad, x1 = Math.max(...xs) + BW / 2 + pad, y0 = Math.min(...ys) - BH / 2 - pad - 12, y1 = Math.max(...ys) + BH / 2 + pad;
-    h += `<rect class="grp" data-g="${gp}" x="${f1(x0)}" y="${f1(y0)}" width="${f1(x1 - x0)}" height="${f1(y1 - y0)}" rx="9"/>`;
+    h += `<rect class="grp${gp.includes('/') ? '' : ' gtop'}" style="--h:${hueOf(gp)}" data-g="${gp}" x="${f1(x0)}" y="${f1(y0)}" width="${f1(x1 - x0)}" height="${f1(y1 - y0)}" rx="9"/>`;
     labels += `<text class="grp" data-g="${gp}" x="${f1(x0 + 7)}" y="${f1(y0 + 12)}">${gp.split('/').pop()}</text>`;
   }
   AR.mods = modLinks(G);
@@ -1060,7 +1066,7 @@ function renderArch() {
     const [x, y] = AR.pos[r.name], sel = AR.sel && AR.sel.type === 'region' && AR.sel.name === r.name;
     const nc = Math.min(r.size, 56), cw = (BW - 12) / nc;
     h += `<g class="reg${sel ? ' sel' : ''}" data-r="${r.name}" transform="translate(${f1(x - BW / 2)},${f1(y - BH / 2)})">`
-      + `<rect class="box ${r.sign > 0 ? 'reg-exc' : r.sign < 0 ? 'reg-inh' : 'reg-io'}" width="${BW}" height="${BH}" rx="6" style="filter:drop-shadow(0 1px 1.5px rgba(16,24,40,.08))"/>`
+      + `<rect class="box ${r.group ? 'reg-cell' : 'reg-io'}"${r.group ? ` style="--h:${hueOf(r.group.split('/')[0])}"` : ''} width="${BW}" height="${BH}" rx="6" style="filter:drop-shadow(0 1px 1.5px rgba(16,24,40,.08))"/>`
       + `<text x="6" y="15" style="font-weight:600">${r.name}</text><text x="${BW - 6}" y="15" text-anchor="end" class="sub">${r.sign > 0 ? 'exc ' : r.sign < 0 ? 'inh ' : ''}${r.size}</text>`;
     for (let c = 0; c < nc; c++) {
       const lo = r.off + Math.floor(c * r.size / nc), hi = r.off + Math.floor((c + 1) * r.size / nc);
@@ -1224,7 +1230,7 @@ $('archLegend').innerHTML = `<span class="item"><i class="k" style="background:v
   + (PROJ.some(p => edgeClass(p) === 'learned') ? `<span class="item"><i class="k" style="background:var(--a-learned)"></i>learned within a life (rule on the arrow)</span>` : '')
   + `<span class="item">▸ excites</span><span class="item">⊣ inhibits</span><span class="item">● senses, mixed signs</span>`
   + (MODS.length ? `<span class="item"><i class="k mod"></i>modulator: released by one cell, acts on a cell or on the learning of a projection</span>` : '')
-  + `<br>Dotted = gain (multiplicative) projection. Green blocks = excitatory, red = inhibitory (Dale's law). Modulators: ${(M.brain.modulators || []).map(m => `<b>${m.name}</b> = ${m.source === 'region' ? `${m.scale}·(${m.pos}${m.neg ? ' − ' + m.neg : ''} − ${m.baseline})` : m.source}`).join(', ') || (M.brain.modulator || 'none')}. Line width = summed |w| per target neuron at the current snapshot. Cells = the focused agent's activations at this tick. Drag blocks, or a group by its box or name, to arrange them; <a href="#" id="archReset">reset layout</a>.`;
+  + `<br>Dotted = gain (multiplicative) projection. Block colour = top-level group (exc / inh and the arrowheads give the sign; Dale's law). Modulators: ${(M.brain.modulators || []).map(m => `<b>${m.name}</b> = ${m.source === 'region' ? `${m.scale}·(${m.pos}${m.neg ? ' − ' + m.neg : ''} − ${m.baseline})` : m.source}`).join(', ') || (M.brain.modulator || 'none')}. Line width = summed |w| per target neuron at the current snapshot. Cells = the focused agent's activations at this tick. Drag blocks, or a group by its box or name, to arrange them; <a href="#" id="archReset">reset layout</a>.`;
 $('archReset').addEventListener('click', e => { e.preventDefault(); try { localStorage.removeItem(LSKEY); } catch (err) {} autoLayout(); renderArch(); archFit(); });
 // the book's layout of this brain (book/data/brain_layout.json, from tools/brain_layout), when the export found one:
 // the regions at the book's grid positions, in and out at the middle of the book's senses and motor blocks

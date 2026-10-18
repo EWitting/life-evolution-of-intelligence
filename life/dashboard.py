@@ -21,6 +21,12 @@ TEMPLATE = Path(__file__).with_name("dashboard.html")
 BOOK_LAYOUT = Path(__file__).resolve().parent.parent / "book" / "data" / "brain_layout.json"
 
 
+def group_hues() -> dict:
+    """The colour (hue) of every top-level group in the book's diagrams; empty without the layout file (the
+    dashboard then takes a hue from the group's name)."""
+    return json.loads(BOOK_LAYOUT.read_text(encoding="utf-8")).get("hues", {}) if BOOK_LAYOUT.exists() else {}
+
+
 def book_layout(names: list[str]) -> dict | None:
     """The book's diagram layout of a brain with these regions (tools/brain_layout writes it): the stage there with
     exactly these regions, else the smallest stage that has them all; None when there is none."""
@@ -102,7 +108,7 @@ def build_data(run_dir: Path, light: bool = False) -> dict:
                  "vision": cfg["vision"], "world": cfg["world"], "brain": cfg["brain"], "w_max": w_max,
                  "eta_max": eta_max, "snap_every": int(x.shape[0] // max(1, rec["w_snap"].shape[0])),
                  "fitness": fitness, "config": cfg, "run": run_dir.name, "experiment": cfg["name"],
-                 "book_layout": book_layout(layout["names"])},
+                 "book_layout": book_layout(layout["names"]), "group_hues": group_hues()},
         "grid": _b64(rec["grid"], np.int16), "pos": _b64(rec["pos"], np.int16), "dir": _b64(rec["dir"], np.int8),
         "alive": _b64(rec["alive"], np.uint8), "held": _b64(rec["held"], np.int16), "food": _b64(rec["food"], np.float32),
         "pain": _b64(rec["pain"], np.float32), "action": _b64(rec["action"], np.int8),

@@ -166,6 +166,10 @@
   function drawBrain(root, D, L) {
     const REG = D.brain.regions, PROJ = D.brain.projections, BW = 122, BH = 38, pos = {};
     const A = L && L.stages && L.stages[D.stage.key], atlas = !!A && REG.every(r => A.pos[r.name]);
+    // cells and group boxes take the colour of their top-level group: the layout file's hues (the same in every
+    // chapter), else one from the group's name
+    const hues = (L && L.hues) || {};
+    const hueOf = g => hues[g] !== undefined ? hues[g] : [...g].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 0);
     const blk = {}, sock = {};   // with the layout: the senses / motor blocks' extent [y0, y1] and their sockets, in px
     let AH, SVGW;
     if (atlas) {
@@ -222,9 +226,11 @@
     const centre = n => sock[n] || pos[n];
     // where a line attaches: a region's centre (clipped to its box later), a socket, or a block's inner edge at the
     // height of the line's other end
-    const attach = (n, other) => sock[n] || (atlas && blk[n]
+    // the senses / motor neurons drawn as one small box (layout mode 'point') are a box like any region
+    const modes = (L && L.modes) || {}, isBlock = n => atlas && !!blk[n] && modes[n] !== 'point';
+    const attach = (n, other) => sock[n] || (isBlock(n)
       ? [pos[n][0] + (n === 'in' ? BW / 2 : -BW / 2), Math.min(blk[n][1], Math.max(blk[n][0], other[1]))] : pos[n]);
-    const isBox = n => !sock[n] && !(atlas && blk[n]);
+    const isBox = n => !sock[n] && !isBlock(n);
     const OBST = atlas ? REG.filter(r => r.name !== 'in' && r.name !== 'out') : REG;   // boxes a line bends around
     function geom(p, a, b) {
       if (a === b) { const [x1, y1] = pos[a], x = x1 + BW / 2 - 30, y = y1 - BH / 2; return {d: `M${f1(x)},${f1(y)} C${f1(x)},${f1(y - 32)} ${f1(x + 46)},${f1(y - 32)} ${f1(x + 30)},${f1(y - 3)}`, end: [x + 30, y - 3], dir: [-0.45, 0.9]}; }
@@ -253,7 +259,7 @@
       const pad = 7 + 9 * (Math.max(...mem.map(r => r.group.split('/').length)) - gp.split('/').length);
       const xs = mem.map(r => pos[r.name][0]), ys = mem.map(r => pos[r.name][1]);
       const x0 = Math.min(...xs) - BW / 2 - pad, x1 = Math.max(...xs) + BW / 2 + pad, y0 = Math.min(...ys) - BH / 2 - pad - 12, y1 = Math.max(...ys) + BH / 2 + pad;
-      s += `<rect class="lb-group" x="${f1(x0)}" y="${f1(y0)}" width="${f1(x1 - x0)}" height="${f1(y1 - y0)}" rx="9"/>`;
+      s += `<rect class="lb-group${gp.includes('/') ? '' : ' lb-gtop'}" style="--h:${hueOf(gp)}" x="${f1(x0)}" y="${f1(y0)}" width="${f1(x1 - x0)}" height="${f1(y1 - y0)}" rx="9"/>`;
       labels += `<text class="lb-grouplabel" x="${f1(x0 + 7)}" y="${f1(y0 + 12)}">${esc(gp.split('/').pop())}</text>`;
     });
     // modulators: a dashed line from the cell that releases one to every cell with a receptor for it, and to every
@@ -296,7 +302,7 @@
     }));
     s += modsvg + labels;
     for (const r of REG) {
-      if (atlas && blk[r.name]) {   // the senses / motor block: name above, a labelled socket per sense or action group
+      if (isBlock(r.name)) {   // the senses / motor block: name above, a labelled socket per sense or action group
         const [b0, b1] = blk[r.name], x0 = pos[r.name][0] - BW / 2, SW = 104, SH = 18;
         s += `<g class="lb-reg" data-r="${esc(r.name)}"><rect x="${f1(x0)}" y="${f1(b0)}" width="${BW}" height="${f1(b1 - b0)}" rx="6" class="lb-io"/>`
           + `<text class="lb-regname" x="${f1(x0 + 2)}" y="${f1(b0 - 6)}">${esc(r.name)} <tspan class="lb-regsub">${r.name === 'in' ? 'senses' : 'motor neurons'} · ${r.size}</tspan></text>`;
@@ -308,7 +314,7 @@
         continue;
       }
       const [x, y] = pos[r.name];
-      s += `<g class="lb-reg${r.new ? ' lb-isnew' : ''}" data-r="${esc(r.name)}" transform="translate(${f1(x - BW / 2)},${f1(y - BH / 2)})"><rect width="${BW}" height="${BH}" rx="6" class="${r.sign > 0 ? 'lb-exc' : r.sign < 0 ? 'lb-inh' : 'lb-io'}"/>`
+      s += `<g class="lb-reg${r.new ? ' lb-isnew' : ''}" data-r="${esc(r.name)}" transform="translate(${f1(x - BW / 2)},${f1(y - BH / 2)})"><rect width="${BW}" height="${BH}" rx="6" ${r.group ? `class="lb-cell" style="--h:${hueOf(r.group.split('/')[0])}"` : 'class="lb-io"'}/>`
         + `<text class="lb-regname" x="8" y="16">${esc(r.name)}</text><text class="lb-regsub" x="8" y="30">${r.name === 'in' ? 'senses' : r.name === 'out' ? 'motor neurons' : (r.sign > 0 ? 'excitatory' : 'inhibitory')} · ${r.size}</text></g>`;
     }
     s += '</svg>';

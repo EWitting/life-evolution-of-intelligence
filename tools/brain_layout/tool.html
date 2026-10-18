@@ -30,8 +30,8 @@
   <label>mode <select id="mode">
     <option value="foresight">foresight: all stages at once</option>
     <option value="forward">forward: old modules pinned</option></select></label><br>
-  <label title="One socket per sense (vis, taste, skin, ...) on the senses block, from the projections' input selection. Off: every input edge ends on the block itself."><input type="checkbox" id="splitIn" checked> split input by sense</label><br>
-  <label title="One socket per group of actions (forward, turn_left/turn_right, use, ...) on the motor block, from the projections' output range. Projections onto all of out end on the block itself."><input type="checkbox" id="splitOut" checked> split output by action</label><br>
+  <label title="split: a tall block with one socket per sense (vis, taste, skin, ...), from the projections' input selection. block: a tall block without sockets; each line leaves it at the height of its target. point: one small box; every line starts from it.">input <select id="inMode"><option value="split">split by sense</option><option value="block">one tall block</option><option value="point">one small box</option></select></label>
+  <label title="split: a tall block with one socket per group of actions (forward, turn_left/turn_right, use, ...), from the projections' output range; projections onto all of out end on the block. block: a tall block without sockets; each line arrives at the height of its source. point: one small box; every line ends on it.">output <select id="outMode"><option value="split">split by action</option><option value="block">one tall block</option><option value="point">one small box</option></select></label><br>
   <label title="Keep the top-to-bottom order of the sockets as it is: the optimiser does not swap them. New sockets of a later stage are still placed."><input type="checkbox" id="lockSockets"> lock socket order</label><br>
   <label>seed <input id="seed" type="number" value="1" style="width:46px"></label>
   <label>iterations <input id="iters" type="number" value="8000" step="1000" style="width:60px"></label>
@@ -39,6 +39,8 @@
   <h3>Connections (weight × length)</h3><div id="wConn"></div>
   <h3>Shape</h3><div id="wShape"></div>
   <button id="reset">Reset weights to defaults</button>
+  <h3 title="The colour of each top-level group's cells and box, in the book and the dashboards too. Defaults: in the order the groups first appear, a golden angle (137.5°) apart, so that an existing group keeps its colour when a later stage adds one.">Group colours (hue)</h3><div id="hues"></div>
+  <button id="resetHues">Reset colours</button>
   <h3>Energy</h3><div id="energy"></div>
   <h3>Layout file</h3>
   <button id="save">Save atlas.json</button><button id="download">Download</button><button id="unpin">Unpin all</button>
@@ -85,14 +87,21 @@ const WEIGHTS = {
 const W = {};
 for (const [k, , v] of [...WEIGHTS.conn, ...WEIGHTS.shape]) W[k] = v;
 const $ = id => document.getElementById(id);
-const opt = {splitIn: true, splitOut: true, lockSockets: false, mode: 'foresight'};
+const opt = {inMode: 'split', outMode: 'split', lockSockets: false, mode: 'foresight'};   // inMode / outMode: split, block, point
 let P = {}, pinned = new Set(), G = null;   // P: grid cell [col, row] of every inner module
 let order = {in: [], out: []};              // top-to-bottom socket order, shared by all stages
+let hueSet = {};                            // group colours chosen here (or saved), over the defaults
 
 if (DATA.atlas) {
   Object.assign(W, DATA.atlas.weights || {}); Object.assign(opt, DATA.atlas.options || {});
+  for (const s of ['in', 'out']) {   // files saved before the three forms had a split on / off switch
+    const old = opt['split' + (s === 'in' ? 'In' : 'Out')];
+    if (!(DATA.atlas.options || {})[s + 'Mode'] && old !== undefined) opt[s + 'Mode'] = old ? 'split' : 'block';
+    delete opt['split' + (s === 'in' ? 'In' : 'Out')];
+  }
   for (const [n, c] of Object.entries(DATA.atlas.cells || {})) P[n] = c.slice();
   pinned = new Set(DATA.atlas.pinned || []);
+  hueSet = {...(DATA.atlas.hues || {})};
   if (DATA.atlas.sockets) order = {in: [...(DATA.atlas.sockets.in || [])], out: [...(DATA.atlas.sockets.out || [])]};
 }
 if (DATA.stages.some(s => !s.actions)) $('warn').textContent = 'The server is an older version without action names: restart serve.py.';
@@ -102,12 +111,12 @@ if (DATA.stages.some(s => !s.actions)) $('warn').textContent = 'The server is an
 const topGroup = g => g ? g.split('/')[0] : '';
 function srcEnds(p) {
   if (p.src !== 'in') return [p.src];
-  if (!opt.splitIn || !p.src_select || !p.src_select.length) return ['in'];
+  if (opt.inMode !== 'split' || !p.src_select || !p.src_select.length) return ['in'];
   return [...new Set(p.src_select.map(s => 'in:' + (/^[a-z_]+/i.exec(s) || ['?'])[0]))];
 }
 function dstEnd(p, actions) {
   if (p.dst !== 'out') return p.dst;
-  if (!opt.splitOut || !p.dst_range || !p.dst_range.length) return 'out';
+  if (opt.outMode !== 'split' || !p.dst_range || !p.dst_range.length) return 'out';
   const [lo, hi] = p.dst_range;
   if (!actions.length) return `out:${lo}-${hi}`;
   if (lo === 0 && hi >= actions.length) return 'out';
@@ -142,7 +151,7 @@ function index(st) {
   st.edges.sort((a, b) => (a.t === 'modproj') - (b.t === 'modproj'));   // a modulated projection is routed before the line to it
   st.pairs = new Set(st.edges.filter(e => e.t !== 'mod' && e.t !== 'modproj').map(e => e.a + '>' + e.b));
   // what each socket's height follows: the inner modules it connects to
-  st.link = {};
+  st.link = {in: [], out: []};   // (and for the blocks themselves: where a small box sits)
   for (const n of st.names) if (node(n).kind === 'sock') st.link[n] = [];
   for (const e of st.edges) if (e.t !== 'modproj') {
     if (st.link[e.a] && node(e.b).kind === 'inner') st.link[e.a].push(e.b);
@@ -169,6 +178,8 @@ function build() {
   const all = {key: 'all', names: [...nodes.keys()], edges: []}, seen = new Set();
   for (const st of G.stages) for (const e of st.edges) { const k = JSON.stringify(e); if (!seen.has(k)) { seen.add(k); all.edges.push(e); } }
   index(all); G.all = all;
+  G.hues = {...groupHues(), ...hueSet};
+  hueControls();
   const rnd = rng(+$('seed').value || 1);
   for (const n of nodes.values()) if (n.kind === 'inner' && !(P[n.name] && P[n.name][0] >= 1 && P[n.name][0] <= GC && P[n.name][1] < GR)) P[n.name] = freeCell(n.name, rnd);
   for (const k of Object.keys(P)) if (!nodes.has(k)) delete P[k];
@@ -215,18 +226,25 @@ function place(st, raw) {
     }
     const shift = socks.length ? (sy - sw) / socks.length : 0;
     for (const n of socks) Y[n] -= shift;
-    const b = socks.length ? [Y[socks[0]] - 0.45, Y[socks[socks.length - 1]] + 0.45] : [-0.3, nrows - 0.7];
-    if (b[1] - b[0] < 0.9) { const c = (b[0] + b[1]) / 2; b[0] = c - 0.45; b[1] = c + 0.45; }
+    let b;
+    if (opt[side + 'Mode'] === 'point') {   // one small box at the mean row of what it connects to
+      const l = st.link[side], c = l.length ? l.reduce((a, m) => a + Y[m], 0) / l.length : (nrows - 1) / 2;
+      b = [c - BH / 2 / CHP, c + BH / 2 / CHP];
+    } else {
+      b = socks.length ? [Y[socks[0]] - 0.45, Y[socks[socks.length - 1]] + 0.45] : [-0.3, nrows - 0.7];
+      if (b[1] - b[0] < 0.9) { const c = (b[0] + b[1]) / 2; b[0] = c - 0.45; b[1] = c + 0.45; }
+    }
     blk[side] = b; X[side] = x; Y[side] = (b[0] + b[1]) / 2;
     top = Math.min(top, b[0] - 0.3); bottom = Math.max(bottom, b[1]);
   }
   return {X, Y, blk, ncols, nrows, y0: top + 0.5, height: bottom - top};
 }
-// where an edge attaches, in px: box centre, socket on the block's inner edge, or the block's inner edge at the other
-// end's height
+const isPoint = n => (n === 'in' || n === 'out') && opt[n + 'Mode'] === 'point';
+// where an edge attaches, in px: box centre (a region, or the senses / motor neurons as one small box), socket on
+// the block's inner edge, or the block's inner edge at the other end's height
 function endPt(pl, n, otherY) {
   const node = G.nodes.get(n), x = pl.X[n] * CW;
-  if (node.kind === 'inner') return [x, pl.Y[n] * CHP];
+  if (node.kind === 'inner' || isPoint(n)) return [x, pl.Y[n] * CHP];
   const dx = node.side === 'in' ? BW / 2 : -BW / 2;
   if (node.kind === 'sock') return [x + dx, pl.Y[n] * CHP];
   const [b0, b1] = pl.blk[n];
@@ -414,7 +432,25 @@ async function run(scratch) {
 }
 
 // ---------- drawing ----------
-const hue = s => { let h = 0; for (const ch of s) h = (h * 31 + ch.charCodeAt(0)) % 360; return h; };
+// a hue per top-level group, in the order the groups first appear along the chain (golden angle apart, so that
+// neighbours in that order differ most); saved in the layout file, the book and the dashboards use the same hues
+const hue = g => G.hues[g] !== undefined ? G.hues[g] : 0;
+function groupHues() {
+  const tops = [...new Set([...G.nodes.values()].map(n => n.top).filter(Boolean))];
+  return Object.fromEntries(tops.map((g, i) => [g, Math.round((150 + i * 137.508) % 360)]));
+}
+function hueControls() {
+  const box = $('hues'); box.innerHTML = '';
+  for (const [g, h] of Object.entries(G.hues)) {
+    const d = document.createElement('div'); d.className = 'w';
+    d.innerHTML = `<label style="text-decoration:none"><span style="display:inline-block;width:10px;height:10px;border:1px solid #888;background:hsl(${h},55%,80%)"></span> ${g}</label><input type="range" min="0" max="359" step="1" value="${h}"><span>${h}</span>`;
+    const inp = d.querySelector('input'), sp = d.querySelector('span:last-child'), sw = d.querySelector('label span');
+    inp.addEventListener('input', () => {
+      hueSet[g] = G.hues[g] = +inp.value; sp.textContent = inp.value; sw.style.background = `hsl(${inp.value},55%,80%)`; render();
+    });
+    box.appendChild(d);
+  }
+}
 const fill = n => n.top ? `hsl(${hue(n.top)},55%,86%)` : '#f3f3f3';
 const STYLE = {proj: ['#555', ''], in: ['#7aa6d6', ''], out: ['#555', ''], mod: ['#9b4dca', '5 3'], modproj: ['#e08a1e', '2 3']};
 const f1 = v => v.toFixed(1);
@@ -444,6 +480,7 @@ function drawPanel(title, st, pl, raw) {
   for (const side of ['in', 'out']) {
     const [b0, b1] = blk[side], x = X[side] * CW;
     svgEl('rect', {x: x - BW / 2, y: b0 * CHP, width: BW, height: (b1 - b0) * CHP, rx: 6, fill: side === 'in' ? '#e6eef8' : '#ececec', stroke: '#666'}, svg);
+    if (isPoint(side)) { svgEl('text', {x, y: Y[side] * CHP + 4, 'text-anchor': 'middle', 'font-weight': 'bold'}, svg).textContent = side === 'in' ? 'senses' : 'motor'; continue; }
     svgEl('text', {x: x + (side === 'in' ? -BW / 2 + 4 : BW / 2 - 4), y: b0 * CHP - 4, 'text-anchor': side === 'in' ? 'start' : 'end', 'font-weight': 'bold'}, svg)
       .textContent = side === 'in' ? 'senses' : 'motor';
     for (const n of order[side].filter(n => st.set.has(n))) {
@@ -453,7 +490,7 @@ function drawPanel(title, st, pl, raw) {
     }
   }
   for (const r of routes(pl, st)) {
-    const e = r.e, [col, dash] = STYLE[e.t], inner = n => G.nodes.get(n).kind === 'inner';
+    const e = r.e, [col, dash] = STYLE[e.t], inner = n => G.nodes.get(n).kind === 'inner' || isPoint(n);
     const [sx, sy] = !r.pts && inner(e.a) ? clipBox(r.x1, r.y1, r.cx - r.x1, r.cy - r.y1) : [r.x1, r.y1];
     const [ex, ey] = !r.pts && e.t !== 'modproj' && inner(e.b) ? clipBox(r.x2, r.y2, r.cx - r.x2, r.cy - r.y2) : [r.x2, r.y2];
     const d = r.pts ? `M${r.pts.map(p => p.map(f1).join(',')).join(' ').replace(' ', ' C')}`
@@ -528,10 +565,13 @@ $('reset').addEventListener('click', () => {
 });
 $('mode').value = opt.mode;
 $('mode').addEventListener('change', () => { opt.mode = $('mode').value; });
-for (const k of ['splitIn', 'splitOut', 'lockSockets']) {
-  $(k).checked = opt[k];
-  $(k).addEventListener('change', () => { opt[k] = $(k).checked; if (k !== 'lockSockets') build(); changed(); });
+for (const k of ['inMode', 'outMode']) {
+  $(k).value = opt[k];
+  $(k).addEventListener('change', () => { opt[k] = $(k).value; build(); changed(); });
 }
+$('resetHues').addEventListener('click', () => { hueSet = {}; G.hues = groupHues(); hueControls(); render(); });
+$('lockSockets').checked = opt.lockSockets;
+$('lockSockets').addEventListener('change', () => { opt.lockSockets = $('lockSockets').checked; changed(); });
 $('scratch').addEventListener('click', () => run(true));
 $('refine').addEventListener('click', () => run(false));
 $('unpin').addEventListener('click', () => { pinned.clear(); render(); });
@@ -545,9 +585,11 @@ function atlas() {
   return {about: 'brain diagram layout. cells: grid cell [col, row] of every module in the layout grid. sockets: ' +
     'top-to-bottom order of the sockets on the senses block (in:<sense>) and motor block (out:<actions>), shared by ' +
     'all stages. stages: per stage the position [col, row] a diagram uses: empty rows and columns removed, the ' +
-    'blocks in the first and last column with their row extent, sockets at fractional rows. Written by tools/brain_layout.',
+    'blocks in the first and last column with their row extent, sockets at fractional rows. modes: how the senses ' +
+    '(in) and motor neurons (out) are drawn: split (a block with sockets), block (a tall block, lines at the height ' +
+    'of their other end), point (one small box). hues: the colour of each top-level group. Written by tools/brain_layout.',
     saved: new Date().toISOString(), chain: G.stages.map(s => s.key), weights: W, options: opt,
-    cells: P, pinned: [...pinned], sockets: order, stages};
+    modes: {in: opt.inMode, out: opt.outMode}, hues: G.hues, cells: P, pinned: [...pinned], sockets: order, stages};
 }
 $('save').addEventListener('click', async () => {
   const r = await fetch('/save', {method: 'POST', body: JSON.stringify(atlas())});

@@ -3,7 +3,8 @@
 //
 // A page places a component with      <div data-life="curves" data-stage="1.1"></div>
 // Components: status, summary, curves, lesions, brain, runs, settings, strip (with data-example="<extras name>").
-// The brain diagram's layout (autoLayout, edge routing) follows life/dashboard.html.
+// The brain diagram takes its layout from data/brain_layout.json (tools/brain_layout) when that has the stage, else
+// columns by depth as in life/dashboard.html; the edge routing follows life/dashboard.html (the tool scores it too).
 (function () {
   'use strict';
   const cache = {};
@@ -157,8 +158,26 @@
   }
 
   // ------------------------------------------------------------------ brain diagram
-  function brain(root, D) {
+  // the layout shared by all stages (tools/brain_layout writes data/brain_layout.json); without it, or for a stage it
+  // does not have, the diagram is laid out in columns by depth as before
+  let layoutP;
+  const loadLayout = () => layoutP || (layoutP = fetch('data/brain_layout.json').then(r => r.ok ? r.json() : null).catch(() => null));
+  function brain(root, D) { return loadLayout().then(L => drawBrain(root, D, L)); }
+  function drawBrain(root, D, L) {
     const REG = D.brain.regions, PROJ = D.brain.projections, BW = 122, BH = 38, pos = {};
+    const A = L && L.stages && L.stages[D.stage.key], atlas = !!A && REG.every(r => A.pos[r.name]);
+    const blk = {}, sock = {};   // with the layout: the senses / motor blocks' extent [y0, y1] and their sockets, in px
+    let AH, SVGW;
+    if (atlas) {
+      const CW = BW + 110, STEP = BH + 26, rows = [...Object.values(A.pos).map(p => p[1]), ...Object.values(A.blocks).flat()];
+      const W0 = 40 + BW + (A.cols - 1) * CW;   // at least as wide as the depth layout: small brains are not blown up
+      SVGW = Math.max(720, W0);
+      const top = Math.min(...rows) - 0.5, X = c => (SVGW - W0) / 2 + 20 + BW / 2 + c * CW, Y = r => 30 + (r - top) * STEP;
+      // a socket sits on its block's inner edge (the right edge of the senses, the left edge of the motor neurons)
+      for (const [n, [c, r]] of Object.entries(A.pos)) if (n.includes(':')) sock[n] = [X(c) + (n.startsWith('in:') ? BW / 2 : -BW / 2), Y(r)]; else pos[n] = [X(c), Y(r)];
+      for (const [n, [b0, b1]] of Object.entries(A.blocks)) blk[n] = [Y(b0), Y(b1)];
+      AH = Y(Math.max(...rows) + 0.5);
+    } else {
     const depth = {in: 0}, q = ['in'];
     while (q.length) { const u = q.shift(); for (const p of PROJ) if (p.src === u && depth[p.dst] === undefined) { depth[p.dst] = depth[u] + 1; q.push(p.dst); } }
     const inner = REG.filter(r => r.name !== 'in' && r.name !== 'out');
@@ -175,26 +194,51 @@
     const STEP = BH + 26, GAP = 40, SUB = 26;   // SUB: extra room where a sub-group starts (its box and label)
     const subs = mem => mem.filter((r, i) => i && r.group !== mem[i - 1].group).length;
     const colH = colKeys.map(c => colsOf[c].reduce((s, k) => s + units.get(k).length * STEP + subs(units.get(k)) * SUB + GAP, -GAP));
-    const AH = Math.max(160, Math.max(...colH) + 70), SVGW = Math.max(720, 40 + colKeys.length * (BW + 110) - 110);
+    AH = Math.max(160, Math.max(...colH) + 70); SVGW = Math.max(720, 40 + colKeys.length * (BW + 110) - 110);
     colKeys.forEach((c, ci) => {
       const x = colKeys.length > 1 ? 20 + BW / 2 + ci * (SVGW - 40 - BW) / (colKeys.length - 1) : SVGW / 2;
       let y = (AH - colH[ci]) / 2 + BH / 2 + 16;
       for (const k of colsOf[c]) { units.get(k).forEach((r, i, mem) => { if (i && r.group !== mem[i - 1].group) y += SUB; pos[r.name] = [x, y]; y += STEP; }); y += GAP; }
     });
+    }
     const clip = (cx, cy, dx, dy) => { const s = Math.min(dx ? (BW / 2 + 4) / Math.abs(dx) : 1e9, dy ? (BH / 2 + 4) / Math.abs(dy) : 1e9); return [cx + dx * s, cy + dy * s]; };
     const inBox = (x, y, n) => Math.abs(x - pos[n][0]) < BW / 2 + 6 && Math.abs(y - pos[n][1]) < BH / 2 + 6;
     const f1 = v => v.toFixed(1);
-    function geom(p) {
-      const [x1, y1] = pos[p.src], [x2, y2] = pos[p.dst];
-      if (p.src === p.dst) { const x = x1 + BW / 2 - 30, y = y1 - BH / 2; return {d: `M${f1(x)},${f1(y)} C${f1(x)},${f1(y - 32)} ${f1(x + 46)},${f1(y - 32)} ${f1(x + 30)},${f1(y - 3)}`, end: [x + 30, y - 3], dir: [-0.45, 0.9]}; }
+    // with the layout, the lines of a projection from the senses start at a socket per sense it reads, and a projection
+    // onto some of the actions ends at that group's socket; a projection onto all of out ends on the motor block
+    const actions = D.brain.actions || [];
+    function ends(p) {
+      if (!atlas) return [[p.src, p.dst]];
+      let d = p.dst;
+      const [lo, hi] = p.dst_range;
+      if (p.dst === 'out' && p.dst_range.length && !(lo === 0 && hi >= actions.length)) {
+        const s = 'out:' + actions.slice(lo, hi).map(a => a.toLowerCase()).join('/');
+        if (sock[s]) d = s;
+      }
+      const ss = p.src === 'in' && p.src_select.length ? p.src_select.map(s => 'in:' + (/^[a-z_]+/i.exec(s) || ['?'])[0]).map(s => sock[s] ? s : 'in') : [p.src];
+      return [...new Set(ss)].map(s => [s, d]);
+    }
+    const ENDS = PROJ.map(ends);
+    const centre = n => sock[n] || pos[n];
+    // where a line attaches: a region's centre (clipped to its box later), a socket, or a block's inner edge at the
+    // height of the line's other end
+    const attach = (n, other) => sock[n] || (atlas && blk[n]
+      ? [pos[n][0] + (n === 'in' ? BW / 2 : -BW / 2), Math.min(blk[n][1], Math.max(blk[n][0], other[1]))] : pos[n]);
+    const isBox = n => !sock[n] && !(atlas && blk[n]);
+    const OBST = atlas ? REG.filter(r => r.name !== 'in' && r.name !== 'out') : REG;   // boxes a line bends around
+    function geom(p, a, b) {
+      if (a === b) { const [x1, y1] = pos[a], x = x1 + BW / 2 - 30, y = y1 - BH / 2; return {d: `M${f1(x)},${f1(y)} C${f1(x)},${f1(y - 32)} ${f1(x + 46)},${f1(y - 32)} ${f1(x + 30)},${f1(y - 3)}`, end: [x + 30, y - 3], dir: [-0.45, 0.9]}; }
+      const [x1, y1] = attach(a, centre(b)), [x2, y2] = attach(b, centre(a));
       const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy) || 1, nx = -dy / len, ny = dx / len;
-      const twins = PROJ.filter(o => o.src === p.src && o.dst === p.dst), ti = twins.indexOf(p);
-      const base = (PROJ.some(o => o.src === p.dst && o.dst === p.src) ? 14 : 0) + (twins.length > 1 ? (ti - (twins.length - 1) / 2) * 16 : 0);
-      const hits = b => REG.some(r => r.name !== p.src && r.name !== p.dst && [0.2, 0.35, 0.5, 0.65, 0.8].some(f => inBox(x1 + dx * f + nx * 4 * f * (1 - f) * b, y1 + dy * f + ny * 4 * f * (1 - f) * b, r.name)));
+      const has = (s, d) => o => ENDS[PROJ.indexOf(o)].some(e => e[0] === s && e[1] === d);
+      const twins = PROJ.filter(has(a, b)), ti = twins.indexOf(p);
+      const base = (PROJ.some(has(b, a)) ? 14 : 0) + (twins.length > 1 ? (ti - (twins.length - 1) / 2) * 16 : 0);
+      const hits = bb => OBST.some(r => r.name !== a && r.name !== b && [0.2, 0.35, 0.5, 0.65, 0.8].some(f => inBox(x1 + dx * f + nx * 4 * f * (1 - f) * bb, y1 + dy * f + ny * 4 * f * (1 - f) * bb, r.name)));
       let bend = base;
       for (let k = 1; k <= 10 && hits(bend); k++) { const sg = base ? Math.sign(base) : (k % 2 ? 1 : -1); bend = base + sg * Math.ceil(k / (base ? 1 : 2)) * 0.4 * BH; }
       const cx = (x1 + x2) / 2 + nx * 2 * bend, cy = (y1 + y2) / 2 + ny * 2 * bend;
-      const [sx, sy] = clip(x1, y1, cx - x1, cy - y1), [ex, ey] = clip(x2, y2, cx - x2, cy - y2), l = Math.hypot(ex - cx, ey - cy) || 1;
+      const [sx, sy] = isBox(a) ? clip(x1, y1, cx - x1, cy - y1) : [x1, y1], [ex, ey] = isBox(b) ? clip(x2, y2, cx - x2, cy - y2) : [x2, y2];
+      const l = Math.hypot(ex - cx, ey - cy) || 1;
       return {d: `M${f1(sx)},${f1(sy)} Q${f1(cx)},${f1(cy)} ${f1(ex)},${f1(ey)}`, end: [ex, ey], dir: [(ex - cx) / l, (ey - cy) / l]};
     }
     const maxDrive = Math.max(1e-6, ...PROJ.map(p => p.drive));
@@ -215,7 +259,7 @@
     // modulators: a dashed line from the cell that releases one to every cell with a receptor for it, and to every
     // projection whose learning it gates (the line ends on the middle of that projection)
     const mid = {}, MODS = [];
-    PROJ.forEach((p, i) => { const m = /^M([-\d.]+),([-\d.]+) Q([-\d.]+),([-\d.]+) ([-\d.]+),([-\d.]+)$/.exec(geom(p).d); if (m) mid[i] = [(+m[1] + 2 * +m[3] + +m[5]) / 4, (+m[2] + 2 * +m[4] + +m[6]) / 4]; });
+    PROJ.forEach((p, i) => { const m = /^M([-\d.]+),([-\d.]+) Q([-\d.]+),([-\d.]+) ([-\d.]+),([-\d.]+)$/.exec(geom(p, ...ENDS[i][0]).d); if (m) mid[i] = [(+m[1] + 2 * +m[3] + +m[5]) / 4, (+m[2] + 2 * +m[4] + +m[6]) / 4]; });
     for (const m of D.brain.modulators || []) {
       if (!pos[m.pos]) continue;
       for (const r of REG) for (const rc of r.receptors || []) if (rc[0] === m.name) MODS.push({m, src: m.pos, to: pos[r.name], dst: r.name, how: rc[1], sens: rc[2]});
@@ -228,7 +272,7 @@
         return {d: `M${f1(x)},${f1(y1)} C${f1(x + b)},${f1(y1)} ${f1(x + b)},${f1(y2)} ${f1(x + 5)},${f1(y2)}`, end: [x + 5, y2], mid: [x + b * 0.75 + 4, (y1 + y2) / 2], anchor: 'start'};
       }
       const base = l.dst && PROJ.some(o => (o.src === l.src && o.dst === l.dst) || (o.src === l.dst && o.dst === l.src)) ? 24 : 0;
-      const hits = b => REG.some(r => r.name !== l.src && r.name !== l.dst && [0.2, 0.35, 0.5, 0.65, 0.8].some(f => inBox(x1 + dx * f + nx * 4 * f * (1 - f) * b, y1 + dy * f + ny * 4 * f * (1 - f) * b, r.name)));
+      const hits = b => OBST.some(r => r.name !== l.src && r.name !== l.dst && [0.2, 0.35, 0.5, 0.65, 0.8].some(f => inBox(x1 + dx * f + nx * 4 * f * (1 - f) * b, y1 + dy * f + ny * 4 * f * (1 - f) * b, r.name)));
       let bend = base;
       for (let k = 1; k <= 10 && hits(bend); k++) { const sg = base ? Math.sign(base) : (k % 2 ? 1 : -1); bend = base + sg * Math.ceil(k / (base ? 1 : 2)) * 0.4 * BH; }
       const cx = (x1 + x2) / 2 + nx * 2 * bend, cy = (y1 + y2) / 2 + ny * 2 * bend;
@@ -241,17 +285,28 @@
       modsvg += `<g class="lb-mod" data-m="${i}"><path class="lb-modline" fill="none" d="${g.d}"/><circle class="lb-modend" cx="${f1(g.end[0])}" cy="${f1(g.end[1])}" r="4"/>`
         + `<text class="lb-modlabel" text-anchor="${g.anchor || 'middle'}" x="${f1(g.mid[0])}" y="${f1(g.mid[1] + 3.5)}">${esc(l.m.name)}</text><path d="${g.d}" fill="none" stroke="transparent" stroke-width="14"/></g>`;
     });
-    PROJ.forEach((p, i) => {
-      const g = geom(p), w = 1 + 4 * Math.sqrt(p.drive / maxDrive), cls = p.rule !== 'fixed' ? 'lb-learned' : p.hard ? 'lb-hard' : 'lb-evolved', [ex, ey] = g.end, [ux, uy] = g.dir;
+    PROJ.forEach((p, i) => ENDS[i].forEach(([from, to]) => {
+      const g = geom(p, from, to), w = 1 + 4 * Math.sqrt(p.drive / maxDrive), cls = p.rule !== 'fixed' ? 'lb-learned' : p.hard ? 'lb-hard' : 'lb-evolved', [ex, ey] = g.end, [ux, uy] = g.dir;
       // excitatory synapses end in an arrowhead, inhibitory ones in a bar; sensory projections (mixed signs) in a dot
       const fromIn = p.src === 'in' && (!p.hard || p.sign === 0), a = 7 + w;
       const head = fromIn ? `<circle class="${cls}-fill" cx="${f1(ex)}" cy="${f1(ey)}" r="${f1(2.5 + w / 2)}"/>`
         : p.sign < 0 ? `<line class="${cls}" stroke-width="${f1(w + 1.5)}" x1="${f1(ex - uy * a)}" y1="${f1(ey + ux * a)}" x2="${f1(ex + uy * a)}" y2="${f1(ey - ux * a)}"/>`
         : `<path class="${cls}-fill" d="M${f1(ex)},${f1(ey)} L${f1(ex - ux * a * 1.5 - uy * a * 0.6)},${f1(ey - uy * a * 1.5 + ux * a * 0.6)} L${f1(ex - ux * a * 1.5 + uy * a * 0.6)},${f1(ey - uy * a * 1.5 - ux * a * 0.6)} z"/>`;
       s += `<g class="lb-edge${p.new ? ' lb-isnew' : ''}" data-p="${i}"><path class="${cls}" fill="none" stroke-width="${f1(w)}" d="${g.d}"/>${head}<path d="${g.d}" fill="none" stroke="transparent" stroke-width="14"/></g>`;
-    });
+    }));
     s += modsvg + labels;
     for (const r of REG) {
+      if (atlas && blk[r.name]) {   // the senses / motor block: name above, a labelled socket per sense or action group
+        const [b0, b1] = blk[r.name], x0 = pos[r.name][0] - BW / 2, SW = 104, SH = 18;
+        s += `<g class="lb-reg" data-r="${esc(r.name)}"><rect x="${f1(x0)}" y="${f1(b0)}" width="${BW}" height="${f1(b1 - b0)}" rx="6" class="lb-io"/>`
+          + `<text class="lb-regname" x="${f1(x0 + 2)}" y="${f1(b0 - 6)}">${esc(r.name)} <tspan class="lb-regsub">${r.name === 'in' ? 'senses' : 'motor neurons'} · ${r.size}</tspan></text>`;
+        for (const [n, [x, y]] of Object.entries(sock)) if (n.startsWith(r.name + ':')) {
+          const sx = r.name === 'in' ? x - SW : x;
+          s += `<rect class="lb-sock" x="${f1(sx)}" y="${f1(y - SH / 2)}" width="${SW}" height="${SH}" rx="4"/><text class="lb-regsub" x="${f1(sx + SW / 2)}" y="${f1(y + 3.5)}" text-anchor="middle">${esc(n.slice(r.name.length + 1))}</text>`;
+        }
+        s += '</g>';
+        continue;
+      }
       const [x, y] = pos[r.name];
       s += `<g class="lb-reg${r.new ? ' lb-isnew' : ''}" data-r="${esc(r.name)}" transform="translate(${f1(x - BW / 2)},${f1(y - BH / 2)})"><rect width="${BW}" height="${BH}" rx="6" class="${r.sign > 0 ? 'lb-exc' : r.sign < 0 ? 'lb-inh' : 'lb-io'}"/>`
         + `<text class="lb-regname" x="8" y="16">${esc(r.name)}</text><text class="lb-regsub" x="8" y="30">${r.name === 'in' ? 'senses' : r.name === 'out' ? 'motor neurons' : (r.sign > 0 ? 'excitatory' : 'inhibitory')} · ${r.size}</text></g>`;

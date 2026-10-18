@@ -244,7 +244,7 @@
     PROJ.forEach((p, i) => {
       const g = geom(p), w = 1 + 4 * Math.sqrt(p.drive / maxDrive), cls = p.rule !== 'fixed' ? 'lb-learned' : p.hard ? 'lb-hard' : 'lb-evolved', [ex, ey] = g.end, [ux, uy] = g.dir;
       // excitatory synapses end in an arrowhead, inhibitory ones in a bar; sensory projections (mixed signs) in a dot
-      const fromIn = p.src === 'in' && !p.hard, a = 7 + w;
+      const fromIn = p.src === 'in' && (!p.hard || p.sign === 0), a = 7 + w;
       const head = fromIn ? `<circle class="${cls}-fill" cx="${f1(ex)}" cy="${f1(ey)}" r="${f1(2.5 + w / 2)}"/>`
         : p.sign < 0 ? `<line class="${cls}" stroke-width="${f1(w + 1.5)}" x1="${f1(ex - uy * a)}" y1="${f1(ey + ux * a)}" x2="${f1(ex + uy * a)}" y2="${f1(ey - ux * a)}"/>`
         : `<path class="${cls}-fill" d="M${f1(ex)},${f1(ey)} L${f1(ex - ux * a * 1.5 - uy * a * 0.6)},${f1(ey - uy * a * 1.5 + ux * a * 0.6)} L${f1(ex - ux * a * 1.5 + uy * a * 0.6)},${f1(ey - uy * a * 1.5 - ux * a * 0.6)} z"/>`;
@@ -263,7 +263,7 @@
     root.querySelectorAll('.lb-edge').forEach(g => {
       const p = PROJ[+g.dataset.p];
       const range = p.dst === 'out' && p.dst_range.length ? ` (${D.brain.actions.slice(p.dst_range[0], p.dst_range[1]).join(', ')})` : '';
-      hover(g, e => showTip(e, `<b>${esc(p.src + sel(p))} → ${esc(p.dst)}${esc(range)}</b><div>${p.rule !== 'fixed' ? `learned within a life (rule: ${esc(p.rule)}${p.modulator ? ', gated by ' + esc(p.modulator) : ''})` : p.hard ? 'hard-wired' : 'evolved'}, ${p.src === 'in' && !p.hard ? 'mixed signs' : p.sign < 0 ? 'inhibitory' : 'excitatory'}${p.new ? ', added in this stage' : ''}</div><div>${fmt(p.synapses, p.synapses < 10 ? 0 : 0)} synapses, mean strength ${fmt(p.mean_abs)}${p.designed !== null && p.designed !== undefined ? ` (designed at ${fmt(Math.abs(p.designed))})` : ''}</div>`));
+      hover(g, e => showTip(e, `<b>${esc(p.src + sel(p))} → ${esc(p.dst)}${esc(range)}</b><div>${p.rule !== 'fixed' ? `learned within a life (rule: ${esc(p.rule)}${p.modulator ? ', gated by ' + esc(p.modulator) : ''})` : p.hard ? 'hard-wired' : 'evolved'}, ${p.src === 'in' && (!p.hard || p.sign === 0) ? 'mixed signs' : p.sign < 0 ? 'inhibitory' : 'excitatory'}${p.new ? ', added in this stage' : ''}</div><div>${fmt(p.synapses, p.synapses < 10 ? 0 : 0)} synapses, mean strength ${fmt(p.mean_abs)}${p.designed !== null && p.designed !== undefined ? ` (designed at ${fmt(Math.abs(p.designed))})` : ''}</div>`));
     });
     const lasts = m => m.lasts ? `Released at once and cleared slowly: it stays for about ${fmt(m.lasts, 0)} ticks (designed at ${fmt(m.lasts_designed, 0)}).` : 'Follows the cell that releases it, without delay.';
     root.querySelectorAll('.lb-mod').forEach(g => {

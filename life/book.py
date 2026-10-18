@@ -195,7 +195,10 @@ def brain_view(s, run: Path) -> dict:
         n = float(present.sum(axis=(1, 2)).mean())
         mean_abs = float(np.abs(w).sum() / max(1.0, present.sum()))
         # Dale rows hold magnitudes: the sign is the source region's. Sensory rows are signed.
-        sign = signs[p["src"]] or float(np.sign(w.sum()))
+        sign = signs[p["src"]]
+        if not sign:   # a sensory projection: mixed when both signs are common (e.g. the random input of the pallium)
+            pos = float((w > 0).sum()) / max(1.0, float((w != 0).sum()))
+            sign = 0.0 if 0.2 < pos < 0.8 else float(np.sign(w.sum()))
         key = (p["src"], p["dst"], tuple(p.get("src_select", ())), tuple(p.get("dst_range", ())), tuple(p.get("src_range", ())))
         projections.append({
             "src": p["src"], "dst": p["dst"], "src_select": list(p.get("src_select", ())),

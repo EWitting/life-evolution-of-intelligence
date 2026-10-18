@@ -319,6 +319,16 @@ def init_state(genome: Genome, layout: Layout, w_max: float = 4.0) -> BrainState
                       mod=jnp.zeros(max(m, 1), jnp.float32), g=jnp.zeros(n, jnp.float32), ws=ws, wg=wg)
 
 
+def block_genome(layout: Layout, genome: Genome) -> Genome:
+    """The genome as step() reads it during a life: the N x N genes cut to the plastic block. The full weights are
+    only needed at birth (init_state); copies of a genome for its siblings are then small."""
+    if not layout.pl_rows:
+        return genome
+    ix = np.ix_(np.asarray(layout.pl_rows), np.asarray(layout.pl_cols))
+    cut = lambda a: a[(..., *ix)] if a.ndim == 3 else a[ix]
+    return genome._replace(**{k: cut(getattr(genome, k)) for k in ("w0", "mask", "eta", "A", "B", "C", "D")})
+
+
 def _fixed_weights(layout: Layout, w: jnp.ndarray) -> tuple:
     """The part of the weights that stays as it is for a life: everything outside the plastic block (the block is
     read from the state every tick). Signed, split into the additive and the gain part, and cut into the columns
@@ -420,8 +430,9 @@ def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, ob
         b_gate = jnp.where(b_mod >= 0, mod[np.maximum(b_mod, 0)], 1.0)
         b_teacher = np.asarray(layout.teacher)[C]
         b_signed = (np.asarray(layout.sign)[R] != 0)[:, None]
-        b_eta, b_mask, b_w0 = genome.eta[ix], genome.mask[ix], genome.w0[ix]
-        b_A, b_B, b_C, b_D = genome.A[ix], genome.B[ix], genome.C[ix], genome.D[ix]
+        blk = (lambda a: a) if genome.eta.shape == (len(R), len(C)) and len(R) * len(C) != layout.n ** 2             else (lambda a: a[ix])   # a genome cut to the block (block_genome) or a full one
+        b_eta, b_mask, b_w0 = blk(genome.eta), blk(genome.mask), blk(genome.w0)
+        b_A, b_B, b_C, b_D = blk(genome.A), blk(genome.B), blk(genome.C), blk(genome.D)
     h = None
     blocks = _block_in_phases(layout) if plastic else ()
     for _ in range(cfg.steps_per_tick):

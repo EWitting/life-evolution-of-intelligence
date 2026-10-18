@@ -81,8 +81,11 @@ def make_simulate(exp: ExperimentConfig, record: bool, compact: bool = True):
         # fewer genomes than agents: every genome lives as N / P siblings (agents i*k .. i*k+k-1 share genome i)
         P = pop.b.shape[0]
         assert N % P == 0, f"{N} agents cannot be split evenly over {P} genomes"
+        bstate0 = jax.vmap(lambda g: brain.init_state(g, layout))(pop)   # birth: the same for all siblings of a genome
+        pop = brain.block_genome(layout, pop)                             # a life reads only the plastic block
         if P != N:
-            pop = jax.tree_util.tree_map(lambda x: jnp.repeat(x, N // P, axis=0), pop)
+            sib = lambda x: jnp.repeat(x, N // P, axis=0)
+            pop, bstate0 = jax.tree_util.tree_map(sib, pop), jax.tree_util.tree_map(sib, bstate0)
         # rules with a leading axis of 2 = two phases of one life: phase 1 from tick WorldConfig.switch_tick on
         phased = rules.food_value.ndim == 2
         rules_at = (lambda tk: jax.tree_util.tree_map(lambda a: a[(tk >= exp.world.switch_tick).astype(jnp.int32)], rules))             if phased else (lambda tk: rules)
@@ -123,7 +126,7 @@ def make_simulate(exp: ExperimentConfig, record: bool, compact: bool = True):
 
         kw, ks = jax.random.split(key)
         world = init_world(exp.world, rules_at(jnp.int32(0)), kw)
-        bstate = jax.vmap(lambda g: brain.init_state(g, layout))(pop)
+        bstate = bstate0
         sig = jnp.zeros((N, 3), jnp.float32)
         eats = jnp.zeros((N, 2, M), jnp.float32)
         tsum = jnp.zeros(N, jnp.float32)

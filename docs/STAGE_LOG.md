@@ -2685,3 +2685,50 @@ the agents on the same cell (same order within a cell, identical results): GPU *
 states built at birth per genome); eligibility and depression only for the plastic block; patch placement as a running
 minimum. All identical bit for bit (generation statistics) and tested. 4096 animals still exceed 8 GB: the per-animal
 weight matrix (1 GB) and the fixed weights copied to siblings (0.7 GB) remain.
+
+## v50 (2026-10-18, evening): 2.2 in mixed patches, three seeds on the GPU; how noisy the comparisons are
+
+Stage 2.2 with `W22` (patch purity 0.25), k-WTA 2, pallium rate 0.2, XOR at 0.5; three seeds of main and control
+on the GPU (`scripts/gpu_queue.sh`, three at a time: six runs in about 17 minutes). Book export (`--evaluate`,
+first 8 worlds):
+
+| | seed 0 | seed 1 | seed 2 | mean |
+|---|---|---|---|---|
+| pallium off, % of intact | 92 | 91 | 93 | **92 +-0.6** |
+| no_plasticity, % | 67 | 77 | 87 | **77 +-6** |
+| flee / fed / settle off, % | 98 / 94 / 94 | 101 / 103 / 89 | 92 / 95 / 97 | |
+| last 50 generations, main - control | | | | +94 +-53 |
+| head to head | +448 | +261 | -106 | +201 +-163 |
+| lab, only the pallium learns: P(bite) poison / good (before 0.23-0.37 / 0.12-0.34) | 0.08 / 0.13 | 0.06 / 0.35 | 0.15 / 0.39 | |
+| lab, only the look learns: poison / good | 0.12 / 0.10 | 0.17 / 0.32 | 0.17 / 0.15 | |
+
+The pallium is used in every seed; learning as a whole more (the look learns too). The lasting states are used less
+in mixed patches (as accepted). Main ahead of control on average, with large standard errors.
+
+**Noise** (`noise.py`, 16 shared worlds, the final populations):
+
+| seed | training curve, last 50: sd per generation (main / control) | re-evaluated main - control, paired | resolvable (2 s.e. paired) | sd between genomes within a world / between worlds |
+|---|---|---|---|---|
+| 0 | 132 / 158 | +111 +-42 | 9.8% | 615 / 165 |
+| 1 | 262 / 231 | +301 +-61 | 11.7% | 648 / 224 |
+| 2 | 168 / 187 | +58 +-42 | 10.9% | 569 / 124 |
+
+With 16 worlds, main is ahead in every seed; the export's 8 worlds had seed 0 at -105. Readings: (1) 8 worlds are
+too few to compare two populations of one seed; the paired standard error falls as 1/sqrt(worlds), so 64 worlds
+resolve about 5%, cheap on the GPU. (2) One life per genome is the largest noise: genomes in one world spread by
+about 600 around a mean of about 850, four times the spread between worlds. Selection works on that: more siblings
+per genome (or more genomes) would sharpen evolution more than anything else. (3) The seeds differ more from each
+other (main - control +58 to +301) than the standard error of one comparison: three seeds stay necessary.
+
+**A remap bug** (found while checking why `noise.py` and the export disagreed about the controls). `remap_genomes`
+counted every projection with a designed start value as hard-wired, so a remap reset evolvable projections with
+a design (the drives stage's `hungry -> grasp / no_feed / valence_app / ganglion`, designed 0) to the design, and it
+drew fixed random projections (the pallium's input) anew. Affected: the warm starts of 1.8 and 2.2 (main and control
+alike began with the hunger synapses at 0); the head to head (the control is remapped onto main's brain, main is not:
+**biased towards main** from 1.8 on); every probe that loads with remapping (`load_population(run, exp)`: gen0,
+lessons, the assays, `lesson_*`, `pallium_real`, `noise.py`, the book's lab test: evolved pallium populations got a
+new random pallium). Not affected: lesions and re-evaluation of the export (loaded directly), evolution within a run,
+chapter 1 before 1.8. Fixed (only non-evolvable designed weights take the design; everything else carries over;
+remapping onto the same layout is now the identity, tested). The 2.2 runs are rerun with the fixed warm start; the
+head to head of 1.8 (frozen) is re-evaluated, its runs are not rerun. The 2.2 numbers above (v48-v50) that came from
+probes or the head to head are affected.

@@ -56,6 +56,12 @@ on the corners of a square. Two colour directions are drawn for every life; one 
 low in both, and the two good kinds are high in one and low in the other. Which kinds are poison is drawn anew in
 every life as well. The new kinds are also less alike than before, which makes up for the harder task.
 
+The patches are now mixed: a patch holds every kind of bush, so where a bush grows says nothing about what it is.
+In patches of mostly one kind, the place answered the question first: a poison bite said that the bushes around
+were poison too, the alarm of the affect stage carried the animal off, and knowing a poison by its look saved
+only the first bite at the next bush of that kind. The states of the affect stage lose part of their job here; the
+look gets it.
+
 <div data-life="settings" data-stage="2.2"></div>
 
 ## Results
@@ -70,30 +76,27 @@ The control is the brain of the affect stage in this world: it learns from pain 
 
 <div data-life="summary" data-stage="2.2"></div>
 
-When both populations live in one world together, the animals with a pallium come out ahead in every seed.
-Re-evaluated apart, each among its own kind, they are ahead in two seeds of three. Over the generations of evolution
-itself the two populations run about level.
+The animals with a pallium are ahead of the control on average, but one life per animal makes every measure
+noisy, and the seeds differ much more from each other than the two brains do. Compared on the same sixteen worlds,
+with the same world for both, they are ahead in every seed.
 
 ### Is the circuit used?
 
 <div data-life="lesions" data-stage="2.2"></div>
 
-In one seed of three the pallium is used. There it carries all of the learning: switching learning off costs as
-much as silencing the pallium, and the look's own learning has been turned down. In the other two seeds neither the
-pallium nor learning as a whole costs anything in the world. The states of the affect stage are still used in every
-seed.
+The pallium is used in every seed, and learning as a whole even more: switching all learning off costs more than
+silencing the pallium, because the look still learns as well. The states of the affect stage are used less than in
+their own world. In mixed patches the place says little about a bush; its look says more.
 
-What holds the lessons back in the world is not the pallium's code. Followed through a life, the cells that fire at
-a bush the animal has learned about are mostly the cells that fired at its lesson, and hardly ever those of the
-other kinds. But two things stand in the way.
+Getting here took two changes to the world, and one to the pallium.
 
-- **A lesson saves little.** Pain already ends a visit to a poison bush after a bite or two, and the alarm of the
-  affect stage carries the animal off after a few. What knowing the poison by its look can still save is the first
-  bite at the next bush of that kind.
-- **Evolution damps aversion close up.** In every population, evolution has given the inputs that see a bush right
-  ahead synapses that hold the aversive cells down: approach what is in front of you. A lesson has to overcome that before it can stop a
-  bite. Where the lessons cost more good food than they save, evolution damps them further, and it can do so through
-  the learning rule itself, by making a lesson undo itself or erase the ones before.
+- **Mixed patches.** In patches of mostly one kind, the place answered the question first: pain ended a visit after
+  a bite or two, the alarm carried the animal off, and knowing a poison by its look saved only the first bite at the
+  next bush of that kind. Evolution then turned the lessons down, and it can do so through the learning rule itself,
+  by making a lesson undo itself or erase the ones before.
+- **Fewer cells at a time.** With four cells active instead of two, a lesson spread twice as far to the good bushes.
+- **Evolution still damps aversion close up.** In every population the inputs that see a bush right ahead hold the
+  aversive cells down: approach what is in front of you. A lesson has to overcome that before it can stop a bite.
 
 ### In the lab
 
@@ -103,9 +106,8 @@ each bush again.
 <div data-life="table" data-stage="2.2" data-example="xor_lab"></div>
 
 Learning on the look alone lowers the bites at all four bushes alike: it cannot tell the kinds apart, so it makes the
-animal shy of all of them. Learning through the pallium lowers the bites at the poison bushes and leaves the good
-ones alone, clearly in two seeds. In the third, evolution has turned the pallium's learning down. What the pallium
-does is what this stage set out to add; whether this world rewards it enough to keep it is the open point.
+animal shy of all of them. Learning through the pallium stops the bites at the poison bushes and leaves the good
+ones as they were, clearly in two seeds; in the third the animals bite little at anything before the meals.
 
 ## The runs behind this page
 

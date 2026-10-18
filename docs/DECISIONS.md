@@ -331,3 +331,24 @@ override them freely; when one does, add or amend an entry so the record stays c
 - **Lab experiments** (tracked single-animal tests, results in the book data) for the learning stages, in place of
   the assay step.
 - **The fixed basal ganglia is merged into the actor stage.**
+
+## ADR-026 The pallium stage, evolvable adaptation, evolution is not switched off, the GPU (2026-10-18)
+
+- Decided with the user while building stage 2.2 (STAGE_LOG v46-v50).
+- **The pallium's job is combinations of features.** A centred look already separates random look-alikes as well
+  as a random expansion; XOR looks (poison ++ and --, good +- and -+, drawn per life) need the expansion. Novel
+  similarity 0.5.
+- **It reads the eye ahead only**, as a fovea after orienting (Garcia effect: lessons from eating bind to what was
+  eaten). Peripheral identity may return with target selection (the actor), as one selected location rather than a
+  density gradient.
+- **Sparse:** 128 cells, k-WTA 2, fixed random mixed-sign input per genome (k-WTA stands in for global feedback
+  inhibition; per-birth drawing of ADR-017 not built yet).
+- **The world gives look-based learning a job:** patches mixed evenly (purity 0.25). The lasting states of the
+  affect stage lose part of theirs; accepted.
+- **The adaptation strength of the look is a gene** (`Genome.adapt`) from this stage on, in main and control, so
+  that habituation cannot hold back later stages.
+- **Evolution is never switched off to keep a feature.** When it turns a feature down (here: the learning-rule
+  genes nulling pain lessons), the world or the design is changed so that the feature pays. Hand-set start values
+  and fixes of genuine flaws of the genetic algorithm are allowed.
+- **Runs go to the GPU** (RTX 5060 in WSL2, about 10x the CPU after the USE step was made parallel). Comparisons
+  should use more shared worlds (32-64) and populations may grow; to be decided before the next stage.

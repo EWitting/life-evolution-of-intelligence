@@ -1,7 +1,7 @@
 # Status
 
 One screen on where the project is. Plan: `docs/BRAIN_EVOLUTION.md`. **Frozen stages: `frozen/README.md`.** Details, numbers and run directories:
-`docs/STAGE_LOG.md`. Newest decisions: `docs/DECISIONS.md` (ADR-017 to ADR-025). Last updated 2026-10-18 (pallium stage 2.2 run with three seeds, provisional; brain step 1.7x faster; before that 2026-10-17: affect redefined in the world of chapter 2 and frozen; 2.0 and 2.1 off the chain; learning rates mutate multiplicatively; 100 generations per stage).
+`docs/STAGE_LOG.md`. Newest decisions: `docs/DECISIONS.md` (ADR-017 to ADR-026). Last updated 2026-10-18 evening (pallium stage 2.2 passes in mixed patches, three seeds, not yet frozen; runs on the GPU in WSL2, about 10x faster; before that 2026-10-17: affect redefined in the world of chapter 2 and frozen; 2.0 and 2.1 off the chain; learning rates mutate multiplicatively; 100 generations per stage).
 
 ## How a stage is judged
 
@@ -57,30 +57,44 @@ remapping the stored populations and freezing again.
 | 1.8 affect | two states that outlast their trigger and add up over bites (a leaky sum): pain -> `alarm` -> `flee` -> forward above about 1.5 poison bites; taste -> `fed` -> `serotonin` -> `settle` -> `rest` above about 9 good bites. Thresholds and fade times evolve. World: 256 x 256 (four times the area), density 0.3, berry types in patches 70% their own kind (320 patches of radius 6); chapter 1 eyes | **frozen**, passes | Re-evaluated (8 worlds) main 1222 1483 1501 vs control 1421 1150 1080 (+185 +-194); **head to head +216 +-135** (+32, +478, +138). Lesions: flee 86 77 88, fed 94 89 86, settle 86 89 83, rest 62 39 51, hungry 24 10 21. Not used in this world: plasticity 98 105 100, cold and warm_seek 102 100 102. Learning rates kept (0.23, 0.11, 0.13; control 0.40, 0.24, 0.13). 100 generations, multiplicative learning-rate mutation. |
 | side paths | 1.1l, 1.5c (centred association before habituation), 1.5f, 1.6h, 1.6 reversal, x.hands, x.td, old 1.2-1.4 | defined, not on the path | Listed with reasons in `frozen/README.md`. |
 | first affect route | 1.8old (states released at once, one berry type per patch; learning unused 99 95 99) -> 2.0 (camera eyes in open country: learning back) -> 2.1 (the chapter 2 world, states that add up) | frozen, off the chain (2026-10-17) | The new 1.8 does this in one stage. Straight from drives with the additive mutation of learning rates, lineages set the rate to 0 and keep it there (`x.affect2`, 200 generations); multiplicative steps keep it (v43, v44). |
-| 2.2 pallium | `pallium` (128 cells, k-WTA 2) reads the eye ahead (`vis+0.app*`, fixed random weights per genome); pain teaches `pallium -> valence_av`; adaptation strength evolves (`Genome.adapt`). World: the 1.8 world with XOR looks at similarity 0.5 (poison ++ and --, good +- and -+) | **work in progress** (learning not yet worth it in the world) | Head to head +322 +-106 (+220, +211, +535); re-evaluated +79 +-66. Lesions (8 worlds): pallium 91 101 99, no_plasticity 94 102 100, flee 94 89 98, settle 83 85 88. Lab (`xor_meals`, pallium only): poison refused more than good in seeds 0 and 1, not in 2; look alone shies from all four. Evolution turns pallium lessons down through the rule genes (A, C) where they cost good food (STAGE_LOG v46-v48). |
+| 2.2 pallium | `pallium` (128 cells, k-WTA 2) reads the eye ahead (`vis+0.app*`, fixed random weights of mixed sign per genome); pain teaches `pallium -> valence_av` (start 0.2); adaptation strength evolves (`Genome.adapt`, main and control). World `W22`: the 1.8 world with XOR looks at similarity 0.5 (poison ++ and --, good +- and -+) and patches mixed evenly (purity 0.25) | **passes, not frozen** (runs before the remap fix; rerun done, evaluation pending) | Lesions (8 worlds): pallium 92 91 93, no_plasticity 67 77 87, flee 98 101 92, fed 94 103 95, settle 94 89 97. Main - control: last 50 generations +94 +-53; head to head +201 +-163 (+448, +261, -106); re-evaluated in 16 shared worlds, paired: +111 +-42, +301 +-61, +58 +-42. Lab (`xor_meals`, pallium only): poison 0.08 0.06 0.15, good 0.13 0.35 0.39 (look alone shies from all four). STAGE_LOG v46-v50. |
 | chapter 2, next | pallium -> dopamine critic -> hands -> basal ganglia with actor -> curiosity | planned (ADR-025) | The definitions `old2.1`-`old2.5` and `x.td` in `stages.py` are the first design on the reversal brain; each stage is defined again when its turn comes. |
 | later, 3.x-5.x | pallium clustering, hippocampus, cerebellum, uncertainty modulators; simulating, mentalizing, speaking | planned | |
 
 ## Next steps
 
-1. **Resume here: the pallium stage (2.2) is work in progress** (STAGE_LOG v46-v48, book page published). The pallium
-   separates XOR looks in real lives (an encounter's active cells were active at a lesson of the same poison 62%,
-   other poison 1%, good 9%), and main beats control in shared worlds in every seed, but the pallium is used in the
-   world in one seed of three. Why lessons pay little: pain and the alarm already end a poison visit after a bite or
-   two, so a lesson saves the first bite at the next bush of that kind; and evolution damps the aversive cells when
-   a bush is ahead (`vis*.hit/near -> valence_av` about -1.1, from -0.7 in 1.8), and turns the lessons down through
-   the rule genes where they cost good food (A -0.85 at similarity 0.6; C -0.27 in seed 2 at 0.5). User
-   (2026-10-18): never switch evolution off; fix what makes evolution turn a feature down (start values and real
-   flaws of the genetic algorithm may change). Probes: `lesson_curve.py`, `lesson_code.py`, `assay_xor.py`,
-   `pallium_real.py`, `learn_worth.py`, `gen0.py OFF=`. Next: make a learned lesson worth more in this world (what
-   a known poison costs beyond its first bite), then three seeds again, then freeze. After that: WSL2 and the GPU.
+1. **Resume here: evaluate the rerun of 2.2, then freeze it with the user, then the dopamine critic** (STAGE_LOG
+   v46-v50). A remap bug was found and fixed on 2026-10-18 evening (v50): evolvable projections with a designed
+   start (`hungry -> feeding`) were reset and fixed random projections (the pallium's input) redrawn on every remap;
+   the head to head was biased towards main from 1.8 on, and probes that remap measured scrambled pallia. The six
+   2.2 runs were rerun with the fixed warm start (`runs/*/20261018-18*`); their evaluation was stopped by low memory
+   (Claude Code reaps background jobs when Windows runs short). Next, one at a time: `life.book export 2.2
+   --evaluate --worlds 16 --jobs 2`, `scripts/probes/noise.py` (STAGE=2.2 WORLDS=16) and `life.book export 1.8
+   --evaluate --jobs 2` (the frozen affect stage's head to head was biased: re-evaluate, do not rerun), all on the
+   GPU; then rewrite the results of `book/pallium.qmd` from the new data, render and publish. The 2.2 numbers in
+   the table above and in v50 are from the runs before the fix. The pallium is used in every seed in mixed patches; with patches of mostly one kind the place
+   answered first and evolution turned the lessons down (through the rule genes: A to -0.85 nulls a pain lesson, C
+   negative erases earlier lessons). User (2026-10-18): never switch evolution off; fix what makes evolution turn a
+   feature down (start values and genuine flaws of the genetic algorithm may change). Open for the stage: the
+   backup check whether a larger pallium (256, 512 cells) lowers the transfer to good berries further
+   (`pallium_real.py MAG=... FAN=8 KFRAC=...`); excitatory-only input to the pallium as an option (Dale's law;
+   brain-free it separates a little worse: 0.20 against 0.13); weights drawn per birth (ADR-017) not built.
+   **Noise, to decide before the next stage** (v50): compare populations in 32-64 shared worlds, paired (8 worlds
+   resolve about 14% between two populations of one seed and gave seed 0 the wrong sign; 16 resolve about 10%);
+   one life per genome is the largest noise (genomes in one world spread by about 600 around a mean of about 850,
+   four times the spread between worlds), so consider more siblings per genome or more genomes now that the GPU
+   makes it cheap (1024 animals in 512 x 512: 1.4 s per 1000 ticks); keep three seeds (seeds differ more than one
+   comparison's error). Raise `life.book export --worlds` accordingly.
+   **Runs: use the GPU** (`docs/SETUP.md`): `wsl.exe -d Ubuntu-24.04 -- bash -lc 'cd /mnt/c/.../Life && bash
+   scripts/gpu_queue.sh <job file> 3'` (job file lines: `<log name>|<stage arguments>`), logs in `runs/logs/`;
+   book export and probes the same way with `XLA_PYTHON_CLIENT_PREALLOCATE=false ~/.venvs/life/bin/python ...`.
+   At most two GPU runs at a time (about 1.5 GB of RAM each inside WSL, capped at 6 GB by `.wslconfig`; three finishing together ran out of memory while writing their recordings), and nothing else heavy on Windows meanwhile; 4096 animals
+   do not fit in 8 GB yet (the per-animal weight matrix `BrainState.w` could hold only the plastic block).
    Rules (STAGE_LOG v40-v44): weight mutation 0.1 for warm-started runs; learning rates mutate multiplicatively
-   (with the additive step an idle rate is trapped at 0); 100 generations; compare populations and lesions in 16
-   shared worlds with standard errors (`trial_lesion.py`), never by the training curve (new worlds every
-   generation); at most three JAX processes with the laptop in use, started a few minutes apart; check older
-   circuits with lesions after every stage. In patches of one type, learning and the lasting states do the same
-   job and a lineage leans on one of them: a world gives two mechanisms each a job only if they answer different
-   questions.
+   (with the additive step an idle rate is trapped at 0); 100 generations; compare populations and lesions in shared
+   worlds with standard errors, never by the training curve (new worlds every generation); check older circuits
+   with lesions after every stage. In patches of one type, learning and the lasting states do the same job and a
+   lineage leans on one of them: a world gives two mechanisms each a job only if they answer different questions.
 2. Cheaper evaluations (user, 2026-10-12): the export runs in parallel (`--jobs`), prints a line per finished
    task and silences only the regions of the stage and its parent (`--lesions recent`, default); four worlds for a
    routine check (`--worlds 4`), seed 0 first. A stage run writes its 150 MB dashboard only with `--dashboard`.
@@ -114,7 +128,7 @@ remapping the stored populations and freezing again.
 - The first chapter 2 design in `stages.py` (`old2.x`) is stale (ADR-025). The dashboard clips displayed weights at `w_max`.
 - `runs/` was cleaned on 2026-10-12: side-path runs and all `dashboard.html` files are gone (light dashboards come from the recordings). Again on 2026-10-18: all `x_*` trials except `x_affect_ch2world_sim05*`, superseded runs inside chain stage directories, and the runs of 1.8old, 2.0 and 2.1 (their populations are in `frozen/`; `x.direct` and `x.eyes0` would need a run restored from there). Left: the runs of the chain 1.0-1.8 and the `sim05` trial.
 
-Practical notes: one process runs a non-plastic stage at about 4-5 s per generation of 1000 ticks and a stage with
+Practical notes: on the GPU (WSL2) a 100-generation run of 256 animals with 4000-tick lives takes about 8 minutes, three at a time (STAGE_LOG v49-v50). On the CPU: one process runs a non-plastic stage at about 4-5 s per generation of 1000 ticks and a stage with
 4000-tick lives at 15-40 s (an unrecorded simulation stops when every animal is dead); how many JAX processes fit in parallel depends on free memory, so on whether the laptop is in use for other things (five were killed for low memory on 2026-10-08 with VS Code and Chrome open; six or seven ran with them closed): check free memory and the size of one running process before starting a batch. A sleeping laptop pauses
 runs, and background commands are stopped after two hours, so run long batches in pieces.
 `scripts/probes/prune.py` keeps only the newest finished run per stage directory.
@@ -141,7 +155,7 @@ view with hard-wired projections drawn dark; a 64-agent sample of large populati
 - Bigger OHOL slices: stones, kindling, fire, cooking (needs `_LA` last-use-actor transitions and leftovers).
 - Moving objects/animals (OHOL `move` transitions) for predators, prey and interception (cerebellum, alarm calls).
 - Communication: VOCALIZE with a small vector (sound channel widening); a GIVE action for altruism.
-- Scale: GPU runs in WSL2 (`docs/SETUP.md`), larger populations (selection is noisy with 64 agents and one life).
+- Scale: GPU runs in WSL2 are set up (`docs/SETUP.md`, about 10x the CPU); larger populations next (selection is noisy with 64 genomes and one life each, v50).
 - Several seeds per stage comparison.
 - **Self-adaptive mutation** (user, 2026-10-17): step sizes as genes (one for weights, one for learning rates per
   genome, mutating multiplicatively, as in evolution strategies), so that mutation shrinks once a population has

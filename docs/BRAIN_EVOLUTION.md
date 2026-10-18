@@ -110,7 +110,7 @@ rule. One tick is about a second, so it behaves like behavioural-timescale plast
 | 1 | association | early bilaterians | pain as the teacher of look -> aversive synapses | US-gated learning, M1, M2 | novel foods with a new look every life | built |
 | 1 | drives | early bilaterians | `cold`, `hungry`, warmth by kinesis | need cells select modes | cold, few hot springs | built |
 | 1 | affect | early bilaterians | lasting states after pain (`alarm`) and a meal (`serotonin`) that add up over bites | modulators with receptors | berry types in patches 70% their own kind | built |
-| 2 | pallium | ~520 Mya, early vertebrates | sparse expansion of the look | fixed per-life random projection, M5 | look-alikes | next |
+| 2 | pallium | ~520 Mya, early vertebrates | sparse expansion of the look | fixed random projection per genome, M5 | combinations of features (XOR looks) | in progress |
 | 2 | dopamine | early vertebrates | critic: opponent value cells, dopamine cell, habenula | TD error as teacher | cues that predict food | planned |
 | 2 | hands | early vertebrates | pick, hold, eat | none | food can be held | planned |
 | 2 | basal ganglia | early vertebrates | striatum D1/D2, GPi, actor | dopamine-gated, signed by pathway | which action works is drawn per life | planned |
@@ -246,18 +246,32 @@ Region names from here on: `pallium`, `striatum`, `gpi`, `snc` (dopamine), `habe
   input. Insects converged on the same design (Kenyon cells). Random sparse expansion separates inputs that
   overlap (Babadi & Sompolinsky 2014; Litwin-Kumar et al. 2017).
 - **Why first.** The networks that prepare the input come before the circuits that learn from them, so that
-  learning works on separated codes and not on the dense look. The job is known from chapter 1: what is learned
-  about one food spreads to foods that look like it (the staple and the poison that looks 80% like it).
-- **Adds.** Region `pallium` (several times the look features), fixed sparse random `look -> pallium` drawn at
-  each birth (the genome holds density and gain), k-WTA (M5). The pain rule of the association stage reads the
-  pallium instead of the look.
-- **First probe.** The assay of the association stage with the learned synapses reading the pallium, look-alikes
-  at several similarities. The look has 8 features per eye column, so the expansion may gain little on a look
-  that habituation already centres; the probe sets size and sparseness. Before the design: measure the repeated
-  poison bites and the bites on a full stomach in the affect world, and how much a perfect learner could gain
-  there (`lessons.py`).
-- **Control.** The affect brain.
-- **Metric.** Poison bites on look-alikes of a learned poison, and on the good look-alikes of it, later in life.
+  learning works on separated codes and not on the dense look.
+- **The job it got** (STAGE_LOG v46-v48). Habituation already centres the look, and a centred look separates
+  random look-alikes as well as a random expansion does (an expansion's code cannot go below zero). What no weighted
+  sum of the look can do is a combination: in the stage's world the four novel types are the corners of two colour
+  directions drawn per life (poison ++ and --, good +- and -+, `berry_world(novel_xor=True)`), so a lesson on one
+  poison by look clears the other. The pallium separates them.
+- **Adds.** Region `pallium`, 128 cells, k-WTA 2, reading only the eye ahead (`vis+0.app*`, all 8 features; at a
+  bite the side eyes see the neighbouring bushes, and even a few side cells undo the gain), fixed random weights
+  of mixed sign drawn per genome (inherited, never mutated; not yet per birth as ADR-017 planned). The pain rule of
+  the association stage also teaches `pallium -> valence_av` (starting rate 0.2). From this stage on the adaptation
+  strength of the look is a gene (`Genome.adapt`), in main and control.
+- **World.** The affect world with XOR looks at novel similarity 0.5 and patches mixed evenly (purity 0.25). At
+  similarity 0.6 no learning paid; at purity 0.7 the place said which bushes were poison, the alarm carried the
+  animal off, and a lesson by look saved only the first bite at the next bush of a kind (pallium used in one seed
+  of three). Paired on an evolved population, all learning off costs 24% at purity 0.25, 6% at 0.7.
+- **What evolution does with it.** Where lessons cost good food it turns them down through the rule genes (A
+  drifted to -0.85, which with the pain driving the aversive cells nulls every lesson; or C negative, which erases
+  earlier lessons), and it damps aversion whenever a bush is ahead (`vis*.hit/near -> valence_av`). The rule genes
+  stay evolvable (user, 2026-10-18): the remedy is a world and a code in which the lessons pay.
+- **Probes.** `pallium_sep.py` (brain-free separation), `pallium_real.py` (real lives, eye columns, adaptation
+  strengths, magnified pallia), `learn_worth.py` (napkin: what transfer still pays), `assay_xor.py` and
+  `life.labtests.xor_meals` (the lab test of the book), `lesson_curve.py` and `lesson_code.py` (acquisition and
+  the pallium code in real lives), `gen0.py OFF=` (paired, learning of chosen projections off).
+- **Control.** The affect brain, with the adaptation gene.
+- **Metric.** Lesions of the pallium and of learning; the lab test (bites on the poison and the good bushes after
+  meals, pallium and look learning on and off).
 - **Confidence.** High that the vertebrate pallium began as sensory association cortex; the expansion function
   in early vertebrates is a model inference.
 

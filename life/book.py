@@ -284,7 +284,9 @@ def evaluate(key: str, worlds: int = 8, jobs: int = 5, lesions: str = "recent") 
     from concurrent.futures import as_completed
     t0 = time.time()
     print(f"evaluate {key}: {len(tasks) + bool(control)} tasks in {jobs} processes, {worlds} worlds each", flush=True)
-    with ProcessPoolExecutor(max_workers=jobs) as pool:
+    import multiprocessing
+    # spawn, not fork: a forked child cannot use the GPU once the parent has touched it (fork is the Linux default)
+    with ProcessPoolExecutor(max_workers=jobs, mp_context=multiprocessing.get_context("spawn")) as pool:
         futures = {pool.submit(_lesion_task, t): f"{t[0]} seed {t[1]}: {', '.join(t[4])}" for t in tasks}
         versus = pool.submit(_versus_task, key, worlds) if control else None
         if versus:

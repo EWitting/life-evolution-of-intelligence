@@ -50,6 +50,18 @@ def _b64(a: np.ndarray, dtype) -> dict:
 BRAIN_AGENTS = 6   # light export: agents whose activations and weights are stored
 
 
+def poison_objects(names: list[str], ate, pain) -> list[bool]:
+    """Per object: is it of a poison kind in this recording? Poison is set per world in later stages, so it is read
+    from the recording: a food is poison when biting it hurt. A bush (full or empty) takes the effect of its berry,
+    the object after the full bush (as in life.book.life_strip)."""
+    idx = {n: i for i, n in enumerate(names)}
+    hurt = {int(o): bool(np.mean(pain[ate == o] > 0.5) > 0.5) for o in np.unique(ate[ate > 0])}
+    def food(i):
+        n = names[i].replace("Empty ", "")
+        return idx[n] + 1 if n.endswith("Bush") and n in idx else i
+    return [hurt.get(food(i), False) for i in range(len(names))]
+
+
 def _light(data: dict, rec, x: np.ndarray, w_max: float, eta_max: float) -> dict:
     """The light export (book/README.md): three arrays make up almost all of a dashboard's size. Activations
     and weights are kept for a few agents (the best one and others spread evenly over the recorded sample, which
@@ -108,6 +120,7 @@ def build_data(run_dir: Path, light: bool = False) -> dict:
     else:
         appearance = [appearance_for(int(o), k).tolist() for o in rs["ohol_id"]]
     colours = [[0.5 + 0.45 * float(c) for c in a[:3]] if o else [1, 1, 1] for a, o in zip(appearance, rs["ohol_id"])]
+    poison = poison_objects(rs["names"], rec["ate"][:len(rec["pain"])], rec["pain"]) if "ate" in rec else [False] * len(rs["names"])
     w_max = cfg["brain"]["w_max"]
     eta_max = cfg["evolution"]["eta_max"]
     try:
@@ -122,7 +135,7 @@ def build_data(run_dir: Path, light: bool = False) -> dict:
     data = {
         "meta": {"T": int(x.shape[0]), "N": int(x.shape[1]), "H": int(rec["grid"].shape[1]), "W": int(rec["grid"].shape[2]),
                  "best": int(rec["best"]), "names": rs["names"], "ohol_id": rs["ohol_id"], "colours": colours,
-                 "appearance": appearance, "food_value": rs["food_value"], "actions": A.NAMES, "layout": layout,
+                 "appearance": appearance, "food_value": rs["food_value"], "poison": poison, "actions": A.NAMES, "layout": layout,
                  "vision": cfg["vision"], "world": cfg["world"], "brain": cfg["brain"], "w_max": w_max,
                  "eta_max": eta_max, "snap_every": int((x.shape[0] + rec["lead"]) // max(1, rec["w_snap"].shape[0])),
                  "lead": rec["lead"],

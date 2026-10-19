@@ -1,139 +1,131 @@
-# Association: learning what is bad {#sec-association}
+# Association {#sec-association}
+
+[Learning what is bad]{.lb-subtitle}
 
 <div data-life="status" data-stage="1.5"></div>
 
-Until now everything the animal knows was put there by evolution. That works for poison that looks the same in
-every generation. It cannot work for food that is new, and in this stage all food is new: every kind of berry
-gets a new colour in every life, and which kinds are poison is drawn anew.
+::: {.lb-takeaway}
+**New:** the first learning within a life. After a bite that hurts, the look of what was bitten comes to mean
+*bad*.
 
-This stage adds the simplest kind of learning from experience: after a bite that hurts, the look of what was
-bitten comes to mean *bad*.
+**Result:** in a world where every food is new, the animals learn which ones are poison and live about twice as
+long as animals that cannot learn. Without the learning they lose more than half their fitness.
+:::
+
+Until now everything the animal knows was put there by evolution. That works for poison that looks the same in
+every generation, but not for food that is new. In this stage all food is new: every kind of berry gets a new
+colour in every life, and which kinds are poison is drawn anew.
 
 <div data-life="brain" data-stage="1.5"></div>
 
 ## The circuit
 
-One new cell and one change to existing synapses:
+One new cell, and one change to existing synapses:
 
-- **`us_pain`**, the *teacher*: driven by pain alone. When it fires, it broadcasts a teaching signal. (*US*
-  stands for *unconditioned stimulus*: something that matters without any learning, as pain does.)
-- The synapses from the eyes' **look** inputs onto the aversive cells `valence_av`, which evolution shaped in
-  earlier stages, can now also change during a life. A synapse grows when its input was just active and the
-  teacher fires.
+- **`us_pain`**, the *teacher*, is driven by pain alone. When it fires, it sends a teaching signal. (*US* stands
+  for *unconditioned stimulus*: something that matters without any learning, as pain does.)
+- **The synapses from the look onto the *bad* cells** (`valence_av`) can now change during a life. A synapse grows
+  when its input was just active and the teacher fires. These are the purple arrows in the diagram.
 
-The aversive cells already turn the animal away and block the bite. So nothing else has to change: once the look
-of a berry excites them, the animal treats that berry as it treats the poison it was born knowing.
+Nothing else has to change. The *bad* cells already turn the animal away and block the bite, so once the look of a
+berry excites them, the animal treats that berry like the poison it was born knowing.
 
-### What exactly gets blamed
+### What gets the blame
 
-A bite hurts, and something has to take the blame. Getting this right turned out to be most of the work of this
-stage, and three things were needed, the first of which the animals already bring with them.
+A bite hurts, and something has to take the blame. Getting this right was most of the work of this stage:
 
-**The lesson is about what sets the food apart.** All berry bushes look alike in most respects. If pain
-strengthened the synapses of the whole look, one bad red berry would make the animal wary of every berry. This is
-where the adapting eyes of the previous stage pay a second time: they pass on the difference between the look
-right now and what they usually see. What all bushes share cancels out before it reaches a synapse. What is left
-to take the blame is the colour.
-
-**The pain is brief.** While pain faded over several ticks, the teacher was still firing after the animal had
-turned away, and by then its eyes were on the next bush. The animal learned to distrust the neighbour of the
-poison as much as the poison.
-
-**Every learned synapse exists.** The look synapses were sparse, as evolution had left them, and a synapse that is
-not there cannot learn. In this stage all of them are present, the new ones starting at zero.
-
-::: {.callout-note collapse="true" title="What did not work: unlearning by tasting again"}
-An earlier design had a second cell that lowered the aversion whenever something the animal distrusted turned out
-to taste fine. It worked when meals were fed to the brain in a test. In a living animal it never fired: aversion
-blocks the bite, so food that is distrusted is never tasted again, and the mistake cannot be found out.
-
-This is why the lesson has to land on the right food in the first place.
-:::
+- **The lesson is about what sets the food apart.** If pain strengthened the whole look, one bad red berry would
+  make the animal wary of every berry. Here the adapting eyes of the previous stage pay a second time: what all
+  bushes share cancels out before it reaches a synapse, and what is left to take the blame is the colour.
+- **The pain is brief.** When pain lasted several ticks, the teacher was still firing after the animal had turned
+  to the next bush, and it learned to distrust the neighbour as much as the poison.
+- **Every learnable synapse exists.** A synapse that is not there cannot learn, so all of them are present, the new
+  ones starting at zero.
 
 ## Watching it work
 
-One animal from the last generation, at two moments of its life.
-
-First, its first bite of a kind of berry that is poison in this life. Before the bite the aversive cells are
-silent and `grasp` fires. One tick after the bite the pain arrives, the teacher fires, and the aversive
-cells and `no_feed` switch on by reflex, as they did before this stage. What cannot be seen is the change the
-teacher leaves behind in the synapses.
+One animal from the last generation, at two moments of its life. First, its first bite of a kind that is poison in
+this life. Before the bite the *bad* cells are silent and `grasp` fires. One tick later the pain arrives, the
+teacher fires, and the *bad* cells and `no_feed` switch on by reflex, as before this stage. What cannot be seen is
+the change the teacher leaves in the synapses.
 
 <div data-life="strip" data-stage="1.5" data-example="first_lesson"></div>
 
-Later in the same life the animal comes up to a bush of the same kind. Nothing hurts now, and yet the aversive
-cells fire and `no_feed` holds the bite back. The animal moves on. It learned this; no ancestor could have told
-it.
+Later in the same life the animal comes up to a bush of the same kind. **Nothing hurts now, and yet the *bad* cells
+fire and `no_feed` holds the bite back.** The animal moves on. It learned this; no ancestor could have told it.
 
 <div data-life="strip" data-stage="1.5" data-example="lesson_again"></div>
 
-## The biology: learning by association
+## Biology
 
 A sea slug that is shocked after a touch learns to pull back from the touch. A rat that gets sick after a new food
 avoids that food afterwards. This is *associative learning*: something neutral (the touch, the taste) comes to
-predict something that already matters (the shock, the sickness), and the animal starts to respond to the first as
-it would to the second.
+predict something that matters (the shock, the sickness), and the animal responds to the first as it would to the
+second.
 
-The synapse-level picture, worked out in the sea slug *Aplysia* and the fruit fly, has three parts. A sensory
-neuron that was just active leaves a short-lived trace at its synapses. A *teaching signal*, released when
-something bad happens, reaches many synapses at once. Only the synapses that carry a fresh trace are strengthened.
-Pain says *something bad happened*; the trace says *and this is what was there*. The circuit above is this
-picture in its simplest form.
+At the level of synapses, worked out in the sea slug *Aplysia* and the fruit fly, it has three parts. A sensory
+neuron that was just active leaves a short trace at its synapses. A teaching signal, released when something bad
+happens, reaches many synapses at once. Only the synapses with a fresh trace are strengthened. The circuit above
+is this picture in its simplest form.
 
-## The world: nothing is familiar
+## The world
 
-There are four kinds of berry bush, and all four are new in every life. Each life draws a new colour for every
-kind, and draws which two of the four are poison. Nothing an ancestor learned about colours is worth inheriting.
+Four kinds of berry bush, all new in every life: each life draws a new colour for every kind, and which two of the
+four are poison. The bushes still look like berry bushes; a new kind differs from the others in colour, the way a
+new berry is still recognisably a berry.
 
-The bushes still look like berry bushes. A new kind differs from the others in its colour, not in its shape, the
-way a new berry is recognisable as a berry.
-
-A poison berry costs about what a good berry gives, and it hurts for one tick. Half of all bushes are poison, so
-an animal that cannot learn pays that price on every second bush it tries, for as long as it lives. Leaving
-everything unknown alone is not an option either: there is nothing else to eat.
-
-There are no duds in this world. What the eyes learned to do in the previous stage stays, and this stage builds
-on it.
+Half of all bushes are poison, so an animal that cannot learn pays on every second bush it tries, all its life.
+Leaving everything unknown alone is not an option either: there is nothing else to eat.
 
 <div data-life="settings" data-stage="1.5"></div>
 
-::: {.callout-note collapse="true" title="What did not work: a world where learning was hardly worth it"}
-The first versions of this world kept a familiar, safe kind of berry as half of all bushes, so that an animal that
-learned nothing would still get by. It got by very well: it ate about eleven good berries for every poison one. A
-perfect learner would have gained less than a tenth of its food. With so little to win, a lesson had to be nearly
-free of side effects to pay at all, and evolution switched learning off whenever it was not.
+## Did it work?
 
-Removing the familiar food turned this around. In the world above, a perfect learner would save about a quarter of
-what it eats.
+<div data-life="verdict" data-stage="1.5" data-used="us_pain,no_plasticity"></div>
+
+**Learning carries this stage.** Silence the teacher, or freeze every synapse at its inherited strength, and the
+animals keep less than half their fitness. The old brain feels pain and turns away from it, but cannot change, so
+it pays for every poison bush it tries, every time.
+
+The learners still lead short lives: half of what they try is poison until they have learned it, and nothing yet
+tells an animal that it is getting hungry.
+
+<div data-life="bars" data-stage="1.5" data-example="life_spent" data-rows="3" data-col0="new brain (main)" data-col1="old brain (control)"></div>
+
+## Full results
+
+::: {.callout-note collapse="true" title="Fitness over the generations"}
+<div data-life="curves" data-stage="1.5"></div>
 :::
 
-## Results
-
-How to read the table and the charts: see [How a stage is judged](index.qmd#sec-judged).
-
-### Main against control
-
-The control is the brain of the previous stage in this world, adapting eyes included: it feels pain and turns away
-from it, but it cannot change. It pays for every poison bush it tries, every time.
-
-<div data-life="curves" data-stage="1.5"></div>
-
+::: {.callout-note collapse="true" title="All fitness measures"}
 <div data-life="summary" data-stage="1.5"></div>
+:::
 
-### Is the circuit used?
+::: {.callout-note collapse="true" title="All lesions"}
+*Learning switched off* freezes every synapse at its inherited strength; `us_pain` silences the teacher.
 
 <div data-life="lesions" data-stage="1.5"></div>
+:::
 
-`no_plasticity` freezes every synapse at its inherited strength, and `us_pain` silences the teacher. If the
-animals do clearly worse without either, they depend on what they learn during their life.
-
-### How a life is spent
-
-Few animals live out the long life this world offers: half of what they try is poison, and nothing tells an
-animal that it is getting hungry.
-
+::: {.callout-note collapse="true" title="How a life is spent"}
 <div data-life="table" data-stage="1.5" data-example="life_spent"></div>
+:::
 
-## The runs behind this page
+::: {.callout-note collapse="true" title="What did not work: unlearning by tasting again"}
+An earlier design had a second cell that lowered the aversion whenever something distrusted turned out to taste
+fine. It worked when meals were fed to the brain in a test. In a living animal it never fired: aversion blocks the
+bite, so food that is distrusted is never tasted again, and the mistake is never found out. That is why the lesson
+has to land on the right food in the first place.
+:::
+
+::: {.callout-note collapse="true" title="What did not work: a world where learning was hardly worth it"}
+The first versions of this world kept a familiar, safe kind of berry as half of all bushes. An animal that learned
+nothing got by very well, and a perfect learner would have gained less than a tenth of its food. With so little to
+win, evolution switched learning off whenever a lesson had any side effect. Removing the familiar food turned
+this around.
+:::
+
+## Runs
 
 <div data-life="runs" data-stage="1.5"></div>

@@ -1,88 +1,97 @@
 # Steering {#sec-steering}
 
+[Turning sight into movement]{.lb-subtitle}
+
 <div data-life="status" data-stage="1.0"></div>
 
+::: {.lb-takeaway}
+**New:** the first brain: eyes, a small clump of neurons, and motor neurons, all wired by evolution from scratch.
+
+**Result:** the animals find food and eat it. No single neuron stands for anything; the behaviour is spread over
+all of them.
+:::
+
 The first animal has no memory, no hunger and no idea of good or bad. It can do one thing: turn what it sees into
-movement. This stage evolves a brain that does that, from random wiring, until the animal finds food and eats it.
-The brain is small: the eyes, a clump of neurons behind them, and the motor neurons that move the animal.
+movement. This stage evolves a brain that does that, starting from random wiring. Everything after this stage is
+added to this brain.
 
-Everything after this stage is added to this brain.
-
-<div data-life="brain" data-stage="1.0"></div>
+<div data-life="brain" data-stage="1.0" data-fold=""></div>
 
 ## The circuit
 
-- A **ganglion**, a clump of sixteen excitatory and eight inhibitory interneurons. The eyes connect to it, its
-  neurons connect to each other, and it connects to the motor neurons.
+- A **ganglion**: sixteen excitatory and eight inhibitory neurons (`ganglion_e` and `ganglion_i`). The eyes
+  connect to it, its neurons connect to each other, and it connects to the motor neurons.
 - **Reflex arcs**: direct connections from the eyes to the motor neurons.
 
-Every synapse in this brain is evolved: which ones exist, and how strong they are. Nothing is designed and nothing
-changes during a life.
+**You do not need to follow the arrows.** Every synapse here is evolved: which ones exist and how strong they are.
+Nothing is designed, nothing changes during a life, and no neuron has a meaning you could name. On later pages
+the ganglion is drawn as a single box.
 
-The brain sees the outside world only. It does not feel its stomach, and it does not notice whether a bite gave
-it anything. Those senses enter the brain in later stages, through cells made for them.
+The brain sees the outside world only. It does not feel its stomach and does not notice whether a bite gave it
+anything; those senses enter in later stages, through cells made for them.
 
 ## Watching it work
 
 One animal from the last generation, walking up to a bush and eating. The rows below the picture are the neurons
-of the ganglion; there is nothing in them to read, and that is the point. No neuron here stands for anything. The
-behaviour is spread over all of them, wherever evolution happened to put it.
+of the ganglion. There is nothing in them to read, and that is the point: the behaviour is spread over all of
+them, wherever evolution happened to put it.
 
 <div data-life="strip" data-stage="1.0" data-example="to_a_bush"></div>
 
-## The biology: steering
+## Biology
 
 The oldest animals with a front and a back were small worms, and what set them apart from jellyfish and sponges
-was that they could go somewhere. A body with a front end, sense organs on it, and a clump of neurons behind them
-can do something a net of nerves spread through the body cannot: turn towards what is good and away from what is
-bad. In *A Brief History of Intelligence* this is the first of the breakthroughs, *steering*.
+was that they could go somewhere. A body with a front end, senses on it and a clump of neurons behind them can
+turn towards what is good and away from what is bad. In *A Brief History of Intelligence* this is the first
+breakthrough, *steering*.
 
-The circuit for it is small. In the worm *C. elegans*, with 302 neurons, sensory neurons connect to a few layers
-of interneurons, and those to the motor neurons, with some sensory neurons wired to motor neurons directly. A
-direct connection is a reflex. The interneurons in between let several senses be weighed against each other
-before the muscles move.
+In the worm *C. elegans*, with 302 neurons, sensory neurons connect to a few layers of interneurons and those to
+the motor neurons, with some sensory neurons wired to motor neurons directly. A direct connection is a reflex. The
+interneurons in between let several senses be weighed against each other before the muscles move.
 
-## The world: berries and onions
+## The world
 
-The world holds four kinds of berry bush and wild onions. All of it is food and nothing is dangerous. An animal
-that stands still starves, and so does one that walks without getting anywhere, because moving costs energy. The
-only way to live is to get to a bush that carries berries, bite, and go on to the next one.
-
-The animal eats what it grasps. Picking something up and carrying it comes much later.
+Four kinds of berry bush and wild onions. Everything is food and nothing is dangerous. Moving costs energy, so an
+animal that stands still starves, and so does one that walks without getting anywhere. The only way to live is to
+reach a bush with berries, bite, and go on to the next one.
 
 <div data-life="settings" data-stage="1.0"></div>
 
-## Results
+## Did it work?
 
-How to read the table and the charts: see [How a stage is judged](index.qmd#sec-judged).
+<div data-life="verdict" data-stage="1.0" data-used="ganglion_e,ganglion_i"></div>
 
-The jump in the curve is a change of setting, not of brain. The population first evolved in short lives, and was
+The animals depend on their ganglion: without it they keep less than a fifth of their fitness. The direct reflex
+arcs alone are far from enough. There is no old brain to compare with, so this stage was run once: every later
+stage starts from this one population.
+
+## Full results
+
+::: {.callout-note collapse="true" title="Fitness over the generations"}
+The jump in the curve is a change of setting, not of brain: the population first evolved in short lives and was
 then given lives four times as long, as in every later stage. In a long life an animal that eats once and then
-stands still does not reach the end, and over the generations that follow the standing still is selected away.
+stands still does not reach the end, and over the following generations the standing still is selected away.
 
 <div data-life="curves" data-stage="1.0"></div>
-
-<div data-life="summary" data-stage="1.0"></div>
-
-This stage has no control: there is no earlier brain to compare it with. The lesions show the only thing they can
-here, that the animal depends on its ganglion. The direct reflex arcs alone are far from enough.
-
-<div data-life="lesions" data-stage="1.0"></div>
-
-::: {.callout-note collapse="true" title="What did not work: all the food at once"}
-In earlier runs every bush was full when the animals were born. The animals filled their stomachs within the
-first tenth of their life and kept eating, the bushes were stripped by the middle of it, and since a bush takes
-long to regrow, most animals then starved together. Whatever an animal might have done better later in life could
-not show, and holding back could not pay: whoever waited found nothing left.
-
-Starting most bushes empty, each at a random point of its regrowth, turned that stock into a steady flow. The
-share of bushes carrying berries now stays about the same from the first tenth of a life to its end, and so does
-the average stomach. The animals still bite when their stomach is full; nothing in this brain can feel the
-stomach yet.
 :::
 
-## The runs behind this page
+::: {.callout-note collapse="true" title="All fitness measures"}
+<div data-life="summary" data-stage="1.0"></div>
+:::
 
-This stage was run once: every later stage starts from this one population and is judged over three seeds.
+::: {.callout-note collapse="true" title="All lesions"}
+<div data-life="lesions" data-stage="1.0"></div>
+:::
+
+::: {.callout-note collapse="true" title="What did not work: all the food at once"}
+In earlier runs every bush was full when the animals were born. They filled their stomachs early and kept eating,
+the bushes were stripped by the middle of the life, and since a bush takes long to regrow most animals then
+starved together. Whatever an animal might have done better later in life could not show.
+
+Starting most bushes empty, each at a random point of its regrowth, turned that stock into a steady flow: the
+share of bushes with berries stays about the same through a life.
+:::
+
+## Runs
 
 <div data-life="runs" data-stage="1.0"></div>

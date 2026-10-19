@@ -237,7 +237,7 @@
       <div class="card-h"><h2>World</h2><span class="info" id="worldInfo"></span>
         <div class="tools"><button class="btn" id="legendBtn" title="What the objects in the world are" aria-expanded="false">Legend</button><button class="btn icon" data-zoom="-1" title="Zoom out"></button><button class="btn icon" data-zoom="1" title="Zoom in"></button><button class="btn icon" data-zoom="0" title="Fit (double-click the map)"></button><button class="btn icon" data-follow title="Keep the focused agent in view"></button><button class="btn icon keep" data-max title="Maximise (Esc to close)"></button></div></div>
       <div class="card-b">
-        <div class="pop" id="legendPop"><h3>Objects in this world</h3><div id="legendObjects" class="legend"></div><p class="small" id="legendAbout"></p></div>
+        <div class="pop" id="legendPop"><h3>Objects in this world</h3><div id="legendObjects" class="legend"></div><p><label class="switch"><input type="checkbox" id="markPoison" checked> mark poison kinds with a skull (the animals cannot see this mark)</label></p><p class="small" id="legendAbout"></p></div>
         <div class="cwrap grow" id="worldWrap"><canvas id="world" class="zoomable"></canvas><div class="toast"></div></div>
         <p class="hint" id="legend"></p>
       </div>
@@ -566,7 +566,23 @@ function groundPattern(ctx, k) {   // OHOL tiles one ground texture across 4x4 c
   if (p.setTransform) p.setTransform(new DOMMatrix([s, 0, 0, s, 0, 0]));
   return p;
 }
+// a red disc with a white skull, centre (x, y) and diameter d in the units of ctx; the book's strip draws the same
+function skull(ctx, x, y, d) {
+  const r = d / 2, k = r * 0.62;
+  ctx.save(); ctx.translate(x, y);
+  ctx.fillStyle = '#d0242b'; ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = d / 14; ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(0, -k * 0.18, k * 0.78, Math.PI, 0); ctx.lineTo(k * 0.78, k * 0.25); ctx.lineTo(k * 0.45, k * 0.4); ctx.lineTo(k * 0.45, k * 0.8);
+  ctx.lineTo(-k * 0.45, k * 0.8); ctx.lineTo(-k * 0.45, k * 0.4); ctx.lineTo(-k * 0.78, k * 0.25); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#d0242b'; ctx.beginPath(); ctx.arc(-k * 0.33, -k * 0.08, k * 0.24, 0, 7); ctx.arc(k * 0.33, -k * 0.08, k * 0.24, 0, 7); ctx.fill();
+  ctx.restore();
+}
+const POISON = M.poison || [];
+const markPoison = () => $('markPoison').checked;
 function paintObject(ctx, x, y, o, useS) {   // in cell units
+  paintThing(ctx, x, y, o, useS);
+  if (POISON[o] && markPoison()) skull(ctx, x + 0.74, y + 0.26, 0.5);
+}
+function paintThing(ctx, x, y, o, useS) {
   const im = useS ? sprites[String(M.ohol_id[o])] : null;
   if (loaded(im)) {
     const s = 0.95, r = Math.min(s / im.naturalWidth, s / im.naturalHeight), dw = im.naturalWidth * r, dh = im.naturalHeight * r;
@@ -575,7 +591,7 @@ function paintObject(ctx, x, y, o, useS) {   // in cell units
   } else { ctx.fillStyle = objColour[o]; ctx.fillRect(x + 0.1, y + 0.1, 0.8, 0.8); }
 }
 function syncCache(useS) {
-  const g = grid.a, base = t * H * W, mode = useS ? 'sprites' : 'plain';
+  const g = grid.a, base = t * H * W, mode = (useS ? 'sprites' : 'plain') + (markPoison() ? '+poison' : '');
   const full = !cache || cacheMode !== mode;
   if (full) {
     if (!cache) { cache = document.createElement('canvas'); cache.width = W * CC; cache.height = H * CC; cacheCtx = cache.getContext('2d'); cacheGrid = new Int16Array(H * W); }
@@ -681,7 +697,7 @@ function toggleFollow() { followOn = !followOn; store.set('follow', followOn); d
 $('legendObjects').innerHTML = M.names.map((n, i) => {
   if (!i) return '';
   const url = DATA.sprites[String(M.ohol_id[i])];
-  return `<span class="chip" title="retina colour of ${n}">${url ? `<img src="${url}" alt="">` : ''}<i style="background:${objColour[i]}"></i>${n}${M.food_value[i] ? ` <span class="muted">food ${M.food_value[i]}</span>` : ''}</span>`;
+  return `<span class="chip" title="retina colour of ${n}">${url ? `<img src="${url}" alt="">` : ''}<i style="background:${objColour[i]}"></i>${n}${POISON[i] ? ' <b style="color:#d0242b">☠ poison</b>' : M.food_value[i] ? ` <span class="muted">food ${M.food_value[i]}</span>` : ''}</span>`;
 }).join('');
 
 // ---------- agent panel ----------
@@ -1311,6 +1327,7 @@ $('tick').max = T - 1;
 $('tick').addEventListener('input', e => setTick(+e.target.value));
 $('agent').addEventListener('change', e => setFocus(+e.target.value));
 $('useSprites').addEventListener('change', () => invalidate('world'));
+$('markPoison').addEventListener('change', () => invalidate('world'));
 $('back').addEventListener('click', () => setTick(t - 1, true));
 $('fwd').addEventListener('click', () => setTick(t + 1, true));
 $('speed').title = `1× = real time (${TPS} tick${TPS === 1 ? '' : 's'} per second)`;

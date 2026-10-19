@@ -94,7 +94,10 @@ remapping the stored populations and freezing again.
    user; **no reruns of frozen stages**. The chapter exam (every population in every earlier world) is dropped as
    a criterion: later populations carry equipment for things earlier worlds lack. A sanity check at most.
 5. Trim (2026-10-08): nothing is removed; every cell is used somewhere on the chain.
-6. Book: "Watching it work" strips for drives (`warm_rest`) and affect (`flight`) done (2026-10-19).
+6. Book: "Watching it work" strips for drives (`warm_rest`) and affect (`flight`) done (2026-10-19). Rewritten as a
+   textbook the same day: background page, takeaway box, `verdict` and `bars` components, full results folded away,
+   ganglion drawn as one box, OHOL sprites with a skull on poison kinds in strips and dashboards (`book/README.md`).
+   The new stage pages follow that structure.
 
 ## Known issues and open points
 

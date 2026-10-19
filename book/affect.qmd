@@ -1,152 +1,133 @@
-# Affect: states that last {#sec-affect}
+# Affect {#sec-affect}
+
+[States that last]{.lb-subtitle}
 
 <div data-life="status" data-stage="1.8"></div>
 
-Everything this brain does so far, it does about the present. A bush is in front of it, so it bites. The skin is
-cold, so it walks. The stomach is empty, so it forages. When the cause is gone, the behaviour is gone in the same
-moment.
+::: {.lb-takeaway}
+**New:** two states that outlast what set them off: *alarm* after poison bites, *contentment* after a good meal.
+They build up over several bites.
 
-But some events say something about the minutes that follow. An animal that has just eaten well is probably
-standing in a good place. An animal that has just been hurt is probably standing in a bad one. To use that, the
-brain has to keep something of the event after it is over. This stage adds two such states: an alarm after pain,
-and contentment after a meal. So that the states have something to work with, the bushes in this world grow in
-patches that are mostly of one kind.
+**Result:** after a run of poison bites the animals flee the bad ground; after a good meal they stay on good ground.
+Both states are used in every seed.
+:::
+
+Everything this brain does so far, it does about the present. A bush is in front of it, so it bites; the skin is
+cold, so it walks. When the cause is gone, the behaviour is gone in the same moment.
+
+But some events say something about the minutes that follow. An animal that has just eaten well is probably on good
+ground; one that has just been hurt is probably on bad ground. To use that, the brain has to keep something of the
+event after it is over. So that the states have something to work with, the bushes in this world grow in patches
+that are mostly of one kind.
 
 <div data-life="brain" data-stage="1.8"></div>
 
 ## The circuit
 
-Two *modulators*, substances that a few cells release and that reach many cells at once, and three new cells.
+Two *modulators* (substances that a few cells release and that reach many cells at once, drawn in pink) and three
+new cells:
 
-- **Alarm.** Pain releases the modulator `alarm`. It drives a new cell, **`flee`**, which pushes the animal
-  forward. After poison bites the animal keeps going for a while, out of the poisoned ground.
-- **Serotonin.** A new cell, **`fed`**, fires when the animal tastes food, and releases the modulator `serotonin`.
-  It drives a new cell, **`settle`**, which switches on `rest`, the cell of the previous stage that holds the
-  forward step back. After a good meal the animal stays where it ate, also where it is cold.
+- **Alarm.** Pain releases the modulator `alarm`, which drives **`flee`**: the animal keeps going forward for a
+  while, out of the poisoned ground.
+- **Contentment.** **`fed`** fires when the animal tastes food and releases `serotonin`, which drives **`settle`**,
+  which switches on `rest` (the cell of the previous stage that holds the forward step back). After a good meal the
+  animal stays where it ate.
 
-`hungry` still shuts `rest`, as before. So a fed animal stays on good ground until it is hungry again, and then it
-forages, with good bushes close by.
+`hungry` still shuts `rest`. So a fed animal stays on good ground until it is hungry again, and then forages with
+good bushes close by.
 
-The two states are not a second system next to the drives. They act on the same cells: the drives decide what the
-animal does from what the body needs now, and the two modulators push those same modes for a while after an event.
+**The states build up.** A modulator is released in small amounts and cleared slowly, so its level is a running sum
+of what happened lately. The cells that read it fire only above a threshold: one poison bite passes without alarm,
+the animal flees only after more than one; it settles only after more good bites than one bush can give. One bite
+says little about the ground, several bites close together say much more.
 
-### States that build up
-
-A modulator is released in small amounts and cleared slowly, so its level at any moment is a running sum of what
-happened lately, not a record of the last event alone. The cells that read it fire only above a threshold. One
-poison bite passes without alarm; the animal flees only when more than one comes within a short while. It settles
-only after more good bites than one bush can give.
-
-That matters in this world, where a patch is mostly one kind but not only one kind. A single bite says little about
-the ground: a poison bush can stand in good ground, and a good bush in poor ground. Several bites close together
-say much more.
-
-The wiring and the thresholds are designed. Evolution may tune every strength, the thresholds, and how fast each
-modulator is cleared, which sets how long each state lasts.
+The wiring and thresholds are designed. Evolution tunes the strengths, the thresholds, and how fast each modulator
+is cleared, which sets how long each state lasts.
 
 ## Watching it work
 
-Below is one animal from the last generation at a poison bush.
-
-It bites three times in a row. Each bite adds to `alarm` (the alarm row is full at the level where `flee` begins to
-fire). One bite is not enough; after the third, `flee` switches on, `rest` falls silent, and the animal walks
-forward every tick, away from the bush. The alarm is cleared slowly, so the flight outlasts the pain by more than ten
-ticks, and then `flee` falls silent again.
+One animal from the last generation at a poison bush. It bites three times in a row, and each bite adds to `alarm`
+(the row is full at the level where `flee` begins to fire). One bite is not enough. **After the third, `flee`
+switches on and the animal walks away, every tick.** The alarm is cleared slowly, so the flight outlasts the pain by
+more than ten ticks.
 
 <div data-life="strip" data-stage="1.8" data-example="flight"></div>
 
-## The biology: affect
+## Biology
 
-A drive, as in the previous stage, follows the body: the hunger cell fires for as long as the stomach is empty and
-stops when it is full. An *affective state* is different in one respect. Something sets it off, and then it stays
-for a while by itself, after its cause has gone.
+A drive, as in the previous stage, follows the body: the hunger cell fires as long as the stomach is empty. An
+*affective state* is different in one respect: something sets it off, and then it stays for a while by itself.
 
-In small animals such states are carried by *neuromodulators*. They are released quickly and cleared slowly, and
-that slowness is the memory. The roundworm *C. elegans* slows down and stays where it is for minutes after it has
-found food, under the influence of serotonin. After a harmful touch it speeds away, and keeps going well after
-the touch has ended.
+In small animals such states are carried by *neuromodulators*, released quickly and cleared slowly; that slowness
+is the memory. The worm *C. elegans* slows down and stays put for minutes after it has found food, under the
+influence of serotonin. After a harmful touch it speeds away and keeps going well after the touch has ended.
 
-Such a state has two sides. It is good or bad, and it makes the animal more active or less. An animal that is
-alarmed is in a bad and active state. An animal that is content is in a good and quiet one.
+Such a state has two sides: it is good or bad, and it makes the animal more active or less. Alarm is bad and
+active; contentment is good and quiet.
 
-## The world: patches of mostly one kind
+## The world
 
-In the world of the previous stage the bushes of every kind were spread evenly. There, a meal says nothing about
-the place: what grows next to the bush just emptied is as likely to be poison as anywhere else. A state that
-lasts has nothing to work with.
+The bushes now grow in patches, mostly of one kind: after good meals the neighbouring bushes are probably good,
+after poison bites probably poison. Not every bush in a patch is of the patch's kind, so knowing a bush by its look,
+the lesson of the association stage, still has a job.
 
-So the bushes now grow in patches, and most bushes in a patch are of one kind. After good meals, the neighbouring
-bushes are most likely good as well. After poison bites, the neighbours are most likely poison too.
-
-Not every bush in a patch is of the patch's kind. In patches of only one kind, the first bite tells the animal all
-it needs to know about the bushes around it, and knowing a poison by its look, the lesson of the association
-stage, has nothing left to do. With other kinds standing among them, there is still a reason to know a bush by its
-look.
-
-The world is also larger than before, four times the area for the same number of animals, with more food. In the
-smaller world the animals took food from each other, and the better they foraged the more they did, so that what a
-better forager gains was mostly hidden. This is the world the next chapter starts in.
-
-The rest is as before: the world is cold, the hot springs are spread evenly, and the four kinds of berry bush are
-new in every life, half of them poison.
+The world is also four times larger for the same number of animals, with more food, so that animals take less food
+from each other and what a better forager gains is not hidden. This is the world the next chapter starts in. The
+rest is as before: cold, hot springs, and four kinds of berry bush, new in every life, half of them poison.
 
 <div data-life="settings" data-stage="1.8"></div>
 
-## Results
+## Did it work?
 
-How to read the table and the charts: see [How a stage is judged](index.qmd#sec-judged).
+<div data-life="verdict" data-stage="1.8" data-used="flee,fed,settle"></div>
 
-### Main against control
+**Both states are used in every seed.** `flee` costs the most when silenced: in these mixed patches a run of poison
+bites is the clearest sign of bad ground.
 
-The control is the brain of the previous stage in this world of patches. It feels pain and tastes food as before,
-but nothing of either stays with it.
+**Against the old brain the gain is clear when the two share a world**, in every seed. Living apart, two seeds are
+ahead and one is behind, so that measure alone would be inconclusive.
 
+## Full results
+
+::: {.callout-note collapse="true" title="Fitness over the generations"}
 <div data-life="curves" data-stage="1.8"></div>
+:::
 
+::: {.callout-note collapse="true" title="All fitness measures"}
 <div data-life="summary" data-stage="1.8"></div>
+:::
 
-The animals with the two states come out ahead of the control in two seeds out of three. In the third the two
-end about level: re-evaluated in the same worlds the control is somewhat ahead, and when both live in one world
-together the main animals are slightly ahead. Over the three seeds the gain is clear when the two populations share
-a world, and weaker when each lives among its own kind.
-
-### Is the circuit used?
-
+::: {.callout-note collapse="true" title="All lesions, and what is not used here"}
 <div data-life="lesions" data-stage="1.8"></div>
 
-The two states are used in every seed. Silencing `flee` costs the most of the new cells: the alarm now acts on a
-run of poison bites, which in these mixed patches is the clearest sign of bad ground. `fed` and `settle` are two
-links of one chain and cost about the same. `rest`, through which both staying after a meal and staying in the
-warmth act, costs more than either.
+`rest`, through which both staying after a meal and staying in the warmth act, costs more than `fed` or `settle`.
 
-Two things from earlier stages are not used in this world.
+Two older circuits are not used in this world:
 
-- Silencing `cold` or `warm_seek` costs nothing, as with the first version of this stage. A fed animal that walks
-  off in search of warmth leaves the good ground, and staying where the food is turns out to be worth more.
-- Switching the learning off costs nothing either. In these patches the look of a bush and the ground it stands on
-  say much the same thing, and the animals lean on the ground: two poison bites in a row and the alarm carries
-  them off. Learning is not lost, though. Its strength is still there in every seed, at about the level where a
-  lesson stays on the food it was learned about. What keeps it from paying is that a lesson about one berry spreads
-  to the berries that look like it. That is the problem the next chapter starts with.
+- **`cold` and `warm_seek`.** A fed animal that walks off in search of warmth leaves the good ground; staying where
+  the food is turns out to be worth more.
+- **Learning.** In these patches the look of a bush and the ground it stands on say much the same thing, and the
+  animals lean on the ground: two poison bites and the alarm carries them off. The learning rate is still there in
+  every seed. What keeps learning from paying is that a lesson about one berry spreads to the berries that look like
+  it, the problem the next chapter starts with.
 
-Neither was removed. The cells belong to the previous stages as they were frozen, and the next stages need the
-learning.
+Neither was removed: the next stages need the learning.
+:::
 
-### After a bite
-
+::: {.callout-note collapse="true" title="After a bite"}
 <div data-life="table" data-stage="1.8" data-example="after_a_bite"></div>
 
-After poison bites the animals of this stage take a few more steps than the control, and after a good meal a
-little fewer. The differences are small in this measure, because one bite alone no longer sets a state off: it
-takes several.
+After poison bites the animals take a few more steps than the old brain, after a good meal a few fewer. The
+differences are small in this measure because one bite alone no longer sets a state off.
+:::
 
-### How a life is spent
-
+::: {.callout-note collapse="true" title="How a life is spent"}
 <div data-life="table" data-stage="1.8" data-example="life_spent"></div>
 
-Both populations stand still for most of their life. Much of that time they bite at nothing: an animal held in
-place by `rest` still has its grasp programme, and a bite costs little.
+Both populations stand still for most of their life, much of it biting at nothing: an animal held in place by
+`rest` still has its grasp programme, and a bite costs little.
+:::
 
-## The runs behind this page
+## Runs
 
 <div data-life="runs" data-stage="1.8"></div>

@@ -2,7 +2,8 @@
 // `python -m life.book export <stage>` writes (book/data/<stage>.json); nothing here contains a number.
 //
 // A page places a component with      <div data-life="curves" data-stage="1.1"></div>
-// Components: status, summary, curves, lesions, brain, runs, settings, strip (with data-example="<extras name>").
+// Components: status, summary, curves, lesions, brain, runs, settings, verdict, strip and table and bars (with
+// data-example="<extras name>").
 // The brain diagram takes its layout from data/brain_layout.json (tools/brain_layout) when that has the stage, else
 // columns by depth as in life/dashboard.html; the edge routing follows life/dashboard.html (the tool scores it too).
 (function () {
@@ -157,15 +158,114 @@
     });
   }
 
+  // ------------------------------------------------------------------ verdict: the two questions a stage answers
+  // <div data-life="verdict" data-stage="1.1" data-used="valence_av,no_feed"></div>: per listed lesion (or a table
+  // extra with a "% of" row), the fitness without it; then main against control, living apart and sharing a world.
+  const LESION_LABEL = {no_plasticity: 'learning', no_depression: 'depression'};
+  const stat = a => { const m = mean(a), se = a.length > 1 ? Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / (a.length - 1) / a.length) : null; return {mean: m, se, seeds: a}; };
+  function verdict(root, D) {
+    const ev = D.evaluation || {}, X = D.extras || {};
+    // an entry is a lesion name, or "<table extra>:<label>" for a table with a "% of" row
+    const used = (root.dataset.used || '').split(',').map(s => s.trim()).filter(Boolean).map(entry => {
+      const [name, label] = entry.split(':');
+      if (ev.lesions && ev.lesions[name]) return {name: `without <code>${esc(LESION_LABEL[name] || name)}</code>`, p: ev.lesions[name].percent};
+      const row = X[name] && X[name].rows.find(r => /% of/.test(r[0]));
+      return row ? {name: esc(label || row[0]), p: row[1]} : null;
+    }).filter(Boolean);
+    const useTag = p => p.seeds.every(v => v <= 95) ? (p.mean < 80 ? ['yes', 'used in every seed'] : ['some', 'used a little, every seed']) : p.mean <= 95 ? ['some', 'used in some seeds'] : ['no', 'not used'];
+    const pct = (diff, base) => diff && base ? stat(diff.seeds.map((d, i) => 100 * d / base.seeds[i])) : null;
+    const reev = ev.reevaluated, base = reev ? reev.control : D.summary.control && D.summary.control.fit_mean;
+    const cmp = [];
+    if (reev) cmp.push({name: 'each among its own kind', p: pct(reev.difference, reev.control)});
+    if (ev.versus && base) cmp.push({name: 'sharing one world', p: pct(ev.versus, base)});
+    if (!reev && D.summary.difference && base) cmp.push({name: 'during evolution', p: pct(D.summary.difference, base)});
+    const cmpTag = p => p.se === null ? (p.mean > 0 ? ['yes', 'better'] : ['no', 'worse'])
+      : p.mean - 2 * p.se > 0 ? (p.seeds.every(v => v > 0) ? ['yes', 'better in every seed'] : ['yes', 'better on average'])
+      : p.mean + 2 * p.se < 0 ? ['bad', 'worse'] : ['no', 'about level'];
+    const dots = (vals, x) => vals.map(v => `<i class="lb-vdot" style="left:${x(v).toFixed(1)}%"></i>`).join('');
+    const lesionRow = it => {   // 0 .. 120 %, a line at 100
+      const x = v => Math.max(0, Math.min(120, v)) / 120 * 100, [cls, tag] = useTag(it.p);
+      return `<div class="lb-vitem"><span class="lb-vname">${it.name}</span><span class="lb-vtrack"><i class="lb-vref" style="left:${x(100)}%"></i><i class="lb-vbar" style="width:${x(it.p.mean).toFixed(1)}%"></i>${dots(it.p.seeds, x)}</span>`
+        + `<span class="lb-vval">${fmt(it.p.mean, 0)}%</span><span class="lb-vtag lb-v${cls}">${tag}</span></div>`;
+    };
+    const lim = Math.max(30, ...cmp.flatMap(c => c.p.seeds.map(Math.abs))) * 1.1;
+    const cmpRow = it => {   // -lim .. +lim %, the middle is level
+      const x = v => 50 + 50 * Math.max(-lim, Math.min(lim, v)) / lim, [cls, tag] = cmpTag(it.p), m = it.p.mean;
+      return `<div class="lb-vitem"><span class="lb-vname">${it.name}</span><span class="lb-vtrack"><i class="lb-vref" style="left:50%"></i><i class="lb-vbar${m < 0 ? ' lb-vneg' : ''}" style="left:${Math.min(50, x(m)).toFixed(1)}%;width:${Math.abs(x(m) - 50).toFixed(1)}%"></i>${dots(it.p.seeds, x)}</span>`
+        + `<span class="lb-vval">${m > 0 ? '+' : ''}${fmt(m, 0)}%</span><span class="lb-vtag lb-v${cls}">${tag}</span></div>`;
+    };
+    let h = '<div class="lb-verdict">';
+    if (used.length) h += `<div class="lb-vq">Is the new circuit used?</div><div class="lb-vsub">fitness with it silenced, % of the intact animals (the line is 100%)</div>${used.map(lesionRow).join('')}`;
+    if (cmp.length) h += `<div class="lb-vq">Does the new brain do better than the old one?</div><div class="lb-vsub">fitness of the new brain minus that of the old, % of the old (the line is level)</div>${cmp.map(cmpRow).join('')}`;
+    root.innerHTML = h + `</div><div class="lb-caption">Bars: mean of the ${D.runs.main.length} seeds; dots: the seeds.${cmp.length ? ' The old brain is the brain of the previous stage, evolved in the same new world from the same start.' : ''}${reev ? ' <i>Each among its own kind</i>: each population lives alone, in the same set of worlds.' : ''}${ev.versus ? ' <i>Sharing one world</i>: half new, half old animals compete for the same food.' : ''} All measures are under <a href="#full-results">Full results</a>.</div>`;
+  }
+
+  // ------------------------------------------------------------------ a table extra as bars: one group per row
+  // <div data-life="bars" data-stage="2.2" data-example="xor_lab" data-rows="0,2,3"></div>
+  function bars(root, D) {
+    const X = (D.extras || {})[root.dataset.example];
+    if (!X) { root.innerHTML = '<div class="lb-caption">Not measured yet.</div>'; return; }
+    const pick = root.dataset.rows ? root.dataset.rows.split(',').map(Number) : X.rows.map((_, i) => i);
+    const rows = pick.map(i => X.rows[i]), cols = X.columns.slice(1), CLS = ['lb-s1', 'lb-s2', 'lb-s3'];
+    const unit = root.dataset.unit || '', scale = +(root.dataset.scale || 1);
+    const hi = Math.max(...rows.flatMap(r => r.slice(1).flatMap(v => v ? [v.mean, ...v.seeds] : []))) * scale * 1.08 || 1;
+    let h = `<div class="lb-legend">${cols.map((c, j) => `<span><i class="lb-key ${CLS[j]}"></i>${esc(root.dataset[`col${j}`] || c)}</span>`).join('')}<span class="lb-muted">dots: the seeds</span></div><div class="lb-barsgrid">`;
+    for (const r of rows) {
+      h += `<div class="lb-barslabel">${esc(r[0])}</div><div class="lb-barsset">`;
+      r.slice(1).forEach((v, j) => {
+        if (!v) return;
+        const x = u => (u * scale / hi * 100).toFixed(1);
+        h += `<div class="lb-barsline"><span class="lb-vtrack"><i class="lb-vbar ${CLS[j]}" style="width:${x(v.mean)}%"></i>${v.seeds.map(s => `<i class="lb-vdot" style="left:${x(s)}%"></i>`).join('')}</span><span class="lb-vval">${fmt(v.mean * scale, scale > 1 ? 0 : undefined)}${unit}</span></div>`;
+      });
+      h += '</div>';
+    }
+    root.innerHTML = h + '</div>' + (root.dataset.caption ? `<div class="lb-caption">${root.dataset.caption}</div>` : '');
+  }
+
   // ------------------------------------------------------------------ brain diagram
   // the layout shared by all stages (tools/brain_layout writes data/brain_layout.json); without it, or for a stage it
   // does not have, the diagram is laid out in columns by depth as before
   let layoutP;
   const loadLayout = () => layoutP || (layoutP = fetch('data/brain_layout.json').then(r => r.ok ? r.json() : null).catch(() => null));
   function brain(root, D) { return loadLayout().then(L => drawBrain(root, D, L)); }
+  // A group whose wiring is an evolved tangle with no named meaning (the ganglion) is drawn as one box, unless this
+  // stage adds it: its excitatory and inhibitory parts become one region, and their projections merge (a merged
+  // projection of both signs ends in a dot). data-fold on the placeholder lists other groups; data-fold="" none.
+  function foldGroups(B, fold) {
+    const into = {};
+    for (const g of fold) {
+      const mem = B.regions.filter(r => r.group === g || (r.group || '').startsWith(g + '/'));
+      if (mem.length > 1 && !mem.some(r => r.new)) mem.forEach(r => { into[r.name] = g; });
+    }
+    const m = n => into[n] || n, regions = [], done = new Set();
+    for (const r of B.regions) {
+      const g = into[r.name];
+      if (!g) { regions.push(r); continue; }
+      if (done.has(g)) continue;
+      done.add(g);
+      const mem = B.regions.filter(o => into[o.name] === g);
+      regions.push({name: g, group: '', hue: g, new: false, members: mem.map(o => o.name), size: mem.reduce((s, o) => s + o.size, 0),
+        sign: mem.every(o => o.sign > 0) ? 1 : mem.every(o => o.sign < 0) ? -1 : 0, receptors: mem.flatMap(o => o.receptors || [])});
+    }
+    const merged = new Map();
+    for (const p of B.projections) {
+      const k = [m(p.src), m(p.dst), p.src_select.join(), p.dst_range.join(), p.rule, p.hard, p.modulator || ''].join('|'), q = merged.get(k);
+      if (!q) { merged.set(k, {...p, src: m(p.src), dst: m(p.dst), parts: [p]}); continue; }
+      q.parts.push(p); q.drive += p.drive; q.synapses += p.synapses; q.new = q.new || p.new;
+      if (q.sign !== p.sign) q.mixed = true;
+      q.mean_abs = q.parts.reduce((s, o) => s + o.mean_abs * o.synapses, 0) / Math.max(1, q.synapses);
+    }
+    return {regions, projections: [...merged.values()], modulators: (B.modulators || []).map(x => ({...x, pos: m(x.pos)})), into};
+  }
   function drawBrain(root, D, L) {
-    const REG = D.brain.regions, PROJ = D.brain.projections, BW = 122, BH = 38, pos = {};
-    const A = L && L.stages && L.stages[D.stage.key], atlas = !!A && REG.every(r => A.pos[r.name]);
+    const F = foldGroups(D.brain, root.dataset.fold !== undefined ? root.dataset.fold.split(',').filter(Boolean) : ['ganglion']);
+    const REG = F.regions, PROJ = F.projections, BW = 122, BH = 38, pos = {};
+    let A = L && L.stages && L.stages[D.stage.key];
+    if (A) {   // a folded group sits where the middle of its members was
+      A = {...A, pos: {...A.pos}};
+      for (const r of REG) if (r.members && r.members.every(n => A.pos[n])) A.pos[r.name] = [0, 1].map(k => mean(r.members.map(n => A.pos[n][k])));
+    }
+    const atlas = !!A && REG.every(r => A.pos[r.name]);
     // cells and group boxes take the colour of their top-level group: the layout file's hues (the same in every
     // chapter), else one from the group's name
     const hues = (L && L.hues) || {};
@@ -266,7 +366,7 @@
     // projection whose learning it gates (the line ends on the middle of that projection)
     const mid = {}, MODS = [];
     PROJ.forEach((p, i) => { const m = /^M([-\d.]+),([-\d.]+) Q([-\d.]+),([-\d.]+) ([-\d.]+),([-\d.]+)$/.exec(geom(p, ...ENDS[i][0]).d); if (m) mid[i] = [(+m[1] + 2 * +m[3] + +m[5]) / 4, (+m[2] + 2 * +m[4] + +m[6]) / 4]; });
-    for (const m of D.brain.modulators || []) {
+    for (const m of F.modulators) {
       if (!pos[m.pos]) continue;
       for (const r of REG) for (const rc of r.receptors || []) if (rc[0] === m.name) MODS.push({m, src: m.pos, to: pos[r.name], dst: r.name, how: rc[1], sens: rc[2]});
       PROJ.forEach((p, i) => { if (p.modulator === m.name && mid[i]) MODS.push({m, src: m.pos, to: mid[i], proj: p}); });
@@ -294,7 +394,7 @@
     PROJ.forEach((p, i) => ENDS[i].forEach(([from, to]) => {
       const g = geom(p, from, to), w = 1 + 4 * Math.sqrt(p.drive / maxDrive), cls = p.rule !== 'fixed' ? 'lb-learned' : p.hard ? 'lb-hard' : 'lb-evolved', [ex, ey] = g.end, [ux, uy] = g.dir;
       // excitatory synapses end in an arrowhead, inhibitory ones in a bar; sensory projections (mixed signs) in a dot
-      const fromIn = p.src === 'in' && (!p.hard || p.sign === 0), a = 7 + w;
+      const fromIn = (p.src === 'in' && (!p.hard || p.sign === 0)) || p.mixed, a = 7 + w;
       const head = fromIn ? `<circle class="${cls}-fill" cx="${f1(ex)}" cy="${f1(ey)}" r="${f1(2.5 + w / 2)}"/>`
         : p.sign < 0 ? `<line class="${cls}" stroke-width="${f1(w + 1.5)}" x1="${f1(ex - uy * a)}" y1="${f1(ey + ux * a)}" x2="${f1(ex + uy * a)}" y2="${f1(ey - ux * a)}"/>`
         : `<path class="${cls}-fill" d="M${f1(ex)},${f1(ey)} L${f1(ex - ux * a * 1.5 - uy * a * 0.6)},${f1(ey - uy * a * 1.5 + ux * a * 0.6)} L${f1(ex - ux * a * 1.5 + uy * a * 0.6)},${f1(ey - uy * a * 1.5 - ux * a * 0.6)} z"/>`;
@@ -314,8 +414,8 @@
         continue;
       }
       const [x, y] = pos[r.name];
-      s += `<g class="lb-reg${r.new ? ' lb-isnew' : ''}" data-r="${esc(r.name)}" transform="translate(${f1(x - BW / 2)},${f1(y - BH / 2)})"><rect width="${BW}" height="${BH}" rx="6" ${r.group ? `class="lb-cell" style="--h:${hueOf(r.group.split('/')[0])}"` : 'class="lb-io"'}/>`
-        + `<text class="lb-regname" x="8" y="16">${esc(r.name)}</text><text class="lb-regsub" x="8" y="30">${r.name === 'in' ? 'senses' : r.name === 'out' ? 'motor neurons' : (r.sign > 0 ? 'excitatory' : 'inhibitory')} · ${r.size}</text></g>`;
+      s += `<g class="lb-reg${r.new ? ' lb-isnew' : ''}" data-r="${esc(r.name)}" transform="translate(${f1(x - BW / 2)},${f1(y - BH / 2)})"><rect width="${BW}" height="${BH}" rx="6" ${r.group || r.hue ? `class="lb-cell" style="--h:${hueOf((r.group || r.hue).split('/')[0])}"` : 'class="lb-io"'}/>`
+        + `<text class="lb-regname" x="8" y="16">${esc(r.name)}</text><text class="lb-regsub" x="8" y="30">${r.name === 'in' ? 'senses' : r.name === 'out' ? 'motor neurons' : (r.sign > 0 ? 'excitatory' : r.sign < 0 ? 'inhibitory' : 'exc. and inh.')} · ${r.size}</text></g>`;
     }
     s += '</svg>';
     const anyNew = REG.some(r => r.new);
@@ -345,7 +445,7 @@
     root.querySelectorAll('.lb-edge').forEach(g => {
       const p = PROJ[+g.dataset.p];
       const range = p.dst === 'out' && p.dst_range.length ? ` (${D.brain.actions.slice(p.dst_range[0], p.dst_range[1]).join(', ')})` : '';
-      hover(g, e => showTip(e, `<b>${esc(p.src + sel(p))} → ${esc(p.dst)}${esc(range)}</b><div>${p.rule !== 'fixed' ? `learned within a life (rule: ${esc(p.rule)}${p.modulator ? ', gated by ' + esc(p.modulator) : ''})` : p.hard ? 'hard-wired' : 'evolved'}, ${p.src === 'in' && (!p.hard || p.sign === 0) ? 'mixed signs' : p.sign < 0 ? 'inhibitory' : 'excitatory'}${p.new ? ', added in this stage' : ''}</div><div>${fmt(p.synapses, p.synapses < 10 ? 0 : 0)} synapses, mean strength ${fmt(p.mean_abs)}${p.designed !== null && p.designed !== undefined ? ` (designed at ${fmt(Math.abs(p.designed))})` : ''}</div>`));
+      hover(g, e => showTip(e, `<b>${esc(p.src + sel(p))} → ${esc(p.dst)}${esc(range)}</b><div>${p.rule !== 'fixed' ? `learned within a life (rule: ${esc(p.rule)}${p.modulator ? ', gated by ' + esc(p.modulator) : ''})` : p.hard ? 'hard-wired' : 'evolved'}, ${(p.src === 'in' && (!p.hard || p.sign === 0)) || p.mixed ? 'mixed signs' : p.sign < 0 ? 'inhibitory' : 'excitatory'}${p.new ? ', added in this stage' : ''}</div><div>${fmt(p.synapses, p.synapses < 10 ? 0 : 0)} synapses, mean strength ${fmt(p.mean_abs)}${p.designed !== null && p.designed !== undefined ? ` (designed at ${fmt(Math.abs(p.designed))})` : ''}</div>`));
     });
     const lasts = m => m.lasts ? `Released at once and cleared slowly: it stays for about ${fmt(m.lasts, 0)} ticks (designed at ${fmt(m.lasts_designed, 0)}).` : 'Follows the cell that releases it, without delay.';
     root.querySelectorAll('.lb-mod').forEach(g => {
@@ -355,8 +455,8 @@
     });
     root.querySelectorAll('.lb-reg').forEach(g => {
       const r = REG.find(o => o.name === g.dataset.r), ins = PROJ.filter(p => p.dst === r.name), outs = PROJ.filter(p => p.src === r.name);
-      const rel = (D.brain.modulators || []).filter(m => m.pos === r.name).map(m => m.name), rec = (r.receptors || []).map(rc => rc[0]);
-      hover(g, e => showTip(e, `<b>${esc(r.name)}</b> ${r.size} neuron${r.size === 1 ? '' : 's'}${r.new ? ', added in this stage' : ''}<div class="lb-muted">from: ${esc([...new Set(ins.map(p => p.src))].join(', ') || '–')}</div><div class="lb-muted">to: ${esc([...new Set(outs.map(p => p.dst))].join(', ') || '–')}</div>${rel.length ? `<div class="lb-muted">releases: ${esc(rel.join(', '))}</div>` : ''}${rec.length ? `<div class="lb-muted">receptors for: ${esc(rec.join(', '))}</div>` : ''}`));
+      const rel = F.modulators.filter(m => m.pos === r.name).map(m => m.name), rec = (r.receptors || []).map(rc => rc[0]);
+      hover(g, e => showTip(e, `<b>${esc(r.name)}</b> ${r.size} neuron${r.size === 1 ? '' : 's'}${r.new ? ', added in this stage' : ''}${r.members ? `<div>drawn as one box: ${esc(r.members.join(', '))}</div>` : ''}<div class="lb-muted">from: ${esc([...new Set(ins.map(p => p.src))].join(', ') || '–')}</div><div class="lb-muted">to: ${esc([...new Set(outs.map(p => p.dst))].join(', ') || '–')}</div>${rel.length ? `<div class="lb-muted">releases: ${esc(rel.join(', '))}</div>` : ''}${rec.length ? `<div class="lb-muted">receptors for: ${esc(rec.join(', '))}</div>` : ''}`));
     });
   }
 
@@ -386,6 +486,25 @@
   // ------------------------------------------------------------------ zoomed-in example: one animal, a few dozen ticks
   const GLYPH = {NOOP: '·', FORWARD: '↑', TURN_LEFT: '↶', TURN_RIGHT: '↷', USE: '◆', EAT: '◆', VOCALIZE: '♪'};
   const WORDS = {NOOP: 'waits', FORWARD: 'steps forward', TURN_LEFT: 'turns left', TURN_RIGHT: 'turns right', USE: 'bites', EAT: 'eats', VOCALIZE: 'calls'};
+  // the OHOL sprites of the objects in the strips (python -m life.book sprites), as in the dashboards
+  let spritesP;
+  const loadSprites = () => spritesP || (spritesP = fetch('data/sprites.json').then(r => r.ok ? r.json() : null).catch(() => null).then(S => {
+    if (!S) return null;
+    const img = u => new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = u; });
+    const keys = Object.keys(S.sprites);
+    return Promise.all([...keys.map(k => img(S.sprites[k])), S.ground ? img(S.ground) : null])
+      .then(a => ({sprites: Object.fromEntries(keys.map((k, i) => [k, a[i]])), ground: a[keys.length]}));
+  }));
+  // a red disc with a white skull, centre (x, y), diameter d (as in life/dashboard.html)
+  function skull(ctx, x, y, d) {
+    const r = d / 2, k = r * 0.62;
+    ctx.save(); ctx.translate(x, y);
+    ctx.fillStyle = '#d0242b'; ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = d / 14; ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(0, -k * 0.18, k * 0.78, Math.PI, 0); ctx.lineTo(k * 0.78, k * 0.25); ctx.lineTo(k * 0.45, k * 0.4); ctx.lineTo(k * 0.45, k * 0.8);
+    ctx.lineTo(-k * 0.45, k * 0.8); ctx.lineTo(-k * 0.45, k * 0.4); ctx.lineTo(-k * 0.78, k * 0.25); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#d0242b'; ctx.beginPath(); ctx.arc(-k * 0.33, -k * 0.08, k * 0.24, 0, 7); ctx.arc(k * 0.33, -k * 0.08, k * 0.24, 0, 7); ctx.fill();
+    ctx.restore();
+  }
   function strip(root, D) {
     const X = D.extras && D.extras[root.dataset.example];
     if (!X) { root.innerHTML = '<div class="lb-note"><p>No example exported for this stage yet.</p></div>'; return; }
@@ -396,12 +515,21 @@
     X.regions.forEach((name, r) => steps[0].cells[r].forEach((_, j, a) => rows.push({label: name + (a.length > 1 ? ' ' + (j + 1) : ''), sub: '', get: s => s.cells[r][j]})));
     let cur = Math.max(0, steps.findIndex(s => s.tick === X.event_tick) - 2), timer = null;
     const anyNeg = () => rows.some(r => steps.some(s => r.get(s) < 0));
-    root.innerHTML = `<div class="lb-strip"><div class="lb-stripworld"><canvas width="${size * CELL}" height="${size * CELL}"></canvas></div>`
+    const SC = 2;   // the canvas is painted at twice its size, so that sprites stay sharp on a sharp screen
+    root.innerHTML = `<div class="lb-strip"><div class="lb-stripworld"><canvas width="${size * CELL * SC}" height="${size * CELL * SC}"></canvas></div>`
       + `<div class="lb-stripside"><div class="lb-controls"><button data-a="play">Play</button><button data-a="prev" aria-label="previous tick">‹</button><button data-a="next" aria-label="next tick">›</button><input type="range" min="0" max="${n - 1}" value="${cur}" aria-label="tick"><span class="lb-tickno"></span></div>`
-      + `<div class="lb-stripcaption"></div><div class="lb-striplegend"></div></div></div><div class="lb-heat"></div>`
-      + `<div class="lb-caption">One animal of the recorded last generation (run ${esc(X.run)}, agent ${X.agent}). Top: the world around it before it acts, the animal in the middle. Below: one column per tick, one row per sense or neuron, darker = more active${anyNeg() ? ' (orange: below zero, less than the sense is used to)' : ''}. The action row shows ↑ a step, ↶ ↷ a turn, ● a good berry eaten, ✕ a poison berry eaten; the last row is the stomach. Click a column or drag the slider.</div>`;
+      + `<div class="lb-stripcaption"></div><details class="lb-details lb-striplegendbox"><summary>What is what</summary><div class="lb-striplegend"></div></details></div></div><div class="lb-heat"></div>`
+      + `<div class="lb-caption">One animal of the recorded last generation (run ${esc(X.run)}, agent ${X.agent}). Top: the world around it before it acts, the animal in the middle; point at a cell for its name. ☠ marks a poison kind of bush, a mark that the animal cannot see. Below: one column per tick, one row per sense or neuron, darker = more active${anyNeg() ? ' (orange: below zero, less than the sense is used to)' : ''}. The action row shows ↑ a step, ↶ ↷ a turn, ● a good berry eaten, ✕ a poison berry eaten; the last row is the stomach. Click a column or drag the slider.</div>`;
     const cv = root.querySelector('canvas'), ctx = cv.getContext('2d'), heat = root.querySelector('.lb-heat');
     const col = o => { const c = X.objects[o].colour; return `rgb(${c.map(v => Math.round(v * 255)).join(',')})`; };
+    // a bush is of a poison kind when its berry is (export), an empty bush when its full bush is
+    const byName = Object.fromEntries(X.objects.map((ob, i) => [ob.name, i]));
+    const poison = o => {
+      const ob = X.objects[o]; if (ob.effect === 'poison') return true;
+      const f = ob.kind === 'empty bush' ? byName[ob.name.replace('Empty ', '')] : undefined;
+      return f !== undefined && X.objects[f].effect === 'poison';
+    };
+    let SP = null;   // the sprites, once loaded
     const css = name => getComputedStyle(root).getPropertyValue(name).trim();
     // the heat strip is an SVG built once; the cursor moves
     const CW = Math.max(14, Math.min(24, Math.floor(600 / n))), RH = 22, L = 104, HW = L + n * CW + 4, extra = 2;
@@ -424,22 +552,34 @@
     heat.innerHTML = h;
     const cursor = heat.querySelector('.lb-cursor');
     function drawWorld(s) {
-      ctx.fillStyle = css('--lb-ground') || '#eef0e6'; ctx.fillRect(0, 0, cv.width, cv.height);
-      ctx.strokeStyle = css('--lb-gridline') || '#e1e0d9'; ctx.lineWidth = 1;
-      for (let i = 1; i < size; i++) { ctx.beginPath(); ctx.moveTo(i * CELL + 0.5, 0); ctx.lineTo(i * CELL + 0.5, cv.height); ctx.moveTo(0, i * CELL + 0.5); ctx.lineTo(cv.width, i * CELL + 0.5); ctx.stroke(); }
+      const span = size * CELL;
+      ctx.setTransform(SC, 0, 0, SC, 0, 0);
+      const pat = SP && SP.ground ? ctx.createPattern(SP.ground, 'repeat') : null;   // OHOL tiles its ground over 4 x 4 cells
+      if (pat && pat.setTransform) { const k = 4 * CELL / SP.ground.naturalWidth; pat.setTransform(new DOMMatrix([k, 0, 0, k, 0, 0])); }
+      ctx.fillStyle = pat || css('--lb-ground') || '#eef0e6'; ctx.fillRect(0, 0, span, span);
+      if (!pat) {
+        ctx.strokeStyle = css('--lb-gridline') || '#e1e0d9'; ctx.lineWidth = 1;
+        for (let i = 1; i < size; i++) { ctx.beginPath(); ctx.moveTo(i * CELL + 0.5, 0); ctx.lineTo(i * CELL + 0.5, span); ctx.moveTo(0, i * CELL + 0.5); ctx.lineTo(span, i * CELL + 0.5); ctx.stroke(); }
+      }
       for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
         const o = s.patch[y * size + x], cx = x * CELL + CELL / 2, cy = y * CELL + CELL / 2;
         if (o < 0) { ctx.fillStyle = css('--lb-wall') || '#c3c2b7'; ctx.fillRect(x * CELL, y * CELL, CELL, CELL); continue; }
         if (!o) continue;
-        const ob = X.objects[o];
-        ctx.beginPath(); ctx.arc(cx, cy, CELL * 0.34, 0, 7);
-        if (ob.kind === 'empty bush') { ctx.strokeStyle = col(o); ctx.lineWidth = 2.5; ctx.stroke(); }
-        else { ctx.fillStyle = col(o); ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 1; ctx.stroke(); }
-        if (ob.effect === 'poison') { ctx.strokeStyle = ob.name.startsWith('White') ? '#333' : '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx - 4, cy - 4); ctx.lineTo(cx + 4, cy + 4); ctx.moveTo(cx + 4, cy - 4); ctx.lineTo(cx - 4, cy + 4); ctx.stroke(); }
+        const ob = X.objects[o], im = SP && SP.sprites[String(ob.ohol)];
+        if (im) {   // drawn as in the dashboard: standing on the bottom of its cell, with a shadow
+          const r = Math.min(0.95 * CELL / im.naturalWidth, 0.95 * CELL / im.naturalHeight), dw = im.naturalWidth * r, dh = im.naturalHeight * r;
+          ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.beginPath(); ctx.ellipse(cx, y * CELL + CELL * 0.92, dw * 0.42, CELL * 0.08, 0, 0, 7); ctx.fill();
+          ctx.drawImage(im, x * CELL + (CELL - dw) / 2, y * CELL + CELL * 0.97 - dh, dw, dh);
+        } else {
+          ctx.beginPath(); ctx.arc(cx, cy, CELL * 0.34, 0, 7);
+          if (ob.kind === 'empty bush') { ctx.strokeStyle = col(o); ctx.lineWidth = 2.5; ctx.stroke(); }
+          else { ctx.fillStyle = col(o); ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 1; ctx.stroke(); }
+        }
+        if (poison(o)) skull(ctx, x * CELL + CELL * 0.75, y * CELL + CELL * 0.25, CELL * 0.5);
       }
       const tri = (cx, cy, d, fill, r) => { ctx.save(); ctx.translate(cx, cy); ctx.rotate(d * Math.PI / 2); ctx.beginPath(); ctx.moveTo(0, -r); ctx.lineTo(r * 0.8, r * 0.8); ctx.lineTo(-r * 0.8, r * 0.8); ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore(); };
       for (const [dy, dx, d] of s.others) tri((dx + R) * CELL + CELL / 2, (dy + R) * CELL + CELL / 2, d, css('--lb-other') || '#898781', CELL * 0.3);
-      tri(R * CELL + CELL / 2, R * CELL + CELL / 2, s.dir, css('--lb-animal') || '#0b0b0b', CELL * 0.36);
+      tri(R * CELL + CELL / 2, R * CELL + CELL / 2, s.dir, SP ? '#0b0b0b' : css('--lb-animal') || '#0b0b0b', CELL * 0.36);
     }
     function show(i) {
       cur = Math.max(0, Math.min(n - 1, i));
@@ -453,8 +593,21 @@
       root.querySelector('.lb-stripcaption').innerHTML = c + '.';
     }
     const seen = new Set(steps.flatMap(s => s.patch.filter(o => o > 0)));
-    root.querySelector('.lb-striplegend').innerHTML = [...seen].sort((a, b) => a - b).map(o => { const ob = X.objects[o]; return `<span><i class="lb-objkey${ob.kind === 'empty bush' ? ' lb-hollow' : ''}" style="--c:${col(o)}"></i>${esc(ob.name)}${ob.effect === 'poison' ? ' (poison, ✕)' : ''}</span>`; }).join('')
-      + '<span><i class="lb-objkey lb-tri"></i>the animal (points where it faces); grey = others</span>';
+    const legend = () => {
+      root.querySelector('.lb-striplegend').innerHTML = [...seen].sort((a, b) => a - b).map(o => {
+        const ob = X.objects[o], im = SP && SP.sprites[String(ob.ohol)];
+        return `<span>${im ? `<img class="lb-objimg" src="${im.src}" alt="">` : `<i class="lb-objkey${ob.kind === 'empty bush' ? ' lb-hollow' : ''}" style="--c:${col(o)}"></i>`}${esc(ob.name)}${poison(o) ? ' <b class="lb-bad">☠ poison</b>' : ''}</span>`;
+      }).join('') + '<span><i class="lb-objkey lb-tri"></i>the animal (points where it faces); grey = others</span>';
+    };
+    legend();
+    hover(cv, e => {   // the name of what is in a cell
+      const b = cv.getBoundingClientRect(), x = Math.floor((e.clientX - b.left) / b.width * size), y = Math.floor((e.clientY - b.top) / b.height * size);
+      const s = steps[cur], o = s.patch[y * size + x];
+      if (x === R && y === R) return showTip(e, '<b>the animal</b>');
+      if (s.others.some(([dy, dx]) => dy + R === y && dx + R === x)) return showTip(e, 'another animal');
+      if (!(o > 0)) return hideTip();
+      showTip(e, `<b>${esc(X.objects[o].name)}</b>${poison(o) ? '<div>a poison kind</div>' : ''}`);
+    });
     heat.addEventListener('click', e => { const t = e.target.dataset.t; if (t !== undefined) show(+t); });
     hover(heat, e => {
       const t = e.target.dataset.t; if (t === undefined) return hideTip();
@@ -468,6 +621,7 @@
       else { if (cur >= n - 1) show(0); e.target.textContent = 'Pause'; timer = setInterval(() => { if (cur >= n - 1) { clearInterval(timer); timer = null; e.target.textContent = 'Play'; } else show(cur + 1); }, 700); }
     });
     show(cur);
+    loadSprites().then(S => { if (S) { SP = S; legend(); show(cur); } });
     // the world tile is a canvas painted with the theme's colours: paint it again when the theme is switched
     new MutationObserver(() => show(cur)).observe(document.body, {attributes: true, attributeFilter: ['class']});
   }
@@ -482,7 +636,7 @@
     root.innerHTML = h + `</tbody></table>` + (X.caption ? `<div class="lb-caption">${X.caption}</div>` : '');
   }
 
-  const COMPONENTS = {status, summary, curves, lesions, brain, runs, settings, strip, table};
+  const COMPONENTS = {status, summary, curves, lesions, brain, runs, settings, strip, table, verdict, bars};
   function init() {
     document.querySelectorAll('[data-life]').forEach(root => {
       const fn = COMPONENTS[root.dataset.life];

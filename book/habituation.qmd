@@ -1,12 +1,19 @@
-# Habituation: getting used to what is always there {#sec-habituation}
+# Habituation {#sec-habituation}
+
+[Getting used to what is always there]{.lb-subtitle}
 
 <div data-life="status" data-stage="1.2h"></div>
 
-The animals of the previous stage know good from bad, and they respond to a look in the same way every time they
-see it. To them a bush that has been emptied still looks enough like food to bite at, and the look does not
-change however often the bite gives nothing. So an animal can stand in front of an empty bush for a long time,
-biting. What is missing is simple to say: an animal should stop responding to something that stays the same and
-keeps giving nothing.
+::: {.lb-takeaway}
+**New:** no new cells. The eyes get used to what they keep seeing: what stays in view fades.
+
+**Result:** the animals stop biting at bushes that never give anything, and spend far less of their life standing
+still. Switching the adaptation off costs them more than half their fitness.
+:::
+
+The animals of the previous stage respond to a look in the same way every time they see it. An emptied bush still
+looks enough like food, so an animal can stand in front of it for a long time, biting. An animal should stop
+responding to something that stays the same and keeps giving nothing.
 
 This stage changes one thing, in the eyes: they get used to what they keep seeing. To make that worth having, the
 world gets a *dud*, a bush that looks like food and never carries a berry.
@@ -15,100 +22,97 @@ world gets a *dud*, a bush that looks like food and never carries a berry.
 
 ## The circuit
 
-No new cells. Each of the eyes' **look** inputs now keeps a slow average of what it has been seeing, over
-roughly the last fifty ticks, and passes on the difference between what it sees now and that average.
+No new cells. Each of the eyes' **look** inputs keeps a slow average of what it has seen over roughly the last
+fifty ticks, and passes on only the **difference** between what it sees now and that average.
 
-Two things follow, both for the whole brain, because every neuron downstream of the eyes now gets the adapted
-look:
+Every neuron downstream of the eyes now gets this adapted look, and two things follow:
 
-- **What stays in view fades.** An animal that stands in front of a bush sees its look sink into the average. The
-  appetitive cells, driven by that look, fall silent, and with them the urge to bite. The animal moves on.
+- **What stays in view fades.** An animal standing in front of a bush sees its look sink into the average. The
+  *good* cells, driven by that look, fall silent, and with them the urge to bite. The animal moves on.
 - **What is unusual stands out.** All berry bushes look alike in most respects, and that shared part is nearly
-  always in view, so it is nearly always in the average. What passes through is the part that differs: the colour
-  of this bush. Nothing uses this yet. It becomes important in the next stage, where the animal learns from a
-  single bite which colour is bad.
+  always in the average. What passes through is the part that differs: the colour of *this* bush. Nothing uses
+  this yet; the next stage does.
 
 ## Watching it work
 
-One animal from the last generation, at a dud. The two rows marked `vis+0` are two of the look inputs of the eye
-that points straight ahead (`vis` for vision, `+0` for its direction), the two that respond most strongly to this dud.
+One animal from the last generation, at a dud. The two `vis+0` rows are two look inputs of the eye that points
+straight ahead (`vis` for vision, `+0` for its direction).
 
-The animal walks up and bites. Step through the ticks and watch the two look inputs: the dud does not change, and
-yet what the eye reports sinks a little with every tick, because the eye is getting used to it. The appetitive
-cells and `grasp` do not fade as smoothly. They hold for a while and then drop out, and the biting stops.
-
-Then the animal turns away, and the look inputs go *below* zero. Nothing is in front of the eye now, but the eye
-is still used to the dud, and what it reports is the difference: less of that look than usual.
+The animal walks up and bites. The dud does not change, yet what the eye reports **sinks a little with every
+tick**. The *good* cells and `grasp` hold for a while, then drop out, and the biting stops. When the animal turns
+away, the look inputs go *below* zero: the eye is still used to the dud and reports less of that look than usual.
 
 <div data-life="strip" data-stage="1.2h" data-example="dud_visit"></div>
 
-Not every visit to a dud goes like this. Most are over within a few ticks, and some last far longer.
-
-## The biology: adaptation and habituation
+## Biology
 
 Step into a room with a strong smell and after a few minutes it is gone. The smell is still there; the receptors
-have stopped reporting it. Sensory neurons respond to *change*: to what differs from the recent past. A steady
-input is the background, and the background carries no news. This is *sensory adaptation*.
+have stopped reporting it. Sensory neurons respond to *change*, and a steady input carries no news. This is
+*sensory adaptation*.
 
-*Habituation* is the same thing seen in behaviour. A snail that is touched pulls in its horns. Touch it again and
-again and it stops bothering. It is the simplest kind of learning there is, older than learning by association,
-and found in every animal that has been tested, including ones with a few hundred neurons.
+*Habituation* is the same thing seen in behaviour. A snail that is touched pulls in its horns; touch it again and
+again and it stops bothering. It is the simplest kind of learning, found in every animal that has been tested,
+including ones with a few hundred neurons.
 
-## The world: a bush that never has berries
+## The world
 
-The world of the previous stage gets one more kind of bush, the dud. It looks like a berry bush and never carries
-a berry. Its colour is drawn anew for every life, so nothing an ancestor knew about colours can tell an animal to
-leave it alone. In some lives the dud happens to have a colour the animal finds attractive, and then an animal
-that responds to a look in the same way every time will stand at it and bite for as long as it lives.
-
-There are as many bushes with berries as before; the duds come on top.
+The world of the previous stage with one more kind of bush, the dud: it looks like a berry bush and never carries
+a berry. Its colour is drawn anew for every life, so nothing an ancestor knew can tell an animal to leave it
+alone. When the dud happens to have an attractive colour, an animal whose eyes do not adapt will stand at it and
+bite for as long as it lives.
 
 <div data-life="settings" data-stage="1.2h"></div>
 
-::: {.callout-note collapse="true" title="What did not work: making the food unfamiliar"}
-Without the dud, in the world of the previous stage, the change of this stage was used only a little. The long
-lives had already selected most of the standing still away, and evolution can learn the look of an empty bush of
-every kind it has always known.
+## Did it work?
 
-Giving the good berries a new colour in every life did not change that. The animals with adapting eyes did
-slightly worse than those without. What makes adaptation worth having is something that looks like food and
-gives nothing, whatever colour it has.
-:::
+There is no group of neurons to silence here, since the change is in how the inputs work. The matching test is
+to switch the adaptation off in the evolved animals and let them live again.
 
-## Results
+<div data-life="verdict" data-stage="1.2h" data-used="adaptation_off:without adaptation"></div>
 
-How to read the table and the charts: see [How a stage is judged](index.qmd#sec-judged).
+**The animals rely on it heavily:** without adaptation they keep well under half their fitness. Against the old
+brain the gain is smaller and uneven across seeds. The control's fitness swings from one generation to the next,
+depending on whether it happens to like the colour of that generation's dud.
 
-The control is the brain of the previous stage, with eyes that do not adapt, in the same world. Its fitness swings
-from one generation to the next: every generation draws a new colour for the dud, and how well these animals do
-depends on whether they happen to like it.
+The clearest difference is in how a life is spent. Animals whose eyes adapt stand and bite at nothing less than
+half as often:
 
-The first generations of main are a step back. Every synapse the animals inherit was tuned to eyes that reported
-the whole look, and the eyes now report only the difference. The population has to re-tune before the change can pay.
+<div data-life="bars" data-stage="1.2h" data-example="life_spent" data-rows="0,1" data-unit="%" data-col0="new brain (main)" data-col1="old brain (control)"></div>
+
+## Full results
+
+::: {.callout-note collapse="true" title="Fitness over the generations"}
+The first generations of main are a step back. Every inherited synapse was tuned to eyes that reported the whole
+look, and the eyes now report only the difference, so the population has to re-tune before the change pays.
 
 <div data-life="curves" data-stage="1.2h"></div>
+:::
 
+::: {.callout-note collapse="true" title="All fitness measures"}
 <div data-life="summary" data-stage="1.2h"></div>
 
-The head-to-head test, in which main and control animals share a world, is left out for this stage. In that test
-all animals have the same eyes, and here the eyes are the difference: the control animals would be given adapting
-eyes that none of their synapses were tuned to.
+The head-to-head test is left out here: in it all animals share one set of eyes, and the eyes are the difference.
+:::
 
-### How a life is spent
-
-<div data-life="table" data-stage="1.2h" data-example="life_spent"></div>
-
-### Is it used?
-
-There is no group of neurons to silence here, since the change is in how the inputs work. The matching test is to
-switch the adaptation off in the final population and let the same animals live in the same worlds again.
-
+::: {.callout-note collapse="true" title="Adaptation switched off"}
 <div data-life="table" data-stage="1.2h" data-example="adaptation_off"></div>
+:::
 
-The lesions of the regions are shown for completeness.
-
+::: {.callout-note collapse="true" title="All lesions"}
 <div data-life="lesions" data-stage="1.2h"></div>
+:::
 
-## The runs behind this page
+::: {.callout-note collapse="true" title="How a life is spent"}
+<div data-life="table" data-stage="1.2h" data-example="life_spent"></div>
+:::
+
+::: {.callout-note collapse="true" title="What did not work: unfamiliar food"}
+Without the dud, adaptation was used only a little: the long lives had already selected most of the standing
+still away, and evolution can learn the look of an empty bush of every kind it has always known. Giving the good
+berries a new colour in every life did not change that. What makes adaptation worth having is something that
+looks like food and gives nothing, whatever colour it has.
+:::
+
+## Runs
 
 <div data-life="runs" data-stage="1.2h"></div>

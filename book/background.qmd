@@ -1,8 +1,11 @@
-# Background: brains and evolution in brief {#sec-background .unnumbered}
+# Background {#sec-background .unnumbered}
+
+[Brains and evolution in brief]{.lb-subtitle}
 
 This book assumes no biology and little machine learning. This page explains the few ideas that every later page
 uses: what a neuron does, why some neurons excite and others inhibit, how to read the brain diagrams, the three
-ways a connection gets its strength, and how evolution and the experiments are run. A glossary at the end
+ways a connection gets its strength, and how evolution and the experiments are run. The parts of real brains
+that the stages model are introduced on their own pages. A glossary at the end
 collects the terms.
 
 If you already know neural networks, the callout below says what is different here.
@@ -100,12 +103,12 @@ Every stage page shows the brain of that stage. Here is the brain of the valence
 - Under a box's name: whether its cells excite or inhibit, and how many there are. The coloured backgrounds
   group regions that belong together.
 - A box outlined in green is new in this stage. The diagram opens on the new circuit alone; the button
-  *everything* shows the whole brain.
+  *everything* shows the whole brain. The ganglion, an evolved tangle with no named cells, is drawn as one box.
 
 Point at a box or an arrow, or tap it on a phone, for details. You do not need to follow every arrow. Each page
 says in words which arrows matter, and the rest is the brain of earlier stages.
 
-## Three ways a connection gets its strength
+## Where strengths come from
 
 | arrow | origin | changes | example |
 |---|---|---|---|
@@ -131,23 +134,7 @@ spreads and reaches many cells at once, and that is cleared slowly. Serotonin an
 Modulators set the mood of a brain more than its next move: because they linger, they let an event act on
 behaviour for a while after it is over. In the diagrams they are drawn in pink.
 
-## A few parts of real brains
-
-The stages are named after the parts of real brains they model. You do not need to know these beforehand; each
-page explains its own. As a map:
-
-| part | in which animals | what it does, roughly | stage |
-|---|---|---|---|
-| ganglion | worms and insects | a clump of neurons that links senses to muscles | steering |
-| hypothalamus | all vertebrates | reads the body's needs (hunger, cold) and switches behaviours on and off | drives |
-| pallium | all vertebrates; in mammals most of it became the cortex | spreads what is sensed over many cells, so that look-alikes can be told apart | pallium |
-| dopamine cells | all vertebrates | signal "better than expected" or "worse than expected" | next |
-| basal ganglia | all vertebrates | choose which action to release (by disinhibition) | later |
-
-The animals in this book are not models of any one species. Each chapter takes its parts from a group of animals,
-as the [roadmap](roadmap.qmd) explains.
-
-## Evolution as an algorithm
+## Evolution
 
 Evolution here is a **genetic algorithm**. A **genome** is what an animal inherits: the strengths of its evolved
 synapses and a few settings, such as how fast it learns. A **population** of genomes is born into a world, each as
@@ -158,7 +145,7 @@ changes (**mutations**). That is one **generation**, and a stage runs for about 
 Nobody tells evolution what a circuit is for. If a new cell helps, the genomes that use it have more children; if
 it does not, evolution may turn it down or ignore it.
 
-## How the experiments are read
+## Reading the experiments
 
 Each stage asks one question: **does the new circuit get used?** Three tools answer it.
 

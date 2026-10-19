@@ -4,12 +4,17 @@ A Quarto book with one page per stage, published at https://ewitting.github.io/l
 
 ## How the pages are written
 
-- One page per stage on the chain, in chain order, by name only (no stage numbers). A page is a small report,
-  with the core first and detail below it: a short introduction that names what the stage adds and just enough
-  of its world to follow, the brain diagram, the circuit, where it helps one animal followed over a few dozen
-  ticks (`strip`), the biology the stage models, the world it lives in (with its settings), the results
-  (curves, table, lesions) and the runs with links to the dashboards. Text above the world section must not
-  depend on it; a term from the biology section that the circuit needs is explained there in a few words.
+- One page per stage on the chain, in chain order, by name only (no stage numbers). The book teaches before it
+  documents: a reader who skims the bold sentences and the figures should get the point. A page has a short title
+  with a subtitle line (`[...]{.lb-subtitle}`), a takeaway box (`::: {.lb-takeaway}`: what is new, what it did),
+  a short introduction, the brain diagram, the circuit, where it helps one animal followed over a few dozen ticks
+  (`strip`), the biology, the world (short, with its settings), **Did it work?** (the `verdict` component, two or
+  three sentences that say which bar to look at, and at most one more figure that makes the point, often `bars`),
+  **Full results** (collapsed callouts: curves, the full table, all lesions, life tables, what did not work) and
+  the runs. Text above the world section must not depend on it.
+- Background that every page assumes (neurons, inhibition, diagrams, evolution, glossary) is on `background.qmd`;
+  a part of a real brain is explained on the page of the stage that models it.
+- Titles and headings are one to three words, so that the sidebar and contents fit on one line.
 - Plain language, short paragraphs, terms explained when first used; cells are named by their fixed meaning.
 - A stage is judged by whether its circuit is used (lesions), with main not clearly worse than control. Three
   seeds and standard errors; a single run is not evidence.
@@ -72,7 +77,15 @@ public repository.
 | `summary` | results table: last generations, re-evaluation, head to head | `--evaluate` for the last two |
 | `lesions` | fitness with each region silenced, per seed | `--evaluate` |
 | `runs` | run directories and dashboard links | `dashboards` for the links |
-| `strip` | one animal over a few dozen ticks (`data-example="<name>"`) | a per-stage extra |
+| `strip` | one animal over a few dozen ticks (`data-example="<name>"`), OHOL sprites, ☠ on poison kinds | a per-stage extra; `python -m life.book sprites` |
+| `verdict` | is the circuit used (`data-used="<lesion>,<table extra>:<label>"`), new against old brain (apart, sharing a world) | `--evaluate` |
+| `bars` | rows of a table extra as bars with the seeds (`data-rows`, `data-col0`, `data-scale`, `data-unit`) | a per-stage extra |
+
+The brain diagram draws the ganglion as one box (an evolved tangle with no named cells) unless the stage adds it;
+`data-fold="<groups>"` folds other groups, `data-fold=""` none.
+
+`data/sprites.json` holds the sprites of every object in a strip (recoloured like the dashboards) and the ground
+texture: `python -m life.book sprites` after exporting a stage with a new strip.
 
 ## Adding something for one stage
 

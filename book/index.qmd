@@ -3,98 +3,73 @@
 This book follows one experiment: growing a brain in a simulation, one piece at a time, in roughly the order in
 which brains are thought to have evolved.
 
-Each stage adds a small circuit to the brain of the previous stage and changes the world so that the new circuit
-has something to be good for. Evolution then gets a number of generations to put the circuit to use. A page of
-this book is the report of one stage: what was added and why, the biology it is modelled on, and what happened.
+Each stage adds a small circuit to the brain of the previous stage, and changes the world so that the new circuit
+has something to be good for. Evolution then gets a number of generations to put the circuit to use. Each page
+of this book is one stage: what was added and why, the biology it is modelled on, and whether it worked.
 
-The concept of explaining cognition in steps following evolution is heavily inspired by the book *A Brief History of Intelligence* by Max Bennett. However, the individual stages do not match one-to-one with the experiments mentioned in the book, and (while I do recommend it) it is not necessary to have read Bennett's work to be able to follow along.
+The idea of explaining cognition in steps that follow evolution comes from the book *A Brief History of
+Intelligence* by Max Bennett. The stages do not match its chapters one to one, and you do not need to have read it
+to follow along.
 
 A disclaimer: this work is not guaranteed to be scientifically accurate, and its brains do not match real brains
 exactly. It stays close to nature where it can, and elsewhere it just "goes for it": it builds up to something
-advanced from what works, without a citation for every choice. It is not scientific enough to be used in
-medicine, and not optimized enough to replace machine learning algorithms. Still, I think that following these
-experiments builds an intuition about intelligence that could prove useful in both.
+advanced from what works, without a citation for every choice. Still, I think that following these experiments
+builds an intuition about intelligence that could prove useful both in neuroscience and in machine learning.
+
+New to neurons or to evolutionary algorithms? The [background](background.qmd) page explains everything this book
+assumes, with a glossary.
 
 ## The animals and their world
 
 The animals live on a grid. Each has a stomach that empties a little every tick (one tick is about a second of
-behaviour) and faster when it moves. An animal whose stomach is empty dies.
+behaviour), and faster when it moves. An animal whose stomach is empty dies.
 
-Food grows on bushes. A bush carries a few berries, and once the last one is eaten it stays empty for a long time,
-longer than a full stomach lasts, and then has all its berries back at once. Waiting beside an empty bush costs more than
-the bush will give, so an animal has to keep moving. At the start of a life most bushes are empty and somewhere
-along their regrowth, as in a world that has been grazed for a while. Through a life, food therefore comes at a
-steady rate: a small share of the bushes carries berries at any moment. A bite costs a little energy.
+Food grows on bushes. Once a bush's last berry is eaten it stays empty for a long time, longer than a full stomach
+lasts, so an animal has to keep moving. At any moment only a small share of the bushes carries berries. A bite
+costs a little energy.
 
 The objects, their names and their pictures come from the game *One Hour One Life*. The simulation uses a small
-slice of the game's rules at each stage and a larger one as the brain grows.
+slice of the game's rules at each stage, and a larger one as the brain grows.
 
 An animal senses the world through a few coarse "eyes": a handful of directions, in each of which it sees whether
 something is there, how near it is, and what it looks like. What something looks like is a short list of numbers,
 its *look*. It can step forward, turn left or right, and grasp what is in front of it.
 
-## The brain
-
-The brain is a network of model neurons. A neuron has an activity between 0 and 1 and passes it on through
-synapses, each with a strength. A neuron is either excitatory (it raises the activity of the neurons it reaches)
-or inhibitory (it lowers it), never both. Neurons are grouped into *regions*, and a *projection* is the set of
-synapses from one region to another.
-
-Some projections are **evolved**: which synapses exist and how strong they are is inherited, with mutations, and
-shaped by selection. Others are **hard-wired**: they are designed, and evolution can only make the whole
-projection stronger or weaker. A hard-wired projection gives a group of neurons a fixed meaning, such as "this
-hurts", that later stages can build on.
-
-## How evolution runs
-
-A population is a set of genomes. A genome is what an animal inherits: the strengths of its evolved synapses, and
-a few other settings, such as how long a mood lasts once it is set off. Each genome is born as several identical
-animals, and the animals of all genomes share one world. The genomes that did best have children, each from two
-parents, with a few mutations. That is one generation.
-
-**Fitness** is what selection rewards. Here it is the *well-fed lifetime*: how long the animal lived, counted
-from its first meal, with each tick weighted by how full its stomach was. An animal that never eats scores zero.
-
-A stage does not start from scratch. It starts from the evolved population of the stage before it, with the new
-circuit added.
-
 ## How a stage is judged {#sec-judged}
 
-One life is mostly luck, and one evolution run can end almost anywhere. So every stage is run three times with
-different random seeds, and every result is given as a mean with its standard error over those seeds.
+Every stage page ends with **Did it work?**, which answers two questions.
 
-Each stage has a **main** run, with the new circuit, and a **control**: the brain of the previous stage in the
-same new world, starting from the same population. The new circuit is then the only difference between them.
+1. **Is the new circuit used?** The evolved animals live again with the new cells silenced, a *lesion*. If they do
+   clearly worse, in every seed, they were using them. This is the main criterion: a circuit that is used is one
+   that later stages can build on.
+2. **Does the new brain do better than the old one?** Each stage has a **main** run, with the new circuit, and a
+   **control**: the brain of the previous stage, put in the same new world and evolved from the same starting
+   population. The new circuit is the only difference between them. The new brain does not have to win; it must not
+   be clearly worse.
 
-A stage succeeds when two things hold:
+Evolution is noisy: one run can end almost anywhere. So every stage is run three times from different random
+starts (*seeds*), and a result counts only when it holds across them. In the charts, bars are the mean and dots
+are the seeds.
 
-1. **The circuit is used.** The final population is put back in its world with the new neurons silenced. If the
-   animals do clearly worse without them, in every seed, they were using them. This is called a *lesion* test.
-2. **Main is not worse than control.** It does not have to be better. The point of some stages is a circuit that
-   later stages can build on.
+The comparison is measured in two ways. **Each among its own kind**: every final population lives again in the same
+set of worlds, so that no population owes its score to easier worlds. **Sharing one world**: half new and half old
+animals live together and compete for the same bushes. When the two disagree, the page says why.
 
-A circuit that is not used is left out of the brain, and the page says so.
+The **fitness** that all of this measures is the *well-fed lifetime*: how long an animal lived from its first meal,
+with each tick weighted by how full its stomach was.
 
-### Reading the results
-
-The **results table** gives fitness in up to three rows, which measure the same thing with less and less noise.
-The first is taken from the last generations as they ran. In the second, every final population lives again in
-the same set of worlds, so that no population can owe its score to easier worlds. In the third, *head to head*,
-main and control animals live together and compete for the same bushes.
-
-The **lesion chart** has one bar per region: the fitness of the population with that region silenced, as a
-percentage of the intact population. A short bar means the animals depended on that region. A bar near 100 means
-they did as well without it. The dots are the seeds, and dots far apart mean the seeds disagree.
+Under **Full results**, each page keeps everything else, folded away: fitness over the generations, every measure
+with its standard error, every lesion, and what did not work. The **results table** there has up to three rows:
+the last generations as they ran, *each among its own kind*, and *sharing one world* (head to head). The **lesion
+chart** has one bar per region: fitness with that region silenced, as a percentage of the intact population.
 
 ## How to read a stage page
 
-Every page starts with the brain. A short introduction says what the stage adds, and the diagram of the brain
-follows right below it. Then come, in order of increasing detail: how the new circuit works, the biology it is
-modelled on, the world it was tested in, the results, and the list of runs behind them, with a link to a
-*dashboard* that replays the last generation of a run. Where it helps, a page zooms in on one animal over a few
-dozen ticks, right after the circuit, so that you can watch the circuit work.
+A page starts with a short summary box, the brain diagram and the new circuit. Where it helps, a **Watching it
+work** strip follows one animal over a few dozen ticks, so that you can see the circuit act. Then come the biology
+the stage is modelled on, the world it was tested in, and *Did it work?*. At the end, **Runs** links to a
+*dashboard* that replays the last generation of a run.
 
-The diagrams and charts show more when you point at a box, an arrow, a bar or a curve, or tap it on a phone.
-
-The numbers, graphs and diagrams are drawn from data files that are written when a stage is run. Only the text
-is written by hand.
+The diagrams and charts show more when you point at a box, an arrow, a bar or a curve, or tap it on a phone. The
+numbers, graphs and diagrams are drawn from data files written when a stage is run; only the text is written by
+hand.

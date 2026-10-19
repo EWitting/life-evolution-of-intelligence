@@ -145,3 +145,47 @@
 .lb-fig-offlabel { font-size: 14px; font-weight: 600; fill: var(--lb-ink2); }
 .lb-fig-title { font-size: 14px; font-weight: 600; fill: var(--lb-ink); }
 .lb-fig-cap { font-size: 12.5px; fill: var(--lb-ink2); }
+.lb-objimg { width: 22px; height: 22px; object-fit: contain; vertical-align: middle; margin-right: 4px; }
+.lb-striplegendbox { margin-top: 0.5rem; }
+.lb-bad { color: var(--lb-bad); }
+
+/* verdict: is the circuit used, and is the new brain better than the old one */
+.lb-verdict { border: 1px solid var(--lb-border); border-radius: 10px; padding: 0.7rem 1rem 0.8rem; background: var(--lb-surface); }
+.lb-vq { font-weight: 600; font-size: 0.98rem; margin-top: 0.7rem; }
+.lb-vq:first-child { margin-top: 0; }
+.lb-vsub { font-size: 0.78rem; color: var(--lb-muted); margin-bottom: 0.25rem; }
+.lb-vitem, .lb-barsline { display: grid; grid-template-columns: minmax(7rem, 10rem) 1fr 3.4rem 10.5rem; align-items: center; gap: 0 0.7rem; padding: 3px 0; font-size: 0.86rem; }
+.lb-barsline { grid-template-columns: 1fr 3.4rem; }
+.lb-vname code { font-size: 0.86em; }
+.lb-vtrack { position: relative; height: 16px; background: var(--lb-cell0); border-radius: 4px; }
+.lb-vbar { position: absolute; top: 3px; bottom: 3px; left: 0; border-radius: 3px; background: var(--lb-s1); opacity: 0.85; }
+.lb-vbar.lb-vneg { background: var(--lb-s2); }
+.lb-vbar.lb-s2 { background: var(--lb-s2); } .lb-vbar.lb-s3 { background: var(--lb-muted); }
+.lb-vdot { position: absolute; top: 50%; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%; background: var(--lb-ink); border: 1.5px solid var(--lb-surface); }
+.lb-vref { position: absolute; top: -3px; bottom: -3px; width: 0; border-left: 1.5px dashed var(--lb-ink2); }
+.lb-vval { text-align: right; font-variant-numeric: tabular-nums; color: var(--lb-ink2); }
+.lb-vtag { font-size: 0.76rem; border-radius: 999px; padding: 1px 8px; justify-self: start; white-space: nowrap; }
+.lb-vyes { background: color-mix(in srgb, var(--lb-good) 16%, transparent); color: var(--lb-good); }
+.lb-vsome { background: var(--lb-note); color: var(--lb-ink2); }
+.lb-vno { background: var(--lb-cell0); color: var(--lb-ink2); }
+.lb-vbad { background: color-mix(in srgb, var(--lb-bad) 16%, transparent); color: var(--lb-bad); }
+.lb-key.lb-s3 { background: var(--lb-muted); }
+.lb-barsgrid { display: grid; grid-template-columns: minmax(8rem, 15rem) 1fr; gap: 0.35rem 0.8rem; align-items: center; margin-top: 0.4rem; font-size: 0.86rem; }
+.lb-barslabel { color: var(--lb-ink); }
+@media (max-width: 640px) {
+  .lb-vitem { grid-template-columns: 1fr 3rem; }
+  .lb-vitem .lb-vname { grid-column: 1 / -1; }
+  .lb-vitem .lb-vtag { grid-column: 1 / -1; margin-bottom: 4px; }
+  .lb-barsgrid { grid-template-columns: 1fr; }
+}
+
+/* the takeaway at the top of a stage page */
+.lb-takeaway { border-left: 4px solid var(--lb-new); background: color-mix(in srgb, var(--lb-new) 8%, transparent); border-radius: 4px; padding: 0.6rem 1rem; margin: 0.6rem 0 1.2rem; }
+.lb-takeaway p { margin: 0.25rem 0; }
+
+/* the short description under a page title */
+.lb-subtitle { display: block; font-size: 1.25rem; color: var(--lb-ink2); margin: -0.6rem 0 1rem; }
+.lb-fig-axis { stroke: var(--lb-axis); stroke-width: 1.5; }
+.lb-fig-bad { fill: var(--lb-bad); }
+.lb-fig-good { fill: var(--lb-good); }
+.lb-fig-skull { font-size: 24px; fill: #fff; }

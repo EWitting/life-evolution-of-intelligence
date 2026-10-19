@@ -174,9 +174,34 @@ def render_person(person_id: int, outfit: dict[str, int] | None = None, age: flo
     return _compose(parts, thumb)
 
 
-# tints for colour variants, in the order of experiments.stages.COLOURS (variant 1 = Red, ...)
-VARIANT_TINTS = [(255, 110, 110), (110, 150, 255), (255, 235, 90), (190, 110, 255), (255, 255, 255), (80, 80, 80),
-                 (255, 150, 200), (255, 170, 70)]
+# colours of the variants, in the order of experiments.stages.COLOURS (variant 1 = Red, ...); the book draws its
+# coloured circles and legend keys in the same colours (life.book.NAMED_COLOURS)
+VARIANT_TINTS = [(204, 66, 56), (56, 120, 209), (224, 179, 13), (143, 82, 184), (237, 237, 230), (38, 38, 38),
+                 (237, 140, 179), (237, 128, 38)]
+
+
+def recolour(im, rgb: tuple[int, int, int]):
+    """The 'color' blend of CSS and canvas: the hue and saturation of `rgb` at the lightness of each pixel of `im`,
+    so that a sprite keeps its shading and takes the colour. White lightens the sprite first, black darkens it,
+    other colours lighten it a little."""
+    import numpy as np
+    from PIL import Image
+    a = np.asarray(im.convert("RGBA"), np.float32) / 255.0
+    c, alpha = a[..., :3], a[..., 3:]
+    if min(rgb) > 200:
+        c = 0.45 + 0.55 * c
+    elif max(rgb) < 60:
+        c = 0.5 * c
+    else:   # dark sprites (bushes) are lifted a little, or yellow turns brown and looks like red
+        c = 0.25 + 0.75 * c
+    w = np.array([0.3, 0.59, 0.11], np.float32)
+    lum = lambda x: (x * w).sum(-1, keepdims=True)
+    t = np.array(rgb, np.float32) / 255.0
+    out = t + (lum(c) - lum(t[None, None]))
+    l, lo, hi = lum(out), out.min(-1, keepdims=True), out.max(-1, keepdims=True)
+    out = np.where(lo < 0, l + (out - l) * l / np.maximum(l - lo, 1e-6), out)
+    out = np.where(hi > 1, l + (out - l) * (1 - l) / np.maximum(hi - l, 1e-6), out)
+    return Image.fromarray((np.clip(np.concatenate([out, alpha], -1), 0, 1) * 255).astype(np.uint8), "RGBA")
 
 
 def clone_base(oid: int) -> tuple[int, int]:
@@ -192,8 +217,9 @@ def _png_url(im) -> str:
     return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
 
 
-def sprite_data_urls(ohol_ids, data_dir: Path = DEFAULT_DATA_DIR) -> dict[int, str]:
-    """{ohol_id: 'data:image/png;base64,...'} for every id that can be rendered."""
+def sprite_data_urls(ohol_ids, data_dir: Path = DEFAULT_DATA_DIR, thumb: int | None = None) -> dict[int, str]:
+    """{ohol_id: 'data:image/png;base64,...'} for every id that can be rendered; `thumb` shrinks them further."""
+    from PIL import Image
     if not sprites_available(data_dir):
         return {}
     out = {}
@@ -203,14 +229,10 @@ def sprite_data_urls(ohol_ids, data_dir: Path = DEFAULT_DATA_DIR) -> dict[int, s
         im = render_object(base, data_dir)
         if im is None:
             continue
-        if oid >= 100000:   # tint clones with their colour so they are distinguishable in the viewer
-            from PIL import ImageChops, Image
-            tint = VARIANT_TINTS[(var - 1) % len(VARIANT_TINTS)] if var >= 1 else (150, 170, 255)
-            if tint == (255, 255, 255):   # 'White': lighten instead of multiply
-                im = Image.blend(im, Image.new("RGBA", im.size, (255, 255, 255, 255)), 0.45).convert("RGBA")
-                im.putalpha(render_object(base, data_dir).getchannel("A"))
-            else:
-                im = ImageChops.multiply(im, Image.new("RGBA", im.size, tint + (255,)))
+        if oid >= 100000:   # recolour clones with their colour so they are distinguishable in the viewer
+            im = recolour(im, VARIANT_TINTS[(var - 1) % len(VARIANT_TINTS)] if var >= 1 else (150, 170, 255))
+        if thumb:
+            im.thumbnail((thumb, thumb), Image.LANCZOS)
         out[oid] = _png_url(im)
     return out
 

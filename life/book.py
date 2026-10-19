@@ -359,7 +359,7 @@ def life_strip(run: Path, agent: int, t0: int, t1: int, regions: tuple, inputs: 
             return None
         named = NAMED_COLOURS.get(n.split()[0], NAMED_COLOURS["Onion" if "Onion" in n else "plain"] if "Bush" in n or "Onion" in n or "berry" in n else None)
         return named or [round(0.5 + 0.45 * float(c), 3) for c in app[i][:3]]
-    objects = [{"name": n, "colour": colour(i, n),
+    objects = [{"name": n, "colour": colour(i, n), "ohol": int(rs["ohol_id"][i]),
                 "kind": kind(n), "effect": effect.get(i + 1 if kind(n) == "bush" else i)} for i, n in enumerate(names)]
     size = 2 * radius + 1
     mod_names = [m["name"] for m in cfg["brain"]["modulators"]]
@@ -677,6 +677,36 @@ def export(key: str, do_evaluate: bool = False, worlds: int = 8, jobs: int = 5, 
     return out_path
 
 
+SPRITE_THUMB = 64                            # px; the strip draws a cell at 30 px (60 on a sharp screen)
+
+
+def strip_sprites() -> Path:
+    """data/sprites.json: the OHOL sprites of every object in a strip of any stage (as in the dashboards, colour
+    variants recoloured), and the ground texture, shared by all pages. Strips exported before objects carried
+    their OHOL id get it here, from their run's ruleset."""
+    from .sprites import sprite_data_urls, ground_data_url
+    ids = set()
+    for f in sorted(DATA_DIR.glob("*.json")):
+        if f.name in ("sprites.json", "brain_layout.json"):
+            continue
+        data, changed = json.loads(f.read_text(encoding="utf-8")), False
+        for x in (data.get("extras") or {}).values():
+            if not (isinstance(x, dict) and "objects" in x and "run" in x):
+                continue
+            if any("ohol" not in o for o in x["objects"]):
+                rs = json.loads((RUNS_DIR / x["run"] / "ruleset.json").read_text())
+                for o, oid in zip(x["objects"], rs["ohol_id"]):
+                    o["ohol"] = int(oid)
+                changed = True
+            ids |= {o["ohol"] for o in x["objects"] if o["ohol"]}
+        if changed:
+            f.write_text(json.dumps(data, separators=(",", ":")), encoding="utf-8")
+    out = DATA_DIR / "sprites.json"
+    sprites = {str(k): v for k, v in sprite_data_urls(sorted(ids), thumb=SPRITE_THUMB).items()}
+    out.write_text(json.dumps({"sprites": sprites, "ground": ground_data_url(0, size=128)}), encoding="utf-8")
+    return out
+
+
 def dashboards(key: str) -> list[Path]:
     """Light dashboards (life.dashboard, light=True) of the stage's reference runs: seed 0 of main and control."""
     from .experiments import stages as S
@@ -702,7 +732,12 @@ def main(argv=None):
                    help="regions to silence: those this stage or its parent added (default), or every region")
     d = sub.add_parser("dashboards", help="write light dashboards to book/dashboards/")
     d.add_argument("keys", nargs="+")
+    sub.add_parser("sprites", help="write book/data/sprites.json (the objects of every strip)")
     a = ap.parse_args(argv)
+    if a.cmd == "sprites":
+        p = strip_sprites()
+        print(f"wrote {p} ({p.stat().st_size / 1024:.0f} kB)")
+        return
     for key in a.keys:
         if a.cmd == "export":
             p = export(key, a.evaluate, a.worlds, a.jobs, a.lesions)

@@ -450,6 +450,17 @@
     ]
   },
   {
+    "objectID": "drives.html#watching-it-work",
+    "href": "drives.html#watching-it-work",
+    "title": "Drives: hunger and cold",
+    "section": "Watching it work",
+    "text": "Watching it work\nBelow is one animal from the last generation with a full stomach, walking in the cold until it reaches the warmth of a hot spring.\nWhile the skin is cold, cold and warm_seek fire and the animal steps forward every tick. Next to the spring the skin sense rises, cold and warm_seek fall silent, and rest switches on and holds the forward step back. The animal stays where it is, mouthing at the empty ground in front of it. hungry stays silent the whole time: the stomach is full, so warmth comes first. Only towards the end does it begin to stir, and rest begins to fade.",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Drives: hunger and cold</span>"
+    ]
+  },
+  {
     "objectID": "drives.html#the-biology-drives",
     "href": "drives.html#the-biology-drives",
     "title": "Drives: hunger and cold",
@@ -510,6 +521,17 @@
     "title": "Affect: states that last",
     "section": "",
     "text": "Alarm. Pain releases the modulator alarm. It drives a new cell, flee, which pushes the animal forward. After poison bites the animal keeps going for a while, out of the poisoned ground.\nSerotonin. A new cell, fed, fires when the animal tastes food, and releases the modulator serotonin. It drives a new cell, settle, which switches on rest, the cell of the previous stage that holds the forward step back. After a good meal the animal stays where it ate, also where it is cold.\n\n\n\n\nStates that build up\nA modulator is released in small amounts and cleared slowly, so its level at any moment is a running sum of what happened lately, not a record of the last event alone. The cells that read it fire only above a threshold. One poison bite passes without alarm; the animal flees only when more than one comes within a short while. It settles only after more good bites than one bush can give.\nThat matters in this world, where a patch is mostly one kind but not only one kind. A single bite says little about the ground: a poison bush can stand in good ground, and a good bush in poor ground. Several bites close together say much more.\nThe wiring and the thresholds are designed. Evolution may tune every strength, the thresholds, and how fast each modulator is cleared, which sets how long each state lasts.",
+    "crumbs": [
+      "Chapter 1: steering",
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>Affect: states that last</span>"
+    ]
+  },
+  {
+    "objectID": "affect.html#watching-it-work",
+    "href": "affect.html#watching-it-work",
+    "title": "Affect: states that last",
+    "section": "Watching it work",
+    "text": "Watching it work\nBelow is one animal from the last generation at a poison bush.\nIt bites three times in a row. Each bite adds to alarm (the alarm row is full at the level where flee begins to fire). One bite is not enough; after the third, flee switches on, rest falls silent, and the animal walks forward every tick, away from the bush. The alarm is cleared slowly, so the flight outlasts the pain by more than ten ticks, and then flee falls silent again.",
     "crumbs": [
       "Chapter 1: steering",
       "<span class='chapter-number'>6</span>  <span class='chapter-title'>Affect: states that last</span>"

@@ -366,6 +366,7 @@ ul.task-list li input[type="checkbox"] {
   <ul class="collapse">
   <li><a href="#states-that-build-up" id="toc-states-that-build-up" class="nav-link" data-scroll-target="#states-that-build-up">States that build up</a></li>
   </ul></li>
+  <li><a href="#watching-it-work" id="toc-watching-it-work" class="nav-link" data-scroll-target="#watching-it-work">Watching it work</a></li>
   <li><a href="#the-biology-affect" id="toc-the-biology-affect" class="nav-link" data-scroll-target="#the-biology-affect">The biology: affect</a></li>
   <li><a href="#the-world-patches-of-mostly-one-kind" id="toc-the-world-patches-of-mostly-one-kind" class="nav-link" data-scroll-target="#the-world-patches-of-mostly-one-kind">The world: patches of mostly one kind</a></li>
   <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">Results</a>
@@ -425,6 +426,14 @@ ul.task-list li input[type="checkbox"] {
 <p>That matters in this world, where a patch is mostly one kind but not only one kind. A single bite says little about the ground: a poison bush can stand in good ground, and a good bush in poor ground. Several bites close together say much more.</p>
 <p>The wiring and the thresholds are designed. Evolution may tune every strength, the thresholds, and how fast each modulator is cleared, which sets how long each state lasts.</p>
 </section>
+</section>
+<section id="watching-it-work" class="level2">
+<h2 class="anchored" data-anchor-id="watching-it-work">Watching it work</h2>
+<p>Below is one animal from the last generation at a poison bush.</p>
+<p>It bites three times in a row. Each bite adds to <code>alarm</code> (the alarm row is full at the level where <code>flee</code> begins to fire). One bite is not enough; after the third, <code>flee</code> switches on, <code>rest</code> falls silent, and the animal walks forward every tick, away from the bush. The alarm is cleared slowly, so the flight outlasts the pain by more than ten ticks, and then <code>flee</code> falls silent again.</p>
+<div data-life="strip" data-stage="1.8" data-example="flight">
+
+</div>
 </section>
 <section id="the-biology-affect" class="level2">
 <h2 class="anchored" data-anchor-id="the-biology-affect">The biology: affect</h2>

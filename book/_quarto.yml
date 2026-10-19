@@ -11,6 +11,7 @@ book:
   author: "Emiel Witting"
   chapters:
     - index.qmd
+    - background.qmd
     - roadmap.qmd
     - part: "Chapter 1: steering"
       chapters:

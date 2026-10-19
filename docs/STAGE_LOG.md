@@ -2821,3 +2821,11 @@ Repeatability with 16 lives (16 small worlds): 0.35, 0.34, 0.31, 0.52, the same 
 its own luck. Main vs control paired, final: 128 small worlds s.e. 24, 32 large worlds 35 (same animal-lives), but
 the small worlds take 1.5-2x the GPU time (main: 7-10 s per 16 small worlds against 5 s per 4 large), so per GPU
 second the two are equal. Small worlds buy nothing: episodes 4 in the stage's own world is the choice.
+
+**One large world, 16 siblings** (`small_world.py FACTOR=0.25 SIBLINGS=16 WORLDS=16 BATCH=1`): 512 x 512, 1024
+animals, 1280 patches, 64 genomes x 16 siblings. Repeatability with 16 lives (one world): generation 0 0.33 / 0.32
+(as 4 x 4: 0.34 / 0.35), final main 0.13 (4 x 4: 0.31), final control 0.40 (0.49); two worlds (32 lives) 0.54 / 0.54 /
+0.23 / 0.56. About 25% faster than 4 x 4 (gen 0 main 4.5 s against 5.9 s per generation). The economy shifts: fitness
+709 vs 603 at generation 0 (lifetime 1063 vs 929), final 1057 / 935 vs 981 / 890; the small worlds (610) did not, so
+it is not the edge. Main vs control, final, paired: sd per world 188, s.e. with 16 worlds 47 (as 64 worlds of 256).
+Not better than 4 x 4: the same at generation 0, worse late in a run, a little cheaper.

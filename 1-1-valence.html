@@ -407,9 +407,9 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <div class="lb-takeaway">
 <p><strong>New:</strong> a few cells that mean <em>this is good</em> and <em>this is bad</em>, and poison berries in the world.</p>
-<p><strong>Result:</strong> the animals learn over generations to turn away from poison before they bite it. They depend almost entirely on the <em>bad</em> side of the new circuit.</p>
+<p><strong>Result:</strong> the creatures learn over generations to turn away from poison before they bite it. They depend almost entirely on the <em>bad</em> side of the new circuit.</p>
 </div>
-<p>The animal of the previous stage steers by reflex. What it sees is wired, through a small ganglion, straight to its motor neurons, and it cannot tell what happened after it bit something.</p>
+<p>The creature of the previous stage steers by reflex. What it sees is wired, through a small ganglion, straight to its motor neurons, and it cannot tell what happened after it bit something.</p>
 <p>This stage gives it cells for <em>good</em> and <em>bad</em>, a sorting of the world that is called <em>valence</em>. The world gets something to sort: two kinds of berry are now poison, and a poison bite hurts.</p>
 <div data-life="brain" data-stage="1.1">
 
@@ -421,22 +421,22 @@ ul.task-list li input[type="checkbox"] {
 <ul>
 <li><strong><code>valence_app</code></strong>, <em>good</em>: the sense of taste is wired to these cells, and reaches the brain nowhere else.</li>
 <li><strong><code>valence_av</code></strong>, <em>bad</em>: pain is wired to these cells, and reaches the brain nowhere else.</li>
-<li><strong><code>grasp</code></strong>: when it fires, the animal bites what is in front of it.</li>
+<li><strong><code>grasp</code></strong>: when it fires, the creature bites what is in front of it.</li>
 <li><strong><code>no_touch</code></strong>, a gate: fires whenever nothing is within reach, and holds <code>grasp</code> shut.</li>
 <li><strong><code>no_feed</code></strong>: driven by the <em>bad</em> cells, it blocks the bite.</li>
 </ul>
 <p><strong>Good leads to a bite, but only when the food is in reach.</strong> The <em>good</em> cells excite <code>grasp</code>, and <code>no_touch</code> holds it shut until something is directly ahead. This is <em>disinhibition</em>, the release of an action by switching off its gate (<a href="./background.html#exciting-and-inhibiting">background</a>).</p>
-<p><strong>Bad turns the animal away and stops the bite</strong>, as in a worm that touches something harmful: the <em>bad</em> cells drive the turning motor neurons, and through <code>no_feed</code> they shut down biting.</p>
+<p><strong>Bad turns the creature away and stops the bite</strong>, as in a worm that touches something harmful: the <em>bad</em> cells drive the turning motor neurons, and through <code>no_feed</code> they shut down biting.</p>
 <p><strong>The eyes give the value cells a head start.</strong> Taste and pain arrive only <em>after</em> a bite. So the value cells also get input from the eyes, and that input is evolved. Over the generations, the look of a poison berry comes to excite the <em>bad</em> cells before anything has been eaten.</p>
 </section>
 <section id="watching-it-work" class="level2">
 <h2 class="anchored" data-anchor-id="watching-it-work">Watching it work</h2>
-<p>One animal from the last generation, around the moment it bites a poison berry. Step through it one tick at a time.</p>
-<p>At the bite nothing has changed yet: the pain arrives one tick later. Then <code>pain</code> is on, both <em>bad</em> cells fire, <code>no_feed</code> switches on and <code>grasp</code> falls silent. The animal turns away. A few ticks later the pain has faded and it is eating again.</p>
+<p>One creature from the last generation, around the moment it bites a poison berry. Step through it one tick at a time.</p>
+<p>At the bite nothing has changed yet: the pain arrives one tick later. Then <code>pain</code> is on, both <em>bad</em> cells fire, <code>no_feed</code> switches on and <code>grasp</code> falls silent. The creature turns away. A few ticks later the pain has faded and it is eating again.</p>
 <div data-life="strip" data-stage="1.1" data-example="bad_berry">
 
 </div>
-<p>Nothing was learned here: the animal will react the same way next time. What keeps it from biting poison often is the evolved input from the eyes, which acts before the bite.</p>
+<p>Nothing was learned here: the creature will react the same way next time. What keeps it from biting poison often is the evolved input from the eyes, which acts before the bite.</p>
 </section>
 <section id="biology" class="level2">
 <h2 class="anchored" data-anchor-id="biology">Biology</h2>
@@ -457,10 +457,10 @@ ul.task-list li input[type="checkbox"] {
 <div data-life="verdict" data-stage="1.1" data-used="valence_av,no_feed,valence_app,grasp">
 
 </div>
-<p><strong>Look at the first two bars:</strong> without the <em>bad</em> cells, or without <code>no_feed</code>, the animals keep only about a tenth of their fitness. The <em>good</em> side matters much less, because the reflexes of the previous stage already bring the animal to food and make it bite.</p>
+<p><strong>Look at the first two bars:</strong> without the <em>bad</em> cells, or without <code>no_feed</code>, the creatures keep only about a tenth of their fitness. The <em>good</em> side matters much less, because the reflexes of the previous stage already bring the creature to food and make it bite.</p>
 <p><strong>The old brain falls far behind.</strong> It cannot feel pain, so it can avoid poison only if evolution happens to wire “this colour, turn away” into its reflexes, and in the generations given it did not.</p>
 <p>That says how much <em>easier</em> the value cells make the solution to find, not what pain is worth in principle: the poison looks the same in every generation, and a brain without pain could evolve the same avoidance by colour. In earlier runs with many more generations, two of three controls eventually did, late and suddenly.</p>
-<p>The difference shows in how the animals spend their lives:</p>
+<p>The difference shows in how the creatures spend their lives:</p>
 <div data-life="bars" data-stage="1.1" data-example="life_spent" data-rows="0,1" data-unit="%" data-col0="new brain (main)" data-col1="old brain (control)">
 
 </div>
@@ -553,8 +553,8 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <div id="callout-5" class="callout-5-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<p>In the first runs of this stage the animals were born with a full stomach, and the <em>good</em> side was not used at all. A full stomach lasted most of a life, so there was little to gain from eating well. Born a quarter full, the animals use it a little.</p>
-<p>One fault remains: the <em>good</em> side makes the animal bite whenever food is in reach, hungry or not, and many bites land on a nearly full stomach. Nothing in this brain can sense the stomach yet; a later stage adds a cell for hunger.</p>
+<p>In the first runs of this stage the creatures were born with a full stomach, and the <em>good</em> side was not used at all. A full stomach lasted most of a life, so there was little to gain from eating well. Born a quarter full, the creatures use it a little.</p>
+<p>One fault remains: the <em>good</em> side makes the creature bite whenever food is in reach, hungry or not, and many bites land on a nearly full stomach. Nothing in this brain can sense the stomach yet; a later stage adds a cell for hunger.</p>
 </div>
 </div>
 </div>

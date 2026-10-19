@@ -407,9 +407,9 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <div class="lb-takeaway">
 <p><strong>New:</strong> no new cells. The eyes get used to what they keep seeing: what stays in view fades.</p>
-<p><strong>Result:</strong> the animals stop biting at bushes that never give anything, and spend far less of their life standing still. Switching the adaptation off costs them more than half their fitness.</p>
+<p><strong>Result:</strong> the creatures stop biting at bushes that never give anything, and spend far less of their life standing still. Switching the adaptation off costs them more than half their fitness.</p>
 </div>
-<p>The animals of the previous stage respond to a look in the same way every time they see it. An emptied bush still looks enough like food, so an animal can stand in front of it for a long time, biting. An animal should stop responding to something that stays the same and keeps giving nothing.</p>
+<p>The creatures of the previous stage respond to a look in the same way every time they see it. An emptied bush still looks enough like food, so a creature can stand in front of it for a long time, biting. A creature should stop responding to something that stays the same and keeps giving nothing.</p>
 <p>This stage changes one thing, in the eyes: they get used to what they keep seeing. To make that worth having, the world gets a <em>dud</em>, a bush that looks like food and never carries a berry.</p>
 <div data-life="brain" data-stage="1.2h">
 
@@ -419,14 +419,14 @@ ul.task-list li input[type="checkbox"] {
 <p>No new cells. Each of the eyes’ <strong>look</strong> inputs keeps a slow average of what it has seen over roughly the last fifty ticks, and passes on only the <strong>difference</strong> between what it sees now and that average.</p>
 <p>Every neuron downstream of the eyes now gets this adapted look, and two things follow:</p>
 <ul>
-<li><strong>What stays in view fades.</strong> An animal standing in front of a bush sees its look sink into the average. The <em>good</em> cells, driven by that look, fall silent, and with them the urge to bite. The animal moves on.</li>
+<li><strong>What stays in view fades.</strong> A creature standing in front of a bush sees its look sink into the average. The <em>good</em> cells, driven by that look, fall silent, and with them the urge to bite. The creature moves on.</li>
 <li><strong>What is unusual stands out.</strong> All berry bushes look alike in most respects, and that shared part is nearly always in the average. What passes through is the part that differs: the colour of <em>this</em> bush. Nothing uses this yet; the next stage does.</li>
 </ul>
 </section>
 <section id="watching-it-work" class="level2">
 <h2 class="anchored" data-anchor-id="watching-it-work">Watching it work</h2>
-<p>One animal from the last generation, at a dud. The two <code>vis+0</code> rows are two look inputs of the eye that points straight ahead (<code>vis</code> for vision, <code>+0</code> for its direction).</p>
-<p>The animal walks up and bites. The dud does not change, yet what the eye reports <strong>sinks a little with every tick</strong>. The <em>good</em> cells and <code>grasp</code> hold for a while, then drop out, and the biting stops. When the animal turns away, the look inputs go <em>below</em> zero: the eye is still used to the dud and reports less of that look than usual.</p>
+<p>One creature from the last generation, at a dud. The two <code>vis+0</code> rows are two look inputs of the eye that points straight ahead (<code>vis</code> for vision, <code>+0</code> for its direction).</p>
+<p>The creature walks up and bites. The dud does not change, yet what the eye reports <strong>sinks a little with every tick</strong>. The <em>good</em> cells and <code>grasp</code> hold for a while, then drop out, and the biting stops. When the creature turns away, the look inputs go <em>below</em> zero: the eye is still used to the dud and reports less of that look than usual.</p>
 <div data-life="strip" data-stage="1.2h" data-example="dud_visit">
 
 </div>
@@ -438,19 +438,19 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="the-world" class="level2">
 <h2 class="anchored" data-anchor-id="the-world">The world</h2>
-<p>The world of the previous stage with one more kind of bush, the dud: it looks like a berry bush and never carries a berry. Its colour is drawn anew for every life, so nothing an ancestor knew can tell an animal to leave it alone. When the dud happens to have an attractive colour, an animal whose eyes do not adapt will stand at it and bite for as long as it lives.</p>
+<p>The world of the previous stage with one more kind of bush, the dud: it looks like a berry bush and never carries a berry. Its colour is drawn anew for every life, so nothing an ancestor knew can tell a creature to leave it alone. When the dud happens to have an attractive colour, a creature whose eyes do not adapt will stand at it and bite for as long as it lives.</p>
 <div data-life="settings" data-stage="1.2h">
 
 </div>
 </section>
 <section id="did-it-work" class="level2">
 <h2 class="anchored" data-anchor-id="did-it-work">Did it work?</h2>
-<p>There is no group of neurons to silence here, since the change is in how the inputs work. The matching test is to switch the adaptation off in the evolved animals and let them live again.</p>
+<p>There is no group of neurons to silence here, since the change is in how the inputs work. The matching test is to switch the adaptation off in the evolved creatures and let them live again.</p>
 <div data-life="verdict" data-stage="1.2h" data-used="adaptation_off:without adaptation">
 
 </div>
-<p><strong>The animals rely on it heavily:</strong> without adaptation they keep well under half their fitness. Against the old brain the gain is smaller and uneven across seeds. The control’s fitness swings from one generation to the next, depending on whether it happens to like the colour of that generation’s dud.</p>
-<p>The clearest difference is in how a life is spent. Animals whose eyes adapt stand and bite at nothing less than half as often:</p>
+<p><strong>The creatures rely on it heavily:</strong> without adaptation they keep well under half their fitness. Against the old brain the gain is smaller and uneven across seeds. The control’s fitness swings from one generation to the next, depending on whether it happens to like the colour of that generation’s dud.</p>
+<p>The clearest difference is in how a life is spent. Creatures whose eyes adapt stand and bite at nothing less than half as often:</p>
 <div data-life="bars" data-stage="1.2h" data-example="life_spent" data-rows="0,1" data-unit="%" data-col0="new brain (main)" data-col1="old brain (control)">
 
 </div>
@@ -491,7 +491,7 @@ ul.task-list li input[type="checkbox"] {
 <div data-life="summary" data-stage="1.2h">
 
 </div>
-<p>The head-to-head test is left out here: in it all animals share one set of eyes, and the eyes are the difference.</p>
+<p>The head-to-head test is left out here: in it all creatures share one set of eyes, and the eyes are the difference.</p>
 </div>
 </div>
 </div>

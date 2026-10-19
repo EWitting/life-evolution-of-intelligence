@@ -486,7 +486,7 @@ excites its target, a bar inhibits it.</figcaption>
 
 </div>
 <ul>
-<li>A <strong>box</strong> is a group of neurons with one job, called a <strong>region</strong>: the eyes, the motor neurons that move the animal, a cell for pain. Its name says what it is for.</li>
+<li>A <strong>box</strong> is a group of neurons with one job, called a <strong>region</strong>: the eyes, the motor neurons that move the creature, a cell for pain. Its name says what it is for.</li>
 <li>An <strong>arrow</strong> between two boxes is a <strong>projection</strong>: all the synapses from one region onto another. The end of the arrow says what it does: an arrowhead excites, a bar inhibits, and a dot (on arrows from the senses) means a mix of both.</li>
 <li>The <strong>colour</strong> of an arrow says where its strengths come from (next section), and its <strong>width</strong> how strong it is overall.</li>
 <li>Under a box’s name: whether its cells excite or inhibit, and how many there are. The coloured backgrounds group regions that belong together.</li>
@@ -532,7 +532,7 @@ excites its target, a bar inhibits it.</figcaption>
 </tr>
 </tbody>
 </table>
-<p>Designed connections give a cell a fixed meaning that later stages can rely on: a cell that is wired to pain and nothing else <em>means</em> pain. Evolved connections are where evolution finds its own solutions, often in ways that are hard to read. Learned connections are the only memory an animal has of its own life.</p>
+<p>Designed connections give a cell a fixed meaning that later stages can rely on: a cell that is wired to pain and nothing else <em>means</em> pain. Evolved connections are where evolution finds its own solutions, often in ways that are hard to read. Learned connections are the only memory a creature has of its own life.</p>
 <section id="learning-within-a-life" class="level3">
 <h3 class="anchored" data-anchor-id="learning-within-a-life">Learning within a life</h3>
 <p>The learning in this book follows one recipe, found in real animals from sea slugs to mammals. A synapse that was just active leaves a short <strong>trace</strong>. When something important happens, such as pain, a <strong>teaching signal</strong> is sent to many synapses at once, and only the ones that carry a trace change. Pain says <em>something bad happened</em>; the trace says <em>and this is what was there</em>.</p>
@@ -544,7 +544,7 @@ excites its target, a bar inhibits it.</figcaption>
 </section>
 <section id="evolution" class="level2">
 <h2 class="anchored" data-anchor-id="evolution">Evolution</h2>
-<p>Evolution here is a <strong>genetic algorithm</strong>. A <strong>genome</strong> is what an animal inherits: the strengths of its evolved synapses and a few settings, such as how fast it learns. A <strong>population</strong> of genomes is born into a world, each as a few identical animals. The <strong>fitness</strong> of a genome is how well its animals did: here, roughly, how long they lived with a full stomach. The genomes that did best have children, each from two parents, with small random changes (<strong>mutations</strong>). That is one <strong>generation</strong>, and a stage runs for about a hundred of them.</p>
+<p>Evolution here is a <strong>genetic algorithm</strong>. A <strong>genome</strong> is what a creature inherits: the strengths of its evolved synapses and a few settings, such as how fast it learns. A <strong>population</strong> of genomes is born into a world, each as a few identical creatures. The <strong>fitness</strong> of a genome is how well its creatures did: here, roughly, how long they lived with a full stomach. The genomes that did best have children, each from two parents, with small random changes (<strong>mutations</strong>). That is one <strong>generation</strong>, and a stage runs for about a hundred of them.</p>
 <p>Nobody tells evolution what a circuit is for. If a new cell helps, the genomes that use it have more children; if it does not, evolution may turn it down or ignore it.</p>
 </section>
 <section id="reading-the-experiments" class="level2">
@@ -552,7 +552,7 @@ excites its target, a bar inhibits it.</figcaption>
 <p>Each stage asks one question: <strong>does the new circuit get used?</strong> Three tools answer it.</p>
 <ul>
 <li><strong>Main against control.</strong> <em>Main</em> is the new brain. The <em>control</em> is the brain of the previous stage, in the same new world, starting from the same population. Whatever separates them is the new circuit, so every comparison on a stage page is new brain against old brain.</li>
-<li><strong>Lesions.</strong> At the end, a region of the evolved brain is silenced and the animals live again. If they do much worse, they were using it. This is the main evidence on every page.</li>
+<li><strong>Lesions.</strong> At the end, a region of the evolved brain is silenced and the creatures live again. If they do much worse, they were using it. This is the main evidence on every page.</li>
 <li><strong>Seeds.</strong> Evolution is noisy: one run can end almost anywhere. So every stage is run three times from different random starts (<em>seeds</em>). A result counts only when it holds in all three.</li>
 </ul>
 <p>Results are given as a mean over the seeds with a <strong>standard error</strong> (±): roughly, how far the mean might move if the experiment were run again. A difference smaller than about twice its standard error could be luck. <a href="./index.html#sec-judged">How a stage is judged</a> on the introduction page says more.</p>
@@ -572,102 +572,106 @@ excites its target, a bar inhibits it.</figcaption>
 </thead>
 <tbody>
 <tr class="odd">
+<td>creature</td>
+<td>one simulated individual; <em>animal</em> always means a real one</td>
+</tr>
+<tr class="even">
 <td>tick</td>
 <td>one step of the simulation, about a second of behaviour</td>
 </tr>
-<tr class="even">
-<td>look</td>
-<td>what an animal sees of a thing: a short list of numbers, like a colour</td>
-</tr>
 <tr class="odd">
+<td>look</td>
+<td>what a creature sees of a thing: a short list of numbers, like a colour</td>
+</tr>
+<tr class="even">
 <td>neuron, cell</td>
 <td>a unit with an activity between 0 (silent) and 1 (firing fast)</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>synapse, strength</td>
 <td>a connection between two neurons, and how much it counts</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>excitatory, inhibitory</td>
 <td>raises or lowers the activity of the neurons it reaches</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>region</td>
 <td>a group of neurons with one job, a box in the diagram</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>projection</td>
 <td>all synapses from one region onto another, an arrow in the diagram</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>hard-wired</td>
 <td>designed; evolution tunes only its overall strength</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>evolved</td>
 <td>inherited synapse by synapse, shaped by selection</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>learned, plastic</td>
 <td>changes within a life</td>
 </tr>
-<tr class="odd">
-<td>motor neurons</td>
-<td>the cells that move the animal: step, turn, bite</td>
-</tr>
 <tr class="even">
+<td>motor neurons</td>
+<td>the cells that move the creature: step, turn, bite</td>
+</tr>
+<tr class="odd">
 <td>motor programme</td>
 <td>a cell that triggers a whole action, such as biting</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>gate</td>
 <td>an inhibitory cell that holds an action back until a condition is met</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>disinhibition</td>
 <td>releasing an action by silencing its gate</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>valence</td>
 <td>sorting things into good (<em>appetitive</em>) and bad (<em>aversive</em>)</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>unconditioned stimulus</td>
 <td>something that matters without learning, such as pain or taste</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>adaptation</td>
 <td>a sense reporting change rather than level: what stays the same fades</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>modulator</td>
 <td>a substance released by a few cells that acts on many, slowly</td>
 </tr>
-<tr class="odd">
-<td>genome</td>
-<td>what an animal inherits</td>
-</tr>
 <tr class="even">
+<td>genome</td>
+<td>what a creature inherits</td>
+</tr>
+<tr class="odd">
 <td>fitness</td>
 <td>what selection rewards: here, the well-fed lifetime</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>generation</td>
 <td>one round of living, selecting and breeding</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>seed</td>
 <td>one independent run of a stage, from its own random start</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>main, control</td>
 <td>the new brain, and the previous brain in the same new world</td>
 </tr>
-<tr class="even">
-<td>lesion</td>
-<td>silencing a region to see whether the animals need it</td>
-</tr>
 <tr class="odd">
+<td>lesion</td>
+<td>silencing a region to see whether the creatures need it</td>
+</tr>
+<tr class="even">
 <td>± (standard error)</td>
 <td>how far a mean might move if the experiment were repeated</td>
 </tr>

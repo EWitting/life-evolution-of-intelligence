@@ -407,9 +407,9 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <div class="lb-takeaway">
 <p><strong>New:</strong> cells that report the body: a cold skin and an emptying stomach. With two needs, the brain has something to decide for the first time: look after warmth, or forage.</p>
-<p><strong>Result:</strong> the hunger cell is the one that matters. It tells the animal when to stop resting in the warmth and go eat; without it the animals lose most of their fitness.</p>
+<p><strong>Result:</strong> the hunger cell is the one that matters. It tells the creature when to stop resting in the warmth and go eat; without it the creatures lose most of their fitness.</p>
 </div>
-<p>Until now the brain has only looked outward. It sees, tastes and feels pain, but has no idea how full its stomach is or how warm its body is, so these animals forage whether they are starving or stuffed.</p>
+<p>Until now the brain has only looked outward. It sees, tastes and feels pain, but has no idea how full its stomach is or how warm its body is, so these creatures forage whether they are starving or stuffed.</p>
 <p>This stage makes the world cold, which gives the body a second need, and gives the brain two cells that report on the body: one for a cold skin, one for an emptying stomach.</p>
 <div data-life="brain" data-stage="1.7">
 
@@ -419,17 +419,17 @@ ul.task-list li input[type="checkbox"] {
 <p>Four new cells:</p>
 <ul>
 <li><strong><code>cold</code></strong> fires while the skin is cold.</li>
-<li><strong><code>warm_seek</code></strong>, driven by <code>cold</code>, pushes the animal forward: keep moving while it is cold.</li>
+<li><strong><code>warm_seek</code></strong>, driven by <code>cold</code>, pushes the creature forward: keep moving while it is cold.</li>
 <li><strong><code>rest</code></strong>, an inhibitory cell, fires while the skin is warm and holds the forward step back: stay where it is warm.</li>
-<li><strong><code>hungry</code></strong>, an inhibitory cell, fires when the stomach is less than about two-thirds full and <strong>shuts both <code>warm_seek</code> and <code>rest</code></strong>. A hungry animal forgets about warmth and forages; a fed one looks after its temperature.</li>
+<li><strong><code>hungry</code></strong>, an inhibitory cell, fires when the stomach is less than about two-thirds full and <strong>shuts both <code>warm_seek</code> and <code>rest</code></strong>. A hungry creature forgets about warmth and forages; a fed one looks after its temperature.</li>
 </ul>
-<p>The animal has no map of where it is warm. It keeps walking while it is cold and stops where it is warm, and that is enough to end up near warmth most of the time.</p>
+<p>The creature has no map of where it is warm. It keeps walking while it is cold and stops where it is warm, and that is enough to end up near warmth most of the time.</p>
 <p>These connections are designed; evolution tunes their strength. One set is left entirely to evolution: synapses from <code>hungry</code> onto the cells that feed. They start at zero, so that evolution can build “bite less on a full stomach” if it pays.</p>
 </section>
 <section id="watching-it-work" class="level2">
 <h2 class="anchored" data-anchor-id="watching-it-work">Watching it work</h2>
-<p>One animal from the last generation, with a full stomach, walking in the cold until it reaches the warmth of a hot spring.</p>
-<p>While the skin is cold, <code>cold</code> and <code>warm_seek</code> fire and the animal steps forward every tick. <strong>Next to the spring the <code>skin</code> sense rises, <code>cold</code> and <code>warm_seek</code> fall silent, and <code>rest</code> switches on.</strong> The animal stays put. <code>hungry</code> stays silent because the stomach is full, so warmth comes first. Towards the end it begins to stir, and <code>rest</code> begins to fade.</p>
+<p>One creature from the last generation, with a full stomach, walking in the cold until it reaches the warmth of a hot spring.</p>
+<p>While the skin is cold, <code>cold</code> and <code>warm_seek</code> fire and the creature steps forward every tick. <strong>Next to the spring the <code>skin</code> sense rises, <code>cold</code> and <code>warm_seek</code> fall silent, and <code>rest</code> switches on.</strong> The creature stays put. <code>hungry</code> stays silent because the stomach is full, so warmth comes first. Towards the end it begins to stir, and <code>rest</code> begins to fade.</p>
 <div data-life="strip" data-stage="1.7" data-example="warm_rest">
 
 </div>
@@ -437,11 +437,11 @@ ul.task-list li input[type="checkbox"] {
 <section id="biology" class="level2">
 <h2 class="anchored" data-anchor-id="biology">Biology</h2>
 <p>A drive is a signal from the body about something it needs: food, water, warmth, sleep. In vertebrates these signals are gathered in the <em>hypothalamus</em>, where small groups of neurons read the blood and the body and fire when a need is not met. They do not move a muscle themselves; they switch behaviours on and hold others back.</p>
-<p>The way these animals find warmth is older still. A bacterium or a worm in a bad place does not know where the good place is. It moves, and when things are good it stops moving. This is <em>kinesis</em>: no map, only a rule about when to keep going.</p>
+<p>The way these creatures find warmth is older still. A bacterium or a worm in a bad place does not know where the good place is. It moves, and when things are good it stops moving. This is <em>kinesis</em>: no map, only a rule about when to keep going.</p>
 </section>
 <section id="the-world" class="level2">
 <h2 class="anchored" data-anchor-id="the-world">The world</h2>
-<p>The world of the previous stage, made cold. A cold body burns its food faster, so an animal that stays cold starves sooner. A few hot springs warm the ground around them. The animal cannot see where it is warm; it feels only the temperature of its own skin. The food is as before: four kinds of berry bush, new in every life, half of them poison.</p>
+<p>The world of the previous stage, made cold. A cold body burns its food faster, so a creature that stays cold starves sooner. A few hot springs warm the ground around them. The creature cannot see where it is warm; it feels only the temperature of its own skin. The food is as before: four kinds of berry bush, new in every life, half of them poison.</p>
 <div data-life="settings" data-stage="1.7">
 
 </div>
@@ -451,12 +451,12 @@ ul.task-list li input[type="checkbox"] {
 <div data-life="verdict" data-stage="1.7" data-used="hungry,rest,cold">
 
 </div>
-<p><strong>The circuit is used, <code>hungry</code> most of all.</strong> Silencing <code>hungry</code> does not make the animal less hungry: it removes the one signal that tells the warmth cells to stand down, so the animal rests in the warmth while its stomach empties. <code>cold</code> and <code>warm_seek</code> form one chain and are used least.</p>
-<p><strong>Against the old brain, the two measures disagree, and that is a finding.</strong> Living among their own kind, the animals with drives do about as well as the old brain or better. Sharing a world with the old brain, they fall behind: clearly in two seeds, level in the third. They do not get more food; they move less, and a warm body burns food more slowly. A resting animal leaves the bushes around it to whoever is still walking, and in a shared world that is the old brain. Food is scarce enough for this to matter.</p>
+<p><strong>The circuit is used, <code>hungry</code> most of all.</strong> Silencing <code>hungry</code> does not make the creature less hungry: it removes the one signal that tells the warmth cells to stand down, so the creature rests in the warmth while its stomach empties. <code>cold</code> and <code>warm_seek</code> form one chain and are used least.</p>
+<p><strong>Against the old brain, the two measures disagree, and that is a finding.</strong> Living among their own kind, the creatures with drives do about as well as the old brain or better. Sharing a world with the old brain, they fall behind: clearly in two seeds, level in the third. They do not get more food; they move less, and a warm body burns food more slowly. A resting creature leaves the bushes around it to whoever is still walking, and in a shared world that is the old brain. Food is scarce enough for this to matter.</p>
 <div data-life="bars" data-stage="1.7" data-example="life_spent" data-rows="0,2" data-col0="new brain (main)" data-col1="old brain (control)">
 
 </div>
-<p>So sharing a world measures who wins the race for berries, and resting is a poor way to win a race. It does not show that resting is a mistake for the animal that does it.</p>
+<p>So sharing a world measures who wins the race for berries, and resting is a poor way to win a race. It does not show that resting is a mistake for the creature that does it.</p>
 </section>
 <section id="full-results" class="level2">
 <h2 class="anchored" data-anchor-id="full-results">Full results</h2>
@@ -493,7 +493,7 @@ ul.task-list li input[type="checkbox"] {
 <div data-life="summary" data-stage="1.7">
 
 </div>
-<p>Either population alone, in a world with half as many animals, does far better than at full numbers: food is a race. Inside the populations with the circuit, evolution left the strength of <code>rest</code> where it was designed and made the hunger gate stronger.</p>
+<p>Either population alone, in a world with half as many creatures, does far better than at full numbers: food is a race. Inside the populations with the circuit, evolution left the strength of <code>rest</code> where it was designed and made the hunger gate stronger.</p>
 </div>
 </div>
 </div>

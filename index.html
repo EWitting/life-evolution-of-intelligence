@@ -370,7 +370,7 @@ ul.task-list li input[type="checkbox"] {
   <ul>
   <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a>
   <ul class="collapse">
-  <li><a href="#the-animals-and-their-world" id="toc-the-animals-and-their-world" class="nav-link" data-scroll-target="#the-animals-and-their-world">The animals and their world</a></li>
+  <li><a href="#the-creatures-and-their-world" id="toc-the-creatures-and-their-world" class="nav-link" data-scroll-target="#the-creatures-and-their-world">The creatures and their world</a></li>
   <li><a href="#sec-judged" id="toc-sec-judged" class="nav-link" data-scroll-target="#sec-judged">How a stage is judged</a></li>
   <li><a href="#how-to-read-a-stage-page" id="toc-how-to-read-a-stage-page" class="nav-link" data-scroll-target="#how-to-read-a-stage-page">How to read a stage page</a></li>
   </ul></li>
@@ -413,28 +413,29 @@ ul.task-list li input[type="checkbox"] {
 <p>The idea of explaining cognition in steps that follow evolution comes from the book <em>A Brief History of Intelligence</em> by Max Bennett. The stages do not match its chapters one to one, and you do not need to have read it to follow along.</p>
 <p>A disclaimer: this work is not guaranteed to be scientifically accurate, and its brains do not match real brains exactly. It stays close to nature where it can, and elsewhere it just “goes for it”: it builds up to something advanced from what works, without a citation for every choice. Still, I think that following these experiments builds an intuition about intelligence that could prove useful both in neuroscience and in machine learning.</p>
 <p>New to neurons or to evolutionary algorithms? The <a href="./background.html">background</a> page explains everything this book assumes, with a glossary.</p>
-<section id="the-animals-and-their-world" class="level2">
-<h2 class="anchored" data-anchor-id="the-animals-and-their-world">The animals and their world</h2>
-<p>The animals live on a grid. Each has a stomach that empties a little every tick (one tick is about a second of behaviour), and faster when it moves. An animal whose stomach is empty dies.</p>
-<p>Food grows on bushes. Once a bush’s last berry is eaten it stays empty for a long time, longer than a full stomach lasts, so an animal has to keep moving. At any moment only a small share of the bushes carries berries. A bite costs a little energy.</p>
+<section id="the-creatures-and-their-world" class="level2">
+<h2 class="anchored" data-anchor-id="the-creatures-and-their-world">The creatures and their world</h2>
+<p>The creatures live on a grid. Each has a stomach that empties a little every tick (one tick is about a second of behaviour), and faster when it moves. A creature whose stomach is empty dies.</p>
+<p>Food grows on bushes. Once a bush’s last berry is eaten it stays empty for a long time, longer than a full stomach lasts, so a creature has to keep moving. At any moment only a small share of the bushes carries berries. A bite costs a little energy.</p>
 <p>The objects, their names and their pictures come from the game <em>One Hour One Life</em>. The simulation uses a small slice of the game’s rules at each stage, and a larger one as the brain grows.</p>
-<p>An animal senses the world through a few coarse “eyes”: a handful of directions, in each of which it sees whether something is there, how near it is, and what it looks like. What something looks like is a short list of numbers, its <em>look</em>. It can step forward, turn left or right, and grasp what is in front of it.</p>
+<p>The creatures wear the bodies of the game’s people, because those are the pictures it has, and the clothes make each one easy to follow. Their brains start out far simpler than a worm’s. This book calls them <em>creatures</em> and keeps the word <em>animal</em> for real ones.</p>
+<p>A creature senses the world through a few coarse “eyes”: a handful of directions, in each of which it sees whether something is there, how near it is, and what it looks like. What something looks like is a short list of numbers, its <em>look</em>. It can step forward, turn left or right, and grasp what is in front of it.</p>
 </section>
 <section id="sec-judged" class="level2">
 <h2 class="anchored" data-anchor-id="sec-judged">How a stage is judged</h2>
 <p>Every stage page ends with <strong>Did it work?</strong>, which answers two questions.</p>
 <ol type="1">
-<li><strong>Is the new circuit used?</strong> The evolved animals live again with the new cells silenced, a <em>lesion</em>. If they do clearly worse, in every seed, they were using them. This is the main criterion: a circuit that is used is one that later stages can build on.</li>
+<li><strong>Is the new circuit used?</strong> The evolved creatures live again with the new cells silenced, a <em>lesion</em>. If they do clearly worse, in every seed, they were using them. This is the main criterion: a circuit that is used is one that later stages can build on.</li>
 <li><strong>Does the new brain do better than the old one?</strong> Each stage has a <strong>main</strong> run, with the new circuit, and a <strong>control</strong>: the brain of the previous stage, put in the same new world and evolved from the same starting population. The new circuit is the only difference between them. The new brain does not have to win; it must not be clearly worse.</li>
 </ol>
 <p>Evolution is noisy: one run can end almost anywhere. So every stage is run three times from different random starts (<em>seeds</em>), and a result counts only when it holds across them. In the charts, bars are the mean and dots are the seeds.</p>
-<p>The comparison is measured in two ways. <strong>Each among its own kind</strong>: every final population lives again in the same set of worlds, so that no population owes its score to easier worlds. <strong>Sharing one world</strong>: half new and half old animals live together and compete for the same bushes. When the two disagree, the page says why.</p>
-<p>The <strong>fitness</strong> that all of this measures is the <em>well-fed lifetime</em>: how long an animal lived from its first meal, with each tick weighted by how full its stomach was.</p>
+<p>The comparison is measured in two ways. <strong>Each among its own kind</strong>: every final population lives again in the same set of worlds, so that no population owes its score to easier worlds. <strong>Sharing one world</strong>: half new and half old creatures live together and compete for the same bushes. When the two disagree, the page says why.</p>
+<p>The <strong>fitness</strong> that all of this measures is the <em>well-fed lifetime</em>: how long a creature lived from its first meal, with each tick weighted by how full its stomach was.</p>
 <p>Under <strong>Full results</strong>, each page keeps everything else, folded away: fitness over the generations, every measure with its standard error, every lesion, and what did not work. The <strong>results table</strong> there has up to three rows: the last generations as they ran, <em>each among its own kind</em>, and <em>sharing one world</em> (head to head). The <strong>lesion chart</strong> has one bar per region: fitness with that region silenced, as a percentage of the intact population.</p>
 </section>
 <section id="how-to-read-a-stage-page" class="level2">
 <h2 class="anchored" data-anchor-id="how-to-read-a-stage-page">How to read a stage page</h2>
-<p>A page starts with a short summary box, the brain diagram and the new circuit. Where it helps, a <strong>Watching it work</strong> strip follows one animal over a few dozen ticks, so that you can see the circuit act. Then come the biology the stage is modelled on, the world it was tested in, and <em>Did it work?</em>. At the end, <strong>Runs</strong> links to a <em>dashboard</em> that replays the last generation of a run.</p>
+<p>A page starts with a short summary box, the brain diagram and the new circuit. Where it helps, a <strong>Watching it work</strong> strip follows one creature over a few dozen ticks, so that you can see the circuit act. Then come the biology the stage is modelled on, the world it was tested in, and <em>Did it work?</em>. At the end, <strong>Runs</strong> links to a <em>dashboard</em> that replays the last generation of a run.</p>
 <p>The diagrams and charts show more when you point at a box, an arrow, a bar or a curve, or tap it on a phone. The numbers, graphs and diagrams are drawn from data files written when a stage is run; only the text is written by hand.</p>
 
 

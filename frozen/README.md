@@ -36,6 +36,15 @@ Chapter 1 is complete. A stored population written before a gene existed (the mo
 2026-10-12) loads with the designed value, and a stored configuration is read with options added since at their
 defaults (`freeze.with_defaults`).
 
+## Chapter 2 (frozen from 2026-10-19)
+
+| stage | what it is | parent | life | seeds |
+|---|---|---|---|---|
+| 2.2 | pallium: 128 cells (k-WTA 2) read the eye ahead through fixed random weights of mixed sign; pain teaches `pallium -> valence_av`; the adaptation strength evolves; world `W22` (the 1.8 world with XOR looks, patches mixed evenly) | 1.8 | 4000 | 3 |
+
+`flee` and `fed` are unused in this world (lesions 97-101%) and kept: frozen chapter 1 circuits that later worlds
+may need (user, 2026-10-19).
+
 ## The first affect route (frozen, off the chain since 2026-10-17)
 
 | stage | what it is | parent | life | seeds |

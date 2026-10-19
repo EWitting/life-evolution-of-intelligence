@@ -107,9 +107,7 @@ remapping the stored populations and freezing again.
    user; **no reruns of frozen stages**. The chapter exam (every population in every earlier world) is dropped as
    a criterion: later populations carry equipment for things earlier worlds lack. A sanity check at most.
 5. Trim (2026-10-08): nothing is removed; every cell is used somewhere on the chain.
-6. Book to-do (user, 2026-10-17): a "Watching it work" strip for the drives page (a fed animal resting at a hot
-   spring) and the affect page (an animal fleeing after a poison bite; wait until the current work on affect is
-   done). Each needs an `@extra` in `life/book.py` that picks the moment with `life_strip`.
+6. Book: "Watching it work" strips for drives (`warm_rest`) and affect (`flight`) done (2026-10-19).
 
 ## Known issues and open points
 

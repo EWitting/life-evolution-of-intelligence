@@ -2829,3 +2829,19 @@ animals, 1280 patches, 64 genomes x 16 siblings. Repeatability with 16 lives (on
 709 vs 603 at generation 0 (lifetime 1063 vs 929), final 1057 / 935 vs 981 / 890; the small worlds (610) did not, so
 it is not the edge. Main vs control, final, paired: sd per world 188, s.e. with 16 worlds 47 (as 64 worlds of 256).
 Not better than 4 x 4: the same at generation 0, worse late in a run, a little cheaper.
+
+## v53 (2026-10-19): budget test stopped; GPU memory per setting
+
+**Budget test** (side stages `x.b1`, `x.b4`, `x.b256`: 200 generations, episodes 4 for 87, 256 genomes in one 512 x 512
+world for 114) stopped by the user after about 10 minutes: too large for a quick check. With three runs sharing the
+GPU, the per-generation costs differed from the solo measurements: 7.8 s, 22 s (2.8x) and 26 s (3.3x), so the
+budgets were not equal anyway. Three runs at a time filled the laptop's RAM (Windows paged; WSL held 4.3 of 5.9 GB)
+and the GPU (7.6 of 8.1 GB). Definitions kept, no results.
+
+**GPU memory of one process** (`scripts/probes/gpu_mem.py`, one process per setting, alone, idle 0.4 GB): peak JAX
+memory of one generation 327 MiB (2.2: 256 animals, 1 episode), 711 MiB (episodes 4), 1293 MiB (1024 animals in one
+world); the recording of the last generation (64-animal sample, 4000 ticks) about 900 MiB in every setting. nvidia-smi
+peak per process, CUDA context and allocator included: 1.6, 2.1 and 2.9 GB. During evolution, before the recording,
+about 1.0, 1.4 and 2.0 GB. Runs record one at a time (`recording_lock`), so three episodes-4 runs need about
+3 x 1.4 + 0.9 = 5.1 GB of the 8.1 GB, which fits when Windows uses little of the GPU; 256 genomes in one large world
+would fit two.

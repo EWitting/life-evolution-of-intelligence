@@ -12,12 +12,80 @@
                   threshold: bias -1, input weight 3). As defined it is still at 0.54 and 0.18 on the next two ticks,
                   when the animal has turned and is looking at another bush
     short         the sickness teacher gets the same short eligibility trace as the taste teacher (0.5)
+    td            the critic as a formula (old2.5 on the 2.2 brain): value cells from the pallium, dopamine = TD error
+                  teaches every pain-gated synapse (TD_GAMMA, TD_SCALE, TD_ETA, TD_ELIG, TD_TASTE); tdp: only those
+                  from the pallium, the look synapses stay pain-gated
+    td2           one error per valence: taste teaches appetitive value, pain aversive value and pallium -> aversive
     safety        a 'safety' cell (tastes good although the aversive cells expected bad one tick earlier) is
                   subtracted from the pain teacher, so a safe meal undoes suspicion of what was just eaten (the
                   v19-v20 design); safety<k> sets its weight in the teacher (default 1)
 """
 from dataclasses import replace
 from life.experiments import stages as S
+
+# the formula critic of `td` (constants of stages, so gen0.py can set them: TD_GAMMA=0.8)
+S.TD_GAMMA = 0.9      # discount per tick
+S.TD_SCALE = 1.0      # weight of value (mean rate of a value population) against taste and pain in the error
+S.TD_ETA = 0.1        # starting learning rate of pallium -> value cells
+S.TD_ELIG = 0.5       # eligibility decay of the value synapses (that of the pain-taught synapses, CS_ELIG)
+S.TD_TASTE = 1.0      # weight of taste in the error
+S.TD_VALENCE = 1.5    # td, td2: weight of value cells -> valence cells (incentive salience, fixed)
+S.TD_DELAY = 1.0      # td, td2: 1 = the value cells read this tick's pallium and the dopamine-taught traces take the pallium
+                      # of a tick earlier (ProjectionSpec.elig_delay), so the error teaches the moment it is about
+
+
+def td_critic(brain, looks: bool = True):
+    """The critic as a formula (old2.5 on the 2.2 brain, no memory): opponent value cells read the pallium,
+    starting silent (at birth the error is taste - pain), one-tick copies give
+        da = us_taste - us_pain + k (gamma (V_app - V_av) - (V_app' - V_av'))     (k = TD_SCALE, ' = a tick earlier)
+    and every pain-gated synapse is taught by -da instead (same trace, modulator da_neg): a good meal now unteaches aversion, and a
+    predicted outcome teaches nothing. looks=False (variant tdp): the look synapses stay pain-gated, only those
+    from the pallium switch to dopamine."""
+    g, k, dl = S.TD_GAMMA, S.TD_SCALE, bool(S.TD_DELAY)
+    terms = (("us_taste", S.TD_TASTE), ("us_pain", -1.0), ("value_app", g * k), ("value_av", -g * k),
+             ("value_app_prev", -k), ("value_av_prev", k))
+    plastic = lambda dst, b: S.P("pallium", dst, rule="hebb", modulator="da", eta_init=S.TD_ETA, elig_tau=S.TD_ELIG,
+                                 abcd=(0.0, b, 0.0, 0.0), density=1.0, w_init=0.0, elig_delay=dl)
+    value = lambda n: replace(S.R(n, 3, **S.VALUE), phase=1 if dl and not n.endswith("_prev") else 0)
+    brain = S.extend(brain,
+                     regions=(S.R("us_taste", 1, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, group="us"),
+                              *(value(n) for n in ("value_app", "value_av", "value_app_prev", "value_av_prev"))),
+                     projections=(S.P("in", "us_taste", src_select=("taste",), density=1.0, w_init=2.0, evolve=False),
+                                  plastic("value_app", 1.0), plastic("value_av", -1.0),
+                                  S.P("value_app", "value_app_prev", topology="one_to_one", w_init=1.0, evolve=False),
+                                  S.P("value_av", "value_av_prev", topology="one_to_one", w_init=1.0, evolve=False),
+                                  S.fixed("value_app", "valence_app", S.TD_VALENCE), S.fixed("value_av", "valence_av", S.TD_VALENCE)),
+                     modulators=(S.Mod("da", terms=terms), S.Mod("da_neg", terms=tuple((r, -w) for r, w in terms))))
+    # the pain-gated synapses keep their inherited plasticity genes (remap_genomes carries A-D over for a projection
+    # with the same rule, so an abcd set here is not used): they are taught by the negated error, da_neg = -da
+    return replace(brain, projections=tuple(
+        replace(p, modulator="da_neg", elig_delay=dl) if p.modulator == "us_av" and (looks or p.src == "pallium") else p
+        for p in brain.projections))
+
+
+def td_split(brain):
+    """The critic with one error per valence (variant td2), as the reward and punishment dopamine cells of the
+    mushroom body (PAM, PPL1) or the two dopamine cell types of Matsumoto & Hikosaka (2009):
+        da_app = us_taste + k (gamma V_app - V_app')      teaches pallium -> value_app
+        da_av  = us_pain  + k (gamma V_av  - V_av')       teaches pallium -> value_av and pallium -> valence_av
+    so the end of a meal (appetitive value falls) is no lesson about danger. The look synapses stay pain-gated."""
+    g, k, dl = S.TD_GAMMA, S.TD_SCALE, bool(S.TD_DELAY)
+    plastic = lambda dst, mod: S.P("pallium", dst, rule="hebb", modulator=mod, eta_init=S.TD_ETA, elig_tau=S.TD_ELIG,
+                                   abcd=(0.0, 1.0, 0.0, 0.0), density=1.0, w_init=0.0, elig_delay=dl)
+    value = lambda n: replace(S.R(n, 3, **S.VALUE), phase=1 if dl and not n.endswith("_prev") else 0)
+    brain = S.extend(brain,
+                     regions=(S.R("us_taste", 1, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, group="us"),
+                              *(value(n) for n in ("value_app", "value_av", "value_app_prev", "value_av_prev"))),
+                     projections=(S.P("in", "us_taste", src_select=("taste",), density=1.0, w_init=2.0, evolve=False),
+                                  plastic("value_app", "da_app"), plastic("value_av", "da_av"),
+                                  S.P("value_app", "value_app_prev", topology="one_to_one", w_init=1.0, evolve=False),
+                                  S.P("value_av", "value_av_prev", topology="one_to_one", w_init=1.0, evolve=False),
+                                  S.fixed("value_app", "valence_app", S.TD_VALENCE), S.fixed("value_av", "valence_av", S.TD_VALENCE)),
+                     modulators=(S.Mod("da_app", terms=(("us_taste", S.TD_TASTE), ("value_app", g * k), ("value_app_prev", -k))),
+                                 S.Mod("da_av", terms=(("us_pain", 1.0), ("value_av", g * k), ("value_av_prev", -k)))))
+    return replace(brain, projections=tuple(
+        replace(p, modulator="da_av", elig_delay=dl) if p.modulator == "us_av" and p.src == "pallium" else p
+        for p in brain.projections))
 
 
 def variant(brain, v):
@@ -59,6 +127,10 @@ def variant(brain, v):
         elif part.startswith("decay"):
             brain = replace(brain, projections=tuple(
                 replace(p, decay=float(part[5:])) if p.modulator in S.CS_MODS else p for p in brain.projections))
+        elif part == "td2":
+            brain = td_split(brain)
+        elif part in ("td", "tdp"):
+            brain = td_critic(brain, looks=part == "td")
         else:
             raise SystemExit(f"unknown variant {part!r}; see variants.py")
     return brain

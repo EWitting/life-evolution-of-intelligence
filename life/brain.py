@@ -48,6 +48,7 @@ class BrainState(NamedTuple):
     ws: tuple = ()     # per update phase [N, phase neurons]: the weights that never change within a life (everything
                        # outside the plastic block), signed and without the gain part; computed once at birth
     wg: tuple = ()     # the same for the gain part (projections with gain)
+    xd: tuple | jnp.ndarray = ()   # [N] activity of the step before x (only with ProjectionSpec.elig_delay)
 
 
 class Layout(NamedTuple):
@@ -104,6 +105,8 @@ class Layout(NamedTuple):
     has_decay: bool
     has_receptors: bool
     mod_accum: tuple = ()   # static: ModulatorSpec.accumulate per modulator (empty = none accumulates)
+    elig_delay: jnp.ndarray | None = None   # [N, N] 1 where the eligibility trace takes the pre activity of a tick earlier
+    has_delay: bool = False
 
     def region(self, name: str) -> slice:
         i = self.names.index(name)
@@ -145,7 +148,7 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
     allowed, density, o2o, gain, evolve_w, tune = z(), z(), z(), z(), z(), z()
     proj_id, rule, mod_idx = z(np.int32, -1), z(np.int32), z(np.int32, -1)
     elig, dep_U, dep_rec, eta_init, decay = z(), z(), z(), z(), z()
-    centred = z()
+    centred, delay = z(), z()
     w_init = z(v=np.nan)
     abcd = np.zeros((4, n, n), np.float32)
     teacher = -np.ones(n, np.int32)
@@ -204,6 +207,8 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
             mod_idx[s, d] = mod_names.index(mname)
         elig[s, d] = p.elig_tau
         centred[s, d] = float(p.centred)
+        assert not p.elig_delay or p.elig_tau > 0, f"projection {key}: elig_delay needs an eligibility trace"
+        delay[s, d] = float(p.elig_delay)
         gain[s, d] = float(p.kind == "gain")
         evolve_w[s, d] = float(p.evolve)
         assert not (p.tune and (p.evolve or p.w_init is None)), f"projection {key}: tune needs evolve=False and w_init"
@@ -268,7 +273,8 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
                   has_gain=bool(gain.any()), has_elig=bool((elig > 0).any()), has_dep=bool((dep_U > 0).any()),
                   has_decay=bool((decay > 0).any()), groups=tuple(r.group for r in regions),
                   rec_gain=j(rec_gain), rec_bias=j(rec_bias), has_receptors=bool(rec_gain.any() or rec_bias.any()),
-                  mod_accum=tuple(float(m.accumulate) for m in mods) if any(m.accumulate for m in mods) else ())
+                  mod_accum=tuple(float(m.accumulate) for m in mods) if any(m.accumulate for m in mods) else (),
+                  elig_delay=j(delay), has_delay=bool(delay.any()))
 
 
 def constrain(layout: Layout, w: jnp.ndarray, w_max: float) -> jnp.ndarray:
@@ -316,7 +322,8 @@ def init_state(genome: Genome, layout: Layout, w_max: float = 4.0) -> BrainState
     return BrainState(x=jnp.zeros(n, jnp.float32), w=w, tr=jnp.zeros(n, jnp.float32),
                       e=jnp.zeros((len(layout.pl_rows), len(layout.pl_cols)), jnp.float32),
                       u=jnp.ones((len(layout.pl_rows), len(layout.pl_cols)), jnp.float32),
-                      mod=jnp.zeros(max(m, 1), jnp.float32), g=jnp.zeros(n, jnp.float32), ws=ws, wg=wg)
+                      mod=jnp.zeros(max(m, 1), jnp.float32), g=jnp.zeros(n, jnp.float32), ws=ws, wg=wg,
+                      xd=jnp.zeros(n, jnp.float32) if layout.has_delay else ())
 
 
 def block_genome(layout: Layout, genome: Genome) -> Genome:
@@ -416,7 +423,7 @@ def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, ob
     """One world tick of brain activity. `obs` is the flattened observation [n_in]; `world_sig` the vector of
     world signals (WORLD_SIGNALS) of the last tick, used only by 'world:*' modulators. Returns (state, action)."""
     n_in, n_out = layout.n_in, layout.n_out
-    w, tr, e, u, mod, g = state.w, state.tr, state.e, state.u, state.mod, state.g
+    w, tr, e, u, mod, g, xd = state.w, state.tr, state.e, state.u, state.mod, state.g, state.xd
     raw = obs
     if layout.has_adapt:   # adapting inputs pass on the input minus its slow average (tr holds the average of the raw input)
         obs = obs - layout.in_adapt * genome.adapt[0] * tr[:n_in]
@@ -487,8 +494,11 @@ def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, ob
         if plastic:
             wb = w[ix]
             target = jnp.where(b_teacher >= 0, x_new[np.maximum(b_teacher, 0)], x_new[C])
-            base = plasticity_rule(b_rule, b_A, b_B, b_C, b_D, wb, x[R], x_new[C], tr[R], tr[C], target,
-                                   np.asarray(layout.centred)[ix] if np.asarray(layout.centred)[ix].any() else None)
+            cen = np.asarray(layout.centred)[ix] if np.asarray(layout.centred)[ix].any() else None
+            base = plasticity_rule(b_rule, b_A, b_B, b_C, b_D, wb, x[R], x_new[C], tr[R], tr[C], target, cen)
+            if layout.has_delay:   # these synapses' traces take the pre activity of the step before
+                late = plasticity_rule(b_rule, b_A, b_B, b_C, b_D, wb, xd[R], x_new[C], tr[R], tr[C], target, cen)
+                base = jnp.where(np.asarray(layout.elig_delay)[ix] > 0, late, base)
             if layout.has_elig:
                 eb = jnp.where(b_elig > 0, b_elig * e + base, 0.0)
                 e = eb
@@ -501,6 +511,8 @@ def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, ob
             if layout.has_dep:
                 u = jnp.clip(u + b_deprec * (1.0 - u) - b_depU * u * jnp.maximum(x[R], 0.0)[:, None], 0.0, 1.0)
         tr = layout.trace_tau * tr + (1.0 - layout.trace_tau) * (x_new.at[:n_in].set(raw) if layout.has_adapt else x_new)
+        if layout.has_delay:
+            xd = x
         x = x_new
     mod = compute_modulators(layout, x, world_sig, mod, genome.clear)
     logits = h[-n_out:] * cfg.logit_gain
@@ -508,7 +520,7 @@ def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, ob
         action = jax.random.categorical(key, logits / cfg.action_temperature)
     else:
         action = jnp.argmax(logits)
-    return BrainState(x=x, w=w, tr=tr, e=e, u=u, mod=mod, g=g, ws=state.ws, wg=state.wg), action.astype(jnp.int32)
+    return BrainState(x=x, w=w, tr=tr, e=e, u=u, mod=mod, g=g, ws=state.ws, wg=state.wg, xd=xd), action.astype(jnp.int32)
 
 
 # ---------------------------------------------------------------- warm starts across layouts

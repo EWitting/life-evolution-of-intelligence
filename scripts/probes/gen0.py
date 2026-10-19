@@ -5,7 +5,7 @@ straight away, or at least not hurt.
 variants: see variants.py. lower-case field=value overrides a WorldConfig field (hunger_per_tick=0.02), upper-case
 NAME=value a constant of life.experiments.stages (NOVEL_WEIGHT=1.0). STAGE defaults to 1.5. OFF=<projection>[,...][;...]:
 one more condition per ';'-group with only the learning of those projections off. Every condition is also given as
-the paired difference from the first (learning on) over the same worlds."""
+the paired difference from the first (learning on of the first variant) over the same worlds."""
 import os, sys
 from dataclasses import replace
 import jax, jax.numpy as jnp, numpy as np
@@ -26,6 +26,7 @@ for a in sys.argv[1:]:
 print("settings:", [a for a in sys.argv[1:] if "=" in a], flush=True)
 
 
+first = None   # every condition is paired with the first condition of the first variant
 for v in args:
     exp = S.make_exp(s, variant(s.brain, v), "gen0", 1, 0)
     pop = load_population(os.environ.get("RUN") or latest_run(S.STAGES[s.parent].name), exp, seed=0)   # RUN: another run
@@ -43,7 +44,6 @@ for v in args:
         for grp in reversed(os.environ["OFF"].split(";")):
             _off = np.isin(np.asarray(_L.proj_id), [list(_L.proj_names).index(n) for n in grp.split(",")])
             conds.insert(1, (f"{grp} off", pop._replace(eta=jnp.where(jnp.asarray(_off)[None], 0.0, pop.eta))))
-    first = None
     for label, g in conds:
         acc = []
         for k in jax.random.split(jax.random.PRNGKey(31), WORLDS):

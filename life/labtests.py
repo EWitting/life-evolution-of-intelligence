@@ -76,3 +76,102 @@ def xor_meals(exp, pop, sim: float, conds: dict, rounds: int = 2, n_agents: int 
             for t in XOR_TYPES:
                 res[(c, "after", t)].append(readout(g, st, obs(looks[t])))
     return res
+
+
+# ---------------------------------------------------------------- classical conditioning (chapter 2, the critic)
+# Textbook protocols on single brains: a cue is a look in one eye column (the column straight ahead, 'vis+0', is the
+# one the pallium reads; 'vis+30' is a side column, read only by the look synapses), shown on the tick before the
+# outcome. A trial: the cue, the cue with three bites (pain 1 / taste 3 / nothing on the tick after each), then
+# four blank ticks. Cues per animal: novel looks (A, B, C, A2 80% like A, -A the opposite colour direction).
+#   acquisition   A -> pain, 12 trials: the aversion to A, its look-alike and its opposite after each trial
+#   extinction    A -> pain 6 trials, then A -> nothing 12 trials
+#   blocking      A -> pain 6, then A + B (side column) -> pain 6; control: C -> pain 6, then A + B -> pain 6.
+#                 Kamin (1969): a cue added to one that already predicts the outcome is learned less
+PROTOCOLS = {
+    "acquisition": dict(train=[("pain", {"vis+0": "A"}, 12)],
+                        tests={"A": {"vis+0": "A"}, "A2": {"vis+0": "A2"}, "-A": {"vis+0": "-A"}, "B": {"vis+0": "B"}}),
+    "extinction": dict(train=[("pain", {"vis+0": "A"}, 6), ("none", {"vis+0": "A"}, 12)],
+                       tests={"A": {"vis+0": "A"}}),
+    "blocking": dict(train=[("pain", {"vis+0": "A"}, 6), ("pain", {"vis+0": "A", "vis+30": "B"}, 6)],
+                     tests={"B side": {"vis+30": "B"}, "A": {"vis+0": "A"}}),
+    "blocking control": dict(train=[("pain", {"vis+0": "C"}, 6), ("pain", {"vis+0": "A", "vis+30": "B"}, 6)],
+                             tests={"B side": {"vis+30": "B"}, "A": {"vis+0": "A"}}),
+}
+
+
+def conditioning(exp, pop, protocol: dict, sim: float, n_agents: int = 24, seed: int = 0, signal: str | None = None) -> dict:
+    """Runs one protocol (PROTOCOLS) on the first n_agents genomes at once. Returns
+        tests: {label: [trials + 1, agents, 4]}  readout before training and after every trial: aversive cells,
+               P(bite) (use or eat), critic value (aversive minus appetitive value cells, 0 without a critic), and
+               the aversive cells' input drive (does not saturate as their rate does)
+        signal: [trials, agents, ticks]          the teaching signal (`signal`, default da, else us_av) per tick
+    A readout is taken as in xor_meals: a rested brain with only the learned weights, learning off, the cue shown
+    for three ticks."""
+    from .experiments import stages as S
+    L = make_layout(exp); names = list(L.in_names); K = exp.vision.appearance_dim
+    base, comp = S.colour_basis(S.BUSH, K)
+    NA = min(n_agents, pop.b.shape[0])
+    pop = jax.tree_util.tree_map(lambda x: x[:NA], pop)
+    rng = np.random.default_rng(seed)
+    looks = []
+    for _ in range(NA):
+        q, _ = np.linalg.qr(rng.normal(size=(K - 1, 4)))
+        u = {"A": q[:, 0], "B": q[:, 1], "C": q[:, 2], "A2": 0.8 * q[:, 0] + 0.6 * q[:, 3], "-A": -q[:, 0]}
+        looks.append({c: sim * base + np.sqrt(1 - sim ** 2) * (v @ comp) for c, v in u.items()})
+
+    def obs(cues=None, taste=0.0, pain=0.0):
+        o = np.zeros((NA, L.n_in), np.float32)
+        o[:, names.index("food")] = 0.5
+        if "temperature" in names:
+            o[:, names.index("temperature")] = 0.5
+        for col, c in (cues or {}).items():
+            o[:, names.index(f"{col}.hit")], o[:, names.index(f"{col}.near")] = 1.0, 0.8
+            idx = [names.index(f"{col}.app{k}") for k in range(K)]
+            for a in range(NA):
+                o[a, idx] = looks[a][c]
+        o[:, names.index("taste")] = taste
+        o[:, names.index("pain")] = pain
+        return jnp.asarray(o)
+
+    def trial(kind, cues):
+        out = dict(pain=dict(pain=1.0), taste=dict(taste=3.0), none={})[kind]
+        return [obs(cues)] + [obs(cues, **out) for _ in range(3)] + ([obs(pain=0.3)] if kind == "pain" else [obs()]) \
+            + [obs()] * 4
+
+    one = lambda g, st, o: B.step(exp.brain, L, g, st, o, jnp.zeros(3), jax.random.PRNGKey(0))[0]
+    step = jax.jit(jax.vmap(one))
+    init = jax.vmap(lambda g: B.init_state(g, L))
+    frozen = pop._replace(eta=jnp.zeros_like(pop.eta))
+    blank = obs()
+    mi = list(L.mod_names).index(signal or ("da" if "da" in L.mod_names else "us_av"))
+    av = L.region("valence_av")
+    val = (L.region("value_av"), L.region("value_app")) if "value_av" in L.names else None
+
+    def readout(st, o):
+        s2 = init(frozen)._replace(w=st.w)
+        for _ in range(40):
+            s2 = step(frozen, s2, blank)
+        for _ in range(3):
+            s2 = step(frozen, s2, o)
+        hall = jax.vmap(lambda x, w, b: x @ B.effective(L, w) + b)(s2.x, s2.w, frozen.b)
+        p = np.asarray(jax.nn.softmax(hall[:, -L.n_out:] * exp.brain.logit_gain / exp.brain.action_temperature, axis=-1))
+        x = np.asarray(s2.x)
+        v = x[:, val[0]].mean(-1) - x[:, val[1]].mean(-1) if val else np.zeros(NA)
+        return np.stack([x[:, av].mean(-1), p[:, 4] + p[:, 5], v, np.asarray(hall)[:, av].mean(-1)], -1)
+
+    tests = {k: obs(c) for k, c in protocol["tests"].items()}
+    st = init(pop)
+    for _ in range(4):
+        st = step(pop, st, blank)
+    res = {k: [readout(st, o)] for k, o in tests.items()}
+    sig = []
+    for kind, cues, n in protocol["train"]:
+        for _ in range(n):
+            tr = []
+            for o in trial(kind, cues):
+                st = step(pop, st, o)
+                tr.append(np.asarray(st.mod[:, mi]))
+            sig.append(np.stack(tr, -1))
+            for k, o in tests.items():
+                res[k].append(readout(st, o))
+    return dict(tests={k: np.stack(v) for k, v in res.items()}, signal=np.stack(sig))

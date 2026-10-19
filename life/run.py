@@ -119,8 +119,11 @@ def make_simulate(exp: ExperimentConfig, record: bool, compact: bool = True):
 
         def stats_of(carry):
             world, _, _, eats, tsum, fed, _, fed_meal = carry
-            return dict(alive_ticks=world.alive_ticks, eaten=world.eaten, pain=world.pain_total, alive=world.alive,
-                        food=jnp.maximum(world.food, 0.0), eats=eats, fed=fed, fed_meal=fed_meal, tsum=tsum)
+            out = dict(alive_ticks=world.alive_ticks, eaten=world.eaten, pain=world.pain_total, alive=world.alive,
+                       food=jnp.maximum(world.food, 0.0), eats=eats, fed=fed, fed_meal=fed_meal, tsum=tsum)
+            if exp.world.snakes:
+                out.update(bites=world.bites, rattles=world.rattles)
+            return out
 
         def chunk(carry, keys):
             carry, recs = jax.lax.scan(one_tick, carry, keys)

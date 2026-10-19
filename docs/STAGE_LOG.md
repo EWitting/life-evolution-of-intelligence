@@ -2845,3 +2845,61 @@ peak per process, CUDA context and allocator included: 1.6, 2.1 and 2.9 GB. Duri
 about 1.0, 1.4 and 2.0 GB. Runs record one at a time (`recording_lock`), so three episodes-4 runs need about
 3 x 1.4 + 0.9 = 5.1 GB of the 8.1 GB, which fits when Windows uses little of the GPU; 256 genomes in one large world
 would fit two.
+
+## v54 (2026-10-19): toward the dopamine critic: a snake world, the critic at generation 0, lab tests
+
+Probes only; no stage was run or frozen. Side stage `x.critic` = the 2.2 brain and world (DRAFT), generation 0 of
+the frozen 2.2 population (seed 0), `DENSE=1`, 16 paired worlds. Base (pain-gated learning, as 2.2) 1010 +- 58,
+learning off 715 +- 35.
+
+**Snake world (for a later memory stage).** `WorldConfig.snakes` etc.: hidden rattlesnakes (OHOL 764, not visible)
+hop every 10 ticks; a creature that comes within `rattle_radius` hears one rattle (one tick, silent at the bite), a
+bite costs food and pain. Wind gusts share the signed `hear` channel (rattle +s, gust -s, s drawn per world;
+`BodyConfig.hear`, not wired to the pallium). Frozen 2.2 (deaf), baseline 1059: 32 snakes, radius 4, 1 food per bite
+-114 +- 38; 2 food -219; 64 snakes -253. Usual gap rattle -> bite 3-5 ticks; about a quarter of bites come without
+a rattle. Proposed for the memory stage: 32 snakes, radius 4, 2 food per bite (gaps of 2, 4, 6 to test).
+
+**The critic as a formula** (`scripts/probes/variants.py`: value cells read the pallium, one-tick copies, the error
+da = taste - pain + k (gamma V - V') computed as a modulator; ADR-025 plans to replace the formula by cells):
+- `td` (the error teaches every pain-gated synapse) 148, `tdp` (only those from the pallium) 226 at first. Cause:
+  **inherited plasticity genes override `abcd`** (`remap_genomes` copies A-D for a projection that keeps its rule),
+  so the sign meant to flip with the error did not: good meals taught aversion. Fixed by teaching those synapses with
+  the negated error (modulator `da_neg`) instead.
+- **Timing** (`ProjectionSpec.elig_delay`, new): the error of tick t is about the move from t-1 to t, so a trace
+  must take the presynaptic activity of t-1 (dopamine acts on activity 0.3-2 s earlier, Yagishita et al. 2014);
+  the value cells read the pallium of the same tick (phase 1). `freeze.with_defaults` now fills new options of
+  projections and regions too (stored definitions predate `elig_delay`).
+- `td2` (one error per valence, the PAM / PPL1 split): 864 without the delay, 935 +- 33 with it; gamma 0.7
+  1088 +- 44 (+78 +- 38), valence weight 0.5 1009. Set aside by the user for now: a single signed error is the
+  standard mammalian picture and should work.
+- Single error after both fixes: gamma 0.9 `td` 722, `tdp` 897; gamma 0.7 770 / 829; scale 3 667 / 490; eta 0.3
+  618 / 642; **taste weight 0.3: 981 +- 37 / 987 +- 43** (-29 / -24); gamma 0.5, scale 3, taste 0.3: 960 +- 50 /
+  853 +- 59 (`td` eats more good berries than base, 45.6 vs 39.7 in the second half, but also more poison).
+
+**Can taste be predicted at all?** (`scripts/probes/taste_predict.py`, one recorded life, offline fits of the taste
+of t+1.) Object ahead + action R^2 0.998; object ahead alone 0.80; the pallium 0.51, with weights >= 0 0.50, its
+pattern as a lookup key 0.51. The pallium is not stale (the same tick fits best) and loses nothing it gets, but it
+reads only the look of the first object in line of sight, not its distance (`vis+0.near`): a bush at the mouth and
+one four cells away are the same state. The TD fixed point also needs values of about 2.3 bites for a good bush at
+gamma 0.9, while the value cells reach 1. Agreed: give the value cells more context (distance first; an efference
+copy of the action later, if at all).
+
+**Lab tests** (`life/labtests.py` PROTOCOLS + `conditioning`, `scripts/probes/lab_conditioning.py`; scripted cue
+looks, cue alone 1 tick, cue + pain 3 ticks, 4 blank; readout the aversive cells' input drive, as their rate
+saturates within two trials). Should have come before generation 0 (BRAIN_EVOLUTION principle 4; now in `CLAUDE.md`).
+At gamma 0.5, scale 3, taste 0.3, `td`:
+- the error moves to the cue (cue tick 0 -> -0.6 from trial 2), the pain becomes 60% predicted (-0.96 -> -0.4 per
+  tick); the base teacher is the same on every trial;
+- extinction: positive error when the pain is left out (+0.55 per tick on the first omission), critic value 0.54 ->
+  0, aversion drive 6.5 -> 4.5 (base stays at 6.9);
+- blocking: B learned in compound after A, drive 1.08 +- 0.18 vs 1.74 +- 0.22 after an unrelated pretraining
+  (base 1.93 / 1.95);
+- generalisation as in base: a look-alike (80%) takes most of the value, the opposite colour direction none.
+- Flaw: a relief burst on the tick the cue disappears (+0.7 every trial). The state is only what is in view, so the
+  critic cannot know when the pain stops; at gamma 0.9 the pain cannot be predicted away at all (a value of
+  pain / (1 - gamma) = 10 per tick would be needed). TD models need a representation of time since the cue for this
+  (complete serial compound; Ludvig, Sutton & Kehoe 2008): the general recurrent memory saved for a later stage is
+  needed even without a gap between cue and outcome.
+
+Next: cue shift far -> near and second-order conditioning once the value cells read `vis+0.near`; how the relief
+burst should be handled; the critic stage itself is still to be agreed with the user.

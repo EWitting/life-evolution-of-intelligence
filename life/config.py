@@ -39,6 +39,19 @@ class WorldConfig:
     sickness_delay: int = 0          # ticks between eating something with pain_value and feeling the pain
     eat_on_pick: bool = False        # True: food that a USE puts into an empty hand is eaten in the same tick (an
                                      # animal with a mouth, not hands; nothing edible is ever carried)
+    # --- hidden snakes (OHOL Rattle Snake 764: bites at deadlyDistance 1, moves up to 4 cells every 10 s). Unlike
+    # OHOL they are not seen (long grass) and warn ahead: a one-tick rattle when an animal comes within
+    # rattle_radius, silent afterwards, so the rattle is never heard at the bite. Wind gusts are a second sound of
+    # the same kind; the body feature `hear` (BodyConfig.hear) is +s for a rattle and -s for a gust, the sign s
+    # drawn per world, so no inherited weight can know which sound means a snake.
+    snakes: int = 0                  # hidden snakes per world
+    snake_move_ticks: int = 10       # ticks between a snake's moves (OHOL autoDecay 10 s)
+    snake_move_dist: int = 4         # cells (Chebyshev) a snake moves at most
+    snake_food: float = 0.0          # food units a bite costs
+    snake_pain: float = 1.0          # pain of a bite (enters the body sense `pain`)
+    rattle_radius: int = 0           # cells (Chebyshev): the rattle sounds once on coming within it, never within
+                                     # biting range (a snake that lands next to an animal bites unannounced)
+    wind_rate: float = 0.0           # chance per agent and tick of hearing a gust
     # --- temperature (OHOL-style): body temp drifts toward the local temperature = ambient_temp + heat of
     # objects nearby (heatValue * heat_scale, falling off linearly to 0 beyond heat_radius cells).
     # Deviation from 0.5 multiplies hunger: hunger * (1 + temp_hunger * 2|T - 0.5|), as in OHOL.
@@ -75,6 +88,7 @@ class BodyConfig:
                                      # spatial gradient along its path (thermosensory neurons such as C. elegans
                                      # AFD respond to changes of the ambient temperature)
     skin: bool = False               # the temperature at the agent's cell, in [0, 1] (the body's own follows slowly)
+    hear: bool = False               # sounds of the world (WorldConfig.snakes): +-1 for a rattle or a gust, 0 silence
 
 
 @dataclass(frozen=True)
@@ -143,6 +157,10 @@ class ProjectionSpec:
                                      # slow average (its activity trace, RegionSpec.trace_tau; BrainConfig.in_trace_tau
                                      # for inputs): the synapse learns from what is unusual about the input, not from
                                      # what is always there (a covariance rule). Transmission is not changed.
+    elig_delay: bool = False         # with elig_tau: the eligibility trace takes the source's activity of one tick
+                                     # earlier, so a modulator computed from this tick's activity (a TD error) teaches
+                                     # the synapses of the moment it is about, not those active as it arrives
+                                     # (dopamine acts on synapses active 0.3-2 s before it: Yagishita et al. 2014)
     src_select: tuple = ()           # src 'in' only: input-feature name patterns (fnmatch, e.g. 'vis*', 'pain')
                                      # restricting which input neurons project; several projections from 'in'
                                      # to the same region may use disjoint selections

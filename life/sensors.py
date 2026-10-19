@@ -3,7 +3,7 @@
 obs = {"vision": [N, W, 4+K], "body": [N, 4+K+extra], "sound": [N, 1]}
 vision column features: [hit, 1 - dist/range, is_agent, is_wall, appearance(K)]
 body features:          [food/max_food, age/max_age, pain, held_present, held_appearance(K)] + optional
-                        BodyConfig features [taste] [temperature] [efference copy of the last action (7)]
+                        BodyConfig features [taste] [temperature] [efference copy of the last action (7)] [hear]
 Every input neuron has a name (input_names); vision columns are named by angle so retinas of different
 resolution line up when genomes are remapped (brain.remap_genomes).
 """
@@ -37,6 +37,8 @@ def body_names(v: VisionConfig, b: BodyConfig | None = None) -> list[str]:
         names.append("skin")
     if b.efference:
         names += [f"efc_{a}" for a in A.NAMES]
+    if b.hear:
+        names.append("hear")
     return names
 
 
@@ -78,7 +80,7 @@ def observe_all(v: VisionConfig, w: WorldConfig, rules: RuleArrays, state: World
     occ = jnp.zeros((H, W), jnp.int32).at[state.pos[:, 0], state.pos[:, 1]].add(state.alive.astype(jnp.int32))
     cols = jnp.arange(v.columns)
 
-    def one(pos, d, held, food, age, pain, taste, temp, dtemp, dskin, skin, last):
+    def one(pos, d, held, food, age, pain, taste, temp, dtemp, dskin, skin, last, hear):
         cells = pos[None, None, :] + offsets[d]                       # [W, R, 2]
         inb = ((cells >= 0) & (cells <= bounds)).all(axis=-1)        # [W, R]
         cc = jnp.clip(cells, 0, bounds)
@@ -108,10 +110,12 @@ def observe_all(v: VisionConfig, w: WorldConfig, rules: RuleArrays, state: World
             parts.append(skin[None])
         if b.efference:
             parts.append(jax.nn.one_hot(last, A.NUM_ACTIONS, dtype=jnp.float32))
+        if b.hear:
+            parts.append(hear[None])
         return vision, jnp.concatenate(parts).astype(jnp.float32)
 
     vision, body = jax.vmap(one)(state.pos, state.dir, state.held, state.food, state.age, state.pain, state.taste,
-                                 state.temp, state.temp_delta, state.skin_delta, state.skin, state.last_action)
+                                 state.temp, state.temp_delta, state.skin_delta, state.skin, state.last_action, state.hear)
     delta = jnp.abs(state.pos[:, None, :] - state.pos[None, :, :]).max(axis=-1)   # [N, N] Chebyshev
     n = state.pos.shape[0]
     within = (delta <= w.hear_radius) & ~jnp.eye(n, dtype=bool)

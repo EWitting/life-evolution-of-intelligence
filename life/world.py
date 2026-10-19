@@ -41,6 +41,13 @@ class WorldState(NamedTuple):
     last_action: jnp.ndarray  # [N] int32 action taken last tick (for the efference copy)
     sick: jnp.ndarray         # [N, D] float32 pain scheduled for the coming ticks (WorldConfig.sickness_delay)
     recent: jnp.ndarray       # [N, M] float32 fading count of what was eaten recently (WorldConfig.variety_bonus)
+    hear: jnp.ndarray         # [N] float32 world sound heard this tick: +rattle_sign rattle, -rattle_sign gust
+    near_snake: jnp.ndarray   # [N] bool within rattle_radius of a snake (a rattle sounds on entering)
+    bites: jnp.ndarray        # [N] float32 snake bites received
+    rattles: jnp.ndarray      # [N] float32 rattles heard
+    snake_pos: jnp.ndarray    # [S, 2] int32 hidden snakes (WorldConfig.snakes); not per agent
+    snake_phase: jnp.ndarray  # [S] int32 tick offset of each snake's moves
+    rattle_sign: jnp.ndarray  # [] float32 +-1, drawn per world
 
 
 def init_world(cfg: WorldConfig, rules: RuleArrays, key: jax.Array) -> WorldState:
@@ -98,6 +105,9 @@ def init_world(cfg: WorldConfig, rules: RuleArrays, key: jax.Array) -> WorldStat
         full_time = jnp.maximum(rules.decay_ticks[grid], 1)
         timer = jnp.where(spent, 1 + jnp.floor(jax.random.uniform(k7, (H, W)) * full_time).astype(jnp.int32), timer)
     pos = jnp.stack([jax.random.randint(k3, (N,), 0, H), jax.random.randint(k4, (N,), 0, W)], axis=1).astype(jnp.int32)
+    ks1, ks2, ks3 = jax.random.split(jax.random.fold_in(key, 11), 3)
+    S = cfg.snakes
+    snake_pos = jax.random.randint(ks1, (S, 2), 0, jnp.array([H, W])).astype(jnp.int32)
     return WorldState(
         grid_obj=grid,
         grid_uses=rules.num_uses[grid],
@@ -123,12 +133,19 @@ def init_world(cfg: WorldConfig, rules: RuleArrays, key: jax.Array) -> WorldStat
         last_action=jnp.zeros(N, jnp.int32),
         sick=jnp.zeros((N, max(1, cfg.sickness_delay)), jnp.float32),
         recent=jnp.zeros((N, rules.food_value.shape[0]), jnp.float32),
+        hear=jnp.zeros(N, jnp.float32),
+        near_snake=jnp.zeros(N, bool),
+        bites=jnp.zeros(N, jnp.float32),
+        rattles=jnp.zeros(N, jnp.float32),
+        snake_pos=snake_pos,
+        snake_phase=jax.random.randint(ks2, (S,), 0, max(1, cfg.snake_move_ticks)).astype(jnp.int32),
+        rattle_sign=jnp.where(jax.random.bernoulli(ks3), 1.0, -1.0).astype(jnp.float32),
     )
 
 
 def take_agents(state: WorldState, sel: jnp.ndarray) -> WorldState:
     """The same world with only the agents `sel` [n] (indices), in that order; the maps are untouched."""
-    maps = ("grid_obj", "grid_uses", "grid_timer", "tick")
+    maps = ("grid_obj", "grid_uses", "grid_timer", "tick", "snake_pos", "snake_phase", "rattle_sign")
     return state._replace(**{f: getattr(state, f)[sel] for f in state._fields if f not in maps})
 
 
@@ -265,6 +282,24 @@ def step_world(cfg: WorldConfig, rules: RuleArrays, state: WorldState, actions: 
         sick = sick.at[:, cfg.sickness_delay - 1].add(pain_eat)
     else:
         pain_in, sick = pain_eat, state.sick
+
+    # --- hidden snakes: move, bite next to them, rattle on coming within rattle_radius; wind gusts ---
+    snake_pos, near, bites, rattles, hear = state.snake_pos, state.near_snake, state.bites, state.rattles, state.hear
+    if cfg.snakes > 0:
+        km, kw = jax.random.split(jax.random.fold_in(key, 12))
+        S, md = cfg.snakes, cfg.snake_move_dist
+        moving = ((state.tick + state.snake_phase) % cfg.snake_move_ticks) == 0
+        jump = jax.random.randint(km, (S, 2), -md, md + 1)
+        snake_pos = jnp.where(moving[:, None], jnp.clip(snake_pos + jump, 0, bounds), snake_pos)
+        dist = jnp.abs(pos[:, None, :] - snake_pos[None, :, :]).max(axis=-1).min(axis=1)   # [N] nearest snake
+        bitten = alive & (dist <= 1)
+        near = alive & (dist <= cfg.rattle_radius)
+        rattle = near & ~state.near_snake & (dist > 1)
+        gust = alive & jax.random.bernoulli(kw, cfg.wind_rate, (N,))
+        hear = state.rattle_sign * (rattle.astype(jnp.float32) - gust.astype(jnp.float32))
+        pain_in = pain_in + cfg.snake_pain * bitten
+        food = food - cfg.snake_food * bitten
+        bites, rattles = bites + bitten, rattles + rattle
     pain = state.pain * cfg.pain_decay + pain_in
 
     # --- temperature and metabolism ---
@@ -301,5 +336,6 @@ def step_world(cfg: WorldConfig, rules: RuleArrays, state: WorldState, actions: 
         skin=skin,
         skin_delta=skin - state.skin,
         recent=recent,
+        hear=hear, near_snake=near, bites=bites, rattles=rattles, snake_pos=snake_pos,
     )
     return new_state, {"gained": gained, "pain": pain_in, "ate": ate}

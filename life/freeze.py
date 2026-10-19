@@ -45,11 +45,13 @@ def with_defaults(part: str, stored):
     if not isinstance(stored, dict) or not isinstance(default, dict):
         return stored
     out = {**{k: v for k, v in default.items() if k not in stored and k not in RUN_ONLY}, **stored}
-    if part == "brain":   # the same for the options of a modulator (stored as a list of them)
+    if part == "brain":   # the same for the options of a modulator, projection and region (stored as lists of them)
         from dataclasses import asdict
-        from .config import ModulatorSpec
-        blank = json.loads(json.dumps(asdict(ModulatorSpec(name=""))))
-        out["modulators"] = [{**{k: v for k, v in blank.items() if k not in m}, **m} for m in out.get("modulators", [])]
+        from .config import ModulatorSpec, ProjectionSpec, RegionSpec
+        for field, spec in (("modulators", ModulatorSpec(name="")), ("projections", ProjectionSpec(src="", dst="")),
+                            ("regions", RegionSpec(name="", size=0))):
+            blank = json.loads(json.dumps(asdict(spec)))
+            out[field] = [{**{k: v for k, v in blank.items() if k not in m}, **m} for m in out.get(field, [])]
     return out
 
 

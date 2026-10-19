@@ -1186,6 +1186,11 @@ EPISODES = 4                     # worlds per generation: 16 lives per genome (4
                                  # better (STAGE_LOG v52). Frozen stages ran with 1 and keep it.
 EVOLUTION_NEW = (("eta_log_std", 0.3), ("episodes", EPISODES))   # Stage.evolution of every stage from the dopamine critic on
 
+# Draft of the dopamine critic (2026-10-19): the 2.2 brain and world, for the generation-0 probes on the frozen 2.2
+# population (`gen0.py` with variant `td`); the stage proper is defined once the probes settle the design.
+stage(Stage("x.critic", "x_critic", "2.2", B22P, W22, VISION_CH1, BODY_17, pallium_world, **{**_S15, "generations": 100},
+            evolution=EVOLUTION_NEW, notes="DRAFT: the 2.2 brain and world as the base of the critic probes"))
+
 # ------------------------------------------------------------------ running
 
 EVOLUTION_OVERRIDES: dict = {}   # set from the command line (--mutation-prob), applied to every stage

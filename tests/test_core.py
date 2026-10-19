@@ -6,7 +6,7 @@ import pytest
 
 from life import actions as A
 from life import brain, ohol
-from life.config import WorldConfig, VisionConfig, BrainConfig, EvolutionConfig, ExperimentConfig, RegionSpec
+from life.config import WorldConfig, VisionConfig, BodyConfig, BrainConfig, EvolutionConfig, ExperimentConfig, RegionSpec
 from life.ruleset import RulesetBuilder
 from life.sensors import ray_offsets, observe_all, flatten_obs, obs_size
 from life.world import init_world, step_world
@@ -209,3 +209,26 @@ def test_dropping_the_dead_changes_nothing():
     assert life[7] < 500 and life[3] + 100 < life[-1]                  # deaths spread over several checks
     for k in a:
         assert np.array_equal(np.asarray(a[k]), np.asarray(b[k])), k
+
+
+def test_hidden_snake_rattles_ahead_and_bites_silently():
+    """Walking towards a snake: one rattle on coming within rattle_radius, silence after, a bite next to it."""
+    rs = toy_ruleset()
+    rules = rs.to_arrays(K)
+    cfg = WorldConfig(height=16, width=16, num_agents=1, hunger_per_tick=0.0, snakes=1, snake_move_ticks=10 ** 6,
+                      snake_food=3.0, rattle_radius=4, pain_decay=0.0)
+    st = empty_world(cfg, rules)
+    st = st._replace(pos=jnp.array([[8, 1]]), dir=jnp.array([1]), food=jnp.array([10.0]),
+                     snake_pos=jnp.array([[8, 10]]), snake_phase=jnp.array([1]))
+    key = jax.random.PRNGKey(1)
+    heard, pain = [], []
+    for _ in range(8):   # x = 2 .. 9; the snake is at x = 10
+        st, ev = step_world(cfg, rules, st, jnp.array([A.FORWARD]), key)
+        heard.append(float(st.hear[0])); pain.append(float(ev["pain"][0]))
+    assert [h != 0 for h in heard] == [False, False, False, False, True, False, False, False]   # x = 6: distance 4
+    assert abs(heard[4]) == 1.0 and heard[4] == float(st.rattle_sign)
+    assert pain == [0.0] * 7 + [1.0]                                                             # x = 9: next to it
+    assert float(st.food[0]) == pytest.approx(7.0) and float(st.bites[0]) == 1 and float(st.rattles[0]) == 1
+    obs = observe_all(VisionConfig(), cfg, rules, st, jnp.asarray(ray_offsets(VisionConfig())),
+                      BodyConfig(hear=True))
+    assert obs["vision"][0, :, 0].sum() == 0   # the snake is not seen

@@ -8,7 +8,10 @@ Protocol for a new circuit or learning rule (2026-10-03): evolution runs are slo
 so check a design in this order:
 
 1. **Mechanism, brain only** (`assay.py`): scripted experience, then action probabilities and cell activities in
-   fixed situations. Does the circuit compute what it is meant to?
+   fixed situations. Does the circuit compute what it is meant to? For learning stages (chapter 2 on) these are
+   **lab tests**: textbook experiments from the literature, whose outcomes are known (`life/labtests.py`;
+   `lab_conditioning.py`: acquisition, extinction, blocking; `assay_xor.py`: look-alike discrimination). Their
+   results go into the book. Do this step before generation 0 and before any evolution run.
 2. **Generation 0, paired** (`gen0.py`): the parent population with the new mechanism on and off in the same
    worlds. Does it help, or at least not hurt, before any evolution?
 0. **On paper** (`classify.py`): can the learning rule separate good from poison at all, with the looks the stage

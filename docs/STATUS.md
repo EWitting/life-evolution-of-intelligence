@@ -10,6 +10,9 @@ than control (user, 2026-10-01). One life is mostly luck, so a design is checked
 `scripts/probes/README.md`):
 
 1. **Mechanism, brain only**: `scripts/probes/assay.py` (scripted experience, then actions in fixed situations).
+   For learning stages: **lab tests**, textbook experiments from the literature (`life/labtests.py`,
+   `scripts/probes/lab_conditioning.py`: acquisition, extinction, blocking), done before generation 0 and
+   evolution, with results in the book (BRAIN_EVOLUTION principle 4).
 2. **Generation 0, paired**: `scripts/probes/gen0.py` (parent population, mechanism on vs off, same worlds). A
    diagnostic, not a gate: a neutral or mildly negative result can still go on to evolution.
 3. **Evolution**: main vs control, 64 genomes x 4 siblings, recombination, **100 generations** (user, 2026-10-17:
@@ -100,6 +103,18 @@ remapping the stored populations and freezing again.
    The new stage pages follow that structure.
 
 ## Known issues and open points
+
+- **To do: reorganise and document the code (user, 2026-10-19).** Bugs have been getting more frequent, and the code
+  is hard to follow for the user and for agents.
+  - `life/experiments/stages.py` is about 1600 lines with every stage in one file: split it per stage or chapter
+    (world builders, brain definitions, stage registry).
+  - Ambiguous names: `life/lab.py` (stepping a world by hand) vs `life/labtests.py` (scripted lab experiments).
+  - `life/brain.py` has long blocks of JAX math without comments; for example the plasticity coefficients
+    `Genome.A`-`D` are defined without saying what they are (for the hebb rule: dw = eta * mod * (A pre post + B pre +
+    C post + D); the other rules use A and C differently, see `plasticity_rule`).
+  - An example of a bug this caused: an `abcd` set on a projection is silently replaced by the inherited genes
+    (`remap_genomes` carries A-D over for a projection that keeps its rule), which flipped the sign of the `td`
+    critic variant (STAGE_LOG v54).
 
 - The pain-blind control of 1.1 does not evolve avoidance by look within 150 generations, though it could.
 - Learned appetite for the staple spreads to the innately avoided poison type, which looks 80% like it (assay).

@@ -63,31 +63,18 @@ remapping the stored populations and freezing again.
 
 ## Next steps
 
-1. **Resume here: 2.2 frozen (2026-10-19, `flee` and `fed` kept). Noise at generation 0 measured (v52): as noisy as at the end of a run;
-   episodes 4 nearly doubles selection accuracy, 64 re-evaluation worlds halve the error of 16. Decide the settings with the user, then the dopamine critic** (STAGE_LOG v46-v51). 2.2 was rerun after
-   the remap fix (v50: evolvable projections with a designed start and the pallium's fixed random input were reset
-   on every remap; it biased the head to head and broke probes) and evaluated (v51): the pallium is used in every
-   seed (lesion 90%), it tells the XOR kinds apart in the lab where the look cannot, and main is ahead of control in
-   every seed in training and head to head. The head to head is checked to hand the control its own brain
-   (`scripts/probes/versus_check.py`, exact). 1.8's head to head re-evaluated: +178 +-66, verdict stands. A larger
-   pallium does not lower the transfer further (backup check done, not worth it). Freezing: `flee` and `fed` are
-   unused in mixed patches (frozen chapter 1 circuits; keep them, later worlds may need them, decide with the
-   user). In patches of mostly one kind the place answered first and evolution turned the lessons down (through the
-   rule genes: A to -0.85 nulls a pain lesson, C negative erases earlier lessons). User (2026-10-18): never switch
-   evolution off; fix what makes evolution turn a feature down (start values and genuine flaws of the genetic
-   algorithm may change). Options not built: excitatory-only input to the pallium (Dale's law; brain-free it
-   separates a little worse: 0.20 against 0.13); weights drawn per birth (ADR-017).
-   **Noise, to decide before the next stage** (v50): compare populations in 32-64 shared worlds, paired (8 worlds
-   resolve about 14% between two populations of one seed and gave seed 0 the wrong sign; 16 resolve about 10%);
-   one life per genome is the largest noise (genomes in one world spread by about 600 around a mean of about 850,
-   four times the spread between worlds), so consider more siblings per genome or more genomes now that the GPU
-   makes it cheap (1024 animals in 512 x 512: 1.4 s per 1000 ticks); keep three seeds (seeds differ more than one
-   comparison's error). Raise `life.book export --worlds` accordingly. Confirmed after the fix (v51): 16 paired worlds resolve 8-13%. Repeatability (`scripts/probes/repeatability.py`, final
-   2.2 populations of seed 0, 8 worlds): a genome's score from its 4 siblings correlates 0.05 (main) / 0.14 (control)
-   between worlds; one life 0.01 / 0.04: at the end of a run selection acts almost only on luck. `siblings` splits
-   the fixed 256 animals (more siblings = fewer genomes, not more lives); more lives per genome come from
-   `evolution.episodes` (independent worlds, already vmapped, unused at 1) or a larger world. GPU cost: 4x the
-   animals about 2.3x the time, 8x about 3.4x. Candidate for the next stage: episodes 4 (16 lives per genome).
+1. **Resume here: design the dopamine critic** (fresh session, 2026-10-19). 2.2 is frozen (tag `stage-2.2`,
+   `flee` and `fed` kept). Old chapter 2 definitions (`old2.x`, `x.td` in `stages.py`) are stale: define the stage
+   again on the 2.2 brain, probe it first (assay, then generation 0 on one seed), and agree new mechanisms with the user.
+   **Noise settings for every new stage** (STAGE_LOG v52, user 2026-10-19): `Stage.evolution = EVOLUTION_NEW`
+   (episodes 4: 4 siblings x 4 worlds = 16 lives per genome; learning rates multiplicative); frozen stages keep
+   episodes 1. Measured at generation 0 of 2.2 (`noise_gen0.py`): one life is as much luck there as at the end of a
+   run (repeatability with 4 lives 0.10, 16 lives 0.34, 64 lives 0.68); 16 lives about double the selection
+   accuracy for about 2.3x the GPU time (about 20 min per run). One 512 x 512 world x 16 siblings or 16 worlds of
+   128 x 128 x 1 sibling repeat no better (`small_world.py`). Comparisons: the spread between the 2.2 seeds is
+   mostly evaluation noise; re-evaluate in 64 worlds (s.e. of main - control about 25, 5% at 2 s.e.; 16 worlds: 49)
+   and pass `--worlds 64` to `life.book export`. Measure the GPU memory of the first episodes-4 run (how many fit
+   side by side; 1.3-1.6 GB is used at idle by Windows).
    **Runs: use the GPU** (`docs/SETUP.md`): `wsl.exe -d Ubuntu-24.04 -- bash -lc 'cd /mnt/c/.../Life && bash
    scripts/gpu_queue.sh <job file> 3'` (job file lines: `<log name>|<stage arguments>`), logs in `runs/logs/`;
    book export and probes the same way with `XLA_PYTHON_CLIENT_PREALLOCATE=false ~/.venvs/life/bin/python ...`.

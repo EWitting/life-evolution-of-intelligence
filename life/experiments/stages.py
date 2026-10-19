@@ -1188,6 +1188,10 @@ SIBLINGS = 4                     # 256 agents = 64 genomes x 4 siblings (Evoluti
 CROSSOVER = 1.0                  # every child has two parents (whole neurons from either): in the recovery
                                  # benchmark this repaired a damaged population 6-7% further than asexual
                                  # reproduction in 40 generations, in every seed (STAGE_LOG, v20)
+EPISODES = 4                     # worlds per generation: 16 lives per genome (4 siblings x 4 worlds) nearly double the
+                                 # selection accuracy for 2.3x the GPU time; one large world or many small ones do no
+                                 # better (STAGE_LOG v52). Frozen stages ran with 1 and keep it.
+EVOLUTION_NEW = (("eta_log_std", 0.3), ("episodes", EPISODES))   # Stage.evolution of every stage from the dopamine critic on
 
 
 def make_exp(s: Stage, brain: BrainConfig, name: str, generations: int, seed: int) -> ExperimentConfig:

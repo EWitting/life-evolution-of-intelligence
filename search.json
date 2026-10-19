@@ -64,7 +64,7 @@
     "href": "background.html#reading-a-brain-diagram",
     "title": "Background",
     "section": "Reading a brain diagram",
-    "text": "Reading a brain diagram\nEvery stage page shows the brain of that stage. Here is the brain of the valence stage, the second one:\n\n\n\n\nA box is a group of neurons with one job, called a region: the eyes, the motor neurons that move the creature, a cell for pain. Its name says what it is for.\nAn arrow between two boxes is a projection: all the synapses from one region onto another. The end of the arrow says what it does: an arrowhead excites, a bar inhibits, and a dot (on arrows from the senses) means a mix of both.\nThe colour of an arrow says where its strengths come from (next section), and its width how strong it is overall.\nUnder a box’s name: whether its cells excite or inhibit, and how many there are. The coloured backgrounds group regions that belong together.\nA box outlined in green is new in this stage. The diagram opens on the new circuit alone; the button everything shows the whole brain. The ganglion, an evolved tangle with no named cells, is drawn as one box.\n\nPoint at a box or an arrow, or tap it on a phone, for details. You do not need to follow every arrow. Each page says in words which arrows matter, and the rest is the brain of earlier stages.",
+    "text": "Reading a brain diagram\nEvery stage page shows the brain of that stage. Here is the brain of the valence stage, the second one:\n\n\n\n\nA box is a group of neurons with one job, called a region: the eyes, the motor neurons that move the creature, a cell for pain. Its name says what it is for.\nAn arrow between two boxes is a projection: all the synapses from one region onto another. The end of the arrow says what it does: an arrowhead excites, a bar inhibits, and a dot (on arrows from the senses) means a mix of both.\nThe colour of an arrow says where its strengths come from (next section), and its width how strong it is overall.\nUnder a box’s name: whether its cells excite or inhibit, and how many there are. The coloured backgrounds group regions that belong together.\nA box outlined in green is new in this stage. The diagram opens on the new circuit: what the stage added and what it connects to directly, with the groups it does not touch drawn as empty outlines. All cells shows the other cells too, faded; everything shows the whole brain.\n\nPoint at a box or an arrow, or tap it on a phone, for details. You do not need to follow every arrow. Each page says in words which arrows matter, and the rest is the brain of earlier stages.",
     "crumbs": [
       "Background"
     ]
@@ -772,6 +772,83 @@
     "crumbs": [
       "Chapter 2: reinforcing",
       "<span class='chapter-number'>7</span>  <span class='chapter-title'>Pallium</span>"
+    ]
+  },
+  {
+    "objectID": "critic.html",
+    "href": "critic.html",
+    "title": "Critic",
+    "section": "",
+    "text": "The circuit\nLearning from surprise\nSo far pain has been the teacher. Every painful bite strengthens the aversion to what the creature was looking at, and nothing weakens it again. That works as long as the world keeps its promises. In this stage it does not: halfway through a life the poison bushes turn good and the good ones turn poison. A teacher that only speaks when it hurts cannot say “this is no longer bad”, so a creature taught by pain keeps avoiding what is now its best food.\nThe new teacher is a critic. It keeps an expectation and teaches with the difference. An expected pain teaches nothing new; a pain that fails to come is a pleasant surprise, and that undoes the aversion.\nIn the model the surprise is a formula; in the brain it is the firing of dopamine cells. Building it from cells is the next step.",
+    "crumbs": [
+      "Chapter 2: reinforcing",
+      "<span class='chapter-number'>8</span>  <span class='chapter-title'>Critic</span>"
+    ]
+  },
+  {
+    "objectID": "critic.html#the-circuit",
+    "href": "critic.html#the-circuit",
+    "title": "Critic",
+    "section": "",
+    "text": "Value cells read the pallium and learn, within the life, how good (value_app) and how bad (value_av) the next few moments will be when a bush looks like this.\nThe surprise is computed every tick: taste − pain + prediction now − prediction a moment ago. When things go as predicted the terms cancel. A bite that tastes better than predicted makes it positive; a pain, or a prediction that falls, makes it negative.\nIt teaches the value cells, so the predictions improve, and every synapse that pain taught before (look and pallium onto the bad cells): a bad surprise strengthens the aversion, a good one weakens it.",
+    "crumbs": [
+      "Chapter 2: reinforcing",
+      "<span class='chapter-number'>8</span>  <span class='chapter-title'>Critic</span>"
+    ]
+  },
+  {
+    "objectID": "critic.html#biology",
+    "href": "critic.html#biology",
+    "title": "Critic",
+    "section": "Biology",
+    "text": "Biology\nDopamine cells in the midbrain fire a burst when something turns out better than expected and pause when it turns out worse. In the classic recordings in monkeys they fire at a drop of juice; once a light reliably announces the juice, they fire at the light instead; and when the juice is then left out, they pause at the moment it should have come. This is the teaching signal of temporal-difference learning, a method from machine learning that predicted these recordings.\nInsects run the same scheme in the mushroom body (the counterpart of the pallium), with separate dopamine cells for reward and for punishment. Mammals mostly signal both with one population of cells, as this model does.",
+    "crumbs": [
+      "Chapter 2: reinforcing",
+      "<span class='chapter-number'>8</span>  <span class='chapter-title'>Critic</span>"
+    ]
+  },
+  {
+    "objectID": "critic.html#the-world",
+    "href": "critic.html#the-world",
+    "title": "Critic",
+    "section": "The world",
+    "text": "The world\nThe world of the pallium stage, with one change: at tick 800 of every life the two poison kinds of new bush turn good and the two good kinds turn poison. Their looks stay the same.",
+    "crumbs": [
+      "Chapter 2: reinforcing",
+      "<span class='chapter-number'>8</span>  <span class='chapter-title'>Critic</span>"
+    ]
+  },
+  {
+    "objectID": "critic.html#did-it-work",
+    "href": "critic.html#did-it-work",
+    "title": "Critic",
+    "section": "Did it work?",
+    "text": "Did it work?\n\n\n\nThe critic pays: about 130 more fitness than the pain teacher when each lives alone, and about 180 more when the two share a world. Its learning is needed (without any learning a fifth is lost), and so are the cells that predict good things (value_app). The cells that predict bad things (value_av) are not used: pain arrives with the bite, so there is little to predict about it ahead of time.\n\n\n\nBoth kinds of creature switch. After tick 800 both stop eating the bushes that turned poison and start eating the ones that turned good, at almost the same rate. The pain teacher manages this in another way: a look that has been seen often stirs the senses less, so an old aversion weakens on its own. The critic’s creatures eat more throughout, before and after the switch, and more of them are still alive at the end.\n\nIn the lab\nThe theory makes sharp predictions, and they can be tested on one creature at a time. A new bush is put in front of it; it bites three times and feels pain each time; after a pause the next trial begins.\n\n\n\nThe surprise moves to the warning. At the first painful meal the signal drops at the bites. After a few meals it drops as soon as the bush appears, and much less at the bites. When the pain is then left out, the signal turns positive where the pain should have been, as in the monkey recordings.\n\n\n\nExtinction (first two rows): when the pain stops, the critic’s aversion fades by a third over twelve meals, and the pain teacher’s does not change. Blocking (last two rows) did not show: the theory predicts that a second warning sign, added to one that already predicts the pain, is learned less. Here neither creature learned the second sign at all in three bites, so there was nothing to block.",
+    "crumbs": [
+      "Chapter 2: reinforcing",
+      "<span class='chapter-number'>8</span>  <span class='chapter-title'>Critic</span>"
+    ]
+  },
+  {
+    "objectID": "critic.html#full-results",
+    "href": "critic.html#full-results",
+    "title": "Critic",
+    "section": "Full results",
+    "text": "Full results\n\n\n\n\n\n\nNoteFitness over the generations\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nNoteAll fitness measures\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nNoteAll lesions\n\n\n\n\n\n\n\n\nThe large losses for value_app_prev and value_av_prev are not a sign of use. These cells hold a copy of the prediction a moment ago, and the surprise is the difference between the two. Silencing only the copy leaves an error that never cancels, and this error unteaches every aversion.\n\n\n\n\n\n\n\n\n\nNoteThe lab and the switch in numbers\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nNoteWhat it took\n\n\n\n\n\n\nA world that changes. Where poison stays poison, the critic did no better than pain: pain comes at the bite, and a pain teacher learns from it directly. Unlearning is what only the critic can do.\nThe right moment. The surprise of a tick is about the step that led to it, so it changes the synapses that were active a tick earlier (real synapses are changed by dopamine that arrives a second or two late).\nA short horizon. Nothing tells the creature how long a pain will last while the bush is in view, so the predictions look only a few ticks ahead. A sense of time since a warning is for a later stage.\nTaste counts less than pain. Whether a bite follows a look depends on a decision the pallium does not see, so taste can be only half predicted; at full weight the unpredicted taste drowned the lessons.\nWiring of its own. The pallium’s random wiring now belongs to the creature’s place in the population, not to its genes, so no lineage can inherit a lucky code.",
+    "crumbs": [
+      "Chapter 2: reinforcing",
+      "<span class='chapter-number'>8</span>  <span class='chapter-title'>Critic</span>"
+    ]
+  },
+  {
+    "objectID": "critic.html#runs",
+    "href": "critic.html#runs",
+    "title": "Critic",
+    "section": "Runs",
+    "text": "Runs",
+    "crumbs": [
+      "Chapter 2: reinforcing",
+      "<span class='chapter-number'>8</span>  <span class='chapter-title'>Critic</span>"
     ]
   }
 ]

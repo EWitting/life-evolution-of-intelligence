@@ -2836,7 +2836,7 @@ Not better than 4 x 4: the same at generation 0, worse late in a run, a little c
 world for 114) stopped by the user after about 10 minutes: too large for a quick check. With three runs sharing the
 GPU, the per-generation costs differed from the solo measurements: 7.8 s, 22 s (2.8x) and 26 s (3.3x), so the
 budgets were not equal anyway. Three runs at a time filled the laptop's RAM (Windows paged; WSL held 4.3 of 5.9 GB)
-and the GPU (7.6 of 8.1 GB). Definitions kept, no results.
+and the GPU (7.6 of 8.1 GB). No results; the definitions and `budget_eval.py` were removed again (git history, commit b523a28).
 
 **GPU memory of one process** (`scripts/probes/gpu_mem.py`, one process per setting, alone, idle 0.4 GB): peak JAX
 memory of one generation 327 MiB (2.2: 256 animals, 1 episode), 711 MiB (episodes 4), 1293 MiB (1024 animals in one

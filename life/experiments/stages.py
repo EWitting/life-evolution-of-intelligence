@@ -1186,18 +1186,6 @@ EPISODES = 4                     # worlds per generation: 16 lives per genome (4
                                  # better (STAGE_LOG v52). Frozen stages ran with 1 and keep it.
 EVOLUTION_NEW = (("eta_log_std", 0.3), ("episodes", EPISODES))   # Stage.evolution of every stage from the dopamine critic on
 
-# Side test (STAGE_LOG v53): one GPU budget for 2.2 (200 generations of the stage's own setting) spent three ways:
-# more generations, more lives per genome (episodes 4, 2.3x the time per generation) or more genomes (256 genomes x 4
-# siblings in one 512 x 512 world at the same densities, about 1.75x). Compared in the stage's own world.
-_S22 = STAGES["2.2"]
-stage(replace(_S22, key="x.b1", name="x_budget_gen200", generations=200,
-              notes="budget test: the 2.2 setting for 200 generations"))
-stage(replace(_S22, key="x.b4", name="x_budget_ep4", generations=87, evolution=EVOLUTION_NEW,
-              notes="budget test: 16 lives per genome (episodes 4) for 87 generations"))
-stage(replace(_S22, key="x.b256", name="x_budget_pop256", generations=114,
-              world=replace(W22, num_agents=1024, height=512, width=512, patches=4 * W22.patches),
-              notes="budget test: 256 genomes x 4 siblings in one 512 x 512 world for 114 generations"))
-
 # ------------------------------------------------------------------ running
 
 EVOLUTION_OVERRIDES: dict = {}   # set from the command line (--mutation-prob), applied to every stage

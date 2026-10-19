@@ -1181,6 +1181,23 @@ stage(Stage("2.2", "s2_2_pallium", "1.8", B22P, W22, VISION_CH1, BODY_17, palliu
             notes="pallium: a sparse random expansion of the eye ahead (128 cells, k-WTA 2) taught by pain onto the "
                   "aversive cells; XOR looks; the adaptation strength evolves"))
 
+EPISODES = 4                     # worlds per generation: 16 lives per genome (4 siblings x 4 worlds) nearly double the
+                                 # selection accuracy for 2.3x the GPU time; one large world or many small ones do no
+                                 # better (STAGE_LOG v52). Frozen stages ran with 1 and keep it.
+EVOLUTION_NEW = (("eta_log_std", 0.3), ("episodes", EPISODES))   # Stage.evolution of every stage from the dopamine critic on
+
+# Side test (STAGE_LOG v53): one GPU budget for 2.2 (200 generations of the stage's own setting) spent three ways:
+# more generations, more lives per genome (episodes 4, 2.3x the time per generation) or more genomes (256 genomes x 4
+# siblings in one 512 x 512 world at the same densities, about 1.75x). Compared in the stage's own world.
+_S22 = STAGES["2.2"]
+stage(replace(_S22, key="x.b1", name="x_budget_gen200", generations=200,
+              notes="budget test: the 2.2 setting for 200 generations"))
+stage(replace(_S22, key="x.b4", name="x_budget_ep4", generations=87, evolution=EVOLUTION_NEW,
+              notes="budget test: 16 lives per genome (episodes 4) for 87 generations"))
+stage(replace(_S22, key="x.b256", name="x_budget_pop256", generations=114,
+              world=replace(W22, num_agents=1024, height=512, width=512, patches=4 * W22.patches),
+              notes="budget test: 256 genomes x 4 siblings in one 512 x 512 world for 114 generations"))
+
 # ------------------------------------------------------------------ running
 
 EVOLUTION_OVERRIDES: dict = {}   # set from the command line (--mutation-prob), applied to every stage
@@ -1188,10 +1205,6 @@ SIBLINGS = 4                     # 256 agents = 64 genomes x 4 siblings (Evoluti
 CROSSOVER = 1.0                  # every child has two parents (whole neurons from either): in the recovery
                                  # benchmark this repaired a damaged population 6-7% further than asexual
                                  # reproduction in 40 generations, in every seed (STAGE_LOG, v20)
-EPISODES = 4                     # worlds per generation: 16 lives per genome (4 siblings x 4 worlds) nearly double the
-                                 # selection accuracy for 2.3x the GPU time; one large world or many small ones do no
-                                 # better (STAGE_LOG v52). Frozen stages ran with 1 and keep it.
-EVOLUTION_NEW = (("eta_log_std", 0.3), ("episodes", EPISODES))   # Stage.evolution of every stage from the dopamine critic on
 
 
 def make_exp(s: Stage, brain: BrainConfig, name: str, generations: int, seed: int) -> ExperimentConfig:

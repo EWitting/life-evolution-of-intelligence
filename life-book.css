@@ -131,3 +131,17 @@
 .lb-watch { display: inline-block; padding: 0.6rem 1.1rem; border-radius: 8px; background: #1f5fbf; color: #fff !important;
             text-decoration: none; font-weight: 600; }
 .lb-watch:hover { opacity: 0.85; }
+
+/* hand-drawn figures in the text (background page) */
+.lb-fig { margin: 1.1rem 0 1.4rem; }
+.lb-fig-line { stroke: var(--lb-ink2); stroke-width: 2; }
+.lb-fig-bar { stroke: var(--lb-ink2); stroke-width: 3; }
+.lb-fig-head { fill: var(--lb-ink2); }
+.lb-fig-on { fill: var(--lb-seq); }
+.lb-fig-off { fill: var(--lb-cell0); stroke: var(--lb-axis); stroke-width: 1.5; }
+.lb-fig-inh-on { fill: var(--lb-seq); stroke: var(--lb-bad); stroke-width: 3; }
+.lb-fig-inh-off { fill: var(--lb-cell0); stroke: var(--lb-bad); stroke-width: 3; }
+.lb-fig-onlabel { font-size: 14px; font-weight: 600; fill: #fff; }
+.lb-fig-offlabel { font-size: 14px; font-weight: 600; fill: var(--lb-ink2); }
+.lb-fig-title { font-size: 14px; font-weight: 600; fill: var(--lb-ink); }
+.lb-fig-cap { font-size: 12.5px; fill: var(--lb-ink2); }

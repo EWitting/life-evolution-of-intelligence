@@ -60,6 +60,86 @@
     ]
   },
   {
+    "objectID": "background.html",
+    "href": "background.html",
+    "title": "Background: brains and evolution in brief",
+    "section": "",
+    "text": "Neurons and synapses\nThis book assumes no biology and little machine learning. This page explains the few ideas that every later page uses: what a neuron does, why some neurons excite and others inhibit, how to read the brain diagrams, the three ways a connection gets its strength, and how evolution and the experiments are run. A glossary at the end collects the terms.\nIf you already know neural networks, the callout below says what is different here.\nA neuron is a cell that collects signals from other neurons and passes on a signal of its own. In this book a neuron is described by one number, its activity: 0 when it is silent, 1 when it fires as fast as it can.\nNeurons are connected by synapses. A synapse has a strength (in machine learning: a weight). Every tick, a neuron adds up the activity of the neurons that reach it, each multiplied by the strength of its synapse, and its new activity follows that sum, squashed into the range from 0 to 1 (a negative sum gives 0). That is nearly all of it.\nThe words neuron and cell mean the same thing in this book.",
+    "crumbs": [
+      "Background: brains and evolution in brief"
+    ]
+  },
+  {
+    "objectID": "background.html#exciting-and-inhibiting",
+    "href": "background.html#exciting-and-inhibiting",
+    "title": "Background: brains and evolution in brief",
+    "section": "Exciting and inhibiting",
+    "text": "Exciting and inhibiting\nA synapse can push its target up or down. An excitatory neuron raises the activity of every neuron it reaches; an inhibitory neuron lowers it. A real neuron is one or the other, never both (this is called Dale’s law), and the brains in this book follow that rule.\nInhibition is not just “the minus sign”. It is how a brain says not now, and most of the circuits in this book are built from three small patterns:\n\n\n  \n  \n  A\n  B\n  Excitation\n  A fires, so B fires\n  \n  \n  \n  E\n  G\n  B\n  A gate\n  E drives B, but the inhibitory\n  gate G holds it shut\n  \n  \n  \n  \n  E\n  X\n  G\n  B\n  Disinhibition\n  X silences the gate,\n  so B is released\n\nFilled circles fire, pale circles are silent; red-edged circles are inhibitory. An arrowhead\nexcites its target, a bar inhibits it.\n\n\nExcitation passes a signal on: this is food, so bite.\nA gate is an inhibitory cell that holds an action back until a condition is met. In the valence stage, a cell that fires whenever nothing is within reach holds the bite shut, so that wanting to eat does not turn into biting the air.\nDisinhibition switches a gate off, and that releases the action. Brains use it a lot: rather than pushing an action into being, they keep many actions held back and lift the hold on one.\n\nA fourth pattern appears later: competition, where cells inhibit each other so that only the strongest few stay active.",
+    "crumbs": [
+      "Background: brains and evolution in brief"
+    ]
+  },
+  {
+    "objectID": "background.html#reading-a-brain-diagram",
+    "href": "background.html#reading-a-brain-diagram",
+    "title": "Background: brains and evolution in brief",
+    "section": "Reading a brain diagram",
+    "text": "Reading a brain diagram\nEvery stage page shows the brain of that stage. Here is the brain of the valence stage, the second one:\n\n\n\n\nA box is a group of neurons with one job, called a region: the eyes, the motor neurons that move the animal, a cell for pain. Its name says what it is for.\nAn arrow between two boxes is a projection: all the synapses from one region onto another. The end of the arrow says what it does: an arrowhead excites, a bar inhibits, and a dot (on arrows from the senses) means a mix of both.\nThe colour of an arrow says where its strengths come from (next section), and its width how strong it is overall.\nUnder a box’s name: whether its cells excite or inhibit, and how many there are. The coloured backgrounds group regions that belong together.\nA box outlined in green is new in this stage. The diagram opens on the new circuit alone; the button everything shows the whole brain.\n\nPoint at a box or an arrow, or tap it on a phone, for details. You do not need to follow every arrow. Each page says in words which arrows matter, and the rest is the brain of earlier stages.",
+    "crumbs": [
+      "Background: brains and evolution in brief"
+    ]
+  },
+  {
+    "objectID": "background.html#three-ways-a-connection-gets-its-strength",
+    "href": "background.html#three-ways-a-connection-gets-its-strength",
+    "title": "Background: brains and evolution in brief",
+    "section": "Three ways a connection gets its strength",
+    "text": "Three ways a connection gets its strength\n\n\n\n\n\n\n\n\n\narrow\norigin\nchanges\nexample\n\n\n\n\ndark\ndesigned (hard-wired): we wire it, evolution may only make it stronger or weaker as a whole\nover generations, as a whole\npain → the “this is bad” cells\n\n\ngrey\nevolved: which synapses exist and how strong each is is inherited, with mutations\nover generations, synapse by synapse\neyes → motor neurons\n\n\npurple\nlearned: it starts where evolution left it and changes during a life\nwithin one life\nthe look of a berry → “this is bad”, after it hurt\n\n\n\nDesigned connections give a cell a fixed meaning that later stages can rely on: a cell that is wired to pain and nothing else means pain. Evolved connections are where evolution finds its own solutions, often in ways that are hard to read. Learned connections are the only memory an animal has of its own life.\n\nLearning within a life\nThe learning in this book follows one recipe, found in real animals from sea slugs to mammals. A synapse that was just active leaves a short trace. When something important happens, such as pain, a teaching signal is sent to many synapses at once, and only the ones that carry a trace change. Pain says something bad happened; the trace says and this is what was there.\n\n\nModulators\nSome cells do not talk to one partner through a synapse. They release a neuromodulator, a substance that spreads and reaches many cells at once, and that is cleared slowly. Serotonin and dopamine are the best-known. Modulators set the mood of a brain more than its next move: because they linger, they let an event act on behaviour for a while after it is over. In the diagrams they are drawn in pink.",
+    "crumbs": [
+      "Background: brains and evolution in brief"
+    ]
+  },
+  {
+    "objectID": "background.html#a-few-parts-of-real-brains",
+    "href": "background.html#a-few-parts-of-real-brains",
+    "title": "Background: brains and evolution in brief",
+    "section": "A few parts of real brains",
+    "text": "A few parts of real brains\nThe stages are named after the parts of real brains they model. You do not need to know these beforehand; each page explains its own. As a map:\n\n\n\n\n\n\n\n\n\npart\nin which animals\nwhat it does, roughly\nstage\n\n\n\n\nganglion\nworms and insects\na clump of neurons that links senses to muscles\nsteering\n\n\nhypothalamus\nall vertebrates\nreads the body’s needs (hunger, cold) and switches behaviours on and off\ndrives\n\n\npallium\nall vertebrates; in mammals most of it became the cortex\nspreads what is sensed over many cells, so that look-alikes can be told apart\npallium\n\n\ndopamine cells\nall vertebrates\nsignal “better than expected” or “worse than expected”\nnext\n\n\nbasal ganglia\nall vertebrates\nchoose which action to release (by disinhibition)\nlater\n\n\n\nThe animals in this book are not models of any one species. Each chapter takes its parts from a group of animals, as the roadmap explains.",
+    "crumbs": [
+      "Background: brains and evolution in brief"
+    ]
+  },
+  {
+    "objectID": "background.html#evolution-as-an-algorithm",
+    "href": "background.html#evolution-as-an-algorithm",
+    "title": "Background: brains and evolution in brief",
+    "section": "Evolution as an algorithm",
+    "text": "Evolution as an algorithm\nEvolution here is a genetic algorithm. A genome is what an animal inherits: the strengths of its evolved synapses and a few settings, such as how fast it learns. A population of genomes is born into a world, each as a few identical animals. The fitness of a genome is how well its animals did: here, roughly, how long they lived with a full stomach. The genomes that did best have children, each from two parents, with small random changes (mutations). That is one generation, and a stage runs for about a hundred of them.\nNobody tells evolution what a circuit is for. If a new cell helps, the genomes that use it have more children; if it does not, evolution may turn it down or ignore it.",
+    "crumbs": [
+      "Background: brains and evolution in brief"
+    ]
+  },
+  {
+    "objectID": "background.html#how-the-experiments-are-read",
+    "href": "background.html#how-the-experiments-are-read",
+    "title": "Background: brains and evolution in brief",
+    "section": "How the experiments are read",
+    "text": "How the experiments are read\nEach stage asks one question: does the new circuit get used? Three tools answer it.\n\nMain against control. Main is the new brain. The control is the brain of the previous stage, in the same new world, starting from the same population. Whatever separates them is the new circuit, so every comparison on a stage page is new brain against old brain.\nLesions. At the end, a region of the evolved brain is silenced and the animals live again. If they do much worse, they were using it. This is the main evidence on every page.\nSeeds. Evolution is noisy: one run can end almost anywhere. So every stage is run three times from different random starts (seeds). A result counts only when it holds in all three.\n\nResults are given as a mean over the seeds with a standard error (±): roughly, how far the mean might move if the experiment were run again. A difference smaller than about twice its standard error could be luck. How a stage is judged on the introduction page says more.",
+    "crumbs": [
+      "Background: brains and evolution in brief"
+    ]
+  },
+  {
+    "objectID": "background.html#glossary",
+    "href": "background.html#glossary",
+    "title": "Background: brains and evolution in brief",
+    "section": "Glossary",
+    "text": "Glossary\n\n\n\n\n\n\n\nterm\nmeaning\n\n\n\n\ntick\none step of the simulation, about a second of behaviour\n\n\nlook\nwhat an animal sees of a thing: a short list of numbers, like a colour\n\n\nneuron, cell\na unit with an activity between 0 (silent) and 1 (firing fast)\n\n\nsynapse, strength\na connection between two neurons, and how much it counts\n\n\nexcitatory, inhibitory\nraises or lowers the activity of the neurons it reaches\n\n\nregion\na group of neurons with one job, a box in the diagram\n\n\nprojection\nall synapses from one region onto another, an arrow in the diagram\n\n\nhard-wired\ndesigned; evolution tunes only its overall strength\n\n\nevolved\ninherited synapse by synapse, shaped by selection\n\n\nlearned, plastic\nchanges within a life\n\n\nmotor neurons\nthe cells that move the animal: step, turn, bite\n\n\nmotor programme\na cell that triggers a whole action, such as biting\n\n\ngate\nan inhibitory cell that holds an action back until a condition is met\n\n\ndisinhibition\nreleasing an action by silencing its gate\n\n\nvalence\nsorting things into good (appetitive) and bad (aversive)\n\n\nunconditioned stimulus\nsomething that matters without learning, such as pain or taste\n\n\nadaptation\na sense reporting change rather than level: what stays the same fades\n\n\nmodulator\na substance released by a few cells that acts on many, slowly\n\n\ngenome\nwhat an animal inherits\n\n\nfitness\nwhat selection rewards: here, the well-fed lifetime\n\n\ngeneration\none round of living, selecting and breeding\n\n\nseed\none independent run of a stage, from its own random start\n\n\nmain, control\nthe new brain, and the previous brain in the same new world\n\n\nlesion\nsilencing a region to see whether the animals need it\n\n\n± (standard error)\nhow far a mean might move if the experiment were repeated",
+    "crumbs": [
+      "Background: brains and evolution in brief"
+    ]
+  },
+  {
     "objectID": "roadmap.html",
     "href": "roadmap.html",
     "title": "Roadmap",

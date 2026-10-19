@@ -5,7 +5,8 @@ straight away, or at least not hurt.
 variants: see variants.py. lower-case field=value overrides a WorldConfig field (hunger_per_tick=0.02), upper-case
 NAME=value a constant of life.experiments.stages (NOVEL_WEIGHT=1.0). STAGE defaults to 1.5. OFF=<projection>[,...][;...]:
 one more condition per ';'-group with only the learning of those projections off. Every condition is also given as
-the paired difference from the first (learning on of the first variant) over the same worlds."""
+the paired difference from the first (learning on of the first variant) over the same worlds. With a reversal
+(WorldConfig.switch_tick) the halves are the two phases, good and poison as they are in each."""
 import os, sys
 from dataclasses import replace
 import jax, jax.numpy as jnp, numpy as np
@@ -50,10 +51,12 @@ for v in args:
             kr, ks = jax.random.split(k)
             rules = jax.tree_util.tree_map(lambda a: a[0], fn(0, kr))
             pv = np.asarray(rules.pain_value)
-            bad = [t for t in range(6) if pv[berry[t]] > 0]; good = [t for t in range(6) if pv[berry[t]] == 0]
+            pv = pv if pv.ndim == 2 else np.stack([pv, pv])   # per half: with a reversal (switch_tick) the halves are its phases
+            bad = [[t for t in range(6) if pv[h, berry[t]] > 0] for h in (0, 1)]
+            good = [[t for t in range(6) if pv[h, berry[t]] == 0] for h in (0, 1)]
             st, _ = sim(rules, g, ks)
             e = np.asarray(st["eats"]); n = e.shape[0]
-            tot = lambda h, ts: sum(e[:, h, berry[t]].sum() for t in ts) / n
+            tot = lambda h, ts: sum(e[:, h, berry[t]].sum() for t in ts[h]) / n
             acc.append([float((s.fitness or S.default_fitness)(st).mean()), float(st["alive_ticks"].mean()), tot(0, good), tot(0, bad), tot(1, good), tot(1, bad),
                         float(st["pain"].mean())])
         m = np.mean(acc, 0); se = np.std(acc, 0, ddof=1) / np.sqrt(WORLDS)

@@ -19,6 +19,7 @@
                   inherited
     pnt           the pallium also reads the no_touch cell (nothing at the mouth), one phase later; put it before
                   td / td2 in a combination (their value cells go one phase after the pallium)
+    noadapt       no input adaptation (BrainConfig.in_adapt off: the looks are not high-passed)
     pphase        control for pnt: the pallium one phase later, without the no_touch input
     pk<k>, pn<n>  pallium k-WTA winners, pallium size (e.g. pk4+pn512)
     pnear         the pallium also reads the distance of the object ahead (vis+0.near), so it codes look x distance;
@@ -107,6 +108,8 @@ def variant(brain, v):
             brain = replace(brain, projections=tuple(
                 replace(p, per_life=True) if p.dst == "pallium" else
                 replace(p, w_init=0.0, evolve=False) if p.src == "pallium" else p for p in brain.projections))
+        elif part == "noadapt":   # no input adaptation (the looks are not high-passed; BrainConfig.in_adapt)
+            brain = replace(brain, in_adapt=())
         elif part == "pphase":   # control for pnt: only the pallium's move one phase later, without no_touch
             brain = replace(brain, regions=tuple(replace(r, phase=r.phase + 1) if r.name == "pallium" else r
                                                  for r in brain.regions))

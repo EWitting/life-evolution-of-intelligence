@@ -112,6 +112,9 @@ remapping the stored populations and freezing again.
   - `life/brain.py` has long blocks of JAX math without comments; for example the plasticity coefficients
     `Genome.A`-`D` are defined without saying what they are (for the hebb rule: dw = eta * mod * (A pre post + B pre +
     C post + D); the other rules use A and C differently, see `plasticity_rule`).
+  - Recordings do not store what each object is in that life (poison or good, per phase with a reversal); the
+    dashboard and the book infer it from which types hurt after being eaten. Store the rules' food and pain values
+    (per phase) with every recording (`save_recording` already gets the appearances) and read them there.
   - An example of a bug this caused: an `abcd` set on a projection is silently replaced by the inherited genes
     (`remap_genomes` carries A-D over for a projection that keeps its rule), which flipped the sign of the `td`
     critic variant (STAGE_LOG v54).

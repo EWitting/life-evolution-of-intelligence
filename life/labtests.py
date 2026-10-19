@@ -94,6 +94,15 @@ PROTOCOLS = {
                        tests={"A": {"vis+0": "A"}}),
     "blocking": dict(train=[("pain", {"vis+0": "A"}, 6), ("pain", {"vis+0": "A", "vis+30": "B"}, 6)],
                      tests={"B side": {"vis+30": "B"}, "A": {"vis+0": "A"}}),
+    # retroactive interference: does learning that B hurts lower the aversion to A? (the reversal world: the new
+    # poisons are the other two XOR corners, X+- and X-+, of the old ones, X++ and X--)
+    "interference": dict(train=[("pain", {"vis+0": "A"}, 6), ("pain", {"vis+0": "B"}, 6)], tests={"A": {"vis+0": "A"}}),
+    "interference control": dict(train=[("pain", {"vis+0": "A"}, 6), ("none", {}, 6)], tests={"A": {"vis+0": "A"}}),
+    "xor interference": dict(train=[("pain", {"vis+0": "X++"}, 1), ("pain", {"vis+0": "X--"}, 1)] * 4
+                             + [("pain", {"vis+0": "X+-"}, 1), ("pain", {"vis+0": "X-+"}, 1)] * 4,
+                             tests={"X++": {"vis+0": "X++"}, "X+-": {"vis+0": "X+-"}}),
+    "xor interference control": dict(train=[("pain", {"vis+0": "X++"}, 1), ("pain", {"vis+0": "X--"}, 1)] * 4
+                                     + [("none", {}, 8)], tests={"X++": {"vis+0": "X++"}, "X+-": {"vis+0": "X+-"}}),
     "blocking control": dict(train=[("pain", {"vis+0": "C"}, 6), ("pain", {"vis+0": "A", "vis+30": "B"}, 6)],
                              tests={"B side": {"vis+30": "B"}, "A": {"vis+0": "A"}}),
 }
@@ -116,7 +125,8 @@ def conditioning(exp, pop, protocol: dict, sim: float, n_agents: int = 24, seed:
     looks = []
     for _ in range(NA):
         q, _ = np.linalg.qr(rng.normal(size=(K - 1, 4)))
-        u = {"A": q[:, 0], "B": q[:, 1], "C": q[:, 2], "A2": 0.8 * q[:, 0] + 0.6 * q[:, 3], "-A": -q[:, 0]}
+        u = {"A": q[:, 0], "B": q[:, 1], "C": q[:, 2], "A2": 0.8 * q[:, 0] + 0.6 * q[:, 3], "-A": -q[:, 0],
+             **{f"X{a}{b}": (int(f"{a}1") * q[:, 0] + int(f"{b}1") * q[:, 1]) / np.sqrt(2) for a in "+-" for b in "+-"}}
         looks.append({c: sim * base + np.sqrt(1 - sim ** 2) * (v @ comp) for c, v in u.items()})
 
     def obs(cues=None, taste=0.0, pain=0.0):

@@ -2951,3 +2951,32 @@ per-life draws, so their lifetimes are not comparable.
 **The critic on these pallia** (TD_TASTE 0.3, gamma 0.9), vs plife + pn512 (1056 +- 66): tdp -70 +- 38, pnt + tdp
 -91 +- 32, pnt + td -122 +- 57, pnt + pk4 + tdp -232 +- 41; the critic variants eat fewer good berries in the second
 half (29-35 vs 42.5). With distance the critic still does not pay at generation 0 in this world.
+
+## v56 (2026-10-19, night): the reversal world is the critic's driver; cost of a larger pallium
+
+**Cost** (`scripts/probes/cost.py`: one generation as evolution runs it, 4 episodes x 256 animals x 4000 ticks, one
+process alone): base (252 neurons) 6.9 s, 0.7 GB GPU; per-life wiring 8.5 s, 1.1 GB (every animal holds its own
+fixed weights); pallium 256 (380 neurons) 25.2 s, 2.4 GB; pallium 512 (636 neurons) does not fit (6.0-6.4 GB asked).
+The brain is one dense n x n matrix per animal, so time and memory grow with n^2 although the pallium has few
+synapses. Decision (user): a larger pallium only if crucial to the critic; the critic is tested at 128.
+
+**Reversal world** (side stage `x.reversal`: x.critic with `berry_world(reverse=True)`: at `switch_tick` the two
+poison novel types turn good and the two good ones poison, looks unchanged; `REV_SWITCH` 800, as only 45% of the
+incoming population is alive at tick 800 and 11% at 2000). `scripts/probes/reversal_curve.py` (bites per living
+creature over the life, P(bite) and aversive cells with each kind at the mouth before / after; plot in runs/logs);
+`gen0.py` now counts good and poison per phase.
+- Both base and `td` (gamma 0.5, scale 3, taste 0.3) adapt within about 100 ticks: the new poisons hurt, and the
+  former poisons are still tried (P(bite) 0.21 at the mouth before the switch). After it, P(bite) on a former
+  poison 0.47 (base) / 0.66 (td); alive at tick 2000 11% / 19%.
+- Why the base adapts at all: **input adaptation** (habituation of the look, `in_adapt`). The aversive cells facing
+  a former poison drop 0.31 -> 0.19 in base; with adaptation off (variant `noadapt`) 0.32 -> 0.30 and P(bite) only
+  0.33. The pain-gated synapses do not extinguish, as the lab test said. Lab interference (`life.labtests`
+  PROTOCOLS `interference`, `xor interference`): pain lessons on B lower the aversion to A by 18% with random looks,
+  not at all with the XOR corners of this world.
+- **Generation 0** (16 paired worlds): base 688 +- 20; learning off 725 +- 15 (+36 +- 14: pain-gated learning hurts
+  in a reversal); **td 832 +- 19, +144 +- 17**; tdp 739 +- 23, +51 +- 23. td eats 67 good berries per creature
+  after the switch against 34 (base) and 52 (learning off), with somewhat more poison. The first world where the
+  critic pays: what was learned stops being true, and only a prediction error can unlearn it.
+
+Open: the switch time (and several reversals per life, not supported yet); the critic's settings in this world;
+then lesions and the stage proper with the user.

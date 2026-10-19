@@ -1165,8 +1165,8 @@ B22P = extend(B18S, regions=(R("pallium", PALLIUM_N, sign="exc", alpha=1.0, bias
                              elig_tau=CS_ELIG["valence_av"], abcd=(0.0, 1.0, 0.0, 0.0), density=1.0)), **_GENE)
 
 
-def pallium_world(exp, novel_sim: float | None = None, xor: bool = True):
-    return learning_world(exp, springs=SPRINGS_17, berries=LEARN_BERRIES, novel_xor=xor,
+def pallium_world(exp, novel_sim: float | None = None, xor: bool = True, reverse: bool = False):
+    return learning_world(exp, springs=SPRINGS_17, berries=LEARN_BERRIES, novel_xor=xor, reverse=reverse,
                           novel_sim=PALLIUM_SIM if novel_sim is None else novel_sim)
 
 
@@ -1190,6 +1190,13 @@ EVOLUTION_NEW = (("eta_log_std", 0.3), ("episodes", EPISODES))   # Stage.evoluti
 # population (`gen0.py` with variant `td`); the stage proper is defined once the probes settle the design.
 stage(Stage("x.critic", "x_critic", "2.2", B22P, W22, VISION_CH1, BODY_17, pallium_world, **{**_S15, "generations": 100},
             evolution=EVOLUTION_NEW, notes="DRAFT: the 2.2 brain and world as the base of the critic probes"))
+# Draft: the same with a reversal: at switch_tick the two poison novel types turn good and the two good ones poison
+# (the looks stay; berry_world reverse), so an aversion must be unlearned. Life is 4000 ticks but the incoming
+# population lives about 1400 at generation 0, so the switch comes early (gen0.py switch_tick=... overrides it).
+REV_SWITCH = 800
+stage(Stage("x.reversal", "x_reversal", "2.2", B22P, replace(W22, switch_tick=REV_SWITCH), VISION_CH1, BODY_17,
+            lambda exp: pallium_world(exp, reverse=True), **{**_S15, "generations": 100},
+            evolution=EVOLUTION_NEW, notes="DRAFT: x.critic with a reversal of the novel types at switch_tick"))
 
 # ------------------------------------------------------------------ running
 

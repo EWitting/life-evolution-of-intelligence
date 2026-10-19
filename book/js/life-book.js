@@ -392,6 +392,7 @@
     const steps = X.steps, n = steps.length, R = X.radius, size = 2 * R + 1, CELL = 30;
     const rows = [];   // one row per input or neuron
     X.inputs.forEach((name, k) => rows.push({label: name, sub: 'sense', get: s => s.inputs[k]}));
+    (X.mods || []).forEach((name, k) => rows.push({label: name, sub: 'modulator', get: s => s.mods[k]}));
     X.regions.forEach((name, r) => steps[0].cells[r].forEach((_, j, a) => rows.push({label: name + (a.length > 1 ? ' ' + (j + 1) : ''), sub: '', get: s => s.cells[r][j]})));
     let cur = Math.max(0, steps.findIndex(s => s.tick === X.event_tick) - 2), timer = null;
     const anyNeg = () => rows.some(r => steps.some(s => r.get(s) < 0));

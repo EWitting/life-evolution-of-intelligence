@@ -44,6 +44,17 @@ say much more.
 The wiring and the thresholds are designed. Evolution may tune every strength, the thresholds, and how fast each
 modulator is cleared, which sets how long each state lasts.
 
+## Watching it work
+
+Below is one animal from the last generation at a poison bush.
+
+It bites three times in a row. Each bite adds to `alarm` (the alarm row is full at the level where `flee` begins to
+fire). One bite is not enough; after the third, `flee` switches on, `rest` falls silent, and the animal walks
+forward every tick, away from the bush. The alarm is cleared slowly, so the flight outlasts the pain by more than ten
+ticks, and then `flee` falls silent again.
+
+<div data-life="strip" data-stage="1.8" data-example="flight"></div>
+
 ## The biology: affect
 
 A drive, as in the previous stage, follows the body: the hunger cell fires for as long as the stomach is empty and

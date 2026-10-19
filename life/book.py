@@ -324,12 +324,15 @@ DIRS = np.array([[-1, 0], [0, 1], [1, 0], [0, -1]])   # up, right, down, left (w
 # berry-bush look-alikes are named after colours (stages.COLOURS); the plain gooseberry bush is green
 NAMED_COLOURS = {"plain": [0.33, 0.6, 0.3], "Red": [0.8, 0.26, 0.22], "Blue": [0.22, 0.47, 0.82], "Yellow": [0.88, 0.7, 0.05],
                  "Purple": [0.56, 0.32, 0.72], "White": [0.93, 0.93, 0.9], "Black": [0.15, 0.15, 0.15],
-                 "Pink": [0.93, 0.55, 0.7], "Orange": [0.93, 0.5, 0.15], "Onion": [0.72, 0.6, 0.42]}
+                 "Pink": [0.93, 0.55, 0.7], "Orange": [0.93, 0.5, 0.15], "Onion": [0.72, 0.6, 0.42],
+                 "Hot": [0.55, 0.78, 0.86]}
 
 
-def life_strip(run: Path, agent: int, t0: int, t1: int, regions: tuple, inputs: tuple = (), radius: int = 4) -> dict:
+def life_strip(run: Path, agent: int, t0: int, t1: int, regions: tuple, inputs: tuple = (), radius: int = 4,
+               mods: tuple = ()) -> dict:
     """A few dozen ticks of one recorded animal for the book's scrubbing strip: the world around it, what it did
-    and the activity of a few named cells. Step t shows the world *before* the action of tick t (the recorded
+    and the activity of a few named cells. `mods`: (name, scale) of modulators to show, their level divided by scale
+    (the level at which the cells that read it fire, so that a full cell means 'enough'). Step t shows the world *before* the action of tick t (the recorded
     state of t - 1), the cells and the action of tick t, and the food level and pain after it."""
     rec = np.load(run / "recording.npz")
     rs = json.loads((run / "ruleset.json").read_text())
@@ -359,6 +362,8 @@ def life_strip(run: Path, agent: int, t0: int, t1: int, regions: tuple, inputs: 
     objects = [{"name": n, "colour": colour(i, n),
                 "kind": kind(n), "effect": effect.get(i + 1 if kind(n) == "bush" else i)} for i, n in enumerate(names)]
     size = 2 * radius + 1
+    mod_names = [m["name"] for m in cfg["brain"]["modulators"]]
+    mod = [(mod_names.index(n), sc) for n, sc in mods]
     steps = []
     for t in range(t0, t1):
         py, px = (int(v) for v in pos[t - 1, agent])
@@ -378,9 +383,10 @@ def life_strip(run: Path, agent: int, t0: int, t1: int, regions: tuple, inputs: 
             "food": float(food[t, agent]), "pain": float(pain[t, agent]),
             "inputs": [float(x[t, agent, layout["in_names"].index(n)]) for n in inputs],
             "cells": [[float(v) for v in x[t, agent, off[r][0]:off[r][0] + off[r][1]]] for r in regions],
+            "mods": [float(rec["mod"][t, agent, j]) / sc for j, sc in mod],
             "motor": [float(v) for v in x[t, agent, off["out"][0]:off["out"][0] + off["out"][1]]]})
     return _decimals({"run": _rel(run), "agent": agent, "radius": radius, "objects": objects, "actions": list(A.NAMES),
-                      "regions": list(regions), "inputs": list(inputs), "max_food": cfg["world"]["max_food"],
+                      "regions": list(regions), "inputs": list(inputs), "mods": [n for n, _ in mods], "max_food": cfg["world"]["max_food"],
                       "steps": steps})
 
 
@@ -735,6 +741,86 @@ def _after_bite(run: Path) -> dict:
     mean = lambda v: float(np.mean(v)) if len(v) else float("nan")
     return {"poison_after_poison": 100.0 * mean(nxt[True]), "poison_after_good": 100.0 * mean(nxt[False]),
             "steps_after_poison": mean(walk[True]), "steps_after_good": mean(walk[False])}
+
+
+def _region(rec, layout, name) -> np.ndarray:
+    """[T, N] the mean activity of a region in a recording."""
+    o, n = dict(zip(layout["names"], zip(layout["offsets"], layout["sizes"])))[name]
+    return rec["x"][..., o:o + n].astype(np.float32).mean(-1)
+
+
+@extra("1.7")
+def warm_rest(s, main: list[Path], control: list[Path]):
+    """A fed animal of the lineage run that walks while its skin is cold, reaches the warmth of a hot spring and stays
+    there. Chosen automatically: `rest` switches on after a walk driven by `warm_seek`, with the stomach full, a spring
+    in view at the end, and the animal standing still for long after."""
+    run = main[0]
+    rec = np.load(run / "recording.npz")
+    layout = json.loads((run / "layout.json").read_text())
+    names = json.loads((run / "ruleset.json").read_text())["names"]
+    spring = names.index("Hot Spring")
+    rest, seek, hungry = (_region(rec, layout, r) for r in ("rest", "warm_seek", "hungry"))
+    alive, pos, grid = rec["alive"].astype(bool), rec["pos"].astype(int), rec["grid"]
+    T, N = alive.shape; H, W = grid.shape[1:]
+    moved = np.r_[np.zeros((1, N), bool), np.abs(np.diff(pos, axis=0)).sum(-1) > 0]
+    before, after = 14, 22
+    best = None
+    for i in range(N):
+        for t in np.nonzero((rest[1:, i] > 0.5) & (rest[:-1, i] <= 0.5))[0] + 1:
+            if t - before < 1 or t + after >= T or not alive[t + after, i]:
+                continue
+            y, x = pos[t, i]
+            near = grid[t, max(0, y - 3):min(H, y + 4), max(0, x - 3):min(W, x + 4)]
+            if not (near == spring).any() or hungry[t - before:t + after, i].max() > 0.5:
+                continue
+            score = (moved[t - before:t, i].sum() + 0.5 * (seek[t - before:t, i] > 0.5).sum()
+                     + 1.5 * (~moved[t:t + after, i]).sum() + 0.5 * (rest[t:t + after, i] > 0.5).sum())
+            if best is None or score > best[0]:
+                best = (float(score), i, int(t))
+    if best is None:
+        return "warm_rest", None
+    _, agent, t = best
+    strip = life_strip(run, agent, t - before, t + after, regions=("cold", "warm_seek", "rest", "hungry"), inputs=("skin",))
+    strip["event_tick"] = t
+    return "warm_rest", strip
+
+
+@extra("1.8")
+def flight(s, main: list[Path], control: list[Path]):
+    """An animal of the lineage run that bites poison more than once, the alarm adds up, `flee` switches on and the
+    animal walks off. Chosen automatically: still while biting, then walking every tick, far from where it was hurt,
+    and no more poison soon after."""
+    run = main[0]
+    rec = np.load(run / "recording.npz")
+    layout = json.loads((run / "layout.json").read_text())
+    flee = _region(rec, layout, "flee")
+    alive, pos, ate, pain = rec["alive"].astype(bool), rec["pos"].astype(int), rec["ate"], rec["pain"]
+    T, N = alive.shape
+    bad = np.zeros(int(ate.max()) + 1, bool)
+    for o in np.unique(ate[ate > 0]):
+        bad[o] = np.mean(pain[ate == o] > 0.5) > 0.5
+    poison = (ate > 0) & bad[ate]
+    moved = np.r_[np.zeros((1, N), bool), np.abs(np.diff(pos, axis=0)).sum(-1) > 0]
+    before, after = 14, 18
+    best = None
+    for i in range(N):
+        for t in np.nonzero((flee[1:, i] > 0.5) & (flee[:-1, i] <= 0.5))[0] + 1:
+            if t - before < 1 or t + after >= T or not alive[t + after, i]:
+                continue
+            bites = poison[t - before:t + 1, i].sum()
+            if bites < 2 or poison[t + 1:t + after, i].any():
+                continue
+            far = np.abs(pos[t + after, i] - pos[t, i]).sum()
+            score = moved[t:t + after, i].sum() + 0.5 * far - moved[t - before:t, i].sum() + min(bites, 3)
+            if best is None or score > best[0]:
+                best = (float(score), i, int(t))
+    if best is None:
+        return "flight", None
+    _, agent, t = best
+    strip = life_strip(run, agent, t - before, t + after, regions=("valence_av", "flee", "rest"),
+                       inputs=("pain",), mods=(("alarm", 1.5),))
+    strip["event_tick"] = t
+    return "flight", strip
 
 
 @extra("1.8")

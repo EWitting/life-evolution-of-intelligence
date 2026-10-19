@@ -32,6 +32,18 @@ entirely: synapses from `hungry` onto the cells that feed (the grasp programme, 
 appetitive cells and the ganglion). They start at zero. If it pays to bite less on a full stomach, this is where
 evolution can build it.
 
+## Watching it work
+
+Below is one animal from the last generation with a full stomach, walking in the cold until it reaches the warmth
+of a hot spring.
+
+While the skin is cold, `cold` and `warm_seek` fire and the animal steps forward every tick. Next to the spring the
+`skin` sense rises, `cold` and `warm_seek` fall silent, and `rest` switches on and holds the forward step back.
+The animal stays where it is, mouthing at the empty ground in front of it. `hungry` stays silent the whole time:
+the stomach is full, so warmth comes first. Only towards the end does it begin to stir, and `rest` begins to fade.
+
+<div data-life="strip" data-stage="1.7" data-example="warm_rest"></div>
+
 ## The biology: drives
 
 A drive is a signal from the body about something it needs: food, water, warmth, sleep. In vertebrates these

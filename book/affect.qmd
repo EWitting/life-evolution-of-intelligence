@@ -8,14 +8,14 @@
 **New:** two states that outlast what set them off: *alarm* after poison bites, *contentment* after a good meal.
 They build up over several bites.
 
-**Result:** after a run of poison bites the animals flee the bad ground; after a good meal they stay on good ground.
+**Result:** after a run of poison bites the creatures flee the bad ground; after a good meal they stay on good ground.
 Both states are used in every seed.
 :::
 
 Everything this brain does so far, it does about the present. A bush is in front of it, so it bites; the skin is
 cold, so it walks. When the cause is gone, the behaviour is gone in the same moment.
 
-But some events say something about the minutes that follow. An animal that has just eaten well is probably on good
+But some events say something about the minutes that follow. A creature that has just eaten well is probably on good
 ground; one that has just been hurt is probably on bad ground. To use that, the brain has to keep something of the
 event after it is over. So that the states have something to work with, the bushes in this world grow in patches
 that are mostly of one kind.
@@ -27,18 +27,18 @@ that are mostly of one kind.
 Two *modulators* (substances that a few cells release and that reach many cells at once, drawn in pink) and three
 new cells:
 
-- **Alarm.** Pain releases the modulator `alarm`, which drives **`flee`**: the animal keeps going forward for a
+- **Alarm.** Pain releases the modulator `alarm`, which drives **`flee`**: the creature keeps going forward for a
   while, out of the poisoned ground.
-- **Contentment.** **`fed`** fires when the animal tastes food and releases `serotonin`, which drives **`settle`**,
+- **Contentment.** **`fed`** fires when the creature tastes food and releases `serotonin`, which drives **`settle`**,
   which switches on `rest` (the cell of the previous stage that holds the forward step back). After a good meal the
-  animal stays where it ate.
+  creature stays where it ate.
 
-`hungry` still shuts `rest`. So a fed animal stays on good ground until it is hungry again, and then forages with
+`hungry` still shuts `rest`. So a fed creature stays on good ground until it is hungry again, and then forages with
 good bushes close by.
 
 **The states build up.** A modulator is released in small amounts and cleared slowly, so its level is a running sum
 of what happened lately. The cells that read it fire only above a threshold: one poison bite passes without alarm,
-the animal flees only after more than one; it settles only after more good bites than one bush can give. One bite
+the creature flees only after more than one; it settles only after more good bites than one bush can give. One bite
 says little about the ground, several bites close together say much more.
 
 The wiring and thresholds are designed. Evolution tunes the strengths, the thresholds, and how fast each modulator
@@ -46,9 +46,9 @@ is cleared, which sets how long each state lasts.
 
 ## Watching it work
 
-One animal from the last generation at a poison bush. It bites three times in a row, and each bite adds to `alarm`
+One creature from the last generation at a poison bush. It bites three times in a row, and each bite adds to `alarm`
 (the row is full at the level where `flee` begins to fire). One bite is not enough. **After the third, `flee`
-switches on and the animal walks away, every tick.** The alarm is cleared slowly, so the flight outlasts the pain by
+switches on and the creature walks away, every tick.** The alarm is cleared slowly, so the flight outlasts the pain by
 more than ten ticks.
 
 <div data-life="strip" data-stage="1.8" data-example="flight"></div>
@@ -62,7 +62,7 @@ In small animals such states are carried by *neuromodulators*, released quickly 
 is the memory. The worm *C. elegans* slows down and stays put for minutes after it has found food, under the
 influence of serotonin. After a harmful touch it speeds away and keeps going well after the touch has ended.
 
-Such a state has two sides: it is good or bad, and it makes the animal more active or less. Alarm is bad and
+Such a state has two sides: it is good or bad, and it makes the creature more active or less. Alarm is bad and
 active; contentment is good and quiet.
 
 ## The world
@@ -71,7 +71,7 @@ The bushes now grow in patches, mostly of one kind: after good meals the neighbo
 after poison bites probably poison. Not every bush in a patch is of the patch's kind, so knowing a bush by its look,
 the lesson of the association stage, still has a job.
 
-The world is also four times larger for the same number of animals, with more food, so that animals take less food
+The world is also four times larger for the same number of creatures, with more food, so that creatures take less food
 from each other and what a better forager gains is not hidden. This is the world the next chapter starts in. The
 rest is as before: cold, hot springs, and four kinds of berry bush, new in every life, half of them poison.
 
@@ -104,10 +104,10 @@ ahead and one is behind, so that measure alone would be inconclusive.
 
 Two older circuits are not used in this world:
 
-- **`cold` and `warm_seek`.** A fed animal that walks off in search of warmth leaves the good ground; staying where
+- **`cold` and `warm_seek`.** A fed creature that walks off in search of warmth leaves the good ground; staying where
   the food is turns out to be worth more.
 - **Learning.** In these patches the look of a bush and the ground it stands on say much the same thing, and the
-  animals lean on the ground: two poison bites and the alarm carries them off. The learning rate is still there in
+  creatures lean on the ground: two poison bites and the alarm carries them off. The learning rate is still there in
   every seed. What keeps learning from paying is that a lesson about one berry spreads to the berries that look like
   it, the problem the next chapter starts with.
 
@@ -117,14 +117,14 @@ Neither was removed: the next stages need the learning.
 ::: {.callout-note collapse="true" title="After a bite"}
 <div data-life="table" data-stage="1.8" data-example="after_a_bite"></div>
 
-After poison bites the animals take a few more steps than the old brain, after a good meal a few fewer. The
+After poison bites the creatures take a few more steps than the old brain, after a good meal a few fewer. The
 differences are small in this measure because one bite alone no longer sets a state off.
 :::
 
 ::: {.callout-note collapse="true" title="How a life is spent"}
 <div data-life="table" data-stage="1.8" data-example="life_spent"></div>
 
-Both populations stand still for most of their life, much of it biting at nothing: an animal held in place by
+Both populations stand still for most of their life, much of it biting at nothing: a creature held in place by
 `rest` still has its grasp programme, and a bite costs little.
 :::
 

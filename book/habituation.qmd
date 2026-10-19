@@ -7,12 +7,12 @@
 ::: {.lb-takeaway}
 **New:** no new cells. The eyes get used to what they keep seeing: what stays in view fades.
 
-**Result:** the animals stop biting at bushes that never give anything, and spend far less of their life standing
+**Result:** the creatures stop biting at bushes that never give anything, and spend far less of their life standing
 still. Switching the adaptation off costs them more than half their fitness.
 :::
 
-The animals of the previous stage respond to a look in the same way every time they see it. An emptied bush still
-looks enough like food, so an animal can stand in front of it for a long time, biting. An animal should stop
+The creatures of the previous stage respond to a look in the same way every time they see it. An emptied bush still
+looks enough like food, so a creature can stand in front of it for a long time, biting. A creature should stop
 responding to something that stays the same and keeps giving nothing.
 
 This stage changes one thing, in the eyes: they get used to what they keep seeing. To make that worth having, the
@@ -27,19 +27,19 @@ fifty ticks, and passes on only the **difference** between what it sees now and 
 
 Every neuron downstream of the eyes now gets this adapted look, and two things follow:
 
-- **What stays in view fades.** An animal standing in front of a bush sees its look sink into the average. The
-  *good* cells, driven by that look, fall silent, and with them the urge to bite. The animal moves on.
+- **What stays in view fades.** A creature standing in front of a bush sees its look sink into the average. The
+  *good* cells, driven by that look, fall silent, and with them the urge to bite. The creature moves on.
 - **What is unusual stands out.** All berry bushes look alike in most respects, and that shared part is nearly
   always in the average. What passes through is the part that differs: the colour of *this* bush. Nothing uses
   this yet; the next stage does.
 
 ## Watching it work
 
-One animal from the last generation, at a dud. The two `vis+0` rows are two look inputs of the eye that points
+One creature from the last generation, at a dud. The two `vis+0` rows are two look inputs of the eye that points
 straight ahead (`vis` for vision, `+0` for its direction).
 
-The animal walks up and bites. The dud does not change, yet what the eye reports **sinks a little with every
-tick**. The *good* cells and `grasp` hold for a while, then drop out, and the biting stops. When the animal turns
+The creature walks up and bites. The dud does not change, yet what the eye reports **sinks a little with every
+tick**. The *good* cells and `grasp` hold for a while, then drop out, and the biting stops. When the creature turns
 away, the look inputs go *below* zero: the eye is still used to the dud and reports less of that look than usual.
 
 <div data-life="strip" data-stage="1.2h" data-example="dud_visit"></div>
@@ -57,8 +57,8 @@ including ones with a few hundred neurons.
 ## The world
 
 The world of the previous stage with one more kind of bush, the dud: it looks like a berry bush and never carries
-a berry. Its colour is drawn anew for every life, so nothing an ancestor knew can tell an animal to leave it
-alone. When the dud happens to have an attractive colour, an animal whose eyes do not adapt will stand at it and
+a berry. Its colour is drawn anew for every life, so nothing an ancestor knew can tell a creature to leave it
+alone. When the dud happens to have an attractive colour, a creature whose eyes do not adapt will stand at it and
 bite for as long as it lives.
 
 <div data-life="settings" data-stage="1.2h"></div>
@@ -66,15 +66,15 @@ bite for as long as it lives.
 ## Did it work?
 
 There is no group of neurons to silence here, since the change is in how the inputs work. The matching test is
-to switch the adaptation off in the evolved animals and let them live again.
+to switch the adaptation off in the evolved creatures and let them live again.
 
 <div data-life="verdict" data-stage="1.2h" data-used="adaptation_off:without adaptation"></div>
 
-**The animals rely on it heavily:** without adaptation they keep well under half their fitness. Against the old
+**The creatures rely on it heavily:** without adaptation they keep well under half their fitness. Against the old
 brain the gain is smaller and uneven across seeds. The control's fitness swings from one generation to the next,
 depending on whether it happens to like the colour of that generation's dud.
 
-The clearest difference is in how a life is spent. Animals whose eyes adapt stand and bite at nothing less than
+The clearest difference is in how a life is spent. Creatures whose eyes adapt stand and bite at nothing less than
 half as often:
 
 <div data-life="bars" data-stage="1.2h" data-example="life_spent" data-rows="0,1" data-unit="%" data-col0="new brain (main)" data-col1="old brain (control)"></div>
@@ -91,7 +91,7 @@ look, and the eyes now report only the difference, so the population has to re-t
 ::: {.callout-note collapse="true" title="All fitness measures"}
 <div data-life="summary" data-stage="1.2h"></div>
 
-The head-to-head test is left out here: in it all animals share one set of eyes, and the eyes are the difference.
+The head-to-head test is left out here: in it all creatures share one set of eyes, and the eyes are the difference.
 :::
 
 ::: {.callout-note collapse="true" title="Adaptation switched off"}

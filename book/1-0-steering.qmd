@@ -7,11 +7,11 @@
 ::: {.lb-takeaway}
 **New:** the first brain: eyes, a small clump of neurons, and motor neurons, all wired by evolution from scratch.
 
-**Result:** the animals find food and eat it. No single neuron stands for anything; the behaviour is spread over
+**Result:** the creatures find food and eat it. No single neuron stands for anything; the behaviour is spread over
 all of them.
 :::
 
-The first animal has no memory, no hunger and no idea of good or bad. It can do one thing: turn what it sees into
+The first creature has no memory, no hunger and no idea of good or bad. It can do one thing: turn what it sees into
 movement. This stage evolves a brain that does that, starting from random wiring. Everything after this stage is
 added to this brain.
 
@@ -32,7 +32,7 @@ anything; those senses enter in later stages, through cells made for them.
 
 ## Watching it work
 
-One animal from the last generation, walking up to a bush and eating. The rows below the picture are the neurons
+One creature from the last generation, walking up to a bush and eating. The rows below the picture are the neurons
 of the ganglion. There is nothing in them to read, and that is the point: the behaviour is spread over all of
 them, wherever evolution happened to put it.
 
@@ -52,7 +52,7 @@ interneurons in between let several senses be weighed against each other before 
 ## The world
 
 Four kinds of berry bush and wild onions. Everything is food and nothing is dangerous. Moving costs energy, so an
-animal that stands still starves, and so does one that walks without getting anywhere. The only way to live is to
+creature that stands still starves, and so does one that walks without getting anywhere. The only way to live is to
 reach a bush with berries, bite, and go on to the next one.
 
 <div data-life="settings" data-stage="1.0"></div>
@@ -61,7 +61,7 @@ reach a bush with berries, bite, and go on to the next one.
 
 <div data-life="verdict" data-stage="1.0" data-used="ganglion_e,ganglion_i"></div>
 
-The animals depend on their ganglion: without it they keep less than a fifth of their fitness. The direct reflex
+The creatures depend on their ganglion: without it they keep less than a fifth of their fitness. The direct reflex
 arcs alone are far from enough. There is no old brain to compare with, so this stage was run once: every later
 stage starts from this one population.
 
@@ -69,7 +69,7 @@ stage starts from this one population.
 
 ::: {.callout-note collapse="true" title="Fitness over the generations"}
 The jump in the curve is a change of setting, not of brain: the population first evolved in short lives and was
-then given lives four times as long, as in every later stage. In a long life an animal that eats once and then
+then given lives four times as long, as in every later stage. In a long life a creature that eats once and then
 stands still does not reach the end, and over the following generations the standing still is selected away.
 
 <div data-life="curves" data-stage="1.0"></div>
@@ -84,9 +84,9 @@ stands still does not reach the end, and over the following generations the stan
 :::
 
 ::: {.callout-note collapse="true" title="What did not work: all the food at once"}
-In earlier runs every bush was full when the animals were born. They filled their stomachs early and kept eating,
-the bushes were stripped by the middle of the life, and since a bush takes long to regrow most animals then
-starved together. Whatever an animal might have done better later in life could not show.
+In earlier runs every bush was full when the creatures were born. They filled their stomachs early and kept eating,
+the bushes were stripped by the middle of the life, and since a bush takes long to regrow most creatures then
+starved together. Whatever a creature might have done better later in life could not show.
 
 Starting most bushes empty, each at a random point of its regrowth, turned that stock into a steady flow: the
 share of bushes with berries stays about the same through a life.

@@ -94,7 +94,7 @@ Every stage page shows the brain of that stage. Here is the brain of the valence
 <div data-life="brain" data-stage="1.1"></div>
 
 - A **box** is a group of neurons with one job, called a **region**: the eyes, the motor neurons that move the
-  animal, a cell for pain. Its name says what it is for.
+  creature, a cell for pain. Its name says what it is for.
 - An **arrow** between two boxes is a **projection**: all the synapses from one region onto another. The end of
   the arrow says what it does: an arrowhead excites, a bar inhibits, and a dot (on arrows from the senses) means a
   mix of both.
@@ -118,7 +118,7 @@ says in words which arrows matter, and the rest is the brain of earlier stages.
 
 Designed connections give a cell a fixed meaning that later stages can rely on: a cell that is wired to pain and
 nothing else *means* pain. Evolved connections are where evolution finds its own solutions, often in ways that are
-hard to read. Learned connections are the only memory an animal has of its own life.
+hard to read. Learned connections are the only memory a creature has of its own life.
 
 ### Learning within a life
 
@@ -136,9 +136,9 @@ behaviour for a while after it is over. In the diagrams they are drawn in pink.
 
 ## Evolution
 
-Evolution here is a **genetic algorithm**. A **genome** is what an animal inherits: the strengths of its evolved
+Evolution here is a **genetic algorithm**. A **genome** is what a creature inherits: the strengths of its evolved
 synapses and a few settings, such as how fast it learns. A **population** of genomes is born into a world, each as
-a few identical animals. The **fitness** of a genome is how well its animals did: here, roughly, how long they
+a few identical creatures. The **fitness** of a genome is how well its creatures did: here, roughly, how long they
 lived with a full stomach. The genomes that did best have children, each from two parents, with small random
 changes (**mutations**). That is one **generation**, and a stage runs for about a hundred of them.
 
@@ -152,7 +152,7 @@ Each stage asks one question: **does the new circuit get used?** Three tools ans
 - **Main against control.** *Main* is the new brain. The *control* is the brain of the previous stage, in the
   same new world, starting from the same population. Whatever separates them is the new circuit, so every
   comparison on a stage page is new brain against old brain.
-- **Lesions.** At the end, a region of the evolved brain is silenced and the animals live again. If they do much
+- **Lesions.** At the end, a region of the evolved brain is silenced and the creatures live again. If they do much
   worse, they were using it. This is the main evidence on every page.
 - **Seeds.** Evolution is noisy: one run can end almost anywhere. So every stage is run three times from different
   random starts (*seeds*). A result counts only when it holds in all three.
@@ -165,8 +165,9 @@ the experiment were run again. A difference smaller than about twice its standar
 
 | term | meaning |
 |---|---|
+| creature | one simulated individual; *animal* always means a real one |
 | tick | one step of the simulation, about a second of behaviour |
-| look | what an animal sees of a thing: a short list of numbers, like a colour |
+| look | what a creature sees of a thing: a short list of numbers, like a colour |
 | neuron, cell | a unit with an activity between 0 (silent) and 1 (firing fast) |
 | synapse, strength | a connection between two neurons, and how much it counts |
 | excitatory, inhibitory | raises or lowers the activity of the neurons it reaches |
@@ -175,7 +176,7 @@ the experiment were run again. A difference smaller than about twice its standar
 | hard-wired | designed; evolution tunes only its overall strength |
 | evolved | inherited synapse by synapse, shaped by selection |
 | learned, plastic | changes within a life |
-| motor neurons | the cells that move the animal: step, turn, bite |
+| motor neurons | the cells that move the creature: step, turn, bite |
 | motor programme | a cell that triggers a whole action, such as biting |
 | gate | an inhibitory cell that holds an action back until a condition is met |
 | disinhibition | releasing an action by silencing its gate |
@@ -183,10 +184,10 @@ the experiment were run again. A difference smaller than about twice its standar
 | unconditioned stimulus | something that matters without learning, such as pain or taste |
 | adaptation | a sense reporting change rather than level: what stays the same fades |
 | modulator | a substance released by a few cells that acts on many, slowly |
-| genome | what an animal inherits |
+| genome | what a creature inherits |
 | fitness | what selection rewards: here, the well-fed lifetime |
 | generation | one round of living, selecting and breeding |
 | seed | one independent run of a stage, from its own random start |
 | main, control | the new brain, and the previous brain in the same new world |
-| lesion | silencing a region to see whether the animals need it |
+| lesion | silencing a region to see whether the creatures need it |
 | ± (standard error) | how far a mean might move if the experiment were repeated |

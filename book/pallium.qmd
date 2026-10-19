@@ -8,11 +8,11 @@
 **New:** a region with random wiring that spreads the look of a bush over many cells, few of them active at a time.
 Lessons from pain are learned on those cells.
 
-**Result:** the animals can now learn poison that only a *combination* of features gives away. A lesson stays on
+**Result:** the creatures can now learn poison that only a *combination* of features gives away. A lesson stays on
 the poison and no longer spreads to the good look-alikes.
 :::
 
-Since the association stage the animal learns from pain which bushes to avoid, on the look of a bush: a handful of
+Since the association stage the creature learns from pain which bushes to avoid, on the look of a bush: a handful of
 colour features. That works when poison and good food differ in some feature. It fails when what makes a bush
 poison is a **combination**: here a bush is poison when its two colour features are both high or both low, and
 good when one is high and the other low. Whatever a lesson on the features teaches about one poison, it teaches the
@@ -58,7 +58,7 @@ This stage adds a new region in front of the learning, the **pallium**.
   how fast each route learns.
 
 Only the eye ahead feeds the pallium: at a bite, the side eyes see neighbouring bushes, and those would be blamed
-too. An animal turns to a bush before it bites it, so the eye ahead sees the one that counts.
+too. A creature turns to a bush before it bites it, so the eye ahead sees the one that counts.
 
 ## Biology
 
@@ -87,18 +87,18 @@ grows says nothing about what it is, and the look has to do the job.
 
 **The pallium is used in every seed.** Switching off all learning costs more than the pallium alone, because the
 look still learns as well. **Against the old brain**, the new brain is ahead in every seed when the two share a
-world. Measured apart, one seed is level: one life per animal makes that measure noisy.
+world. Measured apart, one seed is level: one life per creature makes that measure noisy.
 
 ### In the lab
 
-The sharpest test is outside the world. One animal at a time eats from four new bushes, two poison and two good,
+The sharpest test is outside the world. One creature at a time eats from four new bushes, two poison and two good,
 twice each, and is then shown each bush again. How likely is it to bite?
 
 <div data-life="bars" data-stage="2.2" data-example="xor_lab" data-rows="0,3,2,1" data-scale="100" data-unit="%" data-col0="poison bush" data-col1="good bush"></div>
 
-**Learning on the look alone** makes the animal shy of all four bushes alike: it cannot tell the kinds apart.
+**Learning on the look alone** makes the creature shy of all four bushes alike: it cannot tell the kinds apart.
 **Learning through the pallium alone** more than halves the bites at poison and leaves the good bushes almost
-untouched. With both routes learning, as in the world, the animal is shy of the good bushes too, but less than of
+untouched. With both routes learning, as in the world, the creature is shy of the good bushes too, but less than of
 the poison.
 
 ## Full results
@@ -114,7 +114,7 @@ the poison.
 ::: {.callout-note collapse="true" title="All lesions"}
 <div data-life="lesions" data-stage="2.2"></div>
 
-Of the states of the affect stage only the one that settles the animal at food is still used, a little; fleeing and
+Of the states of the affect stage only the one that settles the creature at food is still used, a little; fleeing and
 being fed no longer matter. In mixed patches the place says little about a bush; its look says more.
 :::
 
@@ -124,7 +124,7 @@ being fed no longer matter. In mixed patches the place says little about a bush;
 
 ::: {.callout-note collapse="true" title="What it took"}
 - **Mixed patches.** In patches of mostly one kind, the place answered the question first: a poison bite or two and
-  the alarm carried the animal off, and knowing a poison by its look saved only the first bite at the next bush of
+  the alarm carried the creature off, and knowing a poison by its look saved only the first bite at the next bush of
   that kind. Evolution then turned the lessons down.
 - **Fewer cells at a time.** With four cells active instead of two, a lesson spread twice as far to the good bushes.
 - **Evolution still damps aversion close up.** In every population the inputs that see a bush right ahead hold the

@@ -22,7 +22,7 @@ The brain of a small worm. It turns what it sees into movement (@sec-steering), 
 hurt (@sec-association), looks after hunger and cold (@sec-drives), and stays in a state for a while after a meal
 or a poison bite, a state that builds up over several bites (@sec-affect).
 
-This animal learns one thing: what to stay away from. It cannot learn what is worth going to, and it cannot learn
+This creature learns one thing: what to stay away from. It cannot learn what is worth going to, and it cannot learn
 what to do.
 
 ## Chapter 2: reinforcing
@@ -32,29 +32,29 @@ brain were already there. This chapter adds them in the following order.
 
 - **The pallium** ([page](pallium.qmd)). The first region whose wiring is random and not shaped by evolution. It
   spreads the look of a thing out over many cells, so that things that look alike can still be told apart, even
-  when only a combination of features says which is which. In chapter 1, what the animal learned about one food
+  when only a combination of features says which is which. In chapter 1, what the creature learned about one food
   spread to the foods that resembled it.
 - **Dopamine.** A cell that fires when things turn out better than expected, and falls silent when they turn out
-  worse. With it the animal learns what predicts food, and what predicts the thing that predicts food. It also
+  worse. With it the creature learns what predicts food, and what predicts the thing that predicts food. It also
   learns to like, which chapter 1 could not do.
-- **Hands.** Until here the animal eats what it grasps. Now it can pick something up, hold it and eat it later,
+- **Hands.** Until here the creature eats what it grasps. Now it can pick something up, hold it and eat it later,
   so that there is something to choose between.
 - **The basal ganglia.** The same dopamine signal teaches which *action* to take. This is learning by trial and
   error, as in a rat that learns to press a lever.
-- **Curiosity.** New things become a little rewarding in themselves, so that the animal tries what it does not
+- **Curiosity.** New things become a little rewarding in themselves, so that the creature tries what it does not
   know yet.
 
 Parked until these work: a map of places and the routes between them (the hippocampus), precise timing (the
-cerebellum), and modulators that set how fast the animal learns when its world is steady or changing.
+cerebellum), and modulators that set how fast the creature learns when its world is steady or changing.
 
 Two things change in how the stages are done. The circuits are designed and tested before any evolution, and
 evolution then tunes them, in fewer generations than in chapter 1. And the learning stages get *lab experiments*:
-one animal in a scripted situation, as in an animal lab, to see whether it learns the way real animals do.
+one creature in a scripted situation, as in an animal lab, to see whether it learns the way real animals do.
 
 ## Chapter 3: simulating
 
-The brain of an early mammal, and its new part, the neocortex. The cortex learns to predict what the animal will
-sense next. Once it can do that, it can be run without the world: the animal stops at a choice, plays out each
+The brain of an early mammal, and its new part, the neocortex. The cortex learns to predict what the creature will
+sense next. Once it can do that, it can be run without the world: the creature stops at a choice, plays out each
 option, and picks the one that ends best.
 
 The planned stages: a cortex that predicts, trying actions in the head at a choice point, replaying experience
@@ -67,7 +67,7 @@ one food stops working for it at once.
 ## Chapter 4: mentalizing
 
 The brain of a primate, living in a group in which the others matter. The brain first gets a model of itself:
-what it knows, and how sure it is. Applied to another animal, the same model says what that animal wants and what
+what it knows, and how sure it is. Applied to another creature, the same model says what that creature wants and what
 it has seen.
 
 The planned stages: knowing when it does not know, reading the goals of others, learning a skill by watching, and
@@ -76,7 +76,7 @@ preparing for a need it does not feel yet, such as storing food before the winte
 ## Chapter 5: speaking
 
 The human step. Calls with a fixed meaning come first, then signals whose meaning is agreed on within a group,
-then naming what two animals are both looking at. The aim at the end is knowledge that no single life could find
+then naming what two creatures are both looking at. The aim at the end is knowledge that no single life could find
 again and that still grows from one generation to the next.
 
 This chapter is the least certain, both in what is known about evolution and in whether a small grid world can
@@ -89,4 +89,4 @@ more of the rules of *One Hour One Life*: tools, fire and cooking, and chains of
 by accident. Animals that move by themselves come in as prey and as predators.
 
 For the last two chapters, the way lives are run has to change as well. A generation now starts and ends
-together. Animals that watch, imitate and teach each other need parents, children and lives that overlap.
+together. Creatures that watch, imitate and teach each other need parents, children and lives that overlap.

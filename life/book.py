@@ -598,7 +598,7 @@ def life_spent(s, main: list[Path], control: list[Path]):
             ("Berries eaten per life", "berries"), ("Lifetime, ticks", "lifetime")]
     return "life_spent", {"columns": ["In the recorded last generation", "main"] + (["control"] if c else []),
                           "rows": [[label, _stat([x[k] for x in m])] + ([_stat([x[k] for x in c])] if c else []) for label, k in rows],
-                          "caption": "From the recording of the last generation of every seed (a sample of 64 animals each)."}
+                          "caption": "From the recording of the last generation of every seed (a sample of 64 creatures each)."}
 
 
 for _key in ("1.1", "1.2h", "1.5", "1.6h", "1.7", "1.8", "2.1"):
@@ -877,7 +877,7 @@ def after_a_bite(s, main: list[Path], control: list[Path]):
             ("After a good meal, the next bush bitten is poison, %", "poison_after_good")]
     return "after_a_bite", {"columns": ["In the recorded last generation", "main"] + (["control"] if c else []),
                             "rows": [[label, _stat([x[k] for x in m])] + ([_stat([x[k] for x in c])] if c else []) for label, k in rows],
-                            "caption": "From the recording of the last generation of every seed (a sample of 64 animals each)."}
+                            "caption": "From the recording of the last generation of every seed (a sample of 64 creatures each)."}
 
 @extra("2.2")
 def xor_lab(s, main: list[Path], control: list[Path]):
@@ -900,7 +900,7 @@ def xor_lab(s, main: list[Path], control: list[Path]):
                 per[c][j].append(float(np.mean([np.mean(res[(c, when, t)], 0)[1] for t in XOR_TYPES if t.startswith(kind)])))
     return "xor_lab", {"columns": ["Chance of a bite when shown the bush", "poison bush", "good bush"],
                        "rows": [[c, _stat(per[c][0]), _stat(per[c][1])] for c in conds],
-                       "caption": "Lab test on 24 animals of the last generation of every seed: two rounds of meals of each "
+                       "caption": "Lab test on 24 creatures of the last generation of every seed: two rounds of meals of each "
                                   "of four new bushes (two poison), then each bush shown with nothing learned since."}
 
 

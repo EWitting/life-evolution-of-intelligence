@@ -151,7 +151,7 @@
         + `<text class="lb-value" x="${W - m.r + 10}" y="${cy + 4}">${fmt(r.p.mean, 0)}${r.p.se !== null ? ` ± ${fmt(r.p.se, 0)}` : ''}</text></g>`;
     });
     s += `<line class="lb-axis" x1="${m.l}" x2="${m.l}" y1="${m.t}" y2="${H - m.b}"/></svg>`;
-    root.innerHTML = s + `<div class="lb-caption">Each region is silenced in turn (no activity, no outgoing synapses) and the final population lives again in ${ev.worlds} shared worlds. Bar = mean over the seeds, dots = the seeds. A region that the animals use costs fitness when silenced; a bar at 100 means the population does as well without it.</div>`;
+    root.innerHTML = s + `<div class="lb-caption">Each region is silenced in turn (no activity, no outgoing synapses) and the final population lives again in ${ev.worlds} shared worlds. Bar = mean over the seeds, dots = the seeds. A region that the creatures use costs fitness when silenced; a bar at 100 means the population does as well without it.</div>`;
     root.querySelectorAll('.lb-row').forEach(g => {
       const r = rows[+g.dataset.i];
       hover(g, e => showTip(e, `<b>${esc(r.name)}</b> silenced<div>${fmt(r.p.mean, 1)}% of intact (± ${fmt(r.p.se, 1)})</div><div class="lb-muted">per seed: ${r.p.seeds.map(v => fmt(v, 0)).join(' · ')}</div>`));
@@ -195,9 +195,9 @@
         + `<span class="lb-vval">${m > 0 ? '+' : ''}${fmt(m, 0)}%</span><span class="lb-vtag lb-v${cls}">${tag}</span></div>`;
     };
     let h = '<div class="lb-verdict">';
-    if (used.length) h += `<div class="lb-vq">Is the new circuit used?</div><div class="lb-vsub">fitness with it silenced, % of the intact animals (the line is 100%)</div>${used.map(lesionRow).join('')}`;
+    if (used.length) h += `<div class="lb-vq">Is the new circuit used?</div><div class="lb-vsub">fitness with it silenced, % of the intact creatures (the line is 100%)</div>${used.map(lesionRow).join('')}`;
     if (cmp.length) h += `<div class="lb-vq">Does the new brain do better than the old one?</div><div class="lb-vsub">fitness of the new brain minus that of the old, % of the old (the line is level)</div>${cmp.map(cmpRow).join('')}`;
-    root.innerHTML = h + `</div><div class="lb-caption">Bars: mean of the ${D.runs.main.length} seeds; dots: the seeds.${cmp.length ? ' The old brain is the brain of the previous stage, evolved in the same new world from the same start.' : ''}${reev ? ' <i>Each among its own kind</i>: each population lives alone, in the same set of worlds.' : ''}${ev.versus ? ' <i>Sharing one world</i>: half new, half old animals compete for the same food.' : ''} All measures are under <a href="#full-results">Full results</a>.</div>`;
+    root.innerHTML = h + `</div><div class="lb-caption">Bars: mean of the ${D.runs.main.length} seeds; dots: the seeds.${cmp.length ? ' The old brain is the brain of the previous stage, evolved in the same new world from the same start.' : ''}${reev ? ' <i>Each among its own kind</i>: each population lives alone, in the same set of worlds.' : ''}${ev.versus ? ' <i>Sharing one world</i>: half new, half old creatures compete for the same food.' : ''} All measures are under <a href="#full-results">Full results</a>.</div>`;
   }
 
   // ------------------------------------------------------------------ a table extra as bars: one group per row
@@ -466,14 +466,14 @@
     const btn = (g, label) => first(g) ? `<a class="lb-watch" href="${esc(first(g).dashboard)}" target="_blank">&#9654; ${label}</a>` : '';
     const watch = btn('main', 'Watch a main run') + btn('control', 'Watch a control run');
     let h = (watch ? `<div class="lb-watchrow">${watch}</div>` : '<div class="lb-caption">No run of this stage is published yet.</div>')
-      + '<div class="lb-caption">A dashboard replays the last generation of a run: all animals in their world, and the brain of a few of them, tick by tick. It is a large page and opens in a new tab.</div>'
+      + '<div class="lb-caption">A dashboard replays the last generation of a run: all creatures in their world, and the brain of a few of them, tick by tick. It is a large page and opens in a new tab.</div>'
       + '<details class="lb-details"><summary>Run directories and dates</summary><table class="lb-table"><thead><tr><th></th><th>seed</th><th>run directory</th><th>generations</th><th>finished</th><th>dashboard</th></tr></thead><tbody>';
     for (const g of ['main', 'control']) for (const r of D.runs[g]) h += `<tr><td>${g}</td><td>${r.seed}</td><td><code>runs/${esc(r.dir)}</code></td><td>${r.generations}</td><td>${esc(r.finished.replace('T', ' '))}</td><td>${r.dashboard ? `<a href="${esc(r.dashboard)}">open</a>` : '<span class="lb-muted">not published</span>'}</td></tr>`;
     root.innerHTML = h + `</tbody></table><div class="lb-caption">One dashboard per stage is published (seed 0 of main and of control); the other seeds are in the run directories. Data exported ${esc(D.exported.replace('T', ' '))}.</div></details>`;
   }
   function settings(root, D) {
     const S = D.settings, w = S.world, e = S.evolution;
-    const rows = [['World', `${w.height} × ${w.width} cells, ${w.num_agents} animals`], ['Objects', esc(S.objects.filter(n => !/Empty/.test(n) && /Bush|Onion|Spring/.test(n)).filter((n, i, a) => a.indexOf(n) === i).join(', '))],
+    const rows = [['World', `${w.height} × ${w.width} cells, ${w.num_agents} creatures`], ['Objects', esc(S.objects.filter(n => !/Empty/.test(n) && /Bush|Onion|Spring/.test(n)).filter((n, i, a) => a.indexOf(n) === i).join(', '))],
       ['Stomach', `holds ${w.max_food}; born ${Math.round(100 * w.start_food)}% full; loses ${w.hunger_per_tick} per tick at rest, +${Math.round(100 * w.move_cost)}% when walking, +${Math.round(100 * w.turn_cost)}% when turning`],
       ['Eyes', `${S.vision.columns} directions over ${S.vision.fov_degrees}°, range ${S.vision.range} cells, ${S.vision.appearance_dim} numbers for the look of each object`],
       ['Life', `${e.ticks_per_generation} ticks, one life per individual`],
@@ -520,7 +520,7 @@
     root.innerHTML = `<div class="lb-strip"><div class="lb-stripworld"><canvas width="${size * CELL * SC}" height="${size * CELL * SC}"></canvas></div>`
       + `<div class="lb-stripside"><div class="lb-controls"><button data-a="play">Play</button><button data-a="prev" aria-label="previous tick">‹</button><button data-a="next" aria-label="next tick">›</button><input type="range" min="0" max="${n - 1}" value="${cur}" aria-label="tick"><span class="lb-tickno"></span></div>`
       + `<div class="lb-stripcaption"></div><details class="lb-details lb-striplegendbox"><summary>What is what</summary><div class="lb-striplegend"></div></details></div></div><div class="lb-heat"></div>`
-      + `<div class="lb-caption">One animal of the recorded last generation (run ${esc(X.run)}, agent ${X.agent}). Top: the world around it before it acts, the animal in the middle; point at a cell for its name. ☠ marks a poison kind of bush, a mark that the animal cannot see. Below: one column per tick, one row per sense or neuron, darker = more active${anyNeg() ? ' (orange: below zero, less than the sense is used to)' : ''}. The action row shows ↑ a step, ↶ ↷ a turn, ● a good berry eaten, ✕ a poison berry eaten; the last row is the stomach. Click a column or drag the slider.</div>`;
+      + `<div class="lb-caption">One creature of the recorded last generation (run ${esc(X.run)}, agent ${X.agent}). Top: the world around it before it acts, the creature in the middle; point at a cell for its name. ☠ marks a poison kind of bush, a mark that the creature cannot see. Below: one column per tick, one row per sense or neuron, darker = more active${anyNeg() ? ' (orange: below zero, less than the sense is used to)' : ''}. The action row shows ↑ a step, ↶ ↷ a turn, ● a good berry eaten, ✕ a poison berry eaten; the last row is the stomach. Click a column or drag the slider.</div>`;
     const cv = root.querySelector('canvas'), ctx = cv.getContext('2d'), heat = root.querySelector('.lb-heat');
     const col = o => { const c = X.objects[o].colour; return `rgb(${c.map(v => Math.round(v * 255)).join(',')})`; };
     // a bush is of a poison kind when its berry is (export), an empty bush when its full bush is
@@ -608,7 +608,7 @@
       const s = steps[cur], prev = steps[cur - 1], a = X.actions[s.action], ate = s.ate ? X.objects[s.ate] : null;
       drawWorld(s); cursor.setAttribute('x', L + cur * CW - 2);
       root.querySelector('input').value = cur; root.querySelector('.lb-tickno').textContent = `tick ${s.tick}`;
-      let c = `The animal <b>${WORDS[a] || a}</b>`;
+      let c = `The creature <b>${WORDS[a] || a}</b>`;
       if (ate) c += ` and eats a ${esc(ate.name)}: ${ate.effect === 'poison' ? '<b>poison</b>' : 'good food'}`;
       if (prev) c += `. Stomach ${fmt(prev.food, 1)} → ${fmt(s.food, 1)}`; else c += `. Stomach ${fmt(s.food, 1)}`;
       if (s.pain > 0.005) c += `, pain ${fmt(s.pain, 2)}`;
@@ -619,14 +619,14 @@
       root.querySelector('.lb-striplegend').innerHTML = [...seen].sort((a, b) => a - b).map(o => {
         const ob = X.objects[o], im = SP && SP.sprites[String(ob.ohol)];
         return `<span>${im ? `<img class="lb-objimg" src="${im.src}" alt="">` : `<i class="lb-objkey${ob.kind === 'empty bush' ? ' lb-hollow' : ''}" style="--c:${col(o)}"></i>`}${esc(ob.name)}${poison(o) ? ' <b class="lb-bad">☠ poison</b>' : ''}</span>`;
-      }).join('') + '<span><i class="lb-objkey lb-tri"></i>the animal followed (red ring; the chevron points where it faces); others have a blue chevron</span>';
+      }).join('') + '<span><i class="lb-objkey lb-tri"></i>the creature followed (red ring; the chevron points where it faces); others have a blue chevron</span>';
     };
     legend();
     hover(cv, e => {   // the name of what is in a cell
       const b = cv.getBoundingClientRect(), x = Math.floor((e.clientX - b.left) / b.width * size), y = Math.floor((e.clientY - b.top) / b.height * size);
       const s = steps[cur], o = s.patch[y * size + x];
-      if (x === R && y === R) return showTip(e, '<b>the animal</b>');
-      if (s.others.some(([dy, dx]) => dy + R === y && dx + R === x)) return showTip(e, 'another animal');
+      if (x === R && y === R) return showTip(e, '<b>the creature</b>');
+      if (s.others.some(([dy, dx]) => dy + R === y && dx + R === x)) return showTip(e, 'another creature');
       if (!(o > 0)) return hideTip();
       showTip(e, `<b>${esc(X.objects[o].name)}</b>${poison(o) ? '<div>a poison kind</div>' : ''}`);
     });

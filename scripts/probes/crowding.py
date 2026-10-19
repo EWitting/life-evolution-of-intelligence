@@ -47,7 +47,7 @@ for size in [int(a) for a in sys.argv[2:]] or [s0.world.height]:
 if os.environ.get("BOOK"):
     out = {"columns": ["World, cells per side", "starting population", "reaching the end of life", "after evolution (seed 0)",
                        "reaching the end of life"], "rows": table,
-           "caption": f"Well-fed lifetime, mean of {WORLDS} worlds, the same {s0.world.num_agents} animals and the same density "
+           "caption": f"Well-fed lifetime, mean of {WORLDS} worlds, the same {s0.world.num_agents} creatures and the same density "
                       "of bushes in every size. The starting population is the population of the previous stage as this stage "
                       "begins."}
     with open(os.path.join("book", "data", f"crowding_{s0.key}.json"), "w", encoding="utf-8") as f:

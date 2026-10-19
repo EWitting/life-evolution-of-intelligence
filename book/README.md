@@ -7,7 +7,7 @@ A Quarto book with one page per stage, published at https://ewitting.github.io/l
 - One page per stage on the chain, in chain order, by name only (no stage numbers). The book teaches before it
   documents: a reader who skims the bold sentences and the figures should get the point. A page has a short title
   with a subtitle line (`[...]{.lb-subtitle}`), a takeaway box (`::: {.lb-takeaway}`: what is new, what it did),
-  a short introduction, the brain diagram, the circuit, where it helps one animal followed over a few dozen ticks
+  a short introduction, the brain diagram, the circuit, where it helps one creature followed over a few dozen ticks
   (`strip`), the biology, the world (short, with its settings), **Did it work?** (the `verdict` component, two or
   three sentences that say which bar to look at, and at most one more figure that makes the point, often `bars`),
   **Full results** (collapsed callouts: curves, the full table, all lesions, life tables, what did not work) and
@@ -77,7 +77,7 @@ public repository.
 | `summary` | results table: last generations, re-evaluation, head to head | `--evaluate` for the last two |
 | `lesions` | fitness with each region silenced, per seed | `--evaluate` |
 | `runs` | run directories and dashboard links | `dashboards` for the links |
-| `strip` | one animal over a few dozen ticks (`data-example="<name>"`), OHOL sprites, ☠ on poison kinds | a per-stage extra; `python -m life.book sprites` |
+| `strip` | one creature over a few dozen ticks (`data-example="<name>"`), OHOL sprites, ☠ on poison kinds | a per-stage extra; `python -m life.book sprites` |
 | `verdict` | is the circuit used (`data-used="<lesion>,<table extra>:<label>"`), new against old brain (apart, sharing a world) | `--evaluate` |
 | `bars` | rows of a table extra as bars with the seeds (`data-rows`, `data-col0`, `data-scale`, `data-unit`) | a per-stage extra |
 

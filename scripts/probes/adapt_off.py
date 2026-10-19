@@ -37,5 +37,5 @@ for key in sys.argv[1:]:
     out = {"columns": ["Fitness of the final population", "main"],
            "rows": [["Adaptation on (as evolved)", st(on)], ["Adaptation switched off", st(off)],
                     ["Off, % of on", st([100 * b / a for a, b in zip(on, off)])]],
-           "caption": f"The same animals in the same {WORLDS} worlds with the adaptation of the look inputs on and off."}
+           "caption": f"The same creatures in the same {WORLDS} worlds with the adaptation of the look inputs on and off."}
     (Path(__file__).resolve().parents[2] / "book" / "data" / f"adapt_off_{key}.json").write_text(json.dumps(out))

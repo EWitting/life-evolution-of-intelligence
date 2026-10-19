@@ -8,12 +8,12 @@
 **New:** cells that report the body: a cold skin and an emptying stomach. With two needs, the brain has something
 to decide for the first time: look after warmth, or forage.
 
-**Result:** the hunger cell is the one that matters. It tells the animal when to stop resting in the warmth and go
-eat; without it the animals lose most of their fitness.
+**Result:** the hunger cell is the one that matters. It tells the creature when to stop resting in the warmth and go
+eat; without it the creatures lose most of their fitness.
 :::
 
 Until now the brain has only looked outward. It sees, tastes and feels pain, but has no idea how full its stomach
-is or how warm its body is, so these animals forage whether they are starving or stuffed.
+is or how warm its body is, so these creatures forage whether they are starving or stuffed.
 
 This stage makes the world cold, which gives the body a second need, and gives the brain two cells that report on
 the body: one for a cold skin, one for an emptying stomach.
@@ -25,14 +25,14 @@ the body: one for a cold skin, one for an emptying stomach.
 Four new cells:
 
 - **`cold`** fires while the skin is cold.
-- **`warm_seek`**, driven by `cold`, pushes the animal forward: keep moving while it is cold.
+- **`warm_seek`**, driven by `cold`, pushes the creature forward: keep moving while it is cold.
 - **`rest`**, an inhibitory cell, fires while the skin is warm and holds the forward step back: stay where it is
   warm.
 - **`hungry`**, an inhibitory cell, fires when the stomach is less than about two-thirds full and **shuts both
-  `warm_seek` and `rest`**. A hungry animal forgets about warmth and forages; a fed one looks after its
+  `warm_seek` and `rest`**. A hungry creature forgets about warmth and forages; a fed one looks after its
   temperature.
 
-The animal has no map of where it is warm. It keeps walking while it is cold and stops where it is warm, and that
+The creature has no map of where it is warm. It keeps walking while it is cold and stops where it is warm, and that
 is enough to end up near warmth most of the time.
 
 These connections are designed; evolution tunes their strength. One set is left entirely to evolution: synapses
@@ -41,11 +41,11 @@ stomach" if it pays.
 
 ## Watching it work
 
-One animal from the last generation, with a full stomach, walking in the cold until it reaches the warmth of a hot
+One creature from the last generation, with a full stomach, walking in the cold until it reaches the warmth of a hot
 spring.
 
-While the skin is cold, `cold` and `warm_seek` fire and the animal steps forward every tick. **Next to the spring
-the `skin` sense rises, `cold` and `warm_seek` fall silent, and `rest` switches on.** The animal stays put. `hungry`
+While the skin is cold, `cold` and `warm_seek` fire and the creature steps forward every tick. **Next to the spring
+the `skin` sense rises, `cold` and `warm_seek` fall silent, and `rest` switches on.** The creature stays put. `hungry`
 stays silent because the stomach is full, so warmth comes first. Towards the end it begins to stir, and `rest`
 begins to fade.
 
@@ -57,14 +57,14 @@ A drive is a signal from the body about something it needs: food, water, warmth,
 signals are gathered in the *hypothalamus*, where small groups of neurons read the blood and the body and fire when
 a need is not met. They do not move a muscle themselves; they switch behaviours on and hold others back.
 
-The way these animals find warmth is older still. A bacterium or a worm in a bad place does not know where the good
+The way these creatures find warmth is older still. A bacterium or a worm in a bad place does not know where the good
 place is. It moves, and when things are good it stops moving. This is *kinesis*: no map, only a rule about when to
 keep going.
 
 ## The world
 
-The world of the previous stage, made cold. A cold body burns its food faster, so an animal that stays cold starves
-sooner. A few hot springs warm the ground around them. The animal cannot see where it is warm; it feels only the
+The world of the previous stage, made cold. A cold body burns its food faster, so a creature that stays cold starves
+sooner. A few hot springs warm the ground around them. The creature cannot see where it is warm; it feels only the
 temperature of its own skin. The food is as before: four kinds of berry bush, new in every life, half of them
 poison.
 
@@ -74,20 +74,20 @@ poison.
 
 <div data-life="verdict" data-stage="1.7" data-used="hungry,rest,cold"></div>
 
-**The circuit is used, `hungry` most of all.** Silencing `hungry` does not make the animal less hungry: it removes
-the one signal that tells the warmth cells to stand down, so the animal rests in the warmth while its stomach
+**The circuit is used, `hungry` most of all.** Silencing `hungry` does not make the creature less hungry: it removes
+the one signal that tells the warmth cells to stand down, so the creature rests in the warmth while its stomach
 empties. `cold` and `warm_seek` form one chain and are used least.
 
 **Against the old brain, the two measures disagree, and that is a finding.** Living among their own kind, the
-animals with drives do about as well as the old brain or better. Sharing a world with the old brain, they fall
-behind: clearly in two seeds, level in the third. They do not get more food; they move less, and a warm body burns food more slowly. A resting animal leaves
+creatures with drives do about as well as the old brain or better. Sharing a world with the old brain, they fall
+behind: clearly in two seeds, level in the third. They do not get more food; they move less, and a warm body burns food more slowly. A resting creature leaves
 the bushes around it to whoever is still walking, and in a shared world that is the old brain. Food is scarce
 enough for this to matter.
 
 <div data-life="bars" data-stage="1.7" data-example="life_spent" data-rows="0,2" data-col0="new brain (main)" data-col1="old brain (control)"></div>
 
 So sharing a world measures who wins the race for berries, and resting is a poor way to win a race. It does not
-show that resting is a mistake for the animal that does it.
+show that resting is a mistake for the creature that does it.
 
 ## Full results
 
@@ -98,7 +98,7 @@ show that resting is a mistake for the animal that does it.
 ::: {.callout-note collapse="true" title="All fitness measures"}
 <div data-life="summary" data-stage="1.7"></div>
 
-Either population alone, in a world with half as many animals, does far better than at full numbers: food is a
+Either population alone, in a world with half as many creatures, does far better than at full numbers: food is a
 race. Inside the populations with the circuit, evolution left the strength of `rest` where it was designed and made
 the hunger gate stronger.
 :::

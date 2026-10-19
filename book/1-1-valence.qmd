@@ -7,11 +7,11 @@
 ::: {.lb-takeaway}
 **New:** a few cells that mean *this is good* and *this is bad*, and poison berries in the world.
 
-**Result:** the animals learn over generations to turn away from poison before they bite it. They depend almost
+**Result:** the creatures learn over generations to turn away from poison before they bite it. They depend almost
 entirely on the *bad* side of the new circuit.
 :::
 
-The animal of the previous stage steers by reflex. What it sees is wired, through a small ganglion, straight to
+The creature of the previous stage steers by reflex. What it sees is wired, through a small ganglion, straight to
 its motor neurons, and it cannot tell what happened after it bit something.
 
 This stage gives it cells for *good* and *bad*, a sorting of the world that is called *valence*. The world gets
@@ -28,7 +28,7 @@ Five new groups of cells, each with a meaning fixed by its wiring:
 
 - **`valence_app`**, *good*: the sense of taste is wired to these cells, and reaches the brain nowhere else.
 - **`valence_av`**, *bad*: pain is wired to these cells, and reaches the brain nowhere else.
-- **`grasp`**: when it fires, the animal bites what is in front of it.
+- **`grasp`**: when it fires, the creature bites what is in front of it.
 - **`no_touch`**, a gate: fires whenever nothing is within reach, and holds `grasp` shut.
 - **`no_feed`**: driven by the *bad* cells, it blocks the bite.
 
@@ -36,7 +36,7 @@ Five new groups of cells, each with a meaning fixed by its wiring:
 holds it shut until something is directly ahead. This is *disinhibition*, the release of an action by switching
 off its gate ([background](background.qmd#exciting-and-inhibiting)).
 
-**Bad turns the animal away and stops the bite**, as in a worm that touches something harmful: the *bad* cells
+**Bad turns the creature away and stops the bite**, as in a worm that touches something harmful: the *bad* cells
 drive the turning motor neurons, and through `no_feed` they shut down biting.
 
 **The eyes give the value cells a head start.** Taste and pain arrive only *after* a bite. So the value cells also
@@ -45,16 +45,16 @@ excite the *bad* cells before anything has been eaten.
 
 ## Watching it work
 
-One animal from the last generation, around the moment it bites a poison berry. Step through it one tick at a
+One creature from the last generation, around the moment it bites a poison berry. Step through it one tick at a
 time.
 
 At the bite nothing has changed yet: the pain arrives one tick later. Then `pain` is on, both *bad* cells fire,
-`no_feed` switches on and `grasp` falls silent. The animal turns away. A few ticks later the pain has faded and it
+`no_feed` switches on and `grasp` falls silent. The creature turns away. A few ticks later the pain has faded and it
 is eating again.
 
 <div data-life="strip" data-stage="1.1" data-example="bad_berry"></div>
 
-Nothing was learned here: the animal will react the same way next time. What keeps it from biting poison often is
+Nothing was learned here: the creature will react the same way next time. What keeps it from biting poison often is
 the evolved input from the eyes, which acts before the bite.
 
 ## Biology
@@ -84,9 +84,9 @@ inherited. Learning it within a life comes in a later stage.
 
 <div data-life="verdict" data-stage="1.1" data-used="valence_av,no_feed,valence_app,grasp"></div>
 
-**Look at the first two bars:** without the *bad* cells, or without `no_feed`, the animals keep only about a tenth
+**Look at the first two bars:** without the *bad* cells, or without `no_feed`, the creatures keep only about a tenth
 of their fitness. The *good* side matters much less, because the reflexes of the previous stage already bring the
-animal to food and make it bite.
+creature to food and make it bite.
 
 **The old brain falls far behind.** It cannot feel pain, so it can avoid poison only if evolution happens to wire
 "this colour, turn away" into its reflexes, and in the generations given it did not.
@@ -95,7 +95,7 @@ That says how much *easier* the value cells make the solution to find, not what 
 poison looks the same in every generation, and a brain without pain could evolve the same avoidance by colour.
 In earlier runs with many more generations, two of three controls eventually did, late and suddenly.
 
-The difference shows in how the animals spend their lives:
+The difference shows in how the creatures spend their lives:
 
 <div data-life="bars" data-stage="1.1" data-example="life_spent" data-rows="0,1" data-unit="%" data-col0="new brain (main)" data-col1="old brain (control)"></div>
 
@@ -124,11 +124,11 @@ What the three rows measure: see [how a stage is judged](index.qmd#sec-judged).
 :::
 
 ::: {.callout-note collapse="true" title="What did not work: appetite on a full stomach"}
-In the first runs of this stage the animals were born with a full stomach, and the *good* side was not used at
+In the first runs of this stage the creatures were born with a full stomach, and the *good* side was not used at
 all. A full stomach lasted most of a life, so there was little to gain from eating well. Born a quarter full,
-the animals use it a little.
+the creatures use it a little.
 
-One fault remains: the *good* side makes the animal bite whenever food is in reach, hungry or not, and many bites
+One fault remains: the *good* side makes the creature bite whenever food is in reach, hungry or not, and many bites
 land on a nearly full stomach. Nothing in this brain can sense the stomach yet; a later stage adds a cell for
 hunger.
 :::

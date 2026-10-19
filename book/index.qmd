@@ -19,19 +19,23 @@ builds an intuition about intelligence that could prove useful both in neuroscie
 New to neurons or to evolutionary algorithms? The [background](background.qmd) page explains everything this book
 assumes, with a glossary.
 
-## The animals and their world
+## The creatures and their world
 
-The animals live on a grid. Each has a stomach that empties a little every tick (one tick is about a second of
-behaviour), and faster when it moves. An animal whose stomach is empty dies.
+The creatures live on a grid. Each has a stomach that empties a little every tick (one tick is about a second of
+behaviour), and faster when it moves. A creature whose stomach is empty dies.
 
 Food grows on bushes. Once a bush's last berry is eaten it stays empty for a long time, longer than a full stomach
-lasts, so an animal has to keep moving. At any moment only a small share of the bushes carries berries. A bite
+lasts, so a creature has to keep moving. At any moment only a small share of the bushes carries berries. A bite
 costs a little energy.
 
 The objects, their names and their pictures come from the game *One Hour One Life*. The simulation uses a small
 slice of the game's rules at each stage, and a larger one as the brain grows.
 
-An animal senses the world through a few coarse "eyes": a handful of directions, in each of which it sees whether
+The creatures wear the bodies of the game's people, because those are the pictures it has, and the clothes make
+each one easy to follow. Their brains start out far simpler than a worm's. This book calls them *creatures* and
+keeps the word *animal* for real ones.
+
+A creature senses the world through a few coarse "eyes": a handful of directions, in each of which it sees whether
 something is there, how near it is, and what it looks like. What something looks like is a short list of numbers,
 its *look*. It can step forward, turn left or right, and grasp what is in front of it.
 
@@ -39,7 +43,7 @@ its *look*. It can step forward, turn left or right, and grasp what is in front 
 
 Every stage page ends with **Did it work?**, which answers two questions.
 
-1. **Is the new circuit used?** The evolved animals live again with the new cells silenced, a *lesion*. If they do
+1. **Is the new circuit used?** The evolved creatures live again with the new cells silenced, a *lesion*. If they do
    clearly worse, in every seed, they were using them. This is the main criterion: a circuit that is used is one
    that later stages can build on.
 2. **Does the new brain do better than the old one?** Each stage has a **main** run, with the new circuit, and a
@@ -53,9 +57,9 @@ are the seeds.
 
 The comparison is measured in two ways. **Each among its own kind**: every final population lives again in the same
 set of worlds, so that no population owes its score to easier worlds. **Sharing one world**: half new and half old
-animals live together and compete for the same bushes. When the two disagree, the page says why.
+creatures live together and compete for the same bushes. When the two disagree, the page says why.
 
-The **fitness** that all of this measures is the *well-fed lifetime*: how long an animal lived from its first meal,
+The **fitness** that all of this measures is the *well-fed lifetime*: how long a creature lived from its first meal,
 with each tick weighted by how full its stomach was.
 
 Under **Full results**, each page keeps everything else, folded away: fitness over the generations, every measure
@@ -66,7 +70,7 @@ chart** has one bar per region: fitness with that region silenced, as a percenta
 ## How to read a stage page
 
 A page starts with a short summary box, the brain diagram and the new circuit. Where it helps, a **Watching it
-work** strip follows one animal over a few dozen ticks, so that you can see the circuit act. Then come the biology
+work** strip follows one creature over a few dozen ticks, so that you can see the circuit act. Then come the biology
 the stage is modelled on, the world it was tested in, and *Did it work?*. At the end, **Runs** links to a
 *dashboard* that replays the last generation of a run.
 

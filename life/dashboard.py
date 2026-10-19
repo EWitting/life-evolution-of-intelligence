@@ -50,6 +50,9 @@ def _b64(a: np.ndarray, dtype) -> dict:
 BRAIN_AGENTS = 6   # light export: agents whose activations and weights are stored
 
 
+PEOPLE = 64   # dressed bodies in a dashboard; agent i wears body i % PEOPLE (the book's strips follow this)
+
+
 def poison_objects(names: list[str], ate, pain) -> list[bool]:
     """Per object: is it of a poison kind in this recording? Poison is set per world in later stages, so it is read
     from the recording: a food is poison when biting it hurt. A bush (full or empty) takes the effect of its berry,
@@ -127,7 +130,7 @@ def build_data(run_dir: Path, light: bool = False) -> dict:
         from .sprites import sprite_data_urls, ground_data_url, person_data_urls
         sprites = {str(i): url for i, url in sprite_data_urls(rs["ohol_id"]).items()}
         ground = ground_data_url(0)   # single biome (grassland) for now
-        people = person_data_urls(min(int(rec["pos"].shape[1]), 64))   # dressed bodies, reused round-robin
+        people = person_data_urls(min(int(rec["pos"].shape[1]), PEOPLE))   # dressed bodies, reused round-robin
     except Exception as e:   # sprites are optional
         print(f"sprites skipped: {e}")
         sprites, ground, people = {}, None, []

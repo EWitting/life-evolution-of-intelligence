@@ -491,9 +491,10 @@
   const loadSprites = () => spritesP || (spritesP = fetch('data/sprites.json').then(r => r.ok ? r.json() : null).catch(() => null).then(S => {
     if (!S) return null;
     const img = u => new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = u; });
-    const keys = Object.keys(S.sprites);
-    return Promise.all([...keys.map(k => img(S.sprites[k])), S.ground ? img(S.ground) : null])
-      .then(a => ({sprites: Object.fromEntries(keys.map((k, i) => [k, a[i]])), ground: a[keys.length]}));
+    const keys = Object.keys(S.sprites), pk = Object.keys(S.people || {});
+    return Promise.all([...keys.map(k => img(S.sprites[k])), S.ground ? img(S.ground) : null, ...pk.map(k => img(S.people[k]))])
+      .then(a => ({sprites: Object.fromEntries(keys.map((k, i) => [k, a[i]])), ground: a[keys.length],
+        people: Object.fromEntries(pk.map((k, i) => [k, a[keys.length + 1 + i]])), cycle: S.people_cycle || 64}));
   }));
   // a red disc with a white skull, centre (x, y), diameter d (as in life/dashboard.html)
   function skull(ctx, x, y, d) {
@@ -577,9 +578,30 @@
         }
         if (poison(o)) skull(ctx, x * CELL + CELL * 0.75, y * CELL + CELL * 0.25, CELL * 0.5);
       }
+      // the animals as in the dashboard: a dressed OHOL body (facing left or right) and a chevron at the cell edge
+      // that points where it faces; red for the animal followed, blue for the others; triangles without sprites
       const tri = (cx, cy, d, fill, r) => { ctx.save(); ctx.translate(cx, cy); ctx.rotate(d * Math.PI / 2); ctx.beginPath(); ctx.moveTo(0, -r); ctx.lineTo(r * 0.8, r * 0.8); ctx.lineTo(-r * 0.8, r * 0.8); ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore(); };
-      for (const [dy, dx, d] of s.others) tri((dx + R) * CELL + CELL / 2, (dy + R) * CELL + CELL / 2, d, css('--lb-other') || '#898781', CELL * 0.3);
-      tri(R * CELL + CELL / 2, R * CELL + CELL / 2, s.dir, SP ? '#0b0b0b' : css('--lb-animal') || '#0b0b0b', CELL * 0.36);
+      const animal = (gx, gy, d, body, left, col, focus) => {
+        const cx = gx * CELL + CELL / 2, cy = gy * CELL + CELL / 2;
+        if (!body) return tri(cx, cy, d, focus ? '#0b0b0b' : css('--lb-other') || '#898781', CELL * (focus ? 0.36 : 0.3));
+        const bh = 1.05 * CELL, bw = body.naturalWidth * bh / body.naturalHeight;
+        ctx.save(); ctx.translate(cx, cy);
+        ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.beginPath(); ctx.ellipse(0, 0.42 * CELL, bw * 0.5, 0.08 * CELL, 0, 0, 7); ctx.fill();
+        ctx.save(); if (left) ctx.scale(-1, 1); ctx.drawImage(body, -bw / 2, 0.5 * CELL - bh - 0.03 * CELL, bw, bh); ctx.restore();
+        const a = 0.2 * CELL;
+        ctx.rotate(d * Math.PI / 2); ctx.beginPath(); ctx.moveTo(0, -0.5 * CELL - a * 0.4); ctx.lineTo(a, -0.5 * CELL + a * 0.6); ctx.lineTo(-a, -0.5 * CELL + a * 0.6); ctx.closePath();
+        ctx.fillStyle = col; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 1; ctx.stroke();
+        ctx.restore();
+        if (focus) { ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, 0.62 * CELL, 0, 7); ctx.stroke(); }
+      };
+      const P = SP && SP.people, body = k => P && P[String(k)];
+      s.others.forEach(([dy, dx, d], k) => animal(dx + R, dy + R, d, body(k % 4), d === 3, '#1b3a6b', false));
+      animal(R, R, s.dir, body(X.agent % ((SP && SP.cycle) || 64)), facingLeft(steps.indexOf(s)), '#c8102e', true);
+    }
+    // OHOL bodies face only left or right: keep the last sideways facing while the animal moves up or down
+    function facingLeft(i) {
+      for (let k = i; k >= 0; k--) { const d = steps[k].dir; if (d % 2) return d === 3; }
+      return false;
     }
     function show(i) {
       cur = Math.max(0, Math.min(n - 1, i));
@@ -597,7 +619,7 @@
       root.querySelector('.lb-striplegend').innerHTML = [...seen].sort((a, b) => a - b).map(o => {
         const ob = X.objects[o], im = SP && SP.sprites[String(ob.ohol)];
         return `<span>${im ? `<img class="lb-objimg" src="${im.src}" alt="">` : `<i class="lb-objkey${ob.kind === 'empty bush' ? ' lb-hollow' : ''}" style="--c:${col(o)}"></i>`}${esc(ob.name)}${poison(o) ? ' <b class="lb-bad">☠ poison</b>' : ''}</span>`;
-      }).join('') + '<span><i class="lb-objkey lb-tri"></i>the animal (points where it faces); grey = others</span>';
+      }).join('') + '<span><i class="lb-objkey lb-tri"></i>the animal followed (red ring; the chevron points where it faces); others have a blue chevron</span>';
     };
     legend();
     hover(cv, e => {   // the name of what is in a cell

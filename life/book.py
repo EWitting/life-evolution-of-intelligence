@@ -682,10 +682,11 @@ SPRITE_THUMB = 64                            # px; the strip draws a cell at 30 
 
 def strip_sprites() -> Path:
     """data/sprites.json: the OHOL sprites of every object in a strip of any stage (as in the dashboards, colour
-    variants recoloured), and the ground texture, shared by all pages. Strips exported before objects carried
+    variants recoloured), the dressed bodies of the animals, and the ground texture, shared by all pages. Strips exported before objects carried
     their OHOL id get it here, from their run's ruleset."""
-    from .sprites import sprite_data_urls, ground_data_url
-    ids = set()
+    from .sprites import sprite_data_urls, ground_data_url, person_ids, render_person, outfit_for, _png_url
+    ids, agents = set(), set(range(4))           # bodies 0-3 dress the other animals in a strip
+    from .dashboard import PEOPLE                # the dashboard dresses agent i as body i % PEOPLE
     for f in sorted(DATA_DIR.glob("*.json")):
         if f.name in ("sprites.json", "brain_layout.json"):
             continue
@@ -699,11 +700,19 @@ def strip_sprites() -> Path:
                     o["ohol"] = int(oid)
                 changed = True
             ids |= {o["ohol"] for o in x["objects"] if o["ohol"]}
+            agents.add(x["agent"] % PEOPLE)
         if changed:
             f.write_text(json.dumps(data, separators=(",", ":")), encoding="utf-8")
     out = DATA_DIR / "sprites.json"
     sprites = {str(k): v for k, v in sprite_data_urls(sorted(ids), thumb=SPRITE_THUMB).items()}
-    out.write_text(json.dumps({"sprites": sprites, "ground": ground_data_url(0, size=128)}), encoding="utf-8")
+    people, bodies = {}, person_ids()
+    for i in sorted(agents) if bodies else []:
+        im = render_person(bodies[i % len(bodies)], outfit_for(i))
+        if im is not None:
+            im.thumbnail((SPRITE_THUMB, SPRITE_THUMB))
+            people[str(i)] = _png_url(im)
+    out.write_text(json.dumps({"sprites": sprites, "ground": ground_data_url(0, size=128), "people": people,
+                               "people_cycle": PEOPLE}), encoding="utf-8")
     return out
 
 

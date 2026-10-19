@@ -84,11 +84,19 @@ def make_simulate(exp: ExperimentConfig, record: bool, compact: bool = True):
         # fewer genomes than agents: every genome lives as N / P siblings (agents i*k .. i*k+k-1 share genome i)
         P = pop.b.shape[0]
         assert N % P == 0, f"{N} agents cannot be split evenly over {P} genomes"
-        bstate0 = jax.vmap(lambda g: brain.init_state(g, layout))(pop)   # birth: the same for all siblings of a genome
-        pop = brain.block_genome(layout, pop)                             # a life reads only the plastic block
-        if P != N:
-            sib = lambda x: jnp.repeat(x, N // P, axis=0)
-            pop, bstate0 = jax.tree_util.tree_map(sib, pop), jax.tree_util.tree_map(sib, bstate0)
+        sib = lambda x: jnp.repeat(x, N // P, axis=0)
+        if layout.has_per_life:   # birth draws the per-life synapses anew for every agent, siblings included
+            kb = jax.random.split(jax.random.fold_in(key, 7), N)
+            full = jax.tree_util.tree_map(sib, pop) if P != N else pop
+            bstate0 = jax.vmap(lambda g, k: brain.init_state(g, layout, key=k))(full, kb)
+            pop = brain.block_genome(layout, pop)
+            if P != N:
+                pop = jax.tree_util.tree_map(sib, pop)
+        else:
+            bstate0 = jax.vmap(lambda g: brain.init_state(g, layout))(pop)   # birth: the same for all siblings of a genome
+            pop = brain.block_genome(layout, pop)                             # a life reads only the plastic block
+            if P != N:
+                pop, bstate0 = jax.tree_util.tree_map(sib, pop), jax.tree_util.tree_map(sib, bstate0)
         # rules with a leading axis of 2 = two phases of one life: phase 1 from tick WorldConfig.switch_tick on
         phased = rules.food_value.ndim == 2
         rules_at = (lambda tk: jax.tree_util.tree_map(lambda a: a[(tk >= exp.world.switch_tick).astype(jnp.int32)], rules))             if phased else (lambda tk: rules)

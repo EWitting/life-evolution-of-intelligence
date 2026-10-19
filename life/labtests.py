@@ -47,7 +47,7 @@ def xor_meals(exp, pop, sim: float, conds: dict, rounds: int = 2, n_agents: int 
 
     def readout(g, st, o):
         frozen = g._replace(eta=jnp.zeros_like(g.eta))
-        s2 = B.init_state(g, L)._replace(w=st.w)
+        s2 = B.init_state(g, L)._replace(w=st.w, ws=st.ws, wg=st.wg)
         for _ in range(40):
             s2 = step(frozen, s2, obs())
         for _ in range(3):
@@ -66,7 +66,7 @@ def xor_meals(exp, pop, sim: float, conds: dict, rounds: int = 2, n_agents: int 
             eta = np.asarray(g0.eta).copy()
             eta[np.isin(pid, [list(L.proj_names).index(n) for n in off])] = 0.0
             g = g0._replace(eta=jnp.asarray(eta))
-            st = B.init_state(g, L)
+            st = B.init_state(g, L, key=jax.random.PRNGKey(1000 * seed + a))   # per-life wiring: one draw per animal
             for t in XOR_TYPES:
                 res[(c, "before", t)].append(readout(g, st, obs(looks[t])))
             for _ in range(rounds):
@@ -140,7 +140,8 @@ def conditioning(exp, pop, protocol: dict, sim: float, n_agents: int = 24, seed:
 
     one = lambda g, st, o: B.step(exp.brain, L, g, st, o, jnp.zeros(3), jax.random.PRNGKey(0))[0]
     step = jax.jit(jax.vmap(one))
-    init = jax.vmap(lambda g: B.init_state(g, L))
+    init = jax.vmap(lambda g, k: B.init_state(g, L, key=k))
+    keys = jax.random.split(jax.random.PRNGKey(seed), NA)   # per-life wiring: one draw per animal
     frozen = pop._replace(eta=jnp.zeros_like(pop.eta))
     blank = obs()
     mi = list(L.mod_names).index(signal or ("da" if "da" in L.mod_names else "us_av"))
@@ -148,7 +149,7 @@ def conditioning(exp, pop, protocol: dict, sim: float, n_agents: int = 24, seed:
     val = (L.region("value_av"), L.region("value_app")) if "value_av" in L.names else None
 
     def readout(st, o):
-        s2 = init(frozen)._replace(w=st.w)
+        s2 = init(frozen, keys)._replace(w=st.w, ws=st.ws, wg=st.wg)
         for _ in range(40):
             s2 = step(frozen, s2, blank)
         for _ in range(3):
@@ -160,7 +161,7 @@ def conditioning(exp, pop, protocol: dict, sim: float, n_agents: int = 24, seed:
         return np.stack([x[:, av].mean(-1), p[:, 4] + p[:, 5], v, np.asarray(hall)[:, av].mean(-1)], -1)
 
     tests = {k: obs(c) for k, c in protocol["tests"].items()}
-    st = init(pop)
+    st = init(pop, keys)
     for _ in range(4):
         st = step(pop, st, blank)
     res = {k: [readout(st, o)] for k, o in tests.items()}

@@ -161,6 +161,11 @@ class ProjectionSpec:
                                      # earlier, so a modulator computed from this tick's activity (a TD error) teaches
                                      # the synapses of the moment it is about, not those active as it arrives
                                      # (dopamine acts on synapses active 0.3-2 s before it: Yagishita et al. 2014)
+    per_life: bool = False           # the synapses (which exist, from density, and their weights, N(0,1)/sqrt(fan_in))
+                                     # are drawn anew at every birth, for each sibling, instead of being inherited:
+                                     # the random wiring of the mushroom body differs between individuals (Caron et
+                                     # al. 2013), and nothing inherited can depend on a code drawn per life (ADR-017).
+                                     # Needs evolve=False and no w_init
     src_select: tuple = ()           # src 'in' only: input-feature name patterns (fnmatch, e.g. 'vis*', 'pain')
                                      # restricting which input neurons project; several projections from 'in'
                                      # to the same region may use disjoint selections

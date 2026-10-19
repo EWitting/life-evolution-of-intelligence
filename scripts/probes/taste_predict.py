@@ -145,3 +145,23 @@ for obj in (17, 8):
           + ", ".join(f"{o} {names[o]} {c / oc.sum():.0%}" for o, c in sorted(zip(objs, oc), key=lambda z: -z[1])[:4]))
 for o in (0, 17, 19, 8, 10):
     print(f"    appearance {o:3d} {names[o][:28]:28s} {np.round(app[o], 2)}")
+
+# would the distance of what is in sight help? the pallium of t with vis+0.near added: on its own (one weight shared
+# by every look), and as a conjunction (the pallium times near, and the pallium when the object is at the mouth)
+near = x[..., list(L.in_names).index("vis+0.near")]
+mouth = (near > 0.75).astype(np.float32)
+print("  with distance (taste of t+1 from the pallium of t): R^2 linear / dale")
+for name, F in (("pallium", P), ("pallium + near", np.concatenate([P, near[..., None]], -1)),
+                ("pallium + pallium x near", np.concatenate([P, P * near[..., None]], -1)),
+                ("pallium x at-the-mouth", P * mouth[..., None]),
+                ("pallium + pallium x at-the-mouth", np.concatenate([P, P * mouth[..., None]], -1))):
+    Ftr, Fte = F[:-1][ok & half[None]], F[:-1][ok & ~half[None]]
+    A_ = np.c_[Ftr, np.ones(len(Ftr))]
+    w_ = np.linalg.solve(A_.T @ A_ + 1e-3 * np.eye(A_.shape[1]), A_.T @ y_tr)
+    wd_, _ = nnls(Ftr, y_tr)
+    print(f"    {name:34s} {r2(np.c_[Fte, np.ones(len(Fte))] @ w_):.3f} / {r2(Fte @ wd_):.3f}")
+
+# the inherited (evolved) start of pallium -> aversive, which reads the pallium code
+ip, ia = L.names.index("pallium"), L.names.index("valence_av")
+blk = np.asarray(pop.w0)[:, L.offsets[ip]:L.offsets[ip] + L.sizes[ip], L.offsets[ia]:L.offsets[ia] + L.sizes[ia]]
+print(f"  inherited pallium -> aversive w0: mean |w| {np.abs(blk).mean():.3f}, 99th pct {np.percentile(np.abs(blk), 99):.3f}")

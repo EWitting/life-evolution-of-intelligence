@@ -2903,3 +2903,51 @@ At gamma 0.5, scale 3, taste 0.3, `td`:
 
 Next: cue shift far -> near and second-order conditioning once the value cells read `vis+0.near`; how the relief
 burst should be handled; the critic stage itself is still to be agreed with the user.
+
+## v55 (2026-10-19, evening): a per-life pallium; distance for the critic; larger pallia
+
+Probes on `x.critic` at generation 0 (frozen 2.2 population, seed 0, `DENSE=1`, 16 paired worlds; base 1010 +- 58).
+
+**Per-life pallium wiring** (`ProjectionSpec.per_life`, new; user: option 1): the pallium's input synapses were drawn
+once per genome and inherited unmutated (selection among the first draws only). Now, where set, they are drawn anew
+at every birth for each sibling (`brain.init_state(key=...)`, `run.make_simulate`), as the mushroom body's wiring
+differs between individuals (Caron et al. 2013); what reads the pallium starts at 0 and is not evolved (variant
+`plife`). The frozen 2.2 keeps its inherited code. Generation 0: +9 +- 21 (no cost).
+
+**Distance for the critic.** The pallium reads only the look of the first object in line of sight, so a bush at the
+mouth and one four cells away are one state (v54). Offline (`taste_predict.py`): `near` as a separate input adds
+nothing (R^2 0.51 -> 0.52), the pallium gated by "at the mouth" reaches 0.73 (ceiling 0.80). `near` fed into the
+pallium splits every look into unrelated codes per distance (R^2 0.20); a new `touch` sense into the pallium spread
+lessons to good types (XOR lab good 0.26: at the mouth it pushes the same cells in every look) and was removed again.
+The existing `no_touch` cell (inhibitory, about 0 at the mouth, 0.9 otherwise) into the pallium, one phase later so
+both describe the same tick (variant `pnt`, value cells one phase after the pallium): per animal R^2 0.50 -> 0.58,
+with 512 cells 0.68.
+
+**Pallium size and k** (`scripts/probes/pallium_sweep.py`: taste R^2 per animal; XOR lab with only the pallium
+learning, aversion poison / good):
+
+| variant | R^2 | XOR poison / good |
+|---|---|---|
+| base | 0.49 | 0.36 / 0.09 |
+| plife | 0.50 | 0.50 / 0.10 |
+| plife + pn512 | 0.51 | 0.60 / 0.02 |
+| plife + pnt | 0.58 | 0.47 / 0.09 |
+| plife + pnt + pn512 | 0.68 | 0.55 / 0.02 |
+| plife + pnt + pn512 + pk4 | 0.58 | 0.93 / 0.06 |
+| plife + pnt + pn1024 (32 animals) | 0.66 | 0.53 / 0.02 |
+| plife + pnt + pn1024 + pk4 | 0.63 | 0.97 / 0.04 |
+| plife + pnt + pn1024 + pk8 | 0.66 | 1.00 / 0.13 |
+
+At 128 cells more winners spread lessons to good types (pk4 0.69, pk8 0.91, with touch); at 512 and 1024 cells k = 4
+discriminates almost perfectly. 1024 cells do not fit a full population in WSL's 5.9 GB: the remap runs in host
+memory (about 20 arrays of genomes x n x n); the probe uses 32 / 24 animals there.
+
+Generation 0, vs base: plife + pn512 **+46 +- 18**; plife + pnt + pn512 -26 +- 18; plife + pnt + pn512 + pk4 +10 +- 21.
+`no_touch` costs about 70 without a critic (a lesson at the bite reaches the bush in sight less well).
+`approach_trace.py`: the pallium is not silent while approaching with `no_touch`, aversion by distance unchanged;
+moving the pallium a phase later alone changes nothing. Single recorded worlds diverge with any change of the
+per-life draws, so their lifetimes are not comparable.
+
+**The critic on these pallia** (TD_TASTE 0.3, gamma 0.9), vs plife + pn512 (1056 +- 66): tdp -70 +- 38, pnt + tdp
+-91 +- 32, pnt + td -122 +- 57, pnt + pk4 + tdp -232 +- 41; the critic variants eat fewer good berries in the second
+half (29-35 vs 42.5). With distance the critic still does not pay at generation 0 in this world.

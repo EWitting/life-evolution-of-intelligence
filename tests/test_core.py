@@ -232,3 +232,20 @@ def test_hidden_snake_rattles_ahead_and_bites_silently():
     obs = observe_all(VisionConfig(), cfg, rules, st, jnp.asarray(ray_offsets(VisionConfig())),
                       BodyConfig(hear=True))
     assert obs["vision"][0, :, 0].sum() == 0   # the snake is not seen
+
+
+def test_per_life_synapses_are_drawn_at_birth():
+    from life.config import ProjectionSpec
+    exp = ExperimentConfig(brain=BrainConfig(regions=(RegionSpec("code", 16),), projections=(
+        ProjectionSpec(src="in", dst="code", density=0.5, evolve=False, per_life=True),
+        ProjectionSpec(src="code", dst="out", density=1.0))))
+    L = make_layout(exp)
+    g = brain.init_genome(jax.random.PRNGKey(0), L)
+    code, out = L.region("code"), slice(L.n - L.n_out, L.n)
+    a = brain.init_state(g, L, key=jax.random.PRNGKey(1)).w
+    b = brain.init_state(g, L, key=jax.random.PRNGKey(2)).w
+    inherited = brain.init_state(g, L).w
+    assert not np.allclose(a[:L.n_in, code], b[:L.n_in, code])                       # a new draw per life
+    assert np.allclose(a[code, out], inherited[code, out]) and np.allclose(a[code, out], b[code, out])
+    assert np.allclose(inherited, g.w0 * g.mask)
+    assert 0.3 < float((a[:L.n_in, code] != 0).mean()) < 0.7                          # the projection's density

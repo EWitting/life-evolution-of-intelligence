@@ -107,6 +107,8 @@ class Layout(NamedTuple):
     mod_accum: tuple = ()   # static: ModulatorSpec.accumulate per modulator (empty = none accumulates)
     elig_delay: jnp.ndarray | None = None   # [N, N] 1 where the eligibility trace takes the pre activity of a tick earlier
     has_delay: bool = False
+    per_life: jnp.ndarray | None = None     # [N, N] 1 where synapses are drawn anew at birth (ProjectionSpec.per_life)
+    has_per_life: bool = False
 
     def region(self, name: str) -> slice:
         i = self.names.index(name)
@@ -148,7 +150,7 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
     allowed, density, o2o, gain, evolve_w, tune = z(), z(), z(), z(), z(), z()
     proj_id, rule, mod_idx = z(np.int32, -1), z(np.int32), z(np.int32, -1)
     elig, dep_U, dep_rec, eta_init, decay = z(), z(), z(), z(), z()
-    centred, delay = z(), z()
+    centred, delay, per_life = z(), z(), z()
     w_init = z(v=np.nan)
     abcd = np.zeros((4, n, n), np.float32)
     teacher = -np.ones(n, np.int32)
@@ -209,6 +211,8 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
         centred[s, d] = float(p.centred)
         assert not p.elig_delay or p.elig_tau > 0, f"projection {key}: elig_delay needs an eligibility trace"
         delay[s, d] = float(p.elig_delay)
+        assert not p.per_life or (not p.evolve and p.w_init is None), f"projection {key}: per_life needs evolve=False, no w_init"
+        per_life[s, d] = float(p.per_life)
         gain[s, d] = float(p.kind == "gain")
         evolve_w[s, d] = float(p.evolve)
         assert not (p.tune and (p.evolve or p.w_init is None)), f"projection {key}: tune needs evolve=False and w_init"
@@ -274,7 +278,8 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
                   has_decay=bool((decay > 0).any()), groups=tuple(r.group for r in regions),
                   rec_gain=j(rec_gain), rec_bias=j(rec_bias), has_receptors=bool(rec_gain.any() or rec_bias.any()),
                   mod_accum=tuple(float(m.accumulate) for m in mods) if any(m.accumulate for m in mods) else (),
-                  elig_delay=j(delay), has_delay=bool(delay.any()))
+                  elig_delay=j(delay), has_delay=bool(delay.any()),
+                  per_life=j(per_life * allowed), has_per_life=bool((per_life * allowed).any()))
 
 
 def constrain(layout: Layout, w: jnp.ndarray, w_max: float) -> jnp.ndarray:
@@ -314,10 +319,21 @@ def genome_from_npz(f, layout: Layout) -> Genome:
     return Genome(**g)
 
 
-def init_state(genome: Genome, layout: Layout, w_max: float = 4.0) -> BrainState:
+def init_state(genome: Genome, layout: Layout, w_max: float = 4.0, key: jax.Array | None = None) -> BrainState:
+    """The brain at birth. With `key`, the per-life synapses (Layout.per_life) are drawn anew, as init_genome draws
+    random ones; without it they are the genome's."""
     n = genome.b.shape[0]
     m = len(layout.mod_names)
     w = genome.w0 * genome.mask
+    if layout.has_per_life and key is not None:
+        k1, k2 = jax.random.split(key)
+        pl = layout.per_life > 0
+        mask = jnp.where(pl, (jax.random.uniform(k1, (n, n)) < layout.density).astype(jnp.float32) * layout.allowed,
+                         genome.mask)
+        fan_in = jnp.maximum(mask.sum(axis=0, keepdims=True), 1.0)
+        w_rand = jax.random.normal(k2, (n, n)) / jnp.sqrt(fan_in)
+        w_rand = jnp.where((layout.sign != 0)[:, None], jnp.abs(w_rand), w_rand)
+        w = jnp.where(pl, w_rand * mask, w)
     ws, wg = _fixed_weights(layout, w)
     return BrainState(x=jnp.zeros(n, jnp.float32), w=w, tr=jnp.zeros(n, jnp.float32),
                       e=jnp.zeros((len(layout.pl_rows), len(layout.pl_cols)), jnp.float32),

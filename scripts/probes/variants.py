@@ -15,6 +15,14 @@
     td            the critic as a formula (old2.5 on the 2.2 brain): value cells from the pallium, dopamine = TD error
                   teaches every pain-gated synapse (TD_GAMMA, TD_SCALE, TD_ETA, TD_ELIG, TD_TASTE); tdp: only those
                   from the pallium, the look synapses stay pain-gated
+    plife         the pallium's input wiring is drawn anew at every birth; what reads the pallium starts at 0, not
+                  inherited
+    pnt           the pallium also reads the no_touch cell (nothing at the mouth), one phase later; put it before
+                  td / td2 in a combination (their value cells go one phase after the pallium)
+    pphase        control for pnt: the pallium one phase later, without the no_touch input
+    pk<k>, pn<n>  pallium k-WTA winners, pallium size (e.g. pk4+pn512)
+    pnear         the pallium also reads the distance of the object ahead (vis+0.near), so it codes look x distance;
+                  combine with the others, e.g. td+pnear
     td2           one error per valence: taste teaches appetitive value, pain aversive value and pallium -> aversive
     safety        a 'safety' cell (tastes good although the aversive cells expected bad one tick earlier) is
                   subtracted from the pain teacher, so a safe meal undoes suspicion of what was just eaten (the
@@ -46,7 +54,8 @@ def td_critic(brain, looks: bool = True):
              ("value_app_prev", -k), ("value_av_prev", k))
     plastic = lambda dst, b: S.P("pallium", dst, rule="hebb", modulator="da", eta_init=S.TD_ETA, elig_tau=S.TD_ELIG,
                                  abcd=(0.0, b, 0.0, 0.0), density=1.0, w_init=0.0, elig_delay=dl)
-    value = lambda n: replace(S.R(n, 3, **S.VALUE), phase=1 if dl and not n.endswith("_prev") else 0)
+    pal = next(r.phase for r in brain.regions if r.name == "pallium")
+    value = lambda n: replace(S.R(n, 3, **S.VALUE), phase=pal + 1 if dl and not n.endswith("_prev") else 0)
     brain = S.extend(brain,
                      regions=(S.R("us_taste", 1, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, group="us"),
                               *(value(n) for n in ("value_app", "value_av", "value_app_prev", "value_av_prev"))),
@@ -72,7 +81,8 @@ def td_split(brain):
     g, k, dl = S.TD_GAMMA, S.TD_SCALE, bool(S.TD_DELAY)
     plastic = lambda dst, mod: S.P("pallium", dst, rule="hebb", modulator=mod, eta_init=S.TD_ETA, elig_tau=S.TD_ELIG,
                                    abcd=(0.0, 1.0, 0.0, 0.0), density=1.0, w_init=0.0, elig_delay=dl)
-    value = lambda n: replace(S.R(n, 3, **S.VALUE), phase=1 if dl and not n.endswith("_prev") else 0)
+    pal = next(r.phase for r in brain.regions if r.name == "pallium")
+    value = lambda n: replace(S.R(n, 3, **S.VALUE), phase=pal + 1 if dl and not n.endswith("_prev") else 0)
     brain = S.extend(brain,
                      regions=(S.R("us_taste", 1, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, group="us"),
                               *(value(n) for n in ("value_app", "value_av", "value_app_prev", "value_av_prev"))),
@@ -92,6 +102,32 @@ def variant(brain, v):
     for part in v.split("+"):
         if part == "base":
             pass
+        elif part == "plife":   # the pallium's input wiring is drawn anew at every birth (ProjectionSpec.per_life);
+            # what reads the pallium starts at 0 and is not inherited (it could only read a code drawn per life)
+            brain = replace(brain, projections=tuple(
+                replace(p, per_life=True) if p.dst == "pallium" else
+                replace(p, w_init=0.0, evolve=False) if p.src == "pallium" else p for p in brain.projections))
+        elif part == "pphase":   # control for pnt: only the pallium's move one phase later, without no_touch
+            brain = replace(brain, regions=tuple(replace(r, phase=r.phase + 1) if r.name == "pallium" else r
+                                                 for r in brain.regions))
+        elif part == "pnt":   # the pallium also reads the no_touch cell (nothing at the mouth): look x at-the-mouth.
+            # The pallium moves one phase later, so no_touch (phase 0, from this tick's inputs) and the look describe
+            # the same tick; the synapses are random like the pallium's input (and per life where that one is)
+            pal = next(p for p in brain.projections if p.src == "in" and p.dst == "pallium")
+            brain = replace(brain, regions=tuple(replace(r, phase=r.phase + 1) if r.name == "pallium" else r
+                                                 for r in brain.regions),
+                            projections=(*brain.projections,
+                                         S.P("no_touch", "pallium", density=1.0, evolve=False, per_life=pal.per_life)))
+        elif part.startswith("pk") and part[2:].isdigit():   # pallium k-WTA winners
+            brain = replace(brain, regions=tuple(replace(r, kwta=int(part[2:])) if r.name == "pallium" else r
+                                                 for r in brain.regions))
+        elif part.startswith("pn") and part[2:].isdigit():   # pallium size
+            brain = replace(brain, regions=tuple(replace(r, size=int(part[2:])) if r.name == "pallium" else r
+                                                 for r in brain.regions))
+        elif part == "pnear":   # the pallium also reads how near the object ahead is (vis+0.near): look x distance
+            brain = replace(brain, projections=tuple(
+                replace(p, src_select=(*p.src_select, "vis+0.near")) if p.src == "in" and p.dst == "pallium" else p
+                for p in brain.projections))
         elif part == "short":
             brain = replace(brain, projections=tuple(
                 replace(p, elig_tau=0.5) if p.modulator == "us_av" else p for p in brain.projections))

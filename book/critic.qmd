@@ -1,0 +1,129 @@
+# Critic {#sec-critic}
+
+[Learning from surprise]{.lb-subtitle}
+
+<div data-life="status" data-stage="2.3"></div>
+
+::: {.lb-takeaway}
+**New:** cells that predict how good or bad the next moments will be, and a teaching signal that is the *surprise*:
+what happened minus what was predicted. This is the role of dopamine.
+
+**Result:** in a world whose poisons change, creatures with the critic eat more and live longer than creatures
+taught by pain alone (10% more fitness, in all three seeds), and silencing the prediction of good things costs them
+a fifth of it. In the lab the signal moves from the pain to its warning, as in recordings of dopamine cells.
+:::
+
+So far pain has been the teacher. Every painful bite strengthens the aversion to what the creature was looking at,
+and nothing weakens it again. That works as long as the world keeps its promises. In this stage it does not: halfway
+through a life the poison bushes turn good and the good ones turn poison. **A teacher that only speaks when it hurts
+cannot say "this is no longer bad"**, so a creature taught by pain keeps avoiding what is now its best food.
+
+The new teacher is a **critic**. It keeps an expectation and teaches with the difference. An expected pain teaches
+nothing new; a pain that fails to come is a pleasant surprise, and that undoes the aversion.
+
+<div data-life="brain" data-stage="2.3"></div>
+
+## The circuit
+
+- **Value cells** read the pallium and learn, within the life, how good (`value_app`) and how bad (`value_av`) the
+  next few moments will be when a bush looks like this.
+- **The surprise** is computed every tick: *taste − pain + prediction now − prediction a moment ago*. When things
+  go as predicted the terms cancel. A bite that tastes better than predicted makes it positive; a pain, or a
+  prediction that falls, makes it negative.
+- **It teaches** the value cells, so the predictions improve, and every synapse that pain taught before (look and
+  pallium onto the *bad* cells): a bad surprise strengthens the aversion, a good one weakens it.
+
+In the model the surprise is a formula; in the brain it is the firing of dopamine cells. Building it from cells is
+the next step.
+
+## Biology
+
+Dopamine cells in the midbrain fire a burst when something turns out better than expected and pause when it turns
+out worse. In the classic recordings in monkeys they fire at a drop of juice; once a light reliably announces the
+juice, they fire at the light instead; and when the juice is then left out, they pause at the moment it should have
+come. This is the teaching signal of *temporal-difference learning*, a method from machine learning that predicted
+these recordings.
+
+Insects run the same scheme in the mushroom body (the counterpart of the pallium), with separate dopamine cells for
+reward and for punishment. Mammals mostly signal both with one population of cells, as this model does.
+
+## The world
+
+The world of the pallium stage, with one change: at tick 800 of every life the two poison kinds of new bush turn
+good and the two good kinds turn poison. Their looks stay the same.
+
+<div data-life="settings" data-stage="2.3"></div>
+
+## Did it work?
+
+<div data-life="verdict" data-stage="2.3" data-used="value_app,value_av,no_plasticity"></div>
+
+The critic pays: about 130 more fitness than the pain teacher when each lives alone, and about 180 more when the
+two share a world. Its learning is needed (without any learning a fifth is lost), and so are the cells that
+predict good things (`value_app`). The cells that predict bad things (`value_av`) are not used: pain arrives with
+the bite, so there is little to predict about it ahead of time.
+
+<div data-life="lines" data-stage="2.3" data-example="reversal_life"></div>
+
+**Both kinds of creature switch.** After tick 800 both stop eating the bushes that turned poison and start eating
+the ones that turned good, at almost the same rate. The pain teacher manages this in another way: a look that has
+been seen often stirs the senses less, so an old aversion weakens on its own. The critic's creatures eat more
+throughout, before and after the switch, and more of them are still alive at the end.
+
+### In the lab
+
+The theory makes sharp predictions, and they can be tested on one creature at a time. A new bush is put in front of
+it; it bites three times and feels pain each time; after a pause the next trial begins.
+
+<div data-life="lines" data-stage="2.3" data-example="dopamine_shift"></div>
+
+**The surprise moves to the warning.** At the first painful meal the signal drops at the bites. After a few meals it
+drops as soon as the bush appears, and much less at the bites. When the pain is then left out, the signal turns
+positive where the pain should have been, as in the monkey recordings.
+
+<div data-life="bars" data-stage="2.3" data-example="conditioning_lab" data-col0="critic" data-col1="pain teacher"></div>
+
+**Extinction** (first two rows): when the pain stops, the critic's aversion fades by a third over twelve meals,
+and the pain teacher's does not change. **Blocking** (last two rows) did not show: the theory predicts that a
+second warning sign, added to one that already predicts the pain, is learned less. Here neither creature learned
+the second sign at all in three bites, so there was nothing to block.
+
+## Full results
+
+::: {.callout-note collapse="true" title="Fitness over the generations"}
+<div data-life="curves" data-stage="2.3"></div>
+:::
+
+::: {.callout-note collapse="true" title="All fitness measures"}
+<div data-life="summary" data-stage="2.3"></div>
+:::
+
+::: {.callout-note collapse="true" title="All lesions"}
+<div data-life="lesions" data-stage="2.3"></div>
+
+The large losses for `value_app_prev` and `value_av_prev` are not a sign of use. These cells hold a copy of the
+prediction a moment ago, and the surprise is the difference between the two. Silencing only the copy leaves an
+error that never cancels, and this error unteaches every aversion.
+:::
+
+::: {.callout-note collapse="true" title="The lab and the switch in numbers"}
+<div data-life="table" data-stage="2.3" data-example="conditioning_lab"></div>
+<div data-life="table" data-stage="2.3" data-example="reversal_bites"></div>
+:::
+
+::: {.callout-note collapse="true" title="What it took"}
+- **A world that changes.** Where poison stays poison, the critic did no better than pain: pain comes at the bite,
+  and a pain teacher learns from it directly. Unlearning is what only the critic can do.
+- **The right moment.** The surprise of a tick is about the step that led to it, so it changes the synapses that
+  were active a tick earlier (real synapses are changed by dopamine that arrives a second or two late).
+- **A short horizon.** Nothing tells the creature how long a pain will last while the bush is in view, so the
+  predictions look only a few ticks ahead. A sense of time since a warning is for a later stage.
+- **Taste counts less than pain.** Whether a bite follows a look depends on a decision the pallium does not see, so
+  taste can be only half predicted; at full weight the unpredicted taste drowned the lessons.
+- **Wiring of its own.** The pallium's random wiring now belongs to the creature's place in the population, not to
+  its genes, so no lineage can inherit a lucky code.
+:::
+
+## Runs
+
+<div data-life="runs" data-stage="2.3"></div>

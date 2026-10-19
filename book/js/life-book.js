@@ -195,8 +195,8 @@
         + `<span class="lb-vval">${m > 0 ? '+' : ''}${fmt(m, 0)}%</span><span class="lb-vtag lb-v${cls}">${tag}</span></div>`;
     };
     let h = '<div class="lb-verdict">';
-    if (used.length) h += `<div class="lb-vq">Is the new circuit used?</div><div class="lb-vsub">fitness with it silenced, % of the intact creatures (the line is 100%)</div>${used.map(lesionRow).join('')}`;
     if (cmp.length) h += `<div class="lb-vq">Does the new brain do better than the old one?</div><div class="lb-vsub">fitness of the new brain minus that of the old, % of the old (the line is level)</div>${cmp.map(cmpRow).join('')}`;
+    if (used.length) h += `<div class="lb-vq">Is the new circuit used?</div><div class="lb-vsub">fitness with it silenced, % of the intact creatures (the line is 100%)</div>${used.map(lesionRow).join('')}`;
     root.innerHTML = h + `</div><div class="lb-caption">Bars: mean of the ${D.runs.main.length} seeds; dots: the seeds.${cmp.length ? ' The old brain is the brain of the previous stage, evolved in the same new world from the same start.' : ''}${reev ? ' <i>Each among its own kind</i>: each population lives alone, in the same set of worlds.' : ''}${ev.versus ? ' <i>Sharing one world</i>: half new, half old creatures compete for the same food.' : ''} All measures are under <a href="#full-results">Full results</a>.</div>`;
   }
 
@@ -228,43 +228,9 @@
   let layoutP;
   const loadLayout = () => layoutP || (layoutP = fetch('data/brain_layout.json').then(r => r.ok ? r.json() : null).catch(() => null));
   function brain(root, D) { return loadLayout().then(L => drawBrain(root, D, L)); }
-  // A group whose wiring is an evolved tangle with no named meaning (the ganglion) is drawn as one box, unless this
-  // stage adds it: its excitatory and inhibitory parts become one region, and their projections merge (a merged
-  // projection of both signs ends in a dot). data-fold on the placeholder lists other groups; data-fold="" none.
-  function foldGroups(B, fold) {
-    const into = {};
-    for (const g of fold) {
-      const mem = B.regions.filter(r => r.group === g || (r.group || '').startsWith(g + '/'));
-      if (mem.length > 1 && !mem.some(r => r.new)) mem.forEach(r => { into[r.name] = g; });
-    }
-    const m = n => into[n] || n, regions = [], done = new Set();
-    for (const r of B.regions) {
-      const g = into[r.name];
-      if (!g) { regions.push(r); continue; }
-      if (done.has(g)) continue;
-      done.add(g);
-      const mem = B.regions.filter(o => into[o.name] === g);
-      regions.push({name: g, group: '', hue: g, new: false, members: mem.map(o => o.name), size: mem.reduce((s, o) => s + o.size, 0),
-        sign: mem.every(o => o.sign > 0) ? 1 : mem.every(o => o.sign < 0) ? -1 : 0, receptors: mem.flatMap(o => o.receptors || [])});
-    }
-    const merged = new Map();
-    for (const p of B.projections) {
-      const k = [m(p.src), m(p.dst), p.src_select.join(), p.dst_range.join(), p.rule, p.hard, p.modulator || ''].join('|'), q = merged.get(k);
-      if (!q) { merged.set(k, {...p, src: m(p.src), dst: m(p.dst), parts: [p]}); continue; }
-      q.parts.push(p); q.drive += p.drive; q.synapses += p.synapses; q.new = q.new || p.new;
-      if (q.sign !== p.sign) q.mixed = true;
-      q.mean_abs = q.parts.reduce((s, o) => s + o.mean_abs * o.synapses, 0) / Math.max(1, q.synapses);
-    }
-    return {regions, projections: [...merged.values()], modulators: (B.modulators || []).map(x => ({...x, pos: m(x.pos)})), into};
-  }
   function drawBrain(root, D, L) {
-    const F = foldGroups(D.brain, root.dataset.fold !== undefined ? root.dataset.fold.split(',').filter(Boolean) : ['ganglion']);
-    const REG = F.regions, PROJ = F.projections, BW = 122, BH = 38, pos = {};
-    let A = L && L.stages && L.stages[D.stage.key];
-    if (A) {   // a folded group sits where the middle of its members was
-      A = {...A, pos: {...A.pos}};
-      for (const r of REG) if (r.members && r.members.every(n => A.pos[n])) A.pos[r.name] = [0, 1].map(k => mean(r.members.map(n => A.pos[n][k])));
-    }
+    const REG = D.brain.regions, PROJ = D.brain.projections, MODL = D.brain.modulators || [], BW = 122, BH = 38, pos = {};
+    const A = L && L.stages && L.stages[D.stage.key];
     const atlas = !!A && REG.every(r => A.pos[r.name]);
     // cells and group boxes take the colour of their top-level group: the layout file's hues (the same in every
     // chapter), else one from the group's name
@@ -359,14 +325,16 @@
       const pad = 7 + 9 * (Math.max(...mem.map(r => r.group.split('/').length)) - gp.split('/').length);
       const xs = mem.map(r => pos[r.name][0]), ys = mem.map(r => pos[r.name][1]);
       const x0 = Math.min(...xs) - BW / 2 - pad, x1 = Math.max(...xs) + BW / 2 + pad, y0 = Math.min(...ys) - BH / 2 - pad - 12, y1 = Math.max(...ys) + BH / 2 + pad;
-      s += `<rect class="lb-group${gp.includes('/') ? '' : ' lb-gtop'}" style="--h:${hueOf(gp)}" x="${f1(x0)}" y="${f1(y0)}" width="${f1(x1 - x0)}" height="${f1(y1 - y0)}" rx="9"/>`;
-      labels += `<text class="lb-grouplabel" x="${f1(x0 + 7)}" y="${f1(y0 + 12)}">${esc(gp.split('/').pop())}</text>`;
+      s += `<rect class="lb-group${gp.includes('/') ? '' : ' lb-gtop'}" data-g="${esc(gp)}" style="--h:${hueOf(gp)}" x="${f1(x0)}" y="${f1(y0)}" width="${f1(x1 - x0)}" height="${f1(y1 - y0)}" rx="9"/>`;
+      // the name in the corner, and in the middle for when the group is drawn as an empty outline (view "new circuit")
+      labels += `<text class="lb-grouplabel" data-g="${esc(gp)}" x="${f1(x0 + 7)}" y="${f1(y0 + 12)}">${esc(gp.split('/').pop())}</text>`
+        + `<text class="lb-gcentre" data-g="${esc(gp)}" x="${f1((x0 + x1) / 2)}" y="${f1((y0 + y1) / 2 + 5)}" text-anchor="middle">${esc(gp.split('/').pop())}</text>`;
     });
     // modulators: a dashed line from the cell that releases one to every cell with a receptor for it, and to every
     // projection whose learning it gates (the line ends on the middle of that projection)
     const mid = {}, MODS = [];
     PROJ.forEach((p, i) => { const m = /^M([-\d.]+),([-\d.]+) Q([-\d.]+),([-\d.]+) ([-\d.]+),([-\d.]+)$/.exec(geom(p, ...ENDS[i][0]).d); if (m) mid[i] = [(+m[1] + 2 * +m[3] + +m[5]) / 4, (+m[2] + 2 * +m[4] + +m[6]) / 4]; });
-    for (const m of F.modulators) {
+    for (const m of MODL) {
       if (!pos[m.pos]) continue;
       for (const r of REG) for (const rc of r.receptors || []) if (rc[0] === m.name) MODS.push({m, src: m.pos, to: pos[r.name], dst: r.name, how: rc[1], sens: rc[2]});
       PROJ.forEach((p, i) => { if (p.modulator === m.name && mid[i]) MODS.push({m, src: m.pos, to: mid[i], proj: p}); });
@@ -394,7 +362,7 @@
     PROJ.forEach((p, i) => ENDS[i].forEach(([from, to]) => {
       const g = geom(p, from, to), w = 1 + 4 * Math.sqrt(p.drive / maxDrive), cls = p.rule !== 'fixed' ? 'lb-learned' : p.hard ? 'lb-hard' : 'lb-evolved', [ex, ey] = g.end, [ux, uy] = g.dir;
       // excitatory synapses end in an arrowhead, inhibitory ones in a bar; sensory projections (mixed signs) in a dot
-      const fromIn = (p.src === 'in' && (!p.hard || p.sign === 0)) || p.mixed, a = 7 + w;
+      const fromIn = p.src === 'in' && (!p.hard || p.sign === 0), a = 7 + w;
       const head = fromIn ? `<circle class="${cls}-fill" cx="${f1(ex)}" cy="${f1(ey)}" r="${f1(2.5 + w / 2)}"/>`
         : p.sign < 0 ? `<line class="${cls}" stroke-width="${f1(w + 1.5)}" x1="${f1(ex - uy * a)}" y1="${f1(ey + ux * a)}" x2="${f1(ex + uy * a)}" y2="${f1(ey - ux * a)}"/>`
         : `<path class="${cls}-fill" d="M${f1(ex)},${f1(ey)} L${f1(ex - ux * a * 1.5 - uy * a * 0.6)},${f1(ey - uy * a * 1.5 + ux * a * 0.6)} L${f1(ex - ux * a * 1.5 + uy * a * 0.6)},${f1(ey - uy * a * 1.5 - ux * a * 0.6)} z"/>`;
@@ -414,15 +382,17 @@
         continue;
       }
       const [x, y] = pos[r.name];
-      s += `<g class="lb-reg${r.new ? ' lb-isnew' : ''}" data-r="${esc(r.name)}" transform="translate(${f1(x - BW / 2)},${f1(y - BH / 2)})"><rect width="${BW}" height="${BH}" rx="6" ${r.group || r.hue ? `class="lb-cell" style="--h:${hueOf((r.group || r.hue).split('/')[0])}"` : 'class="lb-io"'}/>`
+      s += `<g class="lb-reg${r.new ? ' lb-isnew' : ''}" data-r="${esc(r.name)}" transform="translate(${f1(x - BW / 2)},${f1(y - BH / 2)})"><rect width="${BW}" height="${BH}" rx="6" ${r.group ? `class="lb-cell" style="--h:${hueOf(r.group.split('/')[0])}"` : 'class="lb-io"'}/>`
         + `<text class="lb-regname" x="8" y="16">${esc(r.name)}</text><text class="lb-regsub" x="8" y="30">${r.name === 'in' ? 'senses' : r.name === 'out' ? 'motor neurons' : (r.sign > 0 ? 'excitatory' : r.sign < 0 ? 'inhibitory' : 'exc. and inh.')} · ${r.size}</text></g>`;
     }
     s += '</svg>';
     const anyNew = REG.some(r => r.new);
     root.innerHTML = s + `<div class="lb-legend lb-brainlegend"><span><i class="lb-key lb-hardkey"></i>hard-wired (designed; evolution tunes only the strength)</span><span><i class="lb-key lb-evokey"></i>evolved</span>${PROJ.some(p => p.rule !== 'fixed') ? '<span><i class="lb-key lb-learnkey"></i>learned within a life</span>' : ''}<span>▸ excites</span><span>⊣ inhibits</span><span>● senses, mixed signs</span>${MODS.length ? '<span><i class="lb-key lb-modkey"></i>modulator: released by one cell, acts on a cell or on the learning of a projection</span>' : ''}${anyNew ? '<span><i class="lb-key lb-newkey"></i>added in this stage</span>' : ''}<span class="lb-muted">line width = total synaptic strength arriving at one target neuron, mean of the final population</span></div>`;
-    // "new circuit": only what this stage added and what it connects to directly: new projections, projections into
-    // or out of a new region, and the modulator lines of a new modulator or of a new region; a modulator line onto a
-    // projection brings that projection along. Regions stay in place; the ones none of it touches are faded.
+    // three views. "all cells": only what this stage added and what it connects to directly: new projections,
+    // projections into or out of a new region, and the modulator lines of a new modulator or of a new region; a
+    // modulator line onto a projection brings that projection along. Regions stay in place; the ones none of it
+    // touches are faded. "new circuit": the same, but a group none of it touches is drawn as its empty outline with
+    // its name in the middle (the outermost such group; its cells and inner groups are hidden). "everything": all.
     const newReg = new Set(REG.filter(r => r.new).map(r => r.name));
     const showP = new Set(PROJ.map((p, i) => p.new || newReg.has(p.src) || newReg.has(p.dst) ? i : -1).filter(i => i >= 0));
     const showM = new Set(MODS.map((l, i) => l.m.new || newReg.has(l.src) || newReg.has(l.dst) || (l.proj && showP.has(PROJ.indexOf(l.proj))) ? i : -1).filter(i => i >= 0));
@@ -434,18 +404,23 @@
       root.querySelectorAll('.lb-edge').forEach(g => g.classList.toggle('lb-ctx', !showP.has(+g.dataset.p)));
       root.querySelectorAll('.lb-mod').forEach(g => g.classList.toggle('lb-ctx', !showM.has(+g.dataset.m)));
       root.querySelectorAll('.lb-reg').forEach(g => g.classList.toggle('lb-ctx', !used.has(g.dataset.r)));
+      const shut = [...paths].filter(gp => { const mem = REG.filter(r => r.group === gp || r.group.startsWith(gp + '/')); return mem.length > 1 && !mem.some(r => used.has(r.name)); });   // a single cell is shown as itself
+      const inShut = gp => shut.some(o => gp.startsWith(o + '/'));
+      root.querySelectorAll('[data-g]').forEach(g => { g.classList.toggle('lb-shut', shut.includes(g.dataset.g) && !inShut(g.dataset.g)); g.classList.toggle('lb-inshut', inShut(g.dataset.g)); });
+      root.querySelectorAll('.lb-reg').forEach(g => { const r = REG.find(o => o.name === g.dataset.r); g.classList.toggle('lb-inshut', !!r.group && (shut.includes(r.group) || inShut(r.group))); });
       const svg = root.querySelector('.lb-brain'), bar = el('div', 'lb-focusbar', '<span class="lb-muted">Show</span>'
-        + '<button type="button" data-f="1" title="only what this stage added and what it connects to directly">new circuit</button>'
+        + '<button type="button" data-f="2" title="what this stage added and what it connects to directly; other groups as outlines">new circuit</button>'
+        + '<button type="button" data-f="1" title="what this stage added and what it connects to directly, among all cells">all cells</button>'
         + '<button type="button" data-f="0" title="every region and connection of this brain">everything</button>');
-      const set = on => { svg.classList.toggle('lb-focus', on); bar.querySelectorAll('button').forEach(b => b.classList.toggle('lb-on', (b.dataset.f === '1') === on)); };
-      bar.addEventListener('click', e => { if (e.target.dataset.f) set(e.target.dataset.f === '1'); });
-      root.insertBefore(bar, svg); set(true);
+      const set = f => { svg.classList.toggle('lb-focus', f > 0); svg.classList.toggle('lb-outline', f > 1); bar.querySelectorAll('button').forEach(b => b.classList.toggle('lb-on', +b.dataset.f === f)); };
+      bar.addEventListener('click', e => { if (e.target.dataset.f) set(+e.target.dataset.f); });
+      root.insertBefore(bar, svg); set(2);
     }
     const sel = p => p.src_select.length ? ` [${p.src_select.join(', ')}]` : '';
     root.querySelectorAll('.lb-edge').forEach(g => {
       const p = PROJ[+g.dataset.p];
       const range = p.dst === 'out' && p.dst_range.length ? ` (${D.brain.actions.slice(p.dst_range[0], p.dst_range[1]).join(', ')})` : '';
-      hover(g, e => showTip(e, `<b>${esc(p.src + sel(p))} → ${esc(p.dst)}${esc(range)}</b><div>${p.rule !== 'fixed' ? `learned within a life (rule: ${esc(p.rule)}${p.modulator ? ', gated by ' + esc(p.modulator) : ''})` : p.hard ? 'hard-wired' : 'evolved'}, ${(p.src === 'in' && (!p.hard || p.sign === 0)) || p.mixed ? 'mixed signs' : p.sign < 0 ? 'inhibitory' : 'excitatory'}${p.new ? ', added in this stage' : ''}</div><div>${fmt(p.synapses, p.synapses < 10 ? 0 : 0)} synapses, mean strength ${fmt(p.mean_abs)}${p.designed !== null && p.designed !== undefined ? ` (designed at ${fmt(Math.abs(p.designed))})` : ''}</div>`));
+      hover(g, e => showTip(e, `<b>${esc(p.src + sel(p))} → ${esc(p.dst)}${esc(range)}</b><div>${p.rule !== 'fixed' ? `learned within a life (rule: ${esc(p.rule)}${p.modulator ? ', gated by ' + esc(p.modulator) : ''})` : p.hard ? 'hard-wired' : 'evolved'}, ${p.src === 'in' && (!p.hard || p.sign === 0) ? 'mixed signs' : p.sign < 0 ? 'inhibitory' : 'excitatory'}${p.new ? ', added in this stage' : ''}</div><div>${fmt(p.synapses, p.synapses < 10 ? 0 : 0)} synapses, mean strength ${fmt(p.mean_abs)}${p.designed !== null && p.designed !== undefined ? ` (designed at ${fmt(Math.abs(p.designed))})` : ''}</div>`));
     });
     const lasts = m => m.lasts ? `Released at once and cleared slowly: it stays for about ${fmt(m.lasts, 0)} ticks (designed at ${fmt(m.lasts_designed, 0)}).` : 'Follows the cell that releases it, without delay.';
     root.querySelectorAll('.lb-mod').forEach(g => {
@@ -455,8 +430,8 @@
     });
     root.querySelectorAll('.lb-reg').forEach(g => {
       const r = REG.find(o => o.name === g.dataset.r), ins = PROJ.filter(p => p.dst === r.name), outs = PROJ.filter(p => p.src === r.name);
-      const rel = F.modulators.filter(m => m.pos === r.name).map(m => m.name), rec = (r.receptors || []).map(rc => rc[0]);
-      hover(g, e => showTip(e, `<b>${esc(r.name)}</b> ${r.size} neuron${r.size === 1 ? '' : 's'}${r.new ? ', added in this stage' : ''}${r.members ? `<div>drawn as one box: ${esc(r.members.join(', '))}</div>` : ''}<div class="lb-muted">from: ${esc([...new Set(ins.map(p => p.src))].join(', ') || '–')}</div><div class="lb-muted">to: ${esc([...new Set(outs.map(p => p.dst))].join(', ') || '–')}</div>${rel.length ? `<div class="lb-muted">releases: ${esc(rel.join(', '))}</div>` : ''}${rec.length ? `<div class="lb-muted">receptors for: ${esc(rec.join(', '))}</div>` : ''}`));
+      const rel = MODL.filter(m => m.pos === r.name).map(m => m.name), rec = (r.receptors || []).map(rc => rc[0]);
+      hover(g, e => showTip(e, `<b>${esc(r.name)}</b> ${r.size} neuron${r.size === 1 ? '' : 's'}${r.new ? ', added in this stage' : ''}<div class="lb-muted">from: ${esc([...new Set(ins.map(p => p.src))].join(', ') || '–')}</div><div class="lb-muted">to: ${esc([...new Set(outs.map(p => p.dst))].join(', ') || '–')}</div>${rel.length ? `<div class="lb-muted">releases: ${esc(rel.join(', '))}</div>` : ''}${rec.length ? `<div class="lb-muted">receptors for: ${esc(rec.join(', '))}</div>` : ''}`));
     });
   }
 
@@ -648,6 +623,43 @@
     new MutationObserver(() => show(cur)).observe(document.body, {attributes: true, attributeFilter: ['class']});
   }
 
+  // ------------------------------------------------------------------ line panels from a stage's extras
+  // <div data-life="lines" data-stage="2.3" data-example="reversal_life"></div>
+  // extra: {x, xticks?, xlabel, ylabel, vline?, vlabel?, zero?, caption, panels: [{title, series: [{name, y, cls, dash?}]}]}
+  // cls: s1 / s2 (main / control colours), good, bad, muted
+  function lines(root, D) {
+    const X = (D.extras || {})[root.dataset.example];
+    if (!X) { root.innerHTML = '<div class="lb-caption">Not measured yet.</div>'; return; }
+    const P = X.panels, n = P.length, W = 640, H = 250, m = {l: 46, r: 12, t: 26, b: 40}, gap = 18;
+    const pw = (W - m.l - m.r - gap * (n - 1)) / n, ph = H - m.t - m.b;
+    const all = P.flatMap(p => p.series.flatMap(s => s.y)).concat(X.zero ? [0] : []);
+    let lo = Math.min(...all), hi = Math.max(...all);
+    if (lo > 0) lo = 0;
+    const pad = (hi - lo) * 0.06 || 1; hi += pad; if (lo < 0) lo -= pad;
+    const x0 = X.x[0], x1 = X.x[X.x.length - 1];
+    const COL = {s1: 'var(--lb-s1)', s2: 'var(--lb-s2)', good: 'var(--lb-good)', bad: 'var(--lb-bad)', muted: 'var(--lb-muted)'};
+    const ticks = (a, b, k) => { const st = Math.pow(10, Math.floor(Math.log10((b - a) / k || 1))), s = [1, 2, 5, 10].map(f => f * st).find(f => (b - a) / f <= k);
+                                 const out = []; for (let v = Math.ceil(a / s) * s; v <= b + 1e-9; v += s) out.push(+v.toFixed(6)); return out; };
+    let s = `<svg viewBox="0 0 ${W} ${H}" class="lb-svg" role="img" aria-label="${esc(X.ylabel)} over ${esc(X.xlabel)}">`;
+    P.forEach((p, i) => {
+      const ox = m.l + i * (pw + gap), x = v => ox + (v - x0) / (x1 - x0 || 1) * pw, y = v => m.t + (hi - v) / (hi - lo) * ph;
+      for (const v of ticks(lo, hi, 4)) s += `<line class="lb-grid" x1="${ox}" x2="${ox + pw}" y1="${y(v)}" y2="${y(v)}"/>` + (i ? '' : `<text class="lb-tick" x="${ox - 6}" y="${y(v) + 4}" text-anchor="end">${fmt(v)}</text>`);
+      if (X.zero && lo < 0) s += `<line class="lb-axis" x1="${ox}" x2="${ox + pw}" y1="${y(0)}" y2="${y(0)}"/>`;
+      if (X.xticks) X.x.forEach((v, j) => { s += `<text class="lb-tick" x="${x(v)}" y="${H - m.b + 15}" text-anchor="middle">${esc(X.xticks[j])}</text>`; });
+      else for (const v of ticks(x0, x1, 4)) s += `<text class="lb-tick" x="${x(v)}" y="${H - m.b + 15}" text-anchor="middle">${fmt(v)}</text>`;
+      if (X.vline != null) s += `<line class="lb-axis" stroke-dasharray="3 3" x1="${x(X.vline)}" x2="${x(X.vline)}" y1="${m.t}" y2="${m.t + ph}"/>`
+                              + (X.vlabel ? `<text class="lb-tick" x="${x(X.vline) + 4}" y="${m.t + 10}">${esc(X.vlabel)}</text>` : '');
+      if (p.title) s += `<text class="lb-label" x="${ox}" y="${m.t - 9}">${esc(p.title)}</text>`;
+      for (const se of p.series)
+        s += `<polyline fill="none" stroke="${COL[se.cls] || COL.s1}" stroke-width="${se.cls === 'muted' ? 1.2 : 2}"${se.dash ? ' stroke-dasharray="5 4"' : ''} points="${se.y.map((v, j) => `${x(X.x[j]).toFixed(1)},${y(v).toFixed(1)}`).join(' ')}"><title>${esc(se.name)}</title></polyline>`;
+    });
+    s += `<text class="lb-tick" x="${m.l + (W - m.l - m.r) / 2}" y="${H - 6}" text-anchor="middle">${esc(X.xlabel)}</text>`
+       + `<text class="lb-tick" x="12" y="${m.t + ph / 2}" text-anchor="middle" transform="rotate(-90 12 ${m.t + ph / 2})">${esc(X.ylabel)}</text></svg>`;
+    const names = [...new Map(P.flatMap(p => p.series).map(se => [se.name, se])).values()];
+    root.innerHTML = `<div class="lb-legend">${names.map(se => `<span><i class="lb-key" style="background:${COL[se.cls] || COL.s1}${se.dash ? ';opacity:.6' : ''}"></i>${esc(se.name)}</span>`).join('')}</div>`
+                   + s + (X.caption ? `<div class="lb-caption">${X.caption}</div>` : '');
+  }
+
   // ------------------------------------------------------------------ a small table from a stage's extras
   function table(root, D) {
     const X = (D.extras || {})[root.dataset.example];
@@ -658,7 +670,7 @@
     root.innerHTML = h + `</tbody></table>` + (X.caption ? `<div class="lb-caption">${X.caption}</div>` : '');
   }
 
-  const COMPONENTS = {status, summary, curves, lesions, brain, runs, settings, strip, table, verdict, bars};
+  const COMPONENTS = {status, summary, curves, lesions, brain, runs, settings, strip, table, verdict, bars, lines};
   function init() {
     document.querySelectorAll('[data-life]').forEach(root => {
       const fn = COMPONENTS[root.dataset.life];

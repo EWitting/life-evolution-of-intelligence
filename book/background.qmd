@@ -102,8 +102,9 @@ Every stage page shows the brain of that stage. Here is the brain of the valence
   is overall.
 - Under a box's name: whether its cells excite or inhibit, and how many there are. The coloured backgrounds
   group regions that belong together.
-- A box outlined in green is new in this stage. The diagram opens on the new circuit alone; the button
-  *everything* shows the whole brain. The ganglion, an evolved tangle with no named cells, is drawn as one box.
+- A box outlined in green is new in this stage. The diagram opens on the *new circuit*: what the stage added and
+  what it connects to directly, with the groups it does not touch drawn as empty outlines. *All cells* shows the
+  other cells too, faded; *everything* shows the whole brain.
 
 Point at a box or an arrow, or tap it on a phone, for details. You do not need to follow every arrow. Each page
 says in words which arrows matter, and the rest is the brain of earlier stages.

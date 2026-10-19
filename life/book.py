@@ -46,7 +46,7 @@ LESION_REGIONS = {"2.1": ("flee", "fed", "settle", "rest")}
 
 
 def extra(key: str):
-    """Register a per-stage extra: fn(stage, main_runs, control_runs) -> (name, json-able value)."""
+    """Register a per-stage extra: fn(stage, main_runs, control_runs) -> (name, json-able value), or a list of them."""
     def deco(fn):
         EXTRAS.setdefault(key, []).append(fn)
         return fn
@@ -637,7 +637,8 @@ def adaptation_off(s, main: list[Path], control: list[Path]):
 
 # ------------------------------------------------------------------ export
 
-def export(key: str, do_evaluate: bool = False, worlds: int = 8, jobs: int = 5, lesions: str = "recent") -> Path:
+def export(key: str, do_evaluate: bool = False, worlds: int = 8, jobs: int = 5, lesions: str = "recent",
+           extras: bool = True) -> Path:
     from .experiments import stages as S
     s = S.STAGES[key]
     main, control = S.seed_runs(s), S.seed_runs(s, control=True)
@@ -668,10 +669,11 @@ def export(key: str, do_evaluate: bool = False, worlds: int = 8, jobs: int = 5, 
         for info in data["runs"][label]:
             name = info["dir"].split("/")[0] + ".html"
             info["dashboard"] = f"dashboards/{name}" if (DASH_DIR / name).exists() else None
-    data["extras"] = {}
-    for fn in EXTRAS.get(key, []):
-        name, value = fn(s, main, control)
-        data["extras"][name] = value
+    data["extras"] = {} if extras else old.get("extras", {})   # without: keep the earlier ones (e.g. brain only, for the layout tool)
+    for fn in (EXTRAS.get(key, []) if extras else []):
+        out = fn(s, main, control)                          # (name, value), or a list of them
+        for name, value in (out if isinstance(out, list) else [out]):
+            data["extras"][name] = value
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(_round(data), separators=(",", ":")), encoding="utf-8")
     return out_path
@@ -736,6 +738,7 @@ def main(argv=None):
     e.add_argument("keys", nargs="+")
     e.add_argument("--evaluate", action="store_true", help="also simulate: re-evaluation, head to head, lesions")
     e.add_argument("--worlds", type=int, default=8)
+    e.add_argument("--no-extras", action="store_true", help="skip the stage's extras (lab tests, tables), keep earlier ones")
     e.add_argument("--jobs", type=int, default=5, help="parallel processes for --evaluate (about 1 GB each)")
     e.add_argument("--lesions", choices=("recent", "all"), default="recent",
                    help="regions to silence: those this stage or its parent added (default), or every region")
@@ -749,7 +752,7 @@ def main(argv=None):
         return
     for key in a.keys:
         if a.cmd == "export":
-            p = export(key, a.evaluate, a.worlds, a.jobs, a.lesions)
+            p = export(key, a.evaluate, a.worlds, a.jobs, a.lesions, extras=not a.no_extras)
             print(f"wrote {p} ({p.stat().st_size / 1024:.0f} kB)")
         else:
             for p in dashboards(key):
@@ -902,6 +905,139 @@ def xor_lab(s, main: list[Path], control: list[Path]):
                        "rows": [[c, _stat(per[c][0]), _stat(per[c][1])] for c in conds],
                        "caption": "Lab test on 24 creatures of the last generation of every seed: two rounds of meals of each "
                                   "of four new bushes (two poison), then each bush shown with nothing learned since."}
+
+
+def _brain_of(s, run: Path):
+    """The stage's brain for a main run, the control brain for a control run."""
+    return (s.control_brain or s.brain) if "_control" in run.parent.name else s.brain
+
+
+def _reversal_life(s, run: Path, worlds: int = 2, bin_: int = 200, until: int = 2400) -> dict:
+    """Recorded lives of a run's last population in the stage's world scaled to 64 creatures: bites per living
+    creature per `bin_` ticks on the berry types that turn from poison to good and from good to poison at the
+    switch, and the chance of a bite with each at the mouth before and after it."""
+    import jax
+    from dataclasses import replace
+    from . import actions as A
+    from .experiments import stages as S
+    from .run import load_population, make_simulate
+    from .world import DIRS
+    NA = 64
+    f = NA / s.world.num_agents
+    world = replace(s.world, num_agents=NA, height=round(s.world.height * f ** 0.5),
+                    width=round(s.world.width * f ** 0.5), patches=round(s.world.patches * f))
+    exp = S.make_exp(replace(s, world=world), _brain_of(s, run), "book", 1, 0)
+    exp = replace(exp, evolution=replace(exp.evolution, siblings=1, record_weights_every=exp.evolution.ticks_per_generation))
+    pop = load_population(run, exp)
+    rs, fn = s.build(exp)
+    sim = make_simulate(exp, record=True)
+    T, SW = exp.evolution.ticks_per_generation, world.switch_tick
+    nb = until // bin_
+    bites, alive_n, mouth = np.zeros((2, nb)), np.zeros(nb), np.zeros((2, 2, 2))   # kind x before/after x (ticks, bites)
+    for w in range(worlds):
+        kr, ks = jax.random.split(jax.random.PRNGKey(500 + w))
+        rules = jax.tree_util.tree_map(lambda a: a[0], fn(0, kr))
+        _, rec = sim(rules, pop, ks)
+        rec = {k: np.asarray(rec[k]) for k in ("ate", "alive", "action", "grid", "pos", "dir")}
+        pv = np.asarray(rules.pain_value)
+        kind, bush_kind = -np.ones(pv.shape[1], int), -np.ones(pv.shape[1], int)
+        for t in range(6):
+            berry, bush = rs.local(S.variant(t)[S.BERRY]), rs.local(S.variant(t)[S.BUSH])
+            k = 0 if pv[0, berry] > 0 and pv[1, berry] == 0 else 1 if pv[0, berry] == 0 and pv[1, berry] > 0 else -1
+            kind[berry], bush_kind[bush] = k, k
+        alive = rec["alive"].astype(bool)
+        kk = np.where(rec["ate"] > 0, kind[rec["ate"].astype(int)], -1)
+        for b in range(nb):
+            sl = slice(b * bin_, (b + 1) * bin_)
+            alive_n[b] += alive[sl].sum() / bin_
+            for k in range(2):
+                bites[k, b] += ((kk[sl] == k) & alive[sl]).sum() / bin_
+        # at the mouth when the brain acts: the world after the previous step
+        grid = np.r_[rec["grid"][:1] * 0, rec["grid"][:-1]]
+        pos = np.r_[rec["pos"][:1], rec["pos"][:-1]].astype(int)
+        fr = pos + np.asarray(DIRS)[np.r_[rec["dir"][:1], rec["dir"][:-1]].astype(int)]
+        bk = bush_kind[grid[np.arange(T)[:, None], np.clip(fr[..., 0], 0, world.height - 1), np.clip(fr[..., 1], 0, world.width - 1)]]
+        bite = np.isin(rec["action"], [A.USE, A.EAT])
+        for k in range(2):
+            for ph, sel in enumerate((np.arange(T) < SW, np.arange(T) >= SW)):
+                m = (bk == k) & alive & sel[:, None]
+                mouth[k, ph] += (m.sum(), (m & bite).sum())
+    return {"rate": (bites / np.maximum(alive_n, 1e-9) * 100).tolist(), "alive": (alive_n / (worlds * NA)).tolist(),
+            "p_bite": (mouth[..., 1] / np.maximum(mouth[..., 0], 1)).tolist()}
+
+
+@extra("2.3")
+def reversal_life(s, main: list[Path], control: list[Path]):
+    """The reversal over a life, main and control: bites on the berry types that turn from poison to good and from
+    good to poison at the switch (a line figure), and a table of the chance of a bite at the mouth."""
+    bin_ = 200
+    m, c = [_reversal_life(s, r, bin_=bin_) for r in main], [_reversal_life(s, r, bin_=bin_) for r in control]
+    nb = len(m[0]["rate"][0])
+    mean = lambda xs, k: np.mean([x["rate"][k] for x in xs], 0).tolist()
+    panels = []
+    for title, xs in (("Critic (main)", m), ("Pain teacher (control)", c)):
+        if xs:
+            panels.append({"title": title, "series": [
+                {"name": "poison, then good", "y": mean(xs, 0), "cls": "good"},
+                {"name": "good, then poison", "y": mean(xs, 1), "cls": "bad"},
+                {"name": "alive, %", "y": (np.mean([x["alive"] for x in xs], 0) * 100).tolist(), "cls": "muted", "dash": True}]})
+    rows = []
+    for label, k, ph in (("A former poison, before the switch", 0, 0), ("A former poison, after the switch", 0, 1),
+                         ("A former food, before the switch", 1, 0), ("A former food, after the switch", 1, 1)):
+        rows.append([label, _stat([x["p_bite"][k][ph] for x in m])] + ([_stat([x["p_bite"][k][ph] for x in c])] if c else []))
+    return [("reversal_life", {"x": [(i + 0.5) * bin_ for i in range(nb)], "xlabel": "tick of life",
+                               "ylabel": f"bites per 100 creatures alive, per tick", "vline": s.world.switch_tick,
+                               "vlabel": "switch", "panels": panels,
+                               "caption": "Recorded lives of the last generation of every seed (64 creatures, two worlds each); "
+                                          "dashed: share of the creatures still alive."}),
+            ("reversal_bites", {"columns": ["Chance of a bite with the bush at the mouth", "critic"] + (["pain teacher"] if c else []),
+                                "rows": rows, "caption": "From the same recorded lives."})]
+
+
+@extra("2.3")
+def conditioning_lab(s, main: list[Path], control: list[Path]):
+    """Textbook conditioning experiments on 24 evolved creatures of every seed (life.labtests.PROTOCOLS): extinction
+    (pain, then the same bush without pain) and blocking (Kamin 1969), main and control; and the error on every
+    tick of a trial, first trial and a later one (the dopamine shift, Schultz 1997), main only."""
+    from .experiments import stages as S
+    from .labtests import PROTOCOLS, conditioning
+    from .run import load_population
+    def runs_of(runs):
+        out = {"ext6": [], "ext18": [], "block": [], "block_ctl": [], "sig1": [], "sig6": [], "sig7": []}
+        for run in runs:
+            exp = S.make_exp(s, _brain_of(s, run), "book", 1, 0)
+            pop = load_population(run, exp)
+            ext = conditioning(exp, pop, PROTOCOLS["extinction"], S.PALLIUM_SIM)
+            out["ext6"].append(float(ext["tests"]["A"][6, :, 3].mean()))
+            out["ext18"].append(float(ext["tests"]["A"][18, :, 3].mean()))
+            out["sig1"].append(ext["signal"][0].mean(0).tolist())
+            out["sig6"].append(ext["signal"][5].mean(0).tolist())
+            out["sig7"].append(ext["signal"][6].mean(0).tolist())
+            for key, proto in (("block", "blocking"), ("block_ctl", "blocking control")):
+                out[key].append(float(conditioning(exp, pop, PROTOCOLS[proto], S.PALLIUM_SIM)["tests"]["B side"][-1, :, 3].mean()))
+        return out
+    m, c = runs_of(main), runs_of(control)
+    both = lambda k: [_stat(m[k])] + ([_stat(c[k])] if control else [])
+    rows = [["Aversion to a bush after 6 painful meals", *both("ext6")],
+            ["... after 12 more meals of it without pain (extinction)", *both("ext18")],
+            ["Aversion to a second cue paired with pain next to a known one (blocking)", *both("block")],
+            ["... next to a cue that predicted nothing (control)", *both("block_ctl")]]
+    ticks = ["bush", "bite 1", "bite 2", "bite 3", "after", "", "", "", ""]
+    sig = lambda k: np.mean(m[k], 0).tolist()
+    return [("conditioning_lab", {"columns": ["Input drive of the aversive cells", "critic"] + (["pain teacher"] if control else []),
+                                  "rows": rows,
+                                  "caption": "Lab test on 24 creatures of the last generation of every seed: a new look shown at the "
+                                             "mouth, three bites with pain (or none), then four ticks of nothing; read out from a "
+                                             "rested brain, learning off. The drive is the input of the aversive cells before "
+                                             "their ceiling."}),
+            ("dopamine_shift", {"x": list(range(len(ticks))), "xticks": ticks, "xlabel": "tick of a trial",
+                                "ylabel": "error (dopamine)", "zero": True,
+                                "panels": [{"title": "", "series": [
+                                    {"name": "first painful meal", "y": sig("sig1"), "cls": "s2"},
+                                    {"name": "sixth painful meal", "y": sig("sig6"), "cls": "s1"},
+                                    {"name": "first meal without the pain", "y": sig("sig7"), "cls": "good", "dash": True}]}],
+                                "caption": "The critic's error on every tick of a trial, mean of 24 creatures of the last "
+                                           "generation of every seed. Negative: worse than expected."})]
 
 
 if __name__ == "__main__":

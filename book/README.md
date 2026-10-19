@@ -31,6 +31,7 @@ diagram; only the text is written by hand. Never copy a number into the text.
 
     python -m life.book export 1.1 --evaluate    # curves, summary, brain + lesions, head to head (simulates)
     python -m life.book export 1.1               # the same without simulating; keeps the earlier evaluation
+    python -m life.book export 1.1 --no-extras   # quick: brain and curves only (e.g. for the layout tool); keeps earlier extras
     python -m life.book dashboards 1.1           # light dashboards of seed 0 (main, control) -> book/dashboards/,
                                                  # and the data file again, so that the page links them
 
@@ -54,7 +55,9 @@ per sense or group of actions, a tall block without sockets, or one small box. C
 of their top-level group (hues in the same file, also used by the dashboards). The file is
 made with `tools/brain_layout` (`python tools/brain_layout/serve.py`, then http://localhost:8765): it optimises the
 layout over the chain of stages with tunable weights and writes the file on Save. A stage that the file does not
-have (a new stage) gets the old layout in columns by depth until the tool is run again; use its forward mode, or
+have (a new stage) gets the old layout in columns by depth until the tool is run again (the tool reads the brains
+from `data/*.json`, so a quick `export <key> --no-extras` after the first finished run is enough to lay out a new
+stage before its page is written); use its forward mode, or
 pin the existing regions, so that the earlier diagrams do not change. Dashboards exported after the file exists
 offer the same layout (link "book layout" under the architecture diagram).
 
@@ -81,8 +84,9 @@ public repository.
 | `verdict` | is the circuit used (`data-used="<lesion>,<table extra>:<label>"`), new against old brain (apart, sharing a world) | `--evaluate` |
 | `bars` | rows of a table extra as bars with the seeds (`data-rows`, `data-col0`, `data-scale`, `data-unit`) | a per-stage extra |
 
-The brain diagram draws the ganglion as one box (an evolved tangle with no named cells) unless the stage adds it;
-`data-fold="<groups>"` folds other groups, `data-fold=""` none.
+The brain diagram has three views when the stage adds something: *new circuit* (the default: what the stage added
+and what it connects to directly; a group none of that touches is an empty outline with its name in the middle),
+*all cells* (the same with every other cell faded) and *everything*. Regions never move between the views.
 
 `data/sprites.json` holds the sprites of every object in a strip (recoloured like the dashboards) and the ground
 texture: `python -m life.book sprites` after exporting a stage with a new strip.

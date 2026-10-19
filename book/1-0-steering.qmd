@@ -15,7 +15,7 @@ The first creature has no memory, no hunger and no idea of good or bad. It can d
 movement. This stage evolves a brain that does that, starting from random wiring. Everything after this stage is
 added to this brain.
 
-<div data-life="brain" data-stage="1.0" data-fold=""></div>
+<div data-life="brain" data-stage="1.0"></div>
 
 ## The circuit
 

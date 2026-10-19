@@ -2980,3 +2980,39 @@ creature over the life, P(bite) and aversive cells with each kind at the mouth b
 
 Open: the switch time (and several reversals per life, not supported yet); the critic's settings in this world;
 then lesions and the stage proper with the user.
+
+## v57 (2026-10-19, night): stage 2.3, the dopamine critic as a formula; frozen
+
+**Generation-0 sweep** (at most 15 minutes, user): the reversal settings of v56 kept (switch at 800, gamma 0.5,
+value scale 3, taste weight 0.3; "if it works don't touch it"). Gamma, scale and taste are not evolvable while the
+error is a formula (user); they become genes when it is built from cells.
+
+**Per-slot pallium wiring** (`ProjectionSpec.per_slot`, `run.SLOT_KEY`): the random in -> pallium weights belong to
+the population slot, not the genome: the same draw for slot i in every generation, siblings share it, in main and
+control alike. Inherited lucky codes are ruled out without the cost of per-life draws (v56: 8.5 s vs 6.9 s per
+generation). Dropping the dead keeps each brain state with its creature (test). Projections out of the pallium
+start at 0 and are not evolved.
+
+**Stage 2.3** (`B23` = per-slot pallium on the critic, `W23`, EVOLUTION_NEW, 100 generations, three seeds; control:
+the 2.2 brain with per-slot wiring in the same world). Last 50 generations main - control +151 +- 20 (+164, +113,
++176); re-evaluated in 64 worlds +127 +- 7 (1369 vs 1242); head to head +177 +- 50 (+213, +240, +79).
+- **100 generations are needed.** Gap by generation: +101 at 0, about -25 at 20, +20 at 40, +128 at 60, +165 to
+  +171 at 80-95. A 40-generation run would have shown nothing; learning stages keep 100.
+- Lesions (64 worlds, % of intact): value_app 84 83 68, no_plasticity 83 83 83, pallium 83 82 80, us_taste 89 93
+  80, **value_av 101 100 97 (unused)**. value_app_prev 23 33 20 and value_av_prev 33 57 82 are not a measure of use:
+  silencing the copy alone leaves a standing error that unteaches every aversion.
+- Evolved learning rates (start): in -> valence_av (0.3) main 0.04-0.17, control 0.04-0.10; pallium -> valence_av
+  (0.2) main 0.08-0.10, control 0.03 / 0.22 / 0.04; pallium -> value_app (0.1) 0.06-0.08; -> value_av (0.1)
+  0.03-0.04. The control turns pallium learning down in two seeds (pain-gated learning hurts in a reversal, v56).
+- In the world (`reversal_life`, last generation, recorded): both populations switch at about the same rate.
+  P(bite) at the mouth on a former poison 0.34 -> 0.85 (control 0.38 -> 0.83), on a former food 0.87 -> 0.32 (0.88
+  -> 0.31). The control switches through input adaptation (v56). Main eats more throughout (172 vs 135 per life),
+  more pain (19.8 vs 16.4), and lives longer (1743 vs 1596 ticks).
+- Lab (`conditioning`, 24 creatures per seed, drive of the aversive cells): after 6 painful meals 2.7 (control 1.2);
+  after 12 more without pain 1.8 (control 1.2: no extinction without the critic). Blocking: second cue -0.16 vs
+  -0.03 in the control arm (control -0.86 / -0.85): the second cue is not learned in three bites in either, so
+  nothing to block. Error per tick of a trial (`dopamine_shift`): first meal 0 at the bush, -0.96 at the bites;
+  sixth meal -0.31 at the bush, -0.66 at the bites; first meal without pain +0.33 at the bites (the omitted pain).
+
+Frozen (tag `stage-2.3`), `value_av` kept as half of the critic that the next stage builds from cells. Book page
+`book/critic.qmd` (extras `reversal_life`, `conditioning_lab`, `dopamine_shift`; new `lines` component).

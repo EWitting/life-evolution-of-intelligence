@@ -61,14 +61,21 @@ remapping the stored populations and freezing again.
 | side paths | 1.1l, 1.5c (centred association before habituation), 1.5f, 1.6h, 1.6 reversal, x.hands, x.td, old 1.2-1.4 | defined, not on the path | Listed with reasons in `frozen/README.md`. |
 | first affect route | 1.8old (states released at once, one berry type per patch; learning unused 99 95 99) -> 2.0 (camera eyes in open country: learning back) -> 2.1 (the chapter 2 world, states that add up) | frozen, off the chain (2026-10-17) | The new 1.8 does this in one stage. Straight from drives with the additive mutation of learning rates, lineages set the rate to 0 and keep it there (`x.affect2`, 200 generations); multiplicative steps keep it (v43, v44). |
 | 2.2 pallium | `pallium` (128 cells, k-WTA 2) reads the eye ahead (`vis+0.app*`, fixed random weights of mixed sign per genome); pain teaches `pallium -> valence_av` (start 0.2); adaptation strength evolves (`Genome.adapt`, main and control). World `W22`: the 1.8 world with XOR looks at similarity 0.5 (poison ++ and --, good +- and -+) and patches mixed evenly (purity 0.25) | **frozen** 2026-10-19, passes (`flee` and `fed` kept though unused here) | Main - control: last 50 generations +106 +-20 (+83, +145, +91); **head to head +229 +-31** (+184, +288, +214); re-evaluated apart, 16 worlds: +73 +-48 (-14, +151, +83). Lesions (16 worlds): pallium 90 88 92, no_plasticity 77 67 87, settle 96 94 91; flee and fed not used (97-101). Lab (`xor_meals`), bites poison / good after lessons, only the pallium learning 0.16 / 0.37 (before 0.38 / 0.39); only the look 0.22 / 0.23. Poison share of bites 0.14 early in a life, 0.08 late. A larger pallium (256, 512) does not lower the transfer to good bites (0.13 at 128). STAGE_LOG v46-v51. |
+| 2.3 critic | dopamine critic as a formula: value cells `value_app` / `value_av` (3 + 3) on the pallium, one-tick copies, `us_taste`; one signed TD error `da` = taste x 0.3 - pain + 3 (0.5 V' - V) teaches the value cells and, negated (`da_neg`), every synapse pain taught (look and pallium -> `valence_av`), one tick late (`elig_delay`). Pallium wiring per population slot (`per_slot`, main and control). World `W23`: W22 with a reversal at tick 800 (poison and good XOR types swap) | **frozen** 2026-10-19, passes (`value_av` kept though unused) | Main - control: last 50 generations +151 +-20; re-evaluated (64 worlds) +127 +-7 (+123, +119, +140); **head to head +177 +-50** (+213, +240, +79). Lesions (64 worlds): value_app 84 83 68, no_plasticity 83 83 83, pallium 83 82 80, us_taste 89 93 80, value_av 101 100 97 (the `_prev` lesions, 20-82, leave an error that never cancels: not a measure of use). Both populations switch at the reversal about equally (P(bite) on a former poison 0.85 vs 0.83 after it); main eats more throughout (172 vs 135) and lives longer. Lab: the error moves from the bites to the cue and turns positive when the pain is omitted; extinction 2.7 -> 1.8 (control 1.2 -> 1.2); no blocking (the second cue is not learned in either). The gap appears only after generation 40. STAGE_LOG v54-v57. |
 | chapter 2, next | pallium -> dopamine critic -> hands -> basal ganglia with actor -> curiosity | planned (ADR-025) | The definitions `old2.1`-`old2.5` and `x.td` in `stages.py` are the first design on the reversal brain; each stage is defined again when its turn comes. |
 | later, 3.x-5.x | pallium clustering, hippocampus, cerebellum, uncertainty modulators; simulating, mentalizing, speaking | planned | |
 
 ## Next steps
 
-1. **Resume here: design the dopamine critic** (fresh session, 2026-10-19). 2.2 is frozen (tag `stage-2.2`,
-   `flee` and `fed` kept). Old chapter 2 definitions (`old2.x`, `x.td` in `stages.py`) are stale: define the stage
-   again on the 2.2 brain, probe it first (assay, then generation 0 on one seed), and agree new mechanisms with the user.
+1. **Resume here: the dopamine critic built from cells** (2.3 frozen 2026-10-19, tag `stage-2.3`), as its own
+   stage on top of 2.3: the TD formula split into cells (dopamine cells with a baseline, the value difference as
+   synapses); then gamma, the value scale and the taste weight become evolvable (user: not while they are a
+   formula). Open from 2.3: `value_av` is unused (keep or trim, with the user); no blocking in the lab; a sense of
+   time since a cue (the relief burst at cue offset); 100 generations were needed (the main - control gap appears
+   only after generation 40), so keep 100 for learning stages. Probe first (lab tests, generation 0), agree new
+   mechanisms with the user.
+   Earlier (2.2 frozen, tag `stage-2.2`, `flee` and `fed` kept). Old chapter 2 definitions (`old2.x`, `x.td` in
+   `stages.py`) are stale.
    **Noise settings for every new stage** (STAGE_LOG v52, user 2026-10-19): `Stage.evolution = EVOLUTION_NEW`
    (episodes 4: 4 siblings x 4 worlds = 16 lives per genome; learning rates multiplicative); frozen stages keep
    episodes 1. Measured at generation 0 of 2.2 (`noise_gen0.py`): one life is as much luck there as at the end of a
@@ -99,7 +106,7 @@ remapping the stored populations and freezing again.
 5. Trim (2026-10-08): nothing is removed; every cell is used somewhere on the chain.
 6. Book: "Watching it work" strips for drives (`warm_rest`) and affect (`flight`) done (2026-10-19). Rewritten as a
    textbook the same day: background page, takeaway box, `verdict` and `bars` components, full results folded away,
-   ganglion drawn as one box, OHOL sprites with a skull on poison kinds in strips and dashboards (`book/README.md`).
+   brain diagrams with new-circuit / all-cells / everything views, OHOL sprites with a skull on poison kinds in strips and dashboards (`book/README.md`).
    The new stage pages follow that structure.
 
 ## Known issues and open points

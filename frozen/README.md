@@ -41,9 +41,13 @@ defaults (`freeze.with_defaults`).
 | stage | what it is | parent | life | seeds |
 |---|---|---|---|---|
 | 2.2 | pallium: 128 cells (k-WTA 2) read the eye ahead through fixed random weights of mixed sign; pain teaches `pallium -> valence_av`; the adaptation strength evolves; world `W22` (the 1.8 world with XOR looks, patches mixed evenly) | 1.8 | 4000 | 3 |
+| 2.3 | dopamine critic as a formula: value cells on the pallium and one signed TD error that teaches them and, negated, every synapse pain taught; pallium wiring per population slot; world `W23` (W22 with a reversal at tick 800) | 2.2 | 4000 | 3 |
 
-`flee` and `fed` are unused in this world (lesions 97-101%) and kept: frozen chapter 1 circuits that later worlds
+2.2: `flee` and `fed` are unused in this world (lesions 97-101%) and kept: frozen chapter 1 circuits that later worlds
 may need (user, 2026-10-19).
+
+2.3: `value_av` is unused in this world (lesions 97-101%) and kept: it is half of the critic that the next stage builds
+from cells.
 
 ## The first affect route (frozen, off the chain since 2026-10-17)
 

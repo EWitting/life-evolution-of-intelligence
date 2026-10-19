@@ -24,6 +24,7 @@ book:
     - part: "Chapter 2: reinforcing"
       chapters:
         - pallium.qmd
+        - critic.qmd
 
 format:
   html:

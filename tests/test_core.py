@@ -234,10 +234,10 @@ def test_hidden_snake_rattles_ahead_and_bites_silently():
     assert obs["vision"][0, :, 0].sum() == 0   # the snake is not seen
 
 
-def test_per_life_synapses_are_drawn_at_birth():
+def test_per_slot_synapses_come_from_the_slot_key():
     from life.config import ProjectionSpec
     exp = ExperimentConfig(brain=BrainConfig(regions=(RegionSpec("code", 16),), projections=(
-        ProjectionSpec(src="in", dst="code", density=0.5, evolve=False, per_life=True),
+        ProjectionSpec(src="in", dst="code", density=0.5, evolve=False, per_slot=True),
         ProjectionSpec(src="code", dst="out", density=1.0))))
     L = make_layout(exp)
     g = brain.init_genome(jax.random.PRNGKey(0), L)
@@ -245,7 +245,30 @@ def test_per_life_synapses_are_drawn_at_birth():
     a = brain.init_state(g, L, key=jax.random.PRNGKey(1)).w
     b = brain.init_state(g, L, key=jax.random.PRNGKey(2)).w
     inherited = brain.init_state(g, L).w
-    assert not np.allclose(a[:L.n_in, code], b[:L.n_in, code])                       # a new draw per life
+    assert not np.allclose(a[:L.n_in, code], b[:L.n_in, code])                       # another slot, another draw
     assert np.allclose(a[code, out], inherited[code, out]) and np.allclose(a[code, out], b[code, out])
     assert np.allclose(inherited, g.w0 * g.mask)
     assert 0.3 < float((a[:L.n_in, code] != 0).mean()) < 0.7                          # the projection's density
+
+
+def test_dropping_the_dead_keeps_each_creature_its_per_slot_wiring():
+    """Per-slot synapses are drawn at birth and travel with the creature's brain state when the arrays shrink."""
+    from life.config import ProjectionSpec
+    rs = toy_ruleset()
+    exp = ExperimentConfig(world=WorldConfig(height=12, width=12, num_agents=16, spawn_density=0.15, max_food=4.0,
+                                             hunger_per_tick=0.02, move_cost=1.0, eat_on_pick=True),
+                           vision=VisionConfig(columns=3, range=3, appearance_noise=0.1),
+                           brain=BrainConfig(regions=(RegionSpec("code", 8, kwta=2),), projections=(
+                               ProjectionSpec(src="in", dst="code", density=0.5, evolve=False, per_slot=True),
+                               ProjectionSpec(src="code", dst="out", density=1.0),
+                               ProjectionSpec(src="in", dst="out", density=0.5))),
+                           evolution=EvolutionConfig(ticks_per_generation=600, siblings=2))
+    layout = make_layout(exp)
+    pop = jax.vmap(lambda k: brain.init_genome(k, layout))(jax.random.split(jax.random.PRNGKey(0), 8))
+    rules = rs.to_arrays(exp.vision.appearance_dim)
+    a, _ = make_simulate(exp, record=False, compact=False)(rules, pop, jax.random.PRNGKey(3))
+    b, _ = make_simulate(exp, record=False)(rules, pop, jax.random.PRNGKey(3))
+    life = np.sort(np.asarray(a["alive_ticks"]))
+    assert life[7] < 500                                                  # half have died before the end
+    for k in a:
+        assert np.array_equal(np.asarray(a[k]), np.asarray(b[k])), k

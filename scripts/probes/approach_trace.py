@@ -1,6 +1,6 @@
 """What the pallium and the aversive cells do while a creature approaches a bush, by distance (one recorded life of
 64 animals, as da_trace.py, generation 0 of the parent population):
-    STAGE=x.critic DENSE=1 python scripts/probes/approach_trace.py plife plife+pnt
+    STAGE=x.critic DENSE=1 python scripts/probes/approach_trace.py pslot pslot+pnt
 Per variant, for the object seen straight ahead (vis+0) at distance 1 (at the mouth) to 5, split into poison bushes
 and good bushes, second half of life (after lessons): share of those ticks, pallium activity (sum), aversive cells,
 and how often the creature then turns away (TURN_LEFT / TURN_RIGHT)."""

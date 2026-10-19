@@ -1198,6 +1198,69 @@ stage(Stage("x.reversal", "x_reversal", "2.2", B22P, replace(W22, switch_tick=RE
             lambda exp: pallium_world(exp, reverse=True), **{**_S15, "generations": 100},
             evolution=EVOLUTION_NEW, notes="DRAFT: x.critic with a reversal of the novel types at switch_tick"))
 
+# 2.3 dopamine critic (STAGE_LOG v54-v57; ADR-025): a TD error as a formula, the first step before dopamine cells.
+# Value cells (three appetitive, three aversive, rates) read the pallium through synapses that the error teaches;
+# one-tick copies of them give the error of each tick
+#     da = taste - pain + k (gamma (V_app - V_av) - (V_app' - V_av'))           (' = a tick earlier)
+# (Schultz, Dayan & Montague 1997: one signed error, as in mammals). The same error, negated (da_neg), teaches every
+# synapse that pain taught in 2.2 (look -> aversive, pallium -> aversive): a predicted pain teaches nothing more, and
+# pain that does not come (better than expected) unteaches aversion, which a pain teacher cannot do. Eligibility
+# traces take the activity of a tick earlier (elig_delay: the error of tick t is about the move from t-1), and the
+# value cells read the pallium of the same tick (one phase later). A short horizon (gamma 0.5) and value scale 3,
+# so that a pain that lasts while the bush is in view can be predicted (the state does not say when it ends);
+# taste weighs 0.3, as the creature cannot see whether it will eat (taste is half predictable from the pallium).
+# Settings from a generation-0 sweep in this world: gamma 0.5 / scale 3 +142 +- 18, gamma 0.7 +124, gamma 0.9 / scale
+# 1 +84 (v57). The pallium's wiring belongs to the population slot (per_slot_pallium), in main and control alike.
+# World: the reversal: at tick 800 the two poison novel types turn good and the two good ones poison (looks
+# unchanged); what was learned stops being true, and only a prediction error unlearns it. Generation 0: the critic
+# +144 +- 17 over the pain teacher, which does worse than no learning there (v56).
+CRITIC_GAMMA, CRITIC_SCALE, CRITIC_TASTE = 0.5, 3.0, 0.3
+CRITIC_ETA, CRITIC_ELIG, CRITIC_VALENCE = 0.1, 0.5, 1.5
+
+
+def critic(brain: BrainConfig, gamma=None, scale=None, taste=None) -> BrainConfig:
+    """`brain` with the formula critic: value cells, their one-tick copies, the error `da` and its negation `da_neg`,
+    which replaces the pain teacher (us_av) of every synapse it taught."""
+    g, k = CRITIC_GAMMA if gamma is None else gamma, CRITIC_SCALE if scale is None else scale
+    t = CRITIC_TASTE if taste is None else taste
+    terms = (("us_taste", t), ("us_pain", -1.0), ("value_app", g * k), ("value_av", -g * k),
+             ("value_app_prev", -k), ("value_av_prev", k))
+    taught = lambda dst, b: P("pallium", dst, rule="hebb", modulator="da", eta_init=CRITIC_ETA, elig_tau=CRITIC_ELIG,
+                              abcd=(0.0, b, 0.0, 0.0), density=1.0, w_init=0.0, elig_delay=True)
+    pal = next(r.phase for r in brain.regions if r.name == "pallium")
+    value = lambda n: replace(R(n, 3, **VALUE), phase=0 if n.endswith("_prev") else pal + 1)
+    brain = extend(brain,
+                   regions=(R("us_taste", 1, sign="exc", alpha=1.0, bias=0.0, evolve_bias=False, group="us"),
+                            *(value(n) for n in ("value_app", "value_av", "value_app_prev", "value_av_prev"))),
+                   projections=(P("in", "us_taste", src_select=("taste",), density=1.0, w_init=2.0, evolve=False),
+                                taught("value_app", 1.0), taught("value_av", -1.0),
+                                P("value_app", "value_app_prev", topology="one_to_one", w_init=1.0, evolve=False),
+                                P("value_av", "value_av_prev", topology="one_to_one", w_init=1.0, evolve=False),
+                                fixed("value_app", "valence_app", CRITIC_VALENCE),
+                                fixed("value_av", "valence_av", CRITIC_VALENCE)),
+                   modulators=(Mod("da", terms=terms), Mod("da_neg", terms=tuple((r, -w) for r, w in terms))))
+    # the pain-taught synapses keep their inherited plasticity genes (remap_genomes carries A-D over for a projection
+    # whose rule stays): so they take the negated error rather than a flipped sign in abcd
+    return replace(brain, projections=tuple(replace(p, modulator="da_neg", elig_delay=True) if p.modulator == "us_av"
+                                            else p for p in brain.projections))
+
+
+def per_slot_pallium(brain: BrainConfig) -> BrainConfig:
+    """The pallium's random input wiring belongs to the population slot, not to the genome (ProjectionSpec.per_slot:
+    no lineage inherits or selects a lucky code; user, 2026-10-19), and what reads the pallium starts at 0 and is
+    learned only, as it could only read a code that is not inherited. Generation 0: no cost (v55)."""
+    return replace(brain, projections=tuple(
+        replace(p, per_slot=True) if p.src == "in" and p.dst == "pallium" else
+        replace(p, w_init=0.0, evolve=False) if p.src == "pallium" else p for p in brain.projections))
+
+
+W23 = replace(W22, switch_tick=REV_SWITCH)
+B23 = per_slot_pallium(critic(B22P))
+stage(Stage("2.3", "s2_3_critic", "2.2", B23, W23, VISION_CH1, BODY_17, lambda exp: pallium_world(exp, reverse=True),
+            **{**_S15, "generations": 100}, evolution=EVOLUTION_NEW, control_brain=per_slot_pallium(B22P),
+            notes="dopamine critic as a formula: value cells on the pallium, one TD error teaching them and, negated, "
+                  "every synapse the pain teacher taught; reversal world (poison and good novel types swap at tick 800)"))
+
 # ------------------------------------------------------------------ running
 
 EVOLUTION_OVERRIDES: dict = {}   # set from the command line (--mutation-prob), applied to every stage

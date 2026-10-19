@@ -15,8 +15,9 @@
     td            the critic as a formula (old2.5 on the 2.2 brain): value cells from the pallium, dopamine = TD error
                   teaches every pain-gated synapse (TD_GAMMA, TD_SCALE, TD_ETA, TD_ELIG, TD_TASTE); tdp: only those
                   from the pallium, the look synapses stay pain-gated
-    plife         the pallium's input wiring is drawn anew at every birth; what reads the pallium starts at 0, not
-                  inherited
+    pslot         the pallium's input wiring belongs to the population slot (the same draw in every generation, not
+                  inherited); what reads the pallium starts at 0, not evolved. (plife until 2026-10-19: a new draw for
+                  every creature at every birth; logs of then)
     pnt           the pallium also reads the no_touch cell (nothing at the mouth), one phase later; put it before
                   td / td2 in a combination (their value cells go one phase after the pallium)
     noadapt       no input adaptation (BrainConfig.in_adapt off: the looks are not high-passed)
@@ -103,10 +104,10 @@ def variant(brain, v):
     for part in v.split("+"):
         if part == "base":
             pass
-        elif part == "plife":   # the pallium's input wiring is drawn anew at every birth (ProjectionSpec.per_life);
-            # what reads the pallium starts at 0 and is not inherited (it could only read a code drawn per life)
+        elif part == "pslot":   # the pallium's input wiring belongs to the population slot (ProjectionSpec.per_slot);
+            # what reads the pallium starts at 0 and is not evolved (it could only read a code drawn per slot)
             brain = replace(brain, projections=tuple(
-                replace(p, per_life=True) if p.dst == "pallium" else
+                replace(p, per_slot=True) if p.dst == "pallium" else
                 replace(p, w_init=0.0, evolve=False) if p.src == "pallium" else p for p in brain.projections))
         elif part == "noadapt":   # no input adaptation (the looks are not high-passed; BrainConfig.in_adapt)
             brain = replace(brain, in_adapt=())
@@ -120,7 +121,7 @@ def variant(brain, v):
             brain = replace(brain, regions=tuple(replace(r, phase=r.phase + 1) if r.name == "pallium" else r
                                                  for r in brain.regions),
                             projections=(*brain.projections,
-                                         S.P("no_touch", "pallium", density=1.0, evolve=False, per_life=pal.per_life)))
+                                         S.P("no_touch", "pallium", density=1.0, evolve=False, per_slot=pal.per_slot)))
         elif part.startswith("pk") and part[2:].isdigit():   # pallium k-WTA winners
             brain = replace(brain, regions=tuple(replace(r, kwta=int(part[2:])) if r.name == "pallium" else r
                                                  for r in brain.regions))

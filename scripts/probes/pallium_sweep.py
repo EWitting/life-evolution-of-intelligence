@@ -1,5 +1,5 @@
-"""Pallium designs side by side (variants.py: plife, ptouch, pk<k>, pn<n>), generation 0 of the parent population:
-    STAGE=x.critic DENSE=1 python scripts/probes/pallium_sweep.py plife+ptouch plife+ptouch+pk4 ...
+"""Pallium designs side by side (variants.py: pslot, pnt, pk<k>, pn<n>), generation 0 of the parent population:
+    STAGE=x.critic DENSE=1 python scripts/probes/pallium_sweep.py pslot+pnt pslot+pnt+pk4 ...
 Per variant:
   taste R^2   one recorded life (64 animals, as da_trace.py): how well the pallium of tick t predicts the taste of
               t+1 (ridge, any sign / weights >= 0), per animal: fitted on the first half of its life, tested on the

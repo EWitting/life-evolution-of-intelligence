@@ -67,7 +67,17 @@ remapping the stored populations and freezing again.
 
 ## Next steps
 
-1. **Resume here: the dopamine critic built from cells** (2.3 frozen 2026-10-19, tag `stage-2.3`), as its own
+0. **Resume here, first (user, 2026-10-20): does any brain judge a bush by its look before the first bite?**
+   `scripts/probes/reversal_variants.py` on the frozen 2.3 populations (last generation, main and control; STAGE_LOG
+   v58): with swaps every 400 ticks both switch within 100 ticks at every swap, equally; with **one berry per bush**
+   (worth 3, regrowing as 3) neither tells poison from good at all (P(bite) at the mouth 0.46 / 0.46 critic, 0.55 /
+   0.58 control, no crossover). So the crossover in the book figure is mostly the visit-ending reflex (stop at the
+   first painful berry, eat all six of a good bush), not a learned aversion to the look, though the lab shows the
+   aversion is learned. The book page stays as it is for now (user). To find out: the chance of a first bite on
+   arriving at a bush in the 2.3 world; why lab learning does not show in the world (strength, the readout through
+   `valence_av`, evolution favouring "bite once and see"); whether a world of one-bite bushes (evolved in, from
+   generation 0) makes the look matter. Tackle this before the cell-based critic.
+1. **Then: the dopamine critic built from cells** (2.3 frozen 2026-10-19, tag `stage-2.3`), as its own
    stage on top of 2.3: the TD formula split into cells (dopamine cells with a baseline, the value difference as
    synapses); then gamma, the value scale and the taste weight become evolvable (user: not while they are a
    formula). Open from 2.3: `value_av` is unused (keep or trim, with the user); no blocking in the lab; a sense of

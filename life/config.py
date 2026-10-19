@@ -36,6 +36,7 @@ class WorldConfig:
     variety_tau: float = 100.0       # ticks over which the memory of what was eaten fades
     switch_tick: int = 0             # > 0: rules_for_generation returns two phases per life; phase 2 from this tick
                                      # (e.g. the poison identity reverses mid-life). Life halves in stats split here.
+    switch_every: int = 0            # > 0 with switch_tick: the phases keep alternating, every switch_every ticks
     sickness_delay: int = 0          # ticks between eating something with pain_value and feeling the pain
     eat_on_pick: bool = False        # True: food that a USE puts into an empty hand is eaten in the same tick (an
                                      # animal with a mouth, not hands; nothing edible is ever carried)

@@ -3016,3 +3016,17 @@ the 2.2 brain with per-slot wiring in the same world). Last 50 generations main 
 
 Frozen (tag `stage-2.3`), `value_av` kept as half of the critic that the next stage builds from cells. Book page
 `book/critic.qmd` (extras `reversal_life`, `conditioning_lab`, `dopamine_shift`; new `lines` component).
+
+## v58 (2026-10-20): the reversal crossover is mostly the visit-ending reflex
+
+`scripts/probes/reversal_variants.py`: the book's reversal figure for the frozen 2.3 populations (last generation,
+64 creatures, two worlds per seed) in worlds they did not evolve in. New `WorldConfig.switch_every` (phases alternate
+every N ticks from switch_tick; 0 = one switch).
+- **every=400**: both brains switch within one 100-tick bin at all six swaps, without slowing. P(bite) at the mouth
+  0.33 -> 0.85 / 0.84 -> 0.33 (critic), 0.35 -> 0.83 / 0.85 -> 0.34 (control). Alive at the end 29% both.
+- **one=3** (one berry per bush worth 3, regrowth as for 3; every use takes the last-use transition, since a bush
+  with num_uses 1 would otherwise never empty): no discrimination at all. P(bite) poison-first 0.46 / 0.47, good-first
+  0.46 / 0.45 (critic); 0.55 / 0.49, 0.58 / 0.46 (control); alive at the end 20% / 23%.
+So the crossover in the 6-berry world is mostly bites per visit (stop at the first painful berry), which reverses by
+itself; a learned aversion by look hardly shows in the world although the lab shows one. Open, first next session
+(STATUS step 0).

@@ -98,7 +98,10 @@ def make_simulate(exp: ExperimentConfig, record: bool, compact: bool = True):
             pop, bstate0 = jax.tree_util.tree_map(sib, pop), jax.tree_util.tree_map(sib, bstate0)
         # rules with a leading axis of 2 = two phases of one life: phase 1 from tick WorldConfig.switch_tick on
         phased = rules.food_value.ndim == 2
-        rules_at = (lambda tk: jax.tree_util.tree_map(lambda a: a[(tk >= exp.world.switch_tick).astype(jnp.int32)], rules))             if phased else (lambda tk: rules)
+        # (WorldConfig.switch_every > 0: back and forth every switch_every ticks from then on)
+        sw, sw_every = exp.world.switch_tick, exp.world.switch_every
+        phase_at = (lambda tk: (tk >= sw) & (((tk - sw) // sw_every) % 2 == 0)) if sw_every > 0 else (lambda tk: tk >= sw)
+        rules_at = (lambda tk: jax.tree_util.tree_map(lambda a: a[phase_at(tk).astype(jnp.int32)], rules))             if phased else (lambda tk: rules)
         M = rules.food_value.shape[-1]
         half = exp.world.switch_tick if phased else T // 2
 

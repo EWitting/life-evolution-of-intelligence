@@ -959,7 +959,9 @@ def _reversal_life(s, run: Path, worlds: int = 2, bin_: int = 200, until: int = 
         bk = bush_kind[grid[np.arange(T)[:, None], np.clip(fr[..., 0], 0, world.height - 1), np.clip(fr[..., 1], 0, world.width - 1)]]
         bite = np.isin(rec["action"], [A.USE, A.EAT])
         for k in range(2):
-            for ph, sel in enumerate((np.arange(T) < SW, np.arange(T) >= SW)):
+            tt = np.arange(T)
+            ph1 = (tt >= SW) & (((tt - SW) // world.switch_every) % 2 == 0) if world.switch_every else tt >= SW
+            for ph, sel in enumerate((~ph1, ph1)):
                 m = (bk == k) & alive & sel[:, None]
                 mouth[k, ph] += (m.sum(), (m & bite).sum())
     return {"rate": (bites / np.maximum(alive_n, 1e-9) * 100).tolist(), "alive": (alive_n / (worlds * NA)).tolist(),

@@ -2812,3 +2812,12 @@ curve over 50 generations (world noise only, if main and control see the same wo
 The spread between seeds seen in 2.2 fits these errors: last 50 generations +83, +145, +91 (sd 34, against 28
 expected), re-evaluated in 16 worlds -14, +151, +83 (sd 83, against 49): most of the difference between seeds is
 evaluation and world noise, not genuinely different outcomes.
+
+**Small worlds as episodes** (`scripts/probes/small_world.py`, user 2026-10-19): 128 x 128, 64 animals, 80 patches
+(every density as in W22), 1 sibling, 128 worlds run 16 at a time. Economy unchanged: generation 0 fitness 610 vs 603
+in the large world, lifetime 937 vs 929, meals 83 vs 84; final populations 932 / 868 vs 981 / 890 re-evaluated large.
+Repeatability with 16 lives (16 small worlds): 0.35, 0.34, 0.31, 0.52, the same as 4 large worlds x 4 siblings
+(0.34, 0.35, 0.31, 0.49). The 16 x 1 figure from large worlds (0.44, 0.63) does not carry over: a small world adds
+its own luck. Main vs control paired, final: 128 small worlds s.e. 24, 32 large worlds 35 (same animal-lives), but
+the small worlds take 1.5-2x the GPU time (main: 7-10 s per 16 small worlds against 5 s per 4 large), so per GPU
+second the two are equal. Small worlds buy nothing: episodes 4 in the stage's own world is the choice.

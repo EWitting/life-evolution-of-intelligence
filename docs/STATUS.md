@@ -63,8 +63,8 @@ remapping the stored populations and freezing again.
 
 ## Next steps
 
-1. **Resume here: 2.2 frozen (2026-10-19, `flee` and `fed` kept). Next: the noise measurement at generation 0
-   (`scripts/probes/noise_gen0.py`, user 2026-10-19), then the dopamine critic** (STAGE_LOG v46-v51). 2.2 was rerun after
+1. **Resume here: 2.2 frozen (2026-10-19, `flee` and `fed` kept). Noise at generation 0 measured (v52): as noisy as at the end of a run;
+   episodes 4 nearly doubles selection accuracy, 64 re-evaluation worlds halve the error of 16. Decide the settings with the user, then the dopamine critic** (STAGE_LOG v46-v51). 2.2 was rerun after
    the remap fix (v50: evolvable projections with a designed start and the pallium's fixed random input were reset
    on every remap; it biased the head to head and broke probes) and evaluated (v51): the pallium is used in every
    seed (lesion 90%), it tells the XOR kinds apart in the lab where the look cannot, and main is ahead of control in

@@ -2779,3 +2779,36 @@ of the genome means over 8 worlds 246 / 290. Correlation of the genome scores (4
 0.14, one life 0.01 / 0.04 (Spearman-Brown); 32 lives would reach 0.29 / 0.57. In a converged population genetic
 differences are small, so most of the spread is luck. `siblings` divides the fixed 256 animals into genomes;
 `episodes` (parallel worlds, vmapped) adds lives per genome at about 2.3x the time for 4x (GPU benchmark v49).
+
+## v52 (2026-10-19): 2.2 frozen; noise at generation 0
+
+**2.2 frozen** (user, 2026-10-19), three seeds, git tag `stage-2.2`; `flee` and `fed` kept though unused in mixed
+patches. Book: "Watching it work" strips for drives (`warm_rest`) and affect (`flight`, with the alarm level).
+
+**Noise at generation 0** (`scripts/probes/noise_gen0.py`, 32 shared worlds; user: v51 measured a converged
+population, where little but luck is left). The starting population of 2.2 (1.8 seed 0 on the 2.2 brain, main and
+control as `run_stage` builds them) against the final 2.2 populations of seed 0. Repeatability = correlation of the
+same genomes' scores from disjoint worlds, measured directly:
+
+| lives per genome | 1 | 4 (1 world) | 4 (4 worlds) | 16 (4 worlds) | 16 (16 worlds) | 64 (16 worlds) |
+|---|---|---|---|---|---|---|
+| gen 0 main | 0.03 | 0.10 | 0.13 | 0.34 | 0.44 | 0.68 |
+| gen 0 control | 0.03 | 0.11 | 0.13 | 0.35 | 0.34 | 0.65 |
+| final main | 0.03 | 0.09 | 0.11 | 0.31 | 0.33 | 0.62 |
+| final control | 0.05 | 0.18 | 0.22 | 0.49 | 0.63 | 0.82 |
+
+- Generation 0 is no better than the end of a run: the genetic spread is small at the start of a stage too (it
+  starts from a population converged in the parent's world). One life is almost all luck everywhere.
+- Lives add up as Spearman-Brown predicts. Selection accuracy (about the square root): now (4 siblings, 1 episode)
+  0.32; episodes 4 (16 lives) 0.58-0.66; episodes 16 about 0.8. The response to selection per generation scales
+  with it: episodes 4 about 1.9x per generation for about 2.3x the GPU time (v49).
+- Lives in separate worlds are worth only a little more than siblings in one world (16 lives: 0.44 vs 0.34 in main,
+  equal in control): genome x world interaction is small.
+
+**Main vs control** (paired, same worlds): sd of the difference per world 57 at generation 0 (the two populations
+are nearly the same animals), 197 for the final populations. Standard error of the difference, final populations:
+re-evaluation 8 worlds 70, 16 worlds 49, 32 worlds 35, 64 worlds 25 (2 s.e. = 14%, 10%, 7%, 5% of main); training
+curve over 50 generations (world noise only, if main and control see the same worlds) 28 with 1 episode, 14 with 4.
+The spread between seeds seen in 2.2 fits these errors: last 50 generations +83, +145, +91 (sd 34, against 28
+expected), re-evaluated in 16 worlds -14, +151, +83 (sd 83, against 49): most of the difference between seeds is
+evaluation and world noise, not genuinely different outcomes.

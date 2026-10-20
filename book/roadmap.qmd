@@ -9,7 +9,7 @@ to a group of animals, and each builds on the brain of the chapter before it.
 
 | chapter | animals | what the brain gains | |
 |---|---|---|---|
-| 1. Steering | the first worms | good and bad, needs, moods, a first kind of learning | written |
+| 1. Steering | the first worms | good and bad, needs, moods, a first kind of learning, telling look-alikes apart | written |
 | 2. Reinforcing | the first fish | learning from reward what to do | in progress |
 | 3. Simulating | the first mammals | trying something in the head before doing it | planned |
 | 4. Mentalizing | primates | a model of its own mind, and of the minds of others | planned |
@@ -20,32 +20,36 @@ to a group of animals, and each builds on the brain of the chapter before it.
 The brain of a small worm. It turns what it sees into movement (@sec-steering), sorts the world into good and bad
 (@sec-valence), stops reacting to what is always there (@sec-habituation), learns in one life which new foods
 hurt (@sec-association), looks after hunger and cold (@sec-drives), and stays in a state for a while after a meal
-or a poison bite, a state that builds up over several bites (@sec-affect).
+or a poison bite, a state that builds up over several bites (@sec-affect). Last, a region with random wiring
+spreads the look of a thing out over many cells, so that things that look alike can still be told apart, even when
+only a combination of features says which is which (@sec-pallium). Insects have such a region, the mushroom body;
+in vertebrates it is the oldest part of the pallium.
 
-This creature learns one thing: what to stay away from. It cannot learn what is worth going to, and it cannot learn
-what to do.
+This creature learns one thing: what to stay away from, taught by pain. It cannot learn what is worth going to, it
+cannot unlearn, and it cannot learn what to do.
 
 ## Chapter 2: reinforcing
 
 The brain of an early fish. The first vertebrates hunted in open water, and nearly all the parts of the vertebrate
-brain were already there. This chapter adds them in the following order.
+brain were already there. What they add is learning from *surprise*: the difference between what happened and
+what was expected. This chapter adds the parts in the following order.
 
-- **The pallium** ([page](pallium.qmd)). The first region whose wiring is random and not shaped by evolution. It
-  spreads the look of a thing out over many cells, so that things that look alike can still be told apart, even
-  when only a combination of features says which is which. In chapter 1, what the creature learned about one food
-  spread to the foods that resembled it.
-- **Dopamine.** A cell that fires when things turn out better than expected, and falls silent when they turn out
-  worse. With it the creature learns what predicts food, and what predicts the thing that predicts food. It also
-  learns to like, which chapter 1 could not do.
+- **Dopamine** (@sec-critic). A cell that fires when things turn out better than expected, and falls silent
+  when they turn out worse. With it the creature learns what predicts food, and what predicts the thing that
+  predicts food. It also learns to like, and to unlearn, which chapter 1 could not do.
 - **Hands.** Until here the creature eats what it grasps. Now it can pick something up, hold it and eat it later,
   so that there is something to choose between.
 - **The basal ganglia.** The same dopamine signal teaches which *action* to take. This is learning by trial and
   error, as in a rat that learns to press a lever.
 - **Curiosity.** New things become a little rewarding in themselves, so that the creature tries what it does not
   know yet.
+- **The hippocampus.** A map of places, made from the creature's sense of its own movement and from landmarks, so
+  that it can learn where food is, not only what it looks like, and go back there when it is out of sight. It
+  comes after the basal ganglia: a map is of use only to a creature that can learn which way to turn at a place.
+  Goldfish without this part of the pallium can still learn to swim to a marker, but no longer to a place.
 
-Parked until these work: a map of places and the routes between them (the hippocampus), precise timing (the
-cerebellum), and modulators that set how fast the creature learns when its world is steady or changing.
+Parked until these work: precise timing (the cerebellum), and modulators that set how fast the creature learns when
+its world is steady or changing.
 
 Two things change in how the stages are done. The circuits are designed and tested before any evolution, and
 evolution then tunes them, in fewer generations than in chapter 1. And the learning stages get *lab experiments*:
@@ -57,8 +61,8 @@ The brain of an early mammal, and its new part, the neocortex. The cortex learns
 sense next. Once it can do that, it can be run without the world: the creature stops at a choice, plays out each
 option, and picks the one that ends best.
 
-The planned stages: a cortex that predicts, trying actions in the head at a choice point, replaying experience
-during rest and sleep, holding a goal through distractions, and remembering a single event.
+The planned stages: a cortex that predicts, trying actions in the head at a choice point, routes stored on the
+map of chapter 2 and replayed during rest and sleep, holding a goal through distractions, and remembering a single event.
 
 The tests are the classic ones from the rat lab. An animal that explored a maze without reward goes straight to
 food that appears there later. An animal whose path is blocked takes a detour. An animal that has had enough of

@@ -72,7 +72,7 @@ after poison bites probably poison. Not every bush in a patch is of the patch's 
 the lesson of the association stage, still has a job.
 
 The world is also four times larger for the same number of creatures, with more food, so that creatures take less food
-from each other and what a better forager gains is not hidden. This is the world the next chapter starts in. The
+from each other and what a better forager gains is not hidden. The next stage keeps this world. The
 rest is as before: cold, hot springs, and four kinds of berry bush, new in every life, half of them poison.
 
 <div data-life="settings" data-stage="1.8"></div>
@@ -109,7 +109,7 @@ Two older circuits are not used in this world:
 - **Learning.** In these patches the look of a bush and the ground it stands on say much the same thing, and the
   creatures lean on the ground: two poison bites and the alarm carries them off. The learning rate is still there in
   every seed. What keeps learning from paying is that a lesson about one berry spreads to the berries that look like
-  it, the problem the next chapter starts with.
+  it, the problem the next stage takes on.
 
 Neither was removed: the next stages need the learning.
 :::

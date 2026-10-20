@@ -13,12 +13,12 @@ A later change that has to touch a frozen stage (removing a cell that lesions sh
 made by remapping the stored populations onto the new layout and freezing again, with the reason in
 `docs/STAGE_LOG.md`. Results and criteria per stage: `docs/STATUS.md` and the book.
 
-## Chapter 1 (frozen 2026-10-08, git tag `chapter-1-drives`; 1.0 to 1.5 also as `chapter-1-partial`; affect redefined and frozen 2026-10-17, tag `chapter-1-v2`)
+## Chapter 1 (frozen 2026-10-08, git tag `chapter-1-drives`; 1.0 to 1.5 also as `chapter-1-partial`; affect redefined and frozen 2026-10-17, tag `chapter-1-v2`; pallium (2.2) frozen 2026-10-19, tag `stage-2.2`, moved here 2026-10-20)
 
-**Order of the chain: 1.0 -> 1.1 -> 1.2h -> 1.5 -> 1.7 -> 1.8.** The keys are historical names, not positions (1.5 and
+**Order of the chain: 1.0 -> 1.1 -> 1.2h -> 1.5 -> 1.7 -> 1.8 -> 2.2.** The keys are historical names, not positions (1.5 and
 1.7 keep the numbers they had in an earlier order); they stay because run directories, data files and the stage
 log use them. The book shows the stages by name only, in this order: Steering, Valence, Habituation, Association,
-Drives, Affect.
+Drives, Affect, Pallium.
 
 The lineage is one chain: every stage starts from the seed-0 run of its parent. Seeds 1 and 2 of a stage start
 from that same parent run.
@@ -31,20 +31,22 @@ from that same parent run.
 | 1.5 | association: pain teaches the look -> aversive synapses; only novel foods, half poison | 1.2h | 4000 | 3 |
 | 1.7 | drives: `cold`, `warm_seek`, `rest`, `hungry`; the 1.5 world made cold, with hot springs | 1.5 | 4000 | 3 |
 | 1.8 | affect: `alarm` -> `flee`, `serotonin` (`fed`) -> `settle` -> `rest`, adding up over bites; 256 x 256, berry types in patches 70% their own kind; learning rates mutate multiplicatively; 100 generations | 1.7 | 4000 | 3 |
+| 2.2 | pallium: 128 cells (k-WTA 2) read the eye ahead through fixed random weights of mixed sign; pain teaches `pallium -> valence_av`; the adaptation strength evolves; world `W22` (the 1.8 world with XOR looks, patches mixed evenly) | 1.8 | 4000 | 3 |
 
-Chapter 1 is complete. A stored population written before a gene existed (the modulator fade times, `Genome.clear`,
+Chapter 1 is complete. 2.2 (frozen 2026-10-19 as the first stage of chapter 2, tag `stage-2.2`) was moved into
+chapter 1 on 2026-10-20 (ADR-027): it is taught by pain alone, as the association stage; chapter 2 starts with the
+critic. Only its place in the book and the docs changed. A stored population written before a gene existed (the modulator fade times, `Genome.clear`,
 2026-10-12) loads with the designed value, and a stored configuration is read with options added since at their
 defaults (`freeze.with_defaults`).
 
-## Chapter 2 (frozen from 2026-10-19)
+2.2: `flee` and `fed` are unused in this world (lesions 97-101%) and kept: frozen chapter 1 circuits that later worlds
+may need (user, 2026-10-19).
+
+## Chapter 2 (frozen from 2026-10-20)
 
 | stage | what it is | parent | life | seeds |
 |---|---|---|---|---|
-| 2.2 | pallium: 128 cells (k-WTA 2) read the eye ahead through fixed random weights of mixed sign; pain teaches `pallium -> valence_av`; the adaptation strength evolves; world `W22` (the 1.8 world with XOR looks, patches mixed evenly) | 1.8 | 4000 | 3 |
 | 2.3h | dopamine critic as a formula (the 2.3 brain): value cells on the pallium and one signed TD error that teaches them and, negated, every synapse pain taught; pallium wiring per population slot. Harsh world: one berry per bush worth one berry, a poison berry costing as much (POISON_FOOD -3), a quarter of the metabolic rate, born 0.75 full; the poison and good kinds swap at tick 800 from generation 50 on (`Stage.schedule` = `calm_first(50)`); aversion learning rates start x10 (`av_eta_init`); 2 episodes per generation | 2.2 | 4000 | 3 |
-
-2.2: `flee` and `fed` are unused in this world (lesions 97-101%) and kept: frozen chapter 1 circuits that later worlds
-may need (user, 2026-10-19).
 
 2.3h (frozen 2026-10-20, replacing 2.3 on the chain, user): the calm start and the x10 start values are functions in
 `stages.py` (`calm_first`, `av_eta_init`) and not part of the stored rules digest, which is taken at generation 0 with

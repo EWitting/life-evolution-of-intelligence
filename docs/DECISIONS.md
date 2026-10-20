@@ -352,3 +352,21 @@ override them freely; when one does, add or amend an entry so the record stays c
   and fixes of genuine flaws of the genetic algorithm are allowed.
 - **Runs go to the GPU** (RTX 5060 in WSL2, about 10x the CPU after the USE step was made parallel). Comparisons
   should use more shared worlds (32-64) and populations may grow; to be decided before the next stage.
+
+## ADR-027 The pallium closes chapter 1; the hippocampus closes chapter 2 (2026-10-20)
+
+- Decided with the user after 2.3h was frozen.
+- **The pallium stage (key 2.2) moves to the end of chapter 1.** It is taught by pain alone, the US-gated learning
+  of the association stage, on a sparse expansion of the look; nothing in it predicts. Chapter 2 now starts with the
+  critic, so every stage of it is learning from a prediction error. Biology: insects have the same design in the
+  mushroom body (Kenyon cells, dopamine-taught output synapses), and annelid mushroom bodies and the vertebrate
+  pallium may share an origin (Tomer et al. 2010). The region keeps the name `pallium`, the key stays `2.2`
+  (keys are historical names); no population, tag or definition changes. Supersedes the "pallium before the
+  critic" placement of ADR-025 only as to the chapter; the order is unchanged.
+- **The hippocampus becomes a planned stage at the end of chapter 2** (after curiosity), with the map only: place
+  and heading codes from the creature's own movement and landmarks, place -> value and place -> actor under `da`.
+  After the actor, because a value map is of no use until the creature can learn which way to turn at a place.
+  Sequences on the place cells, replay and planning by routes stay in chapter 3. Biology: the fish hippocampus
+  counterpart (lateral pallium in teleosts) is needed for place but not cue learning (Rodríguez et al. 2002). Its
+  inputs (self-motion, heading, landmarks) are new mechanisms, to be agreed when the stage is designed; first check
+  at generation 0 whether a perfect memory of places pays in the world at all.

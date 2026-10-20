@@ -1,10 +1,10 @@
 # Brain evolution sequence: architectures, learning rules and experiments
 
 The plan for growing the brain one module at a time, in roughly the order brains evolved. Chapter 1 is described
-as built; later chapters are the current plan. Where the project stands: `docs/STATUS.md`; numbers, runs and the
+as built (it ends with the pallium, ADR-027); later chapters are the current plan. Where the project stands: `docs/STATUS.md`; numbers, runs and the
 variants that were tried: `docs/STAGE_LOG.md`; the reasons behind design rules: `docs/DECISIONS.md`. Exact wiring:
 `life/experiments/stages.py`. Framework terms (regions, projections, `rule`, `modulated`, warm start) are those of
-ADR-007, ADR-012 and ADR-013. Last brought up to date 2026-10-17.
+ADR-007, ADR-012 and ADR-013. Last brought up to date 2026-10-20.
 
 The spine is Max Bennett's *A Brief History of Intelligence* (2023): **steering -> reinforcing -> simulating ->
 mentalizing -> speaking**. Around it are finer steps taken from comparative neuroscience. The literature does
@@ -20,7 +20,9 @@ historical names, not positions (STATUS has the chain).
 
 Bennett puts **associative learning inside breakthrough 1 (steering)**, in the first bilaterians. What comes with
 vertebrates (breakthrough 2) is *reinforcement learning with prediction errors* and *pattern recognition* (the
-pallium, which later becomes cortex).
+pallium, which later becomes cortex). This project puts the pallium's first job, a sparse expansion of the look, at
+the end of chapter 1: it is still taught by pain, the teacher of chapter 1, and insects have the same design in the
+mushroom body. Chapter 2 starts with the prediction error (ADR-027).
 
 The oldest associative learning is not plain Hebbian learning. In *Aplysia*, *C. elegans* and *Drosophila* a
 conditioned stimulus (CS) becomes linked to an unconditioned stimulus (US) through a **third factor**, a
@@ -31,7 +33,8 @@ comes after the CS:
 
 So the step from "Hebbian" to "RL" is four smaller steps, and the chapters follow them:
 (a) unmodulated adaptation (habituation; later clustering),
-(b) US-gated learning with eligibility traces (classical conditioning; chapter 1),
+(b) US-gated learning with eligibility traces (classical conditioning, on the look and on a sparse expansion of
+    it; chapter 1),
 (c) the teacher becomes a *prediction error* (TD dopamine; chapter 2),
 (d) the prediction error trains *action selection* (actor-critic basal ganglia; chapter 2).
 
@@ -110,13 +113,14 @@ rule. One tick is about a second, so it behaves like behavioural-timescale plast
 | 1 | association | early bilaterians | pain as the teacher of look -> aversive synapses | US-gated learning, M1, M2 | novel foods with a new look every life | built |
 | 1 | drives | early bilaterians | `cold`, `hungry`, warmth by kinesis | need cells select modes | cold, few hot springs | built |
 | 1 | affect | early bilaterians | lasting states after pain (`alarm`) and a meal (`serotonin`) that add up over bites | modulators with receptors | berry types in patches 70% their own kind | built |
-| 2 | pallium | ~520 Mya, early vertebrates | sparse expansion of the look | fixed random projection per genome, M5 | combinations of features (XOR looks) | in progress |
-| 2 | dopamine | early vertebrates | critic: opponent value cells, dopamine cell, habenula | TD error as teacher | cues that predict food | planned |
+| 1 | pallium | bilaterians (insect mushroom body), vertebrates (pallium) | sparse expansion of the look, taught by pain | fixed random projection per genome, M5 | combinations of features (XOR looks) | built |
+| 2 | dopamine | early vertebrates | critic: opponent value cells, dopamine cell, habenula | TD error as teacher | poison and good kinds that swap within a life, small meals | formula built; cells planned |
 | 2 | hands | early vertebrates | pick, hold, eat | none | food can be held | planned |
 | 2 | basal ganglia | early vertebrates | striatum D1/D2, GPi, actor | dopamine-gated, signed by pathway | which action works is drawn per life | planned |
 | 2 | curiosity | early vertebrates | novelty signal onto dopamine | familiarity memory | rewards hidden behind objects | planned |
-| 2 | parked | vertebrates | hippocampus and sequences, cerebellum, noradrenaline and acetylcholine, pallium clustering | | | after the five above |
-| 3 | | ~200 Mya, early mammals | neocortex as a generative model; simulation; replay; goals; episodes | M6, M8 | latent learning, detours, devaluation | planned |
+| 2 | hippocampus | early vertebrates | a map of places: place and heading codes (medial pallium) | path integration from efference copy (M7), place -> value under `da` | food at places fixed per life, out of sight | planned |
+| 2 | parked | vertebrates | cerebellum, noradrenaline and acetylcholine, pallium clustering | | | after the five above |
+| 3 | | ~200 Mya, early mammals | neocortex as a generative model; simulation; sequences and replay on the place map; goals; episodes | M6, M8 | latent learning, detours, devaluation | planned |
 | 4 | | ~60-30 Mya, primates | model of own mind, of others; imitation; future needs | | groups, crafting chains, seasons | planned |
 | 5 | | hominins | signals, learned meaning, shared attention, culture | | signalling games, deep crafting trees | far off |
 
@@ -138,11 +142,11 @@ chapter 1 is blurry.
 
 A bilateral body that moves forward. Steering is one decision, over and over: turn toward good things, away from
 bad ones. Model animals: *C. elegans*, flatworms, the presumed worm-like common ancestor. Order as built: steering
--> valence -> habituation -> association -> drives -> affect. Results per stage: STATUS and the book.
+-> valence -> habituation -> association -> drives -> affect -> pallium. Results per stage: STATUS and the book.
 
 The world of chapter 1: OHOL berry bushes and colour look-alikes on a 128 x 128 map with 256 animals; five
 coarse eye columns (range 5); lives of 4000 ticks; fitness is the well-fed lifetime from the first meal (ADR-024).
-The affect stage moves to 256 x 256, the world chapter 2 starts in.
+The affect stage moves to 256 x 256; the pallium stage keeps that map and mixes the patches.
 
 #### Steering
 - **Adds.** `ganglion_e` (16 excitatory) and `ganglion_i` (8 inhibitory) between the senses and the motor
@@ -215,38 +219,16 @@ The affect stage moves to 256 x 256, the world chapter 2 starts in.
   tuning steps after it (`2.0` camera eyes in open country, `2.1` the chapter 2 world) are frozen as a side path.
 - **Confidence.** High for the phenomenon; medium for the exact neuromodulator mapping in the ancestor.
 
-#### Left out of chapter 1
-- **Extinction and reversal**: learned weights relaxing back toward the inherited ones, in a world whose
-  meanings swap mid-life. Learning was unused there and the relaxing weights lost head to head in every seed.
-  Reversal is left to error-driven learning (dopamine).
-- **Sensory-specific satiety** (OHOL's "yum" bonus) and contact hazards: no stage; habituation got its job from
-  the dud bush.
-
-### Chapter 2: reinforcing (early vertebrates, about 520-450 Mya)
-
-Ecological driver: Cambrian predation and active hunting in open water. The vertebrate brain plan is already
-complete in lampreys: forebrain (pallium, basal ganglia, hypothalamus), midbrain (tectum, dopamine cells),
-hindbrain (pattern generators, a small cerebellum, clear only in jawed vertebrates). Grillner's lamprey work shows
-the basal ganglia wired as in mammals, the main reason for putting reinforcement learning here.
-
-Order: **pallium -> dopamine -> hands -> basal ganglia -> curiosity.** Parked until these five work:
-hippocampus and sequences, cerebellum, uncertainty modulators, pallium clustering. The world is the one of the
-affect stage until a stage needs more; the eyes stay those of chapter 1.
-
-How the learning stages are checked: **lab experiments** take the place of the assay. One animal in scripted
-situations, as in an animal lab (acquisition curves, omission and extinction, blocking, discrimination of
-look-alikes, later devaluation), grown out of `scripts/probes/assay.py`, with results stored in the book's data
-files and shown next to the world results.
-
-Region names from here on: `pallium`, `striatum`, `gpi`, `snc` (dopamine), `habenula`, later `hippocampus`,
-`cerebellum`.
-
 #### Pallium: sparse expansion of the look
 - **Biology.** The oldest pallium is largely olfactory: piriform-like cortex with sparse, random, expansive
-  input. Insects converged on the same design (Kenyon cells). Random sparse expansion separates inputs that
-  overlap (Babadi & Sompolinsky 2014; Litwin-Kumar et al. 2017).
-- **Why first.** The networks that prepare the input come before the circuits that learn from them, so that
-  learning works on separated codes and not on the dense look.
+  input. Insects have the same design in the mushroom body (Kenyon cells, held sparse by one inhibitory cell),
+  with dopamine-taught synapses at its output; annelid mushroom bodies and the vertebrate pallium may share an
+  origin (Tomer et al. 2010). Random sparse expansion separates inputs that overlap (Babadi & Sompolinsky 2014;
+  Litwin-Kumar et al. 2017).
+- **Why in chapter 1** (ADR-027). The networks that prepare the input come before the circuits that learn from
+  them, so that learning works on separated codes and not on the dense look. The pallium is still taught by pain
+  alone, as in the association stage, so it closes chapter 1 and chapter 2 starts with the prediction error. The
+  name stays `pallium` (the region of every later stage); the stage key stays `2.2`.
 - **The job it got** (STAGE_LOG v46-v48). Habituation already centres the look, and a centred look separates
   random look-alikes as well as a random expansion does (an expansion's code cannot go below zero). What no weighted
   sum of the look can do is a combination: in the stage's world the four novel types are the corners of two colour
@@ -276,8 +258,35 @@ Region names from here on: `pallium`, `striatum`, `gpi`, `snc` (dopamine), `habe
   seed (training +106 +-20, head to head +229 +-31). In the lab the pallium alone cuts bites at the poison bushes
   from 0.38 to 0.16 and leaves the good ones (0.37); the look alone lowers both alike. A larger pallium (256, 512
   cells) does not lower the transfer to good food further (0.13 at 128).
-- **Confidence.** High that the vertebrate pallium began as sensory association cortex; the expansion function
-  in early vertebrates is a model inference.
+- **Confidence.** High that random sparse expansion with learning at its output is old (insect mushroom body,
+  vertebrate piriform cortex) and that the vertebrate pallium began as sensory association cortex; that the
+  first bilaterians had such a region, and that it served vision, are inferences of the model.
+
+#### Left out of chapter 1
+- **Extinction and reversal**: learned weights relaxing back toward the inherited ones, in a world whose
+  meanings swap mid-life. Learning was unused there and the relaxing weights lost head to head in every seed.
+  Reversal is left to error-driven learning (dopamine).
+- **Sensory-specific satiety** (OHOL's "yum" bonus) and contact hazards: no stage; habituation got its job from
+  the dud bush.
+
+### Chapter 2: reinforcing (early vertebrates, about 520-450 Mya)
+
+Ecological driver: Cambrian predation and active hunting in open water. The vertebrate brain plan is already
+complete in lampreys: forebrain (pallium, basal ganglia, hypothalamus), midbrain (tectum, dopamine cells),
+hindbrain (pattern generators, a small cerebellum, clear only in jawed vertebrates). Grillner's lamprey work shows
+the basal ganglia wired as in mammals, the main reason for putting reinforcement learning here.
+
+Order: **dopamine -> hands -> basal ganglia -> curiosity -> hippocampus.** The pallium, planned first here, closes
+chapter 1 (ADR-027). Parked until these five work: cerebellum, uncertainty modulators, pallium clustering. The
+world is the one of the critic stage (2.3h, small meals) until a stage needs more; the eyes stay those of chapter 1.
+
+How the learning stages are checked: **lab experiments** take the place of the assay. One animal in scripted
+situations, as in an animal lab (acquisition curves, omission and extinction, blocking, discrimination of
+look-alikes, later devaluation), grown out of `scripts/probes/assay.py`, with results stored in the book's data
+files and shown next to the world results.
+
+Region names from here on: `pallium`, `striatum`, `gpi`, `snc` (dopamine), `habenula`, later `hippocampus`,
+`cerebellum`.
 
 #### Dopamine: the critic
 - **Biology.** Midbrain dopamine cells report `δ = r + γV(s') − V(s)` (Schultz, Dayan & Montague 1997): the
@@ -361,12 +370,28 @@ Region names from here on: `pallium`, `striatum`, `gpi`, `snc` (dopamine), `habe
 - **Confidence.** Medium: novelty responses of dopamine cells are well shown in mammals; in fish the evidence
   for curiosity is mostly behavioural.
 
+#### Hippocampus: a map of places
+- **Biology.** The hippocampus counterpart of fish is part of the pallium (medial in most vertebrates, lateral in
+  the everted pallium of teleosts). Goldfish with it lesioned lose place learning but keep cue learning
+  (Rodríguez et al. 2002), and Bennett puts spatial maps in this breakthrough.
+- **Why here, after the actor** (ADR-027). A place code gives the critic something new to value: places, not only
+  looks. A value map is useless unless the creature can follow it, and the brain so far only steers toward what it
+  sees; an actor that learns "turn here, at this place" can. Following a map by playing routes in the head is
+  chapter 3.
+- **Adds** (new mechanisms, agreed with the user when the stage is designed). A sense of the creature's own
+  movement and heading (path integration from efference copy, M7), landmarks, place cells; place -> value and
+  place -> actor synapses under `da`.
+- **World.** Food at places fixed per life, out of sight (the eyes reach 5 cells on a 256 x 256 map): the harsh
+  world's scarce bushes, the hot springs. First check, at generation 0: would a perfect memory of places pay at
+  all, or does a better random search do as well?
+- **Lab.** Place against cue, as in the goldfish experiments (does the creature return to where the food was or
+  to what marked it?), and a water-maze-like test: a hidden place found from different starts.
+- **Control.** The curiosity brain.
+- **Confidence.** High for a spatial role of the fish pallium; medium for place cells as in mammals.
+- **Left for chapter 3.** Sequences (asymmetric plasticity on recurrent place-cell synapses, a route fixed per
+  life), the substrate of replay and of simulating paths.
+
 #### Parked until the five stages above work
-- **Hippocampus homologue (medial pallium).** Place and head-direction codes from efference copy (M7), place ->
-  value links under `da`. World: a rich patch at a position fixed per life, out of view. Lesions of the goldfish
-  lateral pallium impair spatial but not cue learning (Rodríguez et al. 2002). Then **sequences**: asymmetric
-  plasticity on recurrent place-cell synapses, a route fixed per life; the substrate of replay and of
-  simulating paths in chapter 3.
 - **Cerebellum.** Granule expansion, Purkinje cells learning from a climbing-fibre error (delta rule, M6).
   World: a warning object that stings after a delay drawn per life. A grid world gives it little to do; its role
   here is to bring in the delta rule chapter 3 depends on.
@@ -419,8 +444,9 @@ latent learning, detours, outcome devaluation.
 #### Replay and sleep
 - **Biology.** At rest the hippocampus replays sequences forward and backward (Foster & Wilson 2006); replay
   drives consolidation and value updates. Dyna (Sutton 1990) is the RL counterpart.
-- **Adds.** A rest state triggers offline mode with no sensory input; the normal `da`-gated rules learn from what
-  is generated. World: little real experience (short lives or few rewards), safe resting.
+- **Adds.** First **sequences** on the place map of chapter 2: asymmetric plasticity on recurrent place-cell
+  synapses, so each place cell excites the next one along a travelled path (Mehta et al. 2000). Then a rest state
+  triggers offline mode with no sensory input; the normal `da`-gated rules learn from what is generated. World: little real experience (short lives or few rewards), safe resting.
 - **Confidence.** High for replay; medium for its necessity.
 
 #### Agranular prefrontal cortex: goals over time
@@ -481,9 +507,9 @@ This chapter is the least certain, both biologically and in whether a grid world
 | hypothalamus | internal state, drives; which goal matters | drives | need cells selecting modes |
 | neuromodulatory nuclei (raphe 5-HT, VTA/SNc DA, LC NE, basal forebrain ACh) | lasting states, reward prediction, uncertainty | affect (`alarm`, `serotonin`), dopamine, parked (NE, ACh) | modulator cells with receptors (M2, M3) |
 | valence / amygdala | good and bad; fear and appetitive conditioning | valence, association | value cells; US-gated plastic synapses |
-| pallium (olfactory cortex) | pattern separation, later completion and categories | pallium; parked (clustering) | expansion + k-WTA; later Oja / recurrent Hebb |
+| pallium (olfactory cortex; insect mushroom body) | pattern separation, later completion and categories | pallium (end of chapter 1); parked (clustering) | expansion + k-WTA; later Oja / recurrent Hebb |
 | basal ganglia (striatum, GPi/SNr, habenula, SNc) | action selection by disinhibition; critic and actor | dopamine, basal ganglia | value cells, dopamine cell, D1/D2 under `da` |
-| hippocampus (medial pallium) | space, sequences, episodes, replay | parked; chapter 3 | place codes, recurrent plasticity, one-shot storage |
+| hippocampus (medial pallium) | space, sequences, episodes, replay | hippocampus (end of chapter 2); sequences, replay, episodes in chapter 3 | place codes, recurrent plasticity, one-shot storage |
 | cerebellum | timing, forward models | parked | expansion + delta rule |
 | optic tectum | orienting, looming escape | not a stage (see chapter 2) | |
 | thalamus | relay and gating; perception against imagination | chapter 3 | the gate of offline mode (M8) |

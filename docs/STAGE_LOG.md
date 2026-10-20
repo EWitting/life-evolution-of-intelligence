@@ -3285,3 +3285,21 @@ learning is kept**. The critic's value learning went down in main (pallium -> va
 0.024 -> 0.010). The control (no touch-gated pallium; the 2.3 critic) does about 300 better in the last 20
 generations (2217 vs 1907, one seed, training curves). Lives approach the 4000-tick cap late in the run (3570-3730 in
 the last generation), so fitness is nearing its ceiling.
+
+## v64 (2026-10-20): the reversal in the harsh world
+
+Generation 0 (`rebalance.py`, STAGE=x.harsh with `HARSH_REVERSE=1`, 16 paired worlds) on the evolved x.harsh
+populations; `eta0` = aversion learning off, `critic0` = the critic's value learning off; poison share of the
+berries eaten before / after the switch:
+| population, switch | intact | eta0 | critic0 |
+|---|---|---|---|
+| control (2.3 brain), 800 | 1189 (0.32 / 0.26) | -706 +- 73 (0.47 / 0.45) | -287 +- 34 (0.31 / 0.33) |
+| control, 2000 | 1470 (0.26 / 0.43) | -892 +- 70 | -6 +- 31 (0.23 / 0.66) |
+| main (pnt brain), 800 | 937 (0.37 / 0.30) | -502 +- 53 | -48 +- 19 |
+| main, 2000 | 1303 (0.27 / 0.53) | -817 +- 81 | -31 +- 16 (0.29 / 0.56) |
+Learning is now indispensable (switched off, 40-60% of the fitness is lost). With the switch at 800 the population
+of the control run re-learns the swapped kinds within a life (poison share 0.26 after it), and the critic pays: without
+its value learning the good berries eaten after the switch halve (9.0 vs 18.8), -287. Later switches leave less life
+to re-learn in, so the critic matters less (-6 at 2000) though it still lowers the poison share after it (0.43 vs 0.66).
+Draft stage `x.harshrev`: harsh world, switch at 800; main the 2.3 brain (formula critic, no touch-gated pallium),
+control the 2.2 brain (no critic); both from the x.harsh control run; seed 0, 100 generations: running.

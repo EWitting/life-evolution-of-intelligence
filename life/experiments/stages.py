@@ -1316,6 +1316,7 @@ stage(Stage("x.onet", "x_one_touch", "2.3", pallium_touch(B23), replace(W23, **O
 HARSH_WORLD = dict(start_food=0.75, hunger_per_tick=0.005, switch_tick=0)
 AV_LEARN = ("in->valence_av[vis*.app*]", "pallium->valence_av")
 AV_ETA_START = 10.0
+HARSH_REVERSE = 0.0   # 1: the poison and good kinds swap at WorldConfig.switch_tick (probes set both)
 
 
 def av_eta_init(pop, layout):
@@ -1326,10 +1327,20 @@ def av_eta_init(pop, layout):
 
 
 stage(Stage("x.harsh", "x_harsh", "2.3", pallium_touch(B23), replace(W23, **HARSH_WORLD), VISION_CH1, BODY_17,
-            lambda exp: pallium_world(exp, reverse=False, one_berry=1.0),
+            lambda exp: pallium_world(exp, reverse=bool(HARSH_REVERSE), one_berry=1.0),
             **{**_S15, "generations": 100}, evolution=EVOLUTION_NEW, control_brain=B23, adapt_init=av_eta_init,
             notes="DRAFT: one berry worth one, poison as costly as a berry is good, low metabolic rate, no reversal; "
                   "aversion learning starts x10; control: the 2.3 brain"))
+
+# Draft: the harsh world with the reversal at tick 800 (STAGE_LOG v64). Main: the 2.3 brain (formula critic, without the
+# touch-gated pallium, which cost about 300 in x.harsh); control: the 2.2 brain (pain-taught, no critic). Start from the
+# x.harsh control run (caution by look evolved; run with --init-from). Generation 0 (that population, 16 worlds): aversion
+# learning off -706 +- 73, critic value learning off -287 +- 34 (good berries after the switch 9.0 vs 18.8).
+HARSH_REV_WORLD = dict(HARSH_WORLD, switch_tick=REV_SWITCH)
+stage(Stage("x.harshrev", "x_harsh_rev", "x.harsh", B23, replace(W23, **HARSH_REV_WORLD), VISION_CH1, BODY_17,
+            lambda exp: pallium_world(exp, reverse=True, one_berry=1.0),
+            **{**_S15, "generations": 100}, evolution=EVOLUTION_NEW, control_brain=per_slot_pallium(B22P),
+            notes="DRAFT: the harsh world with a reversal at 800; main the 2.3 critic, control the 2.2 brain"))
 
 # ------------------------------------------------------------------ running
 

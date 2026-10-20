@@ -3159,3 +3159,45 @@ brain learns caution by look, at generation 0 or after 100 generations; a world 
 to five times weaker than the lab's, and the rest of the gap (about 15x in learned drive per lesson) is open.
 Not tried yet: a stronger single lesson (pain value per bite, `poison_pain`), the unteaching by the positive error
 during the approach (`da_neg` on the pain-taught synapses), a lab readout from the world's own weight snapshots.
+
+## v61 (2026-10-20): bridging the lab and the world (replays of recorded inputs)
+
+`scripts/probes/bridge.py` (new): `record` lives (64 creatures, one world, the run's last population) with the raw
+inputs every brain received (`make_simulate(record_obs=True)`, new); `replay` feeds them back into the same brains,
+open loop, with parts of the stream removed, and reads the weights of tick 800 (the switch) out as in the lab (a
+rested brain, each novel type's look 8 ticks from afar, one at the mouth); `arrive` recomputes the chance of a bite
+on the first tick of every visit (ticks 400-800) from the replayed state, as it was and with one thing changed
+(`brain.step(with_logits=True)`, new). The replay reproduces the recorded weights (largest difference 0.006-0.008,
+the float16 recording). Frozen 2.3 seed 0 in the 2.3 world unless stated.
+
+**The learning is in the weights.** Lab readout of the world's weights at tick 800 (about 7 painful bites per
+creature by then): P(bite) poison / good 0.46 / 0.74, aversive drive -0.90 / -1.13. Stripping the stream changes
+little: side eyes blank 0.46 / 0.74; also the eye ahead blank unless a full bush 0.40 / 0.81; also blank outside
+visit windows 0.38 / 0.81. Clutter in the stream is not the gap.
+**Lab lessons were stronger than world lessons.** The XOR lab (pain on two corners, three good meals of each of
+the other two per lesson) with world-like lessons (`outcome_ticks` 1, `linger` 0, new options: one tick of pain,
+none after) after 8 lessons: drive -0.97 / -1.40, P(bite) 0.39 / 0.61, the world's values. With three ticks of
+pain and 0.3 after (the old lab trial): +1.28 / -0.66, 0.08 / 0.54. So the lab overstated a world lesson.
+**Pain intensity cannot make a lesson stronger**: `us_pain` = tanh(2 pain) is 0.96 at pain 1 and 1.00 at pain 3.
+World with pain 3 per poison berry (`stages.POISON_PAIN`, new, default 1; the food cost stays `POISON_FOOD`):
+readout drive -0.90 / -1.13, the same as at pain 1. Only the learning rates set a lesson's size, and evolution
+lowers them.
+**What lingers after a bite** (w23 recording): the pain is felt one tick after the bite, with the same bush at the
+mouth in 99% of cases (the lesson lands on the right bush); a tick later the creature has turned: good bush or empty
+43%, poison bush or empty 30%, the same bush 16%. With mixed patches a lingering pain would mostly teach aversion
+to what happens to be in view; the relief error there (+0.1) is small and is credited to the tick before (the
+same bush).
+**At the bush the learning hardly decides** (`arrive`; P(bite) on the first tick of a visit as in the world /
+weights of birth / only the aversive synapses at birth / only the appetitive ones / no input adaptation):
+| recording | poison | good |
+|---|---|---|
+| w23 (2.3 world) | 0.54 / 0.60 / 0.60 / 0.54 / 0.70 | 0.65 / 0.67 / 0.67 / 0.65 / 0.78 |
+| easy looks (SIM 0, XOR off: a random look per type) | 0.47 / 0.52 / 0.52 / 0.47 / 0.50 | 0.51 / 0.51 / 0.51 / 0.51 / 0.49 |
+| onet1 (x.onet main, its one-berry world) | 0.44 / 0.48 / 0.48 / 0.44 / 0.57 | 0.50 / 0.51 / 0.51 / 0.50 / 0.59 |
+Learning lowers the bite on poison by 0.04-0.06 at arrival, all of it through the aversive synapses; the learned
+appetite does nothing on that tick (its fitness value, v59, is elsewhere: approach or staying). With easy looks
+the readout separates the types well (0.26 / 0.47) while the world does not (0.47 / 0.51): the weights know, the
+decision at the bush does not use them. Input adaptation lowers bites on everything (0.70 -> 0.54) but is not the
+gap. x.onet's own weights read out at 0.95 / 0.97 (drive -1.39 / -1.42): after 100 generations it learns almost no
+aversion. Open: why the same weights move the lab readout (8 ticks from afar, stomach 0.5, nothing else in view)
+so much more than the decision at a real arrival.

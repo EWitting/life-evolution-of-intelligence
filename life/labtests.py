@@ -149,7 +149,7 @@ def conditioning(exp, pop, protocol: dict, sim: float, n_agents: int = 24, seed:
         # (vis+0.near 0.4, two cells off; at the mouth 0.8), as a creature walking up to a bush
         n = protocol.get("lead", 1)
         far = n - 1 if protocol.get("approach") else 0
-        return [obs(cues, near=0.4)] * far + [obs(cues)] * (n - far) + [obs(cues, **out) for _ in range(protocol.get("outcome_ticks", 3))] + ([obs(pain=0.3)] if kind == "pain" else [obs()]) \
+        return [obs(cues, near=0.4)] * far + [obs(cues)] * (n - far) + [obs(cues, **out) for _ in range(protocol.get("outcome_ticks", 3))] + ([obs(pain=protocol.get("linger", 0.3))] if kind == "pain" else [obs()]) \
             + [obs()] * 4
 
     one = lambda g, st, o: B.step(exp.brain, L, g, st, o, jnp.zeros(3), jax.random.PRNGKey(0))[0]

@@ -70,10 +70,11 @@ def make_tick(exp: ExperimentConfig, layout: brain.Layout):
 SLOT_KEY = jax.random.PRNGKey(20261019)   # the random draws of the population slots (ProjectionSpec.per_slot)
 
 
-def make_simulate(exp: ExperimentConfig, record: bool, compact: bool = True):
+def make_simulate(exp: ExperimentConfig, record: bool, compact: bool = True, record_obs: bool = False):
     """Returns a jitted simulate(rules, pop, key) -> (stats, recording_or_None) for one generation.
     With record=True the recording holds per-tick arrays plus weight snapshots every record_weights_every ticks.
-    An unrecorded simulation drops dead agents from its arrays (COMPACT); `compact=False` keeps them, with the
+    `record_obs` adds the raw observation and the world signals each brain received (for replays,
+    scripts/probes/bridge.py). An unrecorded simulation drops dead agents from its arrays (COMPACT); `compact=False` keeps them, with the
     same result."""
     layout = make_layout(exp)
     tick = make_tick(exp, layout)
@@ -125,6 +126,8 @@ def make_simulate(exp: ExperimentConfig, record: bool, compact: bool = True):
                            food=world.food, pain=world.pain, action=acts.astype(jnp.int8), mod=bstate.mod,
                            ate=ev["ate"].astype(jnp.int16),
                            x=bstate.x.astype(jnp.float16))
+                if record_obs:
+                    rec.update(obs=obs, sig_in=carry[2])
             return (world, bstate, sig, eats, tsum, fed, meal, fed_meal), rec
 
         def stats_of(carry):

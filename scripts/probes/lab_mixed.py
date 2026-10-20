@@ -1,7 +1,7 @@
 """Lab: pain lessons on A interleaved with good meals of B (`good` meals per lesson, as in the world, where a good bush
 gives several bites and a poison one bite), trials with an approach (cue 7 ticks from afar, then at the mouth); the
 readout as the world decides a bite: the cue 8 ticks from afar, P(bite) on the first tick at the mouth.
-    python scripts/probes/lab_mixed.py [v=pnt] [good=3] [rounds=8] [xor=1] [outcome=1]
+    python scripts/probes/lab_mixed.py [v=pnt] [good=3] [rounds=8] [xor=1] [outcome=1] [linger=0]
 xor=1: the looks of the world (XOR corners): pain on X++ and X--, good meals of X+- and X-+; P(bite) on poison / good
 corners (mean of the two) and a look never met. outcome=N: ticks of pain or taste per meal (default 3; a world bite
 is one).
@@ -23,7 +23,7 @@ rnd = ([("pain", {"vis+0": "X++"}, 1), ("taste", {"vis+0": "X+-"}, G), ("pain", 
         ("taste", {"vis+0": "X-+"}, G)] if X else [("pain", {"vis+0": "A"}, 1), ("taste", {"vis+0": "B"}, G)])
 looks = ("X++", "X--", "X+-", "X-+", "C") if X else ("A", "B", "C")
 proto = dict(train=[e for e in rnd if e[2]] * R, tests={c: {"vis+0": c} for c in looks},
-             lead=8, approach=True, test_far=8, test_ticks=1, outcome_ticks=int(arg.get("outcome", 3)))
+             lead=8, approach=True, test_far=8, test_ticks=1, outcome_ticks=int(arg.get("outcome", 3)), linger=float(arg.get("linger", 0.3)))
 pb, dr = [], []
 for r in D["runs"]["main"]:
     exp = S.make_exp(s, variant(s.brain, V), "lab", 1, 0)

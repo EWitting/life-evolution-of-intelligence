@@ -435,9 +435,10 @@ def _normalise(layout: Layout, h: jnp.ndarray, g: jnp.ndarray, phase: int | None
 
 
 def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, obs: jnp.ndarray,
-         world_sig: jnp.ndarray, key: jax.Array):
+         world_sig: jnp.ndarray, key: jax.Array, with_logits: bool = False):
     """One world tick of brain activity. `obs` is the flattened observation [n_in]; `world_sig` the vector of
-    world signals (WORLD_SIGNALS) of the last tick, used only by 'world:*' modulators. Returns (state, action)."""
+    world signals (WORLD_SIGNALS) of the last tick, used only by 'world:*' modulators. Returns (state, action), and
+    the action logits as well with `with_logits` (probes)."""
     n_in, n_out = layout.n_in, layout.n_out
     w, tr, e, u, mod, g, xd = state.w, state.tr, state.e, state.u, state.mod, state.g, state.xd
     raw = obs
@@ -536,7 +537,10 @@ def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, ob
         action = jax.random.categorical(key, logits / cfg.action_temperature)
     else:
         action = jnp.argmax(logits)
-    return BrainState(x=x, w=w, tr=tr, e=e, u=u, mod=mod, g=g, ws=state.ws, wg=state.wg, xd=xd), action.astype(jnp.int32)
+    new = BrainState(x=x, w=w, tr=tr, e=e, u=u, mod=mod, g=g, ws=state.ws, wg=state.wg, xd=xd)
+    if with_logits:
+        return new, action.astype(jnp.int32), logits / cfg.action_temperature if cfg.action_temperature > 0 else logits
+    return new, action.astype(jnp.int32)
 
 
 # ---------------------------------------------------------------- warm starts across layouts

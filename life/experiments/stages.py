@@ -679,6 +679,10 @@ POISON_FOOD = -3.0    # OHOL food points lost per poison berry in the learning s
                       # half of the bushes are poison. Generation 0: a perfect learner would save 23% of intake
 
 
+POISON_PAIN = 1.0     # pain of one poison berry in the learning stages. A world lesson is this one tick of pain (pain_decay
+                      # 0), three to five times weaker than a lab trial of three (STAGE_LOG v61)
+
+
 NOVEL = (1, 2, 3, 5)  # berry types whose look and meaning are drawn per life; type 0 is always good, 4 always poison
 NOVEL_WEIGHT = 1.0    # spawn weight of each novel type
 STAPLE_WEIGHT = 0.0   # spawn weight of the ancestral good type (0: no familiar food)
@@ -693,6 +697,7 @@ def learning_world(exp, reverse: bool = False, springs: float = 0.0, berries: in
     should keep a non-learner alive, novel food should be worth trying."""
     return berry_world(exp, 6, poison=(4,), per_life_pool=NOVEL, per_life_k=2, springs=springs, reverse=reverse,
                        novel_looks=NOVEL, novel_sim=NOVEL_SIM if novel_sim is None else novel_sim, poison_food=POISON_FOOD, onions=False,
+                       poison_pain=POISON_PAIN,
                        weights={0: STAPLE_WEIGHT, 4: ANC_POISON_WEIGHT, **{v: NOVEL_WEIGHT for v in NOVEL}},
                        berries=berries, shared_colour=shared_colour, novel_xor=novel_xor, one_berry=one_berry)
 

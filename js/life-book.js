@@ -227,9 +227,11 @@
   // does not have, the diagram is laid out in columns by depth as before
   let layoutP;
   const loadLayout = () => layoutP || (layoutP = fetch('data/brain_layout.json').then(r => r.ok ? r.json() : null).catch(() => null));
-  function brain(root, D) { return loadLayout().then(L => drawBrain(root, D, L)); }
-  // The diagram is drawn in fixed units and scaled to the page (a brain diagram may use the page's full width,
-  // book/wide-brain.lua). Its width is capped so that the region names are never larger on screen than NAME times
+  // the hover texts of cells, groups (by full path) and modulators: data/glossary.json, kept by hand (book/README.md)
+  let glossP;
+  const loadGlossary = () => glossP || (glossP = fetch('data/glossary.json').then(r => r.ok ? r.json() : {}).catch(() => ({})));
+  function brain(root, D) { return Promise.all([loadLayout(), loadGlossary()]).then(([L, T]) => drawBrain(root, D, L, T)); }
+  // The diagram is drawn in fixed units and scaled to the text column. Its width is capped so that the region names are never larger on screen than NAME times
   // the text; where it is scaled down further, the text grows inside the boxes (CSS --k, up to what fits). A diagram
   // whose names are still smaller than SMALL times the text gets a button that opens it full screen, with zoom
   // (wheel, pinch, buttons) and pan (drag). show(crop) moves the view to the box crop() returns, or to all of it.
@@ -264,22 +266,33 @@
       btn.hidden = DESIGN * k * scale >= SMALL * textPx();
     }
     // the bounding box of some elements of the diagram, with a margin, grown until it cuts none of the elements in
-    // whole; all of the diagram when that is most of it anyway
-    V.box = (els, whole = []) => {
+    // whole, nor one of near that sticks out by less than NEAR (a group's outline just above its first cell); all of
+    // the diagram when that is most of it anyway
+    V.box = (els, whole = [], near = []) => {
       const bb = e => {
         const b = e.getBBox(), t = e.transform && e.transform.baseVal.numberOfItems ? e.transform.baseVal.consolidate().matrix : {e: 0, f: 0};
         return b.width || b.height ? [b.x + t.e, b.y + t.f, b.x + b.width + t.e, b.y + b.height + t.f] : null;
       };
       let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
-      const add = b => { x0 = Math.min(x0, b[0]); y0 = Math.min(y0, b[1]); x1 = Math.max(x1, b[2]); y1 = Math.max(y1, b[3]); };
-      els.map(bb).filter(Boolean).forEach(add);
+      const c = [1e9, 1e9, -1e9, -1e9];   // what must be seen, without the margin
+      const add = (b, m = 0) => {
+        x0 = Math.min(x0, b[0] - m); y0 = Math.min(y0, b[1] - m); x1 = Math.max(x1, b[2] + m); y1 = Math.max(y1, b[3] + m);
+        c[0] = Math.min(c[0], b[0]); c[1] = Math.min(c[1], b[1]); c[2] = Math.max(c[2], b[2]); c[3] = Math.max(c[3], b[3]);
+      };
+      els.map(bb).filter(Boolean).forEach(b => add(b));
       if (x0 > x1) return full;
-      const P = 18;
+      const P = 24, NEAR = 40, M = 8;
       x0 -= P; y0 -= P; x1 += P; y1 += P;
-      const rest = whole.map(bb).filter(Boolean);
+      const rest = whole.map(bb).filter(Boolean), close = [...near].map(bb).filter(Boolean);
+      const cuts = b => b[0] < x1 && b[2] > x0 && b[1] < y1 && b[3] > y0 && (b[0] < x0 || b[2] > x1 || b[1] < y0 || b[3] > y1);
       for (let grew = true; grew;) {
         grew = false;
-        for (const b of rest) if (b[0] < x1 && b[2] > x0 && b[1] < y1 && b[3] > y0 && (b[0] < x0 || b[2] > x1 || b[1] < y0 || b[3] > y1)) { add([b[0] - P, b[1] - P, b[2] + P, b[3] + P]); grew = true; }
+        for (const b of rest) if (cuts(b)) { add(b, P); grew = true; }
+        for (const b of close) if (cuts(b) && Math.max(x0 - b[0], b[2] - x1, y0 - b[1], b[3] - y1) <= NEAR) { add(b, M); grew = true; }
+      }
+      for (const b of close) if (cuts(b)) {   // an outline that only reaches into the margin: leave it out altogether
+        if (b[1] > y1 - P && b[1] - 2 >= c[3] + 6) y1 = b[1] - 2; else if (b[3] < y0 + P && b[3] + 2 <= c[1] - 6) y0 = b[3] + 2;
+        else if (b[0] > x1 - P && b[0] - 2 >= c[2] + 6) x1 = b[0] - 2; else if (b[2] < x0 + P && b[2] + 2 <= c[0] - 6) x0 = b[2] + 2;
       }
       x0 = Math.max(full[0], x0); y0 = Math.max(full[1], y0); x1 = Math.min(full[0] + full[2], x1); y1 = Math.min(full[1] + full[3], y1);
       return (x1 - x0) * (y1 - y0) > 0.8 * full[2] * full[3] ? full : [x0, y0, x1 - x0, y1 - y0];
@@ -353,7 +366,8 @@
     setVB(vb); size();
     return V;
   }
-  function drawBrain(root, D, L) {
+  function drawBrain(root, D, L, T) {
+    const say = (kind, k) => T && T[kind] && T[kind][k] ? `<div>${esc(T[kind][k])}</div>` : '';
     const REG = D.brain.regions, PROJ = D.brain.projections, MODL = D.brain.modulators || [], BW = 122, BH = 38, GAPW = 80, pos = {};   // GAPW: the space between two columns (tools/brain_layout uses the same)
     const A = L && L.stages && L.stages[D.stage.key];
     const atlas = !!A && REG.every(r => A.pos[r.name]);
@@ -543,7 +557,7 @@
       // and every other region or group name the box would cut (group outlines may be cut)
       const usedS = new Set(); for (const i of showP) for (const [a, b] of ENDS[i]) usedS.add(a).add(b);
       const crop = () => view.box([...svg.querySelectorAll('.lb-edge:not(.lb-ctx), .lb-mod:not(.lb-ctx)'), ...[...svg.querySelectorAll('.lb-reg:not(.lb-ctx):not(.lb-inshut)')].filter(g => !isBlock(g.dataset.r)), ...[...svg.querySelectorAll('.lb-sock')].filter(r => usedS.has(r.dataset.s))],
-        [...[...svg.querySelectorAll('.lb-reg:not(.lb-inshut)')].filter(g => !isBlock(g.dataset.r)), ...svg.querySelectorAll('.lb-grouplabel, .lb-gcentre')]);
+        [...[...svg.querySelectorAll('.lb-reg:not(.lb-inshut)')].filter(g => !isBlock(g.dataset.r)), ...svg.querySelectorAll('.lb-grouplabel, .lb-gcentre')], svg.querySelectorAll('rect.lb-group'));
       bar.addEventListener('click', e => { if (e.target.dataset.f) set(+e.target.dataset.f); });
       svg.parentNode.parentNode.insertBefore(bar, svg.parentNode); view.bar = bar; set(2);
     }
@@ -557,12 +571,16 @@
     root.querySelectorAll('.lb-mod').forEach(g => {
       const l = MODS[+g.dataset.m];
       const acts = l.proj ? `gates the learning of ${esc(l.proj.src + sel(l.proj))} → ${esc(l.proj.dst)}` : `acts on ${esc(l.dst)} (${l.how === 'gain' ? 'scales its response' : 'adds to its drive'}, sensitivity ${fmt(l.sens)})`;
-      hover(g, e => showTip(e, `<b>${esc(l.m.name)}</b> modulator${l.m.new ? ', added in this stage' : ''}<div>released by ${esc(l.src)}, ${acts}</div><div class="lb-muted">${lasts(l.m)}</div>`));
+      hover(g, e => showTip(e, `<b>${esc(l.m.name)}</b> modulator${l.m.new ? ', added in this stage' : ''}${say('modulators', l.m.name)}<div class="lb-muted">released by ${esc(l.src)}, ${acts}</div><div class="lb-muted">${lasts(l.m)}</div>`));
     });
     root.querySelectorAll('.lb-reg').forEach(g => {
       const r = REG.find(o => o.name === g.dataset.r), ins = PROJ.filter(p => p.dst === r.name), outs = PROJ.filter(p => p.src === r.name);
       const rel = MODL.filter(m => m.pos === r.name).map(m => m.name), rec = (r.receptors || []).map(rc => rc[0]);
-      hover(g, e => showTip(e, `<b>${esc(r.name)}</b> ${r.size} neuron${r.size === 1 ? '' : 's'}${r.new ? ', added in this stage' : ''}<div class="lb-muted">from: ${esc([...new Set(ins.map(p => p.src))].join(', ') || '–')}</div><div class="lb-muted">to: ${esc([...new Set(outs.map(p => p.dst))].join(', ') || '–')}</div>${rel.length ? `<div class="lb-muted">releases: ${esc(rel.join(', '))}</div>` : ''}${rec.length ? `<div class="lb-muted">receptors for: ${esc(rec.join(', '))}</div>` : ''}`));
+      hover(g, e => showTip(e, `<b>${esc(r.name)}</b> ${r.size} neuron${r.size === 1 ? '' : 's'}${r.new ? ', added in this stage' : ''}${say('cells', r.name)}<div class="lb-muted">from: ${esc([...new Set(ins.map(p => p.src))].join(', ') || '–')}</div><div class="lb-muted">to: ${esc([...new Set(outs.map(p => p.dst))].join(', ') || '–')}</div>${rel.length ? `<div class="lb-muted">releases: ${esc(rel.join(', '))}</div>` : ''}${rec.length ? `<div class="lb-muted">receptors for: ${esc(rec.join(', '))}</div>` : ''}`));
+    });
+    root.querySelectorAll('rect.lb-group').forEach(g => {
+      const gp = g.dataset.g, mem = REG.filter(r => r.group === gp || r.group.startsWith(gp + '/')).map(r => r.name);
+      hover(g, e => showTip(e, `<b>${esc(gp.split('/').pop())}</b> group${gp.includes('/') ? ` in ${esc(gp.split('/').slice(0, -1).join('/'))}` : ''}${say('groups', gp)}<div class="lb-muted">cells: ${esc(mem.join(', '))}</div>`));
     });
   }
 

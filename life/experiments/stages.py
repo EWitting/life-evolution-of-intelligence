@@ -1342,6 +1342,16 @@ stage(Stage("x.harshrev", "x_harsh_rev", "x.harsh", B23, replace(W23, **HARSH_RE
             **{**_S15, "generations": 100}, evolution=EVOLUTION_NEW, control_brain=per_slot_pallium(B22P),
             notes="DRAFT: the harsh world with a reversal at 800; main the 2.3 critic, control the 2.2 brain"))
 
+# Candidate for the critic page (not frozen; STAGE_LOG v65): the 2.3 design in the harsh world with the reversal, straight
+# from the pallium stage (no intermediate harsh stage). Main the formula critic (B23), control the 2.2 brain; the
+# aversion learning rates start x10 in both (av_eta_init), a start value that gives generation 0 learners to select.
+stage(Stage("2.3h", "s2_3h_critic", "2.2", B23, replace(W23, **HARSH_REV_WORLD), VISION_CH1, BODY_17,
+            lambda exp: pallium_world(exp, reverse=True, one_berry=1.0),
+            **{**_S15, "generations": 100}, evolution=EVOLUTION_NEW, control_brain=per_slot_pallium(B22P),
+            adapt_init=av_eta_init,
+            notes="CANDIDATE: dopamine critic as a formula in the harsh world (one berry worth one, poison as costly, "
+                  "low metabolic rate) with a reversal at 800; control the 2.2 brain"))
+
 # ------------------------------------------------------------------ running
 
 EVOLUTION_OVERRIDES: dict = {}   # set from the command line (--mutation-prob), applied to every stage

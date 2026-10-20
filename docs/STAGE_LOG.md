@@ -3303,3 +3303,23 @@ its value learning the good berries eaten after the switch halve (9.0 vs 18.8), 
 to re-learn in, so the critic matters less (-6 at 2000) though it still lowers the poison share after it (0.43 vs 0.66).
 Draft stage `x.harshrev`: harsh world, switch at 800; main the 2.3 brain (formula critic, no touch-gated pallium),
 control the 2.2 brain (no critic); both from the x.harsh control run; seed 0, 100 generations: running.
+Stopped at generation 40 (user: early stopping allowed when still strong at 40): main 1680 at generation 39 (poison
+share 0.35), control 925 at generation 60 (0.35); from generation 1 on the control fails after the switch (poison
+share late in life 0.68 vs 0.37). Populations from `checkpoint.npz` (generation 39 / 59).
+**Lab** (`scripts/probes/lab_critic.py`, new; 24 creatures; frozen 2.3 seed 0 for comparison):
+| | harsh + reversal, critic | harsh + reversal, no critic | frozen 2.3 |
+|---|---|---|---|
+| aversion drive after 6 painful meals (lab trials) | +12.7 | +9.9 | +3.4 |
+| ... after 12 more without pain | -1.05 (P(bite) 0.37) | +9.85 (0.00) | +2.1 (0.00) |
+| the same with world-like trials (one tick of pain) | +9.9 -> +6.4 | +8.0 -> +8.0 | -0.1 -> -0.3 |
+| XOR meals, world-like lessons, P(bite) poison / good after 6 rounds | 0.00 / 0.24 | 0.10 / 0.50 | 0.21 / 0.61 |
+Error per tick (cue, three bites, after): first painful meal 0 / -0.96 / -0.51 after; sixth -0.27 / -0.70 / +0.01;
+first without pain -0.31 / +0.30 / +0.58. The critic extinguishes fully with lab trials (the pain-only teacher
+not at all); learning is fast and specific (the XOR corners apart after one round).
+
+## v65 (2026-10-20): candidate stage 2.3h, the critic in the harsh world, straight from the pallium stage
+
+`2.3h` (`s2_3h_critic`): the 2.3 design (main B23, control the 2.2 brain with per-slot wiring) in the harsh world
+with the reversal at 800 (`HARSH_REV_WORLD`), from frozen 2.2 seed 0, aversion learning rates x10 at the start
+(`av_eta_init`), 100 generations, EVOLUTION_NEW. Not frozen; 2.3 stays the frozen critic until the user decides.
+Seed 0 running.

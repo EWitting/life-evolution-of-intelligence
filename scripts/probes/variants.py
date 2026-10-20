@@ -117,8 +117,11 @@ def variant(brain, v):
         elif part == "pnt":   # the pallium also reads the no_touch cell (nothing at the mouth): look x at-the-mouth.
             # The pallium moves one phase later, so no_touch (phase 0, from this tick's inputs) and the look describe
             # the same tick; the synapses are random like the pallium's input (and per life where that one is)
+            # on a brain that has the critic already (2.3), its value cells move along, so they still read the
+            # pallium of the same tick
             pal = next(p for p in brain.projections if p.src == "in" and p.dst == "pallium")
-            brain = replace(brain, regions=tuple(replace(r, phase=r.phase + 1) if r.name == "pallium" else r
+            brain = replace(brain, regions=tuple(replace(r, phase=r.phase + 1)
+                                                 if r.name in ("pallium", "value_app", "value_av") else r
                                                  for r in brain.regions),
                             projections=(*brain.projections,
                                          S.P("no_touch", "pallium", density=1.0, evolve=False, per_slot=pal.per_slot)))

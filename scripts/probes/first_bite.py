@@ -1,13 +1,13 @@
 """Does a creature judge a bush by its look before the first bite? Read from the recordings of the last generation
 of the frozen 2.3 runs (main and control, three seeds; one world of 64 creatures each, no new simulation):
-    python scripts/probes/first_bite.py
+    python scripts/probes/first_bite.py [run_dir ...]     (default: the 2.3 runs of book/data/2.3.json)
 A visit is a run of ticks with the same full bush at the mouth (the world after the previous step, as the brain
 sees it). Per kind (poison / good in that phase, read from the pain at each bite) and phase (before / after the
 switch at tick 800): visits, P(any bite during the visit), P(bite on the first tick), bites per visit, and
 P(a second bite | the first bite hurt / did not). Then the same split by experience: how many painful bites the
 creature has had from that berry type earlier in the same phase (0, 1-2, 3+), the test of a learned aversion to
 the look (a lesson stops the first bite on the next visit)."""
-import json
+import json, sys
 from pathlib import Path
 import numpy as np
 from life import actions as A
@@ -99,6 +99,10 @@ def table(vs, label):
                           + "  ".join(f"{n} {np.mean([x[n] for x in v]):.3f}" for n in cells))
 
 
+if sys.argv[1:]:
+    for d in sys.argv[1:]:
+        table(visits(Path(d)), d)
+    sys.exit()
 for side in ("main", "control"):
     allv = []
     for r in D["runs"][side]:

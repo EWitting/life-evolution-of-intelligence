@@ -1279,6 +1279,29 @@ stage(Stage("x.one", "x_one_berry", "2.3", B23, W23, VISION_CH1, BODY_17,
             **{**_S15, "generations": 100}, evolution=EVOLUTION_NEW, control_brain=per_slot_pallium(B22P),
             notes="DRAFT: 2.3 with one berry per bush (a bite is a whole visit)"))
 
+
+def pallium_touch(brain: BrainConfig) -> BrainConfig:
+    """The pallium also reads `no_touch` (about 0 with something at the mouth, 0.9 otherwise; random weights like its
+    look input, per slot where that is), so its code is look x at-the-mouth: a bush seen from afar and the same bush
+    at the mouth are two states for the critic. The pallium and the value cells move one phase later, so `no_touch`
+    and the look describe the same tick and the value cells still read this tick's code (probe variant `pnt`, v55).
+    Lab (v60): with the bush in view from afar for 15 ticks the error at the bites falls to -0.65 (without: -0.87)."""
+    pal = next(p for p in brain.projections if p.src == "in" and p.dst == "pallium")
+    return replace(brain, regions=tuple(replace(r, phase=r.phase + 1) if r.name in ("pallium", "value_app", "value_av")
+                                        else r for r in brain.regions),
+                   projections=(*brain.projections, P("no_touch", "pallium", density=1.0, evolve=False,
+                                                        per_slot=pal.per_slot)))
+
+
+# Draft: x.one with the touch-gated pallium; control the 2.3 brain in the same world. World tuned at generation 0
+# (STAGE_LOG v60): born three quarters full, a lower metabolic rate (regrowth follows it): lives of about 2500
+# ticks and about 26 painful bites at generation 0
+ONE_T_WORLD = dict(start_food=0.75, hunger_per_tick=0.015)
+stage(Stage("x.onet", "x_one_touch", "2.3", pallium_touch(B23), replace(W23, **ONE_T_WORLD), VISION_CH1, BODY_17,
+            lambda exp: pallium_world(exp, reverse=True, one_berry=ONE_BERRY),
+            **{**_S15, "generations": 100}, evolution=EVOLUTION_NEW, control_brain=B23,
+            notes="DRAFT: one berry per bush; the pallium reads no_touch (look x at the mouth); control: the 2.3 brain"))
+
 # ------------------------------------------------------------------ running
 
 EVOLUTION_OVERRIDES: dict = {}   # set from the command line (--mutation-prob), applied to every stage

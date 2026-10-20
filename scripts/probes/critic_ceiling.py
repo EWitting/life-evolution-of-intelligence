@@ -1,6 +1,6 @@
 """How much of the pain can the 2.3 critic predict away in the lab? The frozen 2.3 populations (last generation, three
 seeds, 24 creatures each), a new look A followed by pain on every trial (labtests `conditioning`), 60 trials:
-    python scripts/probes/critic_ceiling.py [x1 x5 x20] [lead=1,4,8,16]
+    python scripts/probes/critic_ceiling.py [x1 x5 x20] [lead=1,4,8,16] [approach] [v=pnt]
 lead=a,b,..: the cue is in view for that many ticks before the first bite (labtests protocol "lead"; default 1),
 as when a creature walks up to a bush it can see. xK multiplies the learning rates of pallium -> value_app / value_av by K (x1 = as evolved), to tell too few trials
 from a ceiling. Per trial: the error on the cue tick, mean over the three bites, on the tick after the cue is gone
@@ -14,12 +14,16 @@ import jax.numpy as jnp, numpy as np
 from life.experiments import stages as S
 from life.labtests import conditioning
 from life.run import load_population, make_layout
+sys.path.insert(0, str(Path(__file__).parent))
+from variants import variant
 
 s = S.STAGES["2.3"]
 D = json.load(open("book/data/2.3.json"))
 N = 60
 proto = dict(train=[("pain", {"vis+0": "A"}, N)], tests={"A": {"vis+0": "A"}})
 show = [1, 2, 6, 12, 24, 40, 60]
+V = next((a[2:] for a in sys.argv[1:] if a.startswith("v=")), "base")   # v=pnt: a brain variant (variants.py)
+proto["approach"] = "approach" in sys.argv[1:]                         # the cue seen from afar before the mouth
 leads = [int(v) for a in sys.argv[1:] if a.startswith("lead=") for v in a[5:].split(",")] or [1]
 mults = [a for a in sys.argv[1:] if a.startswith("x")] or ["x1", "x5", "x20"]
 for arg, lead in [(m, l) for m in mults for l in leads]:
@@ -28,7 +32,7 @@ for arg, lead in [(m, l) for m in mults for l in leads]:
     sig, val = [], []
     for r in D["runs"]["main"]:
         run = Path("runs") / r["dir"]
-        exp = S.make_exp(s, s.brain, "lab", 1, 0)
+        exp = S.make_exp(s, variant(s.brain, V), "lab", 1, 0)
         pop = load_population(run, exp)
         L = make_layout(exp)
         sl = lambda n: np.arange(L.region(n).start, L.region(n).stop)

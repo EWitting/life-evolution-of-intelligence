@@ -129,13 +129,13 @@ def conditioning(exp, pop, protocol: dict, sim: float, n_agents: int = 24, seed:
              **{f"X{a}{b}": (int(f"{a}1") * q[:, 0] + int(f"{b}1") * q[:, 1]) / np.sqrt(2) for a in "+-" for b in "+-"}}
         looks.append({c: sim * base + np.sqrt(1 - sim ** 2) * (v @ comp) for c, v in u.items()})
 
-    def obs(cues=None, taste=0.0, pain=0.0):
+    def obs(cues=None, taste=0.0, pain=0.0, near=0.8):
         o = np.zeros((NA, L.n_in), np.float32)
         o[:, names.index("food")] = 0.5
         if "temperature" in names:
             o[:, names.index("temperature")] = 0.5
         for col, c in (cues or {}).items():
-            o[:, names.index(f"{col}.hit")], o[:, names.index(f"{col}.near")] = 1.0, 0.8
+            o[:, names.index(f"{col}.hit")], o[:, names.index(f"{col}.near")] = 1.0, near
             idx = [names.index(f"{col}.app{k}") for k in range(K)]
             for a in range(NA):
                 o[a, idx] = looks[a][c]
@@ -145,7 +145,11 @@ def conditioning(exp, pop, protocol: dict, sim: float, n_agents: int = 24, seed:
 
     def trial(kind, cues):
         out = dict(pain=dict(pain=1.0), taste=dict(taste=3.0), none={})[kind]
-        return [obs(cues)] * protocol.get("lead", 1) + [obs(cues, **out) for _ in range(3)] + ([obs(pain=0.3)] if kind == "pain" else [obs()]) \
+        # lead: ticks with the cue in view before the outcome; approach: all but the last of them seen from afar
+        # (vis+0.near 0.4, two cells off; at the mouth 0.8), as a creature walking up to a bush
+        n = protocol.get("lead", 1)
+        far = n - 1 if protocol.get("approach") else 0
+        return [obs(cues, near=0.4)] * far + [obs(cues)] * (n - far) + [obs(cues, **out) for _ in range(3)] + ([obs(pain=0.3)] if kind == "pain" else [obs()]) \
             + [obs()] * 4
 
     one = lambda g, st, o: B.step(exp.brain, L, g, st, o, jnp.zeros(3), jax.random.PRNGKey(0))[0]

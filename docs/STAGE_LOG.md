@@ -3079,3 +3079,36 @@ At F = 3 the berry counts read directly as decisions (good 15.2 vs poison 13.9: 
 trying every bush costs a third of a good bush instead of a sixth. F <= 2 starves the population. One-berry bushes
 alone do not make the look matter at generation 0, since the critic cannot learn an aversive value from a look seen
 from afar in either world.
+
+## v60 (2026-10-20): the touch-gated pallium (`pnt`) in the one-berry world: lab, generation 0, one seed
+
+User's choice (after v59): the critic's state should change as a bush nears; the best variant at 128 cells in v55
+was `pnt` (the pallium also reads `no_touch`, look x at-the-mouth); no larger pallium (cost, v56). Now
+`stages.pallium_touch` (= probe variant `pnt`; on a brain with the critic the value cells move one phase later with
+the pallium, so they still read this tick's code; the probe variant was fixed for that too).
+
+**Lab** (`critic_ceiling.py ... approach v=pnt`, frozen 2.3, three seeds x 24, 60 trials of A -> pain, evolved
+rates; new protocol option `approach`: all cue ticks but the last seen from afar, `vis+0.near` 0.4):
+| cue in view before the bites | plain: bites at trial 24 / 60, aversive value | pnt: bites at 24 / 60, aversive value |
+|---|---|---|
+| 1 tick (at the mouth) | -0.53 / -0.50, 0.49 | -0.54 / -0.52, 0.49 |
+| 8 ticks (7 from afar) | -0.77 / -0.75, 0.40 | -0.65 / -0.58, 0.52 |
+| 16 ticks (15 from afar) | -0.88 / -0.87, 0.29 | -0.73 / -0.65, 0.50 |
+With `pnt` the far ticks carry almost no error (+0.01 to +0.05 instead of +0.15 to +0.30): the far code no longer
+drains the value at the mouth. Learning is slower with a long approach (trial 24 vs 60), but the value at the mouth
+reaches what a cue at the mouth alone gives.
+
+**Generation 0** (`gen0.py`, STAGE=x.one, frozen 2.3 seed 0, 16 paired worlds; good / poison eaten after the switch):
+| world | plain | pnt vs plain | learning off vs plain | lifetime | pain |
+|---|---|---|---|---|---|
+| one berry 3 | 1061 (15.2 / 13.9) | -42 +- 14 | -147 +- 18 | 1434 | 22 |
+| + born 0.75 full | 1249 (17.6 / 16.2) | -34 +- 16 | -174 +- 24 | 1671 | 25 |
+| + born 0.75, hunger 0.015 | 1972 (20.6 / 19.4) | -37 +- 16 | -158 +- 29 | 2523 | 26 |
+| one berry 2, born 0.75, hunger 0.0167 | 1169 (15.8 / 14.3) | -62 +- 11 | -157 +- 23 | 1616 | 23 |
+`pnt` costs 35-60 on the inherited population (its codes are new; v55: about 70 without a critic); nothing
+discriminates by look yet in any world. Chosen: one berry worth 3, born 0.75 full, hunger 0.015 (regrowth 800 ticks,
+follows the metabolic rate): lives of about 2500 ticks with about 26 painful bites, the most lessons per life.
+
+**Evolution, seed 0** (draft stage `x.onet`: main `pallium_touch(B23)`, control the 2.3 brain, same world, warm
+start from frozen 2.3 seed 0, 100 generations, EVOLUTION_NEW; about 40 s per generation). Generation 0 in the run:
+main 2030, control 2050, poison share of bites 0.48 in both.

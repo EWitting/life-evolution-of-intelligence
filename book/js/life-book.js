@@ -208,14 +208,19 @@
     const pick = root.dataset.rows ? root.dataset.rows.split(',').map(Number) : X.rows.map((_, i) => i);
     const rows = pick.map(i => X.rows[i]), cols = X.columns.slice(1), CLS = ['lb-s1', 'lb-s2', 'lb-s3'];
     const unit = root.dataset.unit || '', scale = +(root.dataset.scale || 1);
-    const hi = Math.max(...rows.flatMap(r => r.slice(1).flatMap(v => v ? [v.mean, ...v.seeds] : []))) * scale * 1.08 || 1;
+    // the scale runs from the lowest value (or 0) to the highest: a negative mean is a bar to the left of a zero line,
+    // and every dot stays inside its track
+    const vals = rows.flatMap(r => r.slice(1).flatMap(v => v ? [v.mean, ...v.seeds] : [])).map(u => u * scale);
+    const span = Math.max(...vals, 0) - Math.min(...vals, 0) || 1;
+    const hi = Math.max(...vals, 0) + span * 0.06, lo = Math.min(...vals, 0) - (Math.min(...vals) < 0 ? span * 0.06 : 0);
+    const x = u => ((u * scale - lo) / (hi - lo) * 100).toFixed(1), z = x(0);
     let h = `<div class="lb-legend">${cols.map((c, j) => `<span><i class="lb-key ${CLS[j]}"></i>${esc(root.dataset[`col${j}`] || c)}</span>`).join('')}<span class="lb-muted">dots: the seeds</span></div><div class="lb-barsgrid">`;
     for (const r of rows) {
       h += `<div class="lb-barslabel">${esc(r[0])}</div><div class="lb-barsset">`;
       r.slice(1).forEach((v, j) => {
         if (!v) return;
-        const x = u => (u * scale / hi * 100).toFixed(1);
-        h += `<div class="lb-barsline"><span class="lb-vtrack"><i class="lb-vbar ${CLS[j]}" style="width:${x(v.mean)}%"></i>${v.seeds.map(s => `<i class="lb-vdot" style="left:${x(s)}%"></i>`).join('')}</span><span class="lb-vval">${fmt(v.mean * scale, scale > 1 ? 0 : undefined)}${unit}</span></div>`;
+        const a = Math.min(+x(v.mean), +z), b = Math.max(+x(v.mean), +z);
+        h += `<div class="lb-barsline"><span class="lb-vtrack">${lo < 0 ? `<i class="lb-vzero" style="left:${z}%"></i>` : ''}<i class="lb-vbar ${CLS[j]}" style="left:${a}%;width:${(b - a).toFixed(1)}%"></i>${v.seeds.map(s => `<i class="lb-vdot" style="left:${x(s)}%"></i>`).join('')}</span><span class="lb-vval">${fmt(v.mean * scale, scale > 1 ? 0 : undefined)}${unit}</span></div>`;
       });
       h += '</div>';
     }
@@ -780,17 +785,22 @@
 
   // ------------------------------------------------------------------ line panels from a stage's extras
   // <div data-life="lines" data-stage="2.3" data-example="reversal_life"></div>
-  // extra: {x, xticks?, xlabel, ylabel, vline?, vlabel?, zero?, caption, panels: [{title, series: [{name, y, cls, dash?}]}]}
-  // cls: s1 / s2 (main / control colours), good, bad, muted
+  // extra: {x, xticks?, xlabel, ylabel, y2label?, y2max?, vline?, vlabel?, zero?, caption,
+  //         panels: [{title, series: [{name, y, cls, dash?, axis?}]}]}
+  // cls: s1 / s2 (main / control colours), good, bad, muted. axis "right": a scale of its own (from 0 to y2max, or to
+  // its highest value), ticks on the right of the last panel, labelled y2label (e.g. the share of creatures alive)
   function lines(root, D) {
     const X = (D.extras || {})[root.dataset.example];
     if (!X) { root.innerHTML = '<div class="lb-caption">Not measured yet.</div>'; return; }
-    const P = X.panels, n = P.length, W = 640, H = 250, m = {l: 46, r: 12, t: 26, b: 40}, gap = 18;
+    const P = X.panels, n = P.length, W = 640, H = 250, gap = 18;
+    const right = se => se.axis === 'right', has2 = P.some(p => p.series.some(right));
+    const m = {l: 46, r: has2 ? 44 : 12, t: 26, b: 40};
     const pw = (W - m.l - m.r - gap * (n - 1)) / n, ph = H - m.t - m.b;
-    const all = P.flatMap(p => p.series.flatMap(s => s.y)).concat(X.zero ? [0] : []);
+    const all = P.flatMap(p => p.series.filter(se => !right(se)).flatMap(s => s.y)).concat(X.zero ? [0] : []);
     let lo = Math.min(...all), hi = Math.max(...all);
     if (lo > 0) lo = 0;
     const pad = (hi - lo) * 0.06 || 1; hi += pad; if (lo < 0) lo -= pad;
+    const hi2 = X.y2max || Math.max(...P.flatMap(p => p.series.filter(right).flatMap(s => s.y)), 0) * 1.06 || 1;
     const x0 = X.x[0], x1 = X.x[X.x.length - 1];
     const COL = {s1: 'var(--lb-s1)', s2: 'var(--lb-s2)', good: 'var(--lb-good)', bad: 'var(--lb-bad)', muted: 'var(--lb-muted)'};
     const ticks = (a, b, k) => { const st = Math.pow(10, Math.floor(Math.log10((b - a) / k || 1))), s = [1, 2, 5, 10].map(f => f * st).find(f => (b - a) / f <= k);
@@ -798,18 +808,23 @@
     let s = `<svg viewBox="0 0 ${W} ${H}" class="lb-svg" role="img" aria-label="${esc(X.ylabel)} over ${esc(X.xlabel)}">`;
     P.forEach((p, i) => {
       const ox = m.l + i * (pw + gap), x = v => ox + (v - x0) / (x1 - x0 || 1) * pw, y = v => m.t + (hi - v) / (hi - lo) * ph;
+      const y2 = v => m.t + (hi2 - v) / hi2 * ph;
       for (const v of ticks(lo, hi, 4)) s += `<line class="lb-grid" x1="${ox}" x2="${ox + pw}" y1="${y(v)}" y2="${y(v)}"/>` + (i ? '' : `<text class="lb-tick" x="${ox - 6}" y="${y(v) + 4}" text-anchor="end">${fmt(v)}</text>`);
+      if (has2 && i === n - 1) for (const v of ticks(0, hi2, 4)) s += `<text class="lb-tick lb-muted" x="${ox + pw + 6}" y="${y2(v) + 4}">${fmt(v)}</text>`;
       if (X.zero && lo < 0) s += `<line class="lb-axis" x1="${ox}" x2="${ox + pw}" y1="${y(0)}" y2="${y(0)}"/>`;
       if (X.xticks) X.x.forEach((v, j) => { s += `<text class="lb-tick" x="${x(v)}" y="${H - m.b + 15}" text-anchor="middle">${esc(X.xticks[j])}</text>`; });
       else for (const v of ticks(x0, x1, 4)) s += `<text class="lb-tick" x="${x(v)}" y="${H - m.b + 15}" text-anchor="middle">${fmt(v)}</text>`;
       if (X.vline != null) s += `<line class="lb-axis" stroke-dasharray="3 3" x1="${x(X.vline)}" x2="${x(X.vline)}" y1="${m.t}" y2="${m.t + ph}"/>`
                               + (X.vlabel ? `<text class="lb-tick" x="${x(X.vline) + 4}" y="${m.t + 10}">${esc(X.vlabel)}</text>` : '');
       if (p.title) s += `<text class="lb-label" x="${ox}" y="${m.t - 9}">${esc(p.title)}</text>`;
-      for (const se of p.series)
-        s += `<polyline fill="none" stroke="${COL[se.cls] || COL.s1}" stroke-width="${se.cls === 'muted' ? 1.2 : 2}"${se.dash ? ' stroke-dasharray="5 4"' : ''} points="${se.y.map((v, j) => `${x(X.x[j]).toFixed(1)},${y(v).toFixed(1)}`).join(' ')}"><title>${esc(se.name)}</title></polyline>`;
+      for (const se of p.series) {
+        const yy = right(se) ? y2 : y;
+        s += `<polyline fill="none" stroke="${COL[se.cls] || COL.s1}" stroke-width="${se.cls === 'muted' ? 1.2 : 2}"${se.dash ? ' stroke-dasharray="5 4"' : ''} points="${se.y.map((v, j) => `${x(X.x[j]).toFixed(1)},${yy(v).toFixed(1)}`).join(' ')}"><title>${esc(se.name)}</title></polyline>`;
+      }
     });
     s += `<text class="lb-tick" x="${m.l + (W - m.l - m.r) / 2}" y="${H - 6}" text-anchor="middle">${esc(X.xlabel)}</text>`
-       + `<text class="lb-tick" x="12" y="${m.t + ph / 2}" text-anchor="middle" transform="rotate(-90 12 ${m.t + ph / 2})">${esc(X.ylabel)}</text></svg>`;
+       + `<text class="lb-tick" x="12" y="${m.t + ph / 2}" text-anchor="middle" transform="rotate(-90 12 ${m.t + ph / 2})">${esc(X.ylabel)}</text>`
+       + (has2 && X.y2label ? `<text class="lb-tick lb-muted" x="${W - 8}" y="${m.t + ph / 2}" text-anchor="middle" transform="rotate(90 ${W - 8} ${m.t + ph / 2})">${esc(X.y2label)}</text>` : '') + '</svg>';
     const names = [...new Map(P.flatMap(p => p.series).map(se => [se.name, se])).values()];
     root.innerHTML = `<div class="lb-legend">${names.map(se => `<span><i class="lb-key" style="background:${COL[se.cls] || COL.s1}${se.dash ? ';opacity:.6' : ''}"></i>${esc(se.name)}</span>`).join('')}</div>`
                    + s + (X.caption ? `<div class="lb-caption">${X.caption}</div>` : '');

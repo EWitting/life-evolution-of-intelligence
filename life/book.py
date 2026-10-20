@@ -969,6 +969,7 @@ def _reversal_life(s, run: Path, worlds: int = 2, bin_: int = 200, until: int = 
 
 
 @extra("2.3")
+@extra("2.3h")
 def reversal_life(s, main: list[Path], control: list[Path]):
     """The reversal over a life, main and control: bites on the berry types that turn from poison to good and from
     good to poison at the switch (a line figure), and a table of the chance of a bite at the mouth."""
@@ -982,21 +983,24 @@ def reversal_life(s, main: list[Path], control: list[Path]):
             panels.append({"title": title, "series": [
                 {"name": "poison, then good", "y": mean(xs, 0), "cls": "good"},
                 {"name": "good, then poison", "y": mean(xs, 1), "cls": "bad"},
-                {"name": "alive, %", "y": (np.mean([x["alive"] for x in xs], 0) * 100).tolist(), "cls": "muted", "dash": True}]})
+                {"name": "alive, %", "y": (np.mean([x["alive"] for x in xs], 0) * 100).tolist(), "cls": "muted", "dash": True,
+                 "axis": "right"}]})
     rows = []
     for label, k, ph in (("A former poison, before the switch", 0, 0), ("A former poison, after the switch", 0, 1),
                          ("A former food, before the switch", 1, 0), ("A former food, after the switch", 1, 1)):
         rows.append([label, _stat([x["p_bite"][k][ph] for x in m])] + ([_stat([x["p_bite"][k][ph] for x in c])] if c else []))
     return [("reversal_life", {"x": [(i + 0.5) * bin_ for i in range(nb)], "xlabel": "tick of life",
                                "ylabel": f"bites per 100 creatures alive, per tick", "vline": s.world.switch_tick,
+                               "y2label": "creatures alive, %", "y2max": 100,
                                "vlabel": "switch", "panels": panels,
                                "caption": "Recorded lives of the last generation of every seed (64 creatures, two worlds each); "
-                                          "dashed: share of the creatures still alive."}),
+                                          "dashed: share of the creatures still alive (right axis)."}),
             ("reversal_bites", {"columns": ["Chance of a bite with the bush at the mouth", "critic"] + (["pain teacher"] if c else []),
                                 "rows": rows, "caption": "From the same recorded lives."})]
 
 
 @extra("2.3")
+@extra("2.3h")
 def conditioning_lab(s, main: list[Path], control: list[Path]):
     """Textbook conditioning experiments on 24 evolved creatures of every seed (life.labtests.PROTOCOLS): extinction
     (pain, then the same bush without pain) and blocking (Kamin 1969), main and control; and the error on every

@@ -3335,3 +3335,23 @@ generation 89 intact), main seed 1 at generation 27 (checkpoint 19). Seed 0 up t
 main / control: 853 / 773, 1051 / 870, 1137 / 852, 1200 / 874, - / 908; poison share 0.435 -> 0.391 (main) and
 0.446 -> 0.431 (control). Checkpoints are now written to a temporary file and renamed. Not restarted (user's go-ahead
 needed after a kill).
+
+**2.3h seed 0, with the calm start** (user: one stage, the reversal from halfway; `Stage.schedule` = `calm_first(50)`:
+both phases of a life alike for generations 0-49; `EVOLUTION_2EP`, 2 episodes; about 23 s per generation with two runs
+side by side; `runs/s2_3h_critic/20261020-181149`, `runs/s2_3h_critic_control/20261020-181137`). The runs of 16:47
+(reversal from generation 0, 4 episodes) were the ones stopped by memory pressure. Blocks of 10 generations, fitness
+(poison share before / after tick 800 of a life):
+| generations | critic | no critic |
+|---|---|---|
+| 0-9 | 1003 (0.44 / 0.36) | 1144 (0.44 / 0.31) |
+| 20-29 | 1282 (0.41 / 0.24) | 1108 (0.44 / 0.27) |
+| 40-49 | 1484 (0.38 / 0.23) | 1164 (0.43 / 0.29) |
+| 50-59 (switch on) | 941 +- 44 (0.38 / 0.35) | 809 +- 24 (0.43 / 0.42) |
+| 70-79 | 1042 +- 77 (0.37 / 0.33) | 883 +- 22 (0.43 / 0.44) |
+| 90-99 | 1200 +- 42 (0.34 / 0.29) | 957 +- 26 (0.43 / 0.43) |
+The critic leads already in the calm half (from about generation 20). The switch costs both a third; the critic
+recovers (+243 at 90-99, still rising), the control stays near 900. Compared at equal time in the reversal world with
+the run that had it from generation 0 (its generations 40-59: +285, poison 0.40 vs 0.44), the gap is about the same and
+caution is better. Recordings of the last generation (`first_bite.py`), P(bite) per visit, poison / good: critic before
+the switch 0.05 / 0.13, after it 0.06 / 0.14 (the swapped kinds tracked); control 0.10 / 0.27, then 0.10 / 0.12 (no
+discrimination after the switch). Seeds 1 and 2 running (pairs, two processes).

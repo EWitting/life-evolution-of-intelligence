@@ -29,7 +29,8 @@ To refresh: `git -C data/ohol pull --depth 1`.
 
 Done on this laptop: Ubuntu-24.04 under WSL2, `build-essential`, uv, the environment `~/.venvs/life` (JAX 0.11.2,
 `jax[cuda12]`, CudaDevice), the project installed editable from `/mnt/c/...`. `%USERPROFILE%\.wslconfig` caps WSL at
-6 GB with `autoMemoryReclaim=gradual`. Run from Windows:
+6 GB with `autoMemoryReclaim=dropCache` (until 2026-10-20 `gradual`, which left about 3 GB of cached run files
+counted against Windows). Run from Windows:
 
     wsl.exe -d Ubuntu-24.04 -- bash -lc 'cd /mnt/c/Users/emiel/Documents/Projects/Life && XLA_PYTHON_CLIENT_PREALLOCATE=false ~/.venvs/life/bin/python -m life.experiments.stages ...'
 

@@ -107,7 +107,8 @@ remapping the stored populations and freezing again.
    **Runs: use the GPU** (`docs/SETUP.md`): `wsl.exe -d Ubuntu-24.04 -- bash -lc 'cd /mnt/c/.../Life && bash
    scripts/gpu_queue.sh <job file> 3'` (job file lines: `<log name>|<stage arguments>`), logs in `runs/logs/`;
    book export and probes the same way with `XLA_PYTHON_CLIENT_PREALLOCATE=false ~/.venvs/life/bin/python ...`.
-   At most three GPU runs at a time (about 1.5 GB of RAM each inside WSL, capped at 6 GB by `.wslconfig`); they take turns for the memory-heavy recording at the end (`life.run.recording_lock`). One book export with `--evaluate --jobs 2` at a time (not covered by the lock), and nothing else heavy on Windows meanwhile; 4096 animals
+   At most two GPU runs at a time (2.0-2.5 GB of RAM each inside WSL, capped at 6 GB by `.wslconfig`, which drops
+   its file cache when idle, `autoMemoryReclaim=dropCache`; measured 2026-10-20); they take turns for the memory-heavy recording at the end (`life.run.recording_lock`). One book export with `--evaluate --jobs 2` at a time (not covered by the lock), and nothing else heavy on Windows meanwhile; 4096 animals
    do not fit in 8 GB yet (the per-animal weight matrix `BrainState.w` could hold only the plastic block).
    Rules (STAGE_LOG v40-v44): weight mutation 0.1 for warm-started runs; learning rates mutate multiplicatively
    (with the additive step an idle rate is trapped at 0); 100 generations; compare populations and lesions in shared

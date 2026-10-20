@@ -81,6 +81,9 @@ class Stage:
     adapt_init: Callable | None = None   # (population, layout) -> population: a change to the warm-start population
                                   # after it is remapped onto this stage's layout (e.g. interpolate_eyes)
     control_brain: BrainConfig | None = None   # the control's brain if not the parent's (e.g. with a new gene)
+    schedule: Callable | None = None   # (rules_for_generation) -> rules_for_generation, applied during evolution only:
+                                  # a world that changes over the generations (lesions, the book and probes, which ask
+                                  # for generation 0, get the stage's world as built)
     notes: str = ""
 
 
@@ -1342,15 +1345,27 @@ stage(Stage("x.harshrev", "x_harsh_rev", "x.harsh", B23, replace(W23, **HARSH_RE
             **{**_S15, "generations": 100}, evolution=EVOLUTION_NEW, control_brain=per_slot_pallium(B22P),
             notes="DRAFT: the harsh world with a reversal at 800; main the 2.3 critic, control the 2.2 brain"))
 
+def calm_first(generations: int):
+    """Schedule: for the first `generations` generations both phases of a life are the first one (no reversal), then
+    the world as built (the poison and good kinds swap at WorldConfig.switch_tick)."""
+    def wrap(fn):
+        def rules(gen, key):
+            r = fn(gen, key)
+            return r if gen >= generations else jax.tree_util.tree_map(lambda a: jnp.repeat(a[:, :1], 2, axis=1), r)
+        return rules
+    return wrap
+
+
 # Candidate for the critic page (not frozen; STAGE_LOG v65): the 2.3 design in the harsh world with the reversal, straight
 # from the pallium stage (no intermediate harsh stage). Main the formula critic (B23), control the 2.2 brain; the
 # aversion learning rates start x10 in both (av_eta_init), a start value that gives generation 0 learners to select.
+HARSH_CALM = 50   # 2.3h: generations without the reversal first (user, 2026-10-20: one stage, no intermediate one)
 stage(Stage("2.3h", "s2_3h_critic", "2.2", B23, replace(W23, **HARSH_REV_WORLD), VISION_CH1, BODY_17,
             lambda exp: pallium_world(exp, reverse=True, one_berry=1.0),
             **{**_S15, "generations": 100}, evolution=EVOLUTION_NEW, control_brain=per_slot_pallium(B22P),
-            adapt_init=av_eta_init,
+            adapt_init=av_eta_init, schedule=calm_first(HARSH_CALM),
             notes="CANDIDATE: dopamine critic as a formula in the harsh world (one berry worth one, poison as costly, "
-                  "low metabolic rate) with a reversal at 800; control the 2.2 brain"))
+                  "low metabolic rate); the reversal at 800 from generation HARSH_CALM on; control the 2.2 brain"))
 
 # ------------------------------------------------------------------ running
 
@@ -1396,6 +1411,8 @@ def run_stage(key: str, generations: int | None = None, control: bool = False, i
         if s.dense_plastic and not control:
             init = init._replace(mask=jnp.where(((np.asarray(lay.rule) > 0) & (np.asarray(lay.allowed) > 0))[None], 1.0, init.mask))
     rs, rules_fn = s.build(exp)
+    if s.schedule:
+        rules_fn = s.schedule(rules_fn)
     res = run_evolution(exp, rs, s.fitness or default_fitness, rules_for_generation=rules_fn, init_population=init,
                         row_extra=s.row_extra(rs) if s.row_extra else None, dashboard=dashboard)
     if init is not None:   # a run started from an earlier run of its own experiment continues it (book: one curve)

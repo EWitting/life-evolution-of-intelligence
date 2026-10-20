@@ -3323,3 +3323,8 @@ not at all); learning is fast and specific (the XOR corners apart after one roun
 with the reversal at 800 (`HARSH_REV_WORLD`), from frozen 2.2 seed 0, aversion learning rates x10 at the start
 (`av_eta_init`), 100 generations, EVOLUTION_NEW. Not frozen; 2.3 stays the frozen critic until the user decides.
 Seed 0 running.
+Seed 0 at generation 40: main 1180 (poison share 0.41), control 755 at generation 53 (0.46). Checkpoint (generation
+39 / 49): pallium -> valence_av at the cap (1.0) in both, look -> valence_av 0.46 / 0.45; the critic's value learning
+up from 2.3 (pallium -> value_app 0.069 -> 0.088, -> value_av 0.024 -> 0.062). Caution evolves more slowly from 2.2
+than from the x.harsh population (x.harshrev: 0.35 at 39). Seed 0 runs to 100 generations; seeds 1 and 2 started
+(from frozen 2.2 seed 0, `--seed N --suffix _seedN --mutation-prob 0.1`), main first, controls when slots free up.

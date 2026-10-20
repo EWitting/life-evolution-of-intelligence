@@ -3328,3 +3328,10 @@ Seed 0 at generation 40: main 1180 (poison share 0.41), control 755 at generatio
 up from 2.3 (pallium -> value_app 0.069 -> 0.088, -> value_av 0.024 -> 0.062). Caution evolves more slowly from 2.2
 than from the x.harsh population (x.harshrev: 0.35 at 39). Seed 0 runs to 100 generations; seeds 1 and 2 started
 (from frozen 2.2 seed 0, `--seed N --suffix _seedN --mutation-prob 0.1`), main first, controls when slots free up.
+**Runs stopped by memory pressure** (2026-10-20, about 17:40): Claude Code stopped the background queues because
+Windows ran critically low on memory, which ended the WSL runs. Main seed 0 at generation 69 (killed while writing
+its checkpoint: corrupt), control seed 0 after generation 99 (killed while saving: no population.npz; checkpoint of
+generation 89 intact), main seed 1 at generation 27 (checkpoint 19). Seed 0 up to then, blocks of 20 generations,
+main / control: 853 / 773, 1051 / 870, 1137 / 852, 1200 / 874, - / 908; poison share 0.435 -> 0.391 (main) and
+0.446 -> 0.431 (control). Checkpoints are now written to a temporary file and renamed. Not restarted (user's go-ahead
+needed after a kill).

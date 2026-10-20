@@ -360,8 +360,10 @@ def run_evolution(exp: ExperimentConfig, ruleset: Ruleset, fitness_fn: Callable[
             if out_dir is not None and gen % CHECKPOINT_EVERY == CHECKPOINT_EVERY - 1:
                 # so that a run stopped early can still be looked into (not a finished run: latest_run and
                 # load_population read population.npz; load this one with load_population(run, file=...))
-                np.savez_compressed(out_dir / "checkpoint.npz", generation=gen,
+                # written to a temporary file and renamed: a run killed while writing keeps its last checkpoint
+                np.savez_compressed(out_dir / "checkpoint.tmp.npz", generation=gen,
                                     **{k: np.asarray(v) for k, v in pop._asdict().items()})
+                os.replace(out_dir / "checkpoint.tmp.npz", out_dir / "checkpoint.npz")
             pop = next_generation(ke, pop, fit, ecfg, layout)
     with open(out_dir / "fitness.csv", "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))

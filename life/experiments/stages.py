@@ -1361,7 +1361,7 @@ def calm_first(generations: int):
     return wrap
 
 
-# Candidate for the critic page (not frozen; STAGE_LOG v65): the 2.3 design in the harsh world with the reversal, straight
+# The critic on the chain (frozen 2026-10-20, replacing 2.3; STAGE_LOG v65): the 2.3 design in the harsh world with the reversal, straight
 # from the pallium stage (no intermediate harsh stage). Main the formula critic (B23), control the 2.2 brain; the
 # aversion learning rates start x10 in both (av_eta_init), a start value that gives generation 0 learners to select.
 HARSH_CALM = 50   # 2.3h: generations without the reversal first (user, 2026-10-20: one stage, no intermediate one)
@@ -1369,7 +1369,7 @@ stage(Stage("2.3h", "s2_3h_critic", "2.2", B23, replace(W23, **HARSH_REV_WORLD),
             lambda exp: pallium_world(exp, reverse=True, one_berry=1.0),
             **{**_S15, "generations": 100}, evolution=EVOLUTION_2EP, control_brain=per_slot_pallium(B22P),
             adapt_init=av_eta_init, schedule=calm_first(HARSH_CALM),
-            notes="CANDIDATE: dopamine critic as a formula in the harsh world (one berry worth one, poison as costly, "
+            notes="dopamine critic as a formula in the harsh world (one berry worth one, poison as costly, "
                   "low metabolic rate); the reversal at 800 from generation HARSH_CALM on; control the 2.2 brain"))
 
 # ------------------------------------------------------------------ running

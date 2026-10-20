@@ -3355,3 +3355,16 @@ the run that had it from generation 0 (its generations 40-59: +285, poison 0.40 
 caution is better. Recordings of the last generation (`first_bite.py`), P(bite) per visit, poison / good: critic before
 the switch 0.05 / 0.13, after it 0.06 / 0.14 (the swapped kinds tracked); control 0.10 / 0.27, then 0.10 / 0.12 (no
 discrimination after the switch). Seeds 1 and 2 running (pairs, two processes).
+**Frozen 2026-10-20 as the critic stage (user), replacing 2.3 on the chain** (tag `stage-2.3h`). Three seeds, 100
+generations each (`runs/s2_3h_critic{,_seed1,_seed2}`, controls likewise). Last 10 generations main / control: 1200 /
+957, 956 / 788, 1102 / 694. Book export (`--evaluate --worlds 16`): re-evaluated main 1065 vs control 802, +264 +- 87
+(+238, +128, +426); head to head +359 +- 76 (+253, +317, +507). Lesions, % of intact: no_plasticity 40 54 52,
+pallium 87 99 85, us_taste 87 93 90, value_av 94 87 91 (used), value_app 105 101 109 (not used; in 2.3 the other way
+round: here the critic's lesson is "this no longer hurts"), value_app_prev 72 69 77, value_av_prev 67 61 67 (a
+standing error, not a measure of use). First bite per visit after the switch, poison now / good now: critic 0.06 /
+0.14, 0.06 / 0.09, 0.08 / 0.11; control 0.10 / 0.12, 0.05 / 0.13, 0.08 / 0.06 (before the switch both discriminate,
+the control a little more sharply). Lab (export, 24 creatures per seed): aversion drive after 6 painful meals 12.0
+(control 9.7), after 12 more without pain 2.1 (control 9.7); blocking: second cue 4.8 next to a known cue vs 5.5 next
+to an unrelated one (control 2.6 vs 2.8); error per tick, sixth painful meal: cue -0.39, bites -0.58, after +0.27;
+first meal without pain: +0.42 at the bites. Book: critic page rewritten for 2.3h; bars draw negative values from a
+zero line; the reversal figure has the share alive on its own right axis; blocking moved to the full results.

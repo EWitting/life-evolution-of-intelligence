@@ -41,13 +41,24 @@ defaults (`freeze.with_defaults`).
 | stage | what it is | parent | life | seeds |
 |---|---|---|---|---|
 | 2.2 | pallium: 128 cells (k-WTA 2) read the eye ahead through fixed random weights of mixed sign; pain teaches `pallium -> valence_av`; the adaptation strength evolves; world `W22` (the 1.8 world with XOR looks, patches mixed evenly) | 1.8 | 4000 | 3 |
-| 2.3 | dopamine critic as a formula: value cells on the pallium and one signed TD error that teaches them and, negated, every synapse pain taught; pallium wiring per population slot; world `W23` (W22 with a reversal at tick 800) | 2.2 | 4000 | 3 |
+| 2.3h | dopamine critic as a formula (the 2.3 brain): value cells on the pallium and one signed TD error that teaches them and, negated, every synapse pain taught; pallium wiring per population slot. Harsh world: one berry per bush worth one berry, a poison berry costing as much (POISON_FOOD -3), a quarter of the metabolic rate, born 0.75 full; the poison and good kinds swap at tick 800 from generation 50 on (`Stage.schedule` = `calm_first(50)`); aversion learning rates start x10 (`av_eta_init`); 2 episodes per generation | 2.2 | 4000 | 3 |
 
 2.2: `flee` and `fed` are unused in this world (lesions 97-101%) and kept: frozen chapter 1 circuits that later worlds
 may need (user, 2026-10-19).
 
-2.3: `value_av` is unused in this world (lesions 97-101%) and kept: it is half of the critic that the next stage builds
-from cells.
+2.3h (frozen 2026-10-20, replacing 2.3 on the chain, user): the calm start and the x10 start values are functions in
+`stages.py` (`calm_first`, `av_eta_init`) and not part of the stored rules digest, which is taken at generation 0 with
+the reversal on. STAGE_LOG v59-v65.
+
+## The first critic (frozen 2026-10-19, off the chain since 2026-10-20)
+
+| stage | what it is | parent | life | seeds |
+|---|---|---|---|---|
+| 2.3 | the same brain in `W23` (the pallium world, six berries to a bush, a reversal at tick 800 from the first generation) | 2.2 | 4000 | 3 |
+
+In that world no creature judged a bush by its look before biting (a first bite on every bush, the visit ended by
+the pain): the critic paid by a learned appetite for bushes, and its learned aversion stayed below the aversive
+cells' threshold (STAGE_LOG v58-v61).
 
 ## The first affect route (frozen, off the chain since 2026-10-17)
 

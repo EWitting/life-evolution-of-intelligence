@@ -67,37 +67,28 @@ remapping the stored populations and freezing again.
 | side paths | 1.1l, 1.5c (centred association before habituation), 1.5f, 1.6h, 1.6 reversal, x.hands, x.td, old 1.2-1.4 | defined, not on the path | Listed with reasons in `frozen/README.md`. |
 | first affect route | 1.8old (states released at once, one berry type per patch; learning unused 99 95 99) -> 2.0 (camera eyes in open country: learning back) -> 2.1 (the chapter 2 world, states that add up) | frozen, off the chain (2026-10-17) | The new 1.8 does this in one stage. Straight from drives with the additive mutation of learning rates, lineages set the rate to 0 and keep it there (`x.affect2`, 200 generations); multiplicative steps keep it (v43, v44). |
 | 2.2 pallium | `pallium` (128 cells, k-WTA 2) reads the eye ahead (`vis+0.app*`, fixed random weights of mixed sign per genome); pain teaches `pallium -> valence_av` (start 0.2); adaptation strength evolves (`Genome.adapt`, main and control). World `W22`: the 1.8 world with XOR looks at similarity 0.5 (poison ++ and --, good +- and -+) and patches mixed evenly (purity 0.25) | **frozen** 2026-10-19, passes (`flee` and `fed` kept though unused here) | Main - control: last 50 generations +106 +-20 (+83, +145, +91); **head to head +229 +-31** (+184, +288, +214); re-evaluated apart, 16 worlds: +73 +-48 (-14, +151, +83). Lesions (16 worlds): pallium 90 88 92, no_plasticity 77 67 87, settle 96 94 91; flee and fed not used (97-101). Lab (`xor_meals`), bites poison / good after lessons, only the pallium learning 0.16 / 0.37 (before 0.38 / 0.39); only the look 0.22 / 0.23. Poison share of bites 0.14 early in a life, 0.08 late. A larger pallium (256, 512) does not lower the transfer to good bites (0.13 at 128). STAGE_LOG v46-v51. |
-| 2.3 critic | dopamine critic as a formula: value cells `value_app` / `value_av` (3 + 3) on the pallium, one-tick copies, `us_taste`; one signed TD error `da` = taste x 0.3 - pain + 3 (0.5 V' - V) teaches the value cells and, negated (`da_neg`), every synapse pain taught (look and pallium -> `valence_av`), one tick late (`elig_delay`). Pallium wiring per population slot (`per_slot`, main and control). World `W23`: W22 with a reversal at tick 800 (poison and good XOR types swap) | **frozen** 2026-10-19, passes (`value_av` kept though unused) | Main - control: last 50 generations +151 +-20; re-evaluated (64 worlds) +127 +-7 (+123, +119, +140); **head to head +177 +-50** (+213, +240, +79). Lesions (64 worlds): value_app 84 83 68, no_plasticity 83 83 83, pallium 83 82 80, us_taste 89 93 80, value_av 101 100 97 (the `_prev` lesions, 20-82, leave an error that never cancels: not a measure of use). Both populations switch at the reversal about equally (P(bite) on a former poison 0.85 vs 0.83 after it); main eats more throughout (172 vs 135) and lives longer. Lab: the error moves from the bites to the cue and turns positive when the pain is omitted; extinction 2.7 -> 1.8 (control 1.2 -> 1.2); no blocking (the second cue is not learned in either). The gap appears only after generation 40. STAGE_LOG v54-v57. |
+| 2.3 critic | dopamine critic as a formula: value cells `value_app` / `value_av` (3 + 3) on the pallium, one-tick copies, `us_taste`; one signed TD error `da` = taste x 0.3 - pain + 3 (0.5 V' - V) teaches the value cells and, negated (`da_neg`), every synapse pain taught (look and pallium -> `valence_av`), one tick late (`elig_delay`). Pallium wiring per population slot (`per_slot`, main and control). World `W23`: W22 with a reversal at tick 800 (poison and good XOR types swap) | frozen 2026-10-19, **off the chain since 2026-10-20** (replaced by 2.3h) (`value_av` kept though unused) | Main - control: last 50 generations +151 +-20; re-evaluated (64 worlds) +127 +-7 (+123, +119, +140); **head to head +177 +-50** (+213, +240, +79). Lesions (64 worlds): value_app 84 83 68, no_plasticity 83 83 83, pallium 83 82 80, us_taste 89 93 80, value_av 101 100 97 (the `_prev` lesions, 20-82, leave an error that never cancels: not a measure of use). Both populations switch at the reversal about equally (P(bite) on a former poison 0.85 vs 0.83 after it); main eats more throughout (172 vs 135) and lives longer. Lab: the error moves from the bites to the cue and turns positive when the pain is omitted; extinction 2.7 -> 1.8 (control 1.2 -> 1.2); no blocking (the second cue is not learned in either). The gap appears only after generation 40. STAGE_LOG v54-v57. |
+| 2.3h critic | the 2.3 brain (formula critic) in a harsh world: one berry per bush worth one berry, a poison berry as costly as a good one is good, a quarter of the metabolic rate, born 0.75 full; the poison and good kinds swap at tick 800 from generation 50 on (`calm_first(50)`); aversion learning rates start x10; 2 episodes per generation | **frozen** 2026-10-20, passes; on the critic page | Re-evaluated (16 worlds) main 1065 vs control 802, **+264 +-87** (+238, +128, +426); **head to head +359 +-76**. Lesions: no_plasticity 40 54 52, pallium 87 99 85, us_taste 87 93 90, **value_av 94 87 91 (used)**, value_app 105 101 109 (not used). After the switch the critic's first bite still favours the kinds good now in all three seeds (poison / good 0.06 / 0.14, 0.06 / 0.09, 0.08 / 0.11), the control's in one of three. Lab: aversion after 6 painful meals 12.0 (control 9.7), after 12 without pain 2.1 (control 9.7); a small blocking effect (second cue 4.8 vs 5.5; control 2.6 vs 2.8). STAGE_LOG v58-v65. |
 | chapter 2, next | pallium -> dopamine critic -> hands -> basal ganglia with actor -> curiosity | planned (ADR-025) | The definitions `old2.1`-`old2.5` and `x.td` in `stages.py` are the first design on the reversal brain; each stage is defined again when its turn comes. |
 | later, 3.x-5.x | pallium clustering, hippocampus, cerebellum, uncertainty modulators; simulating, mentalizing, speaking | planned | |
 
 ## Next steps
 
-0. **Answered (2026-10-20, STAGE_LOG v58, v59): no 2.3 brain judges a bush by its look.** In the recordings the first
-   bite on arrival is as likely on poison as on good (0.43-0.52) and does not fall with earlier pain from that type;
-   all discrimination is the second bite. The learning that pays (-254 at generation 0 without it) is the critic's
-   learned appetite for bushes (`value_app` -> `valence_app`), not an aversion. Cause: the critic's state is only
-   the look ahead, without distance or time, so a look in view for many ticks before the bite drains its own value
-   (gamma 0.5) and the pain is never predicted in the world (error -0.9 after 11+ painful bites; lab ceiling -0.50,
-   -0.87 with the cue in view 16 ticks before). One-berry bushes (`berry_world(one_berry=3)`, draft `x.one`) make
-   the berry counts readable (fitness 1061 vs 1415 at generation 0; F <= 2 starves) but do not fix this alone.
-   **Then (user, 2026-10-20; STAGE_LOG v60):** `pnt` (`stages.pallium_touch`) in a tuned one-berry world, draft
-   stage `x.onet` (born 0.75 full, hunger 0.015): works in the lab, but after 100 generations (seed 0) neither main
-   nor control judges a bush by its look (poison share 0.49 / 0.48; main - control about -90); evolution triples
-   the appetitive value learning and turns the aversion learning down. A world lesson is one tick of pain, three to
-   five times weaker than the lab's; about a factor 3-5 more is unexplained. **Next:** find the rest of the lab-world
-   gap before more evolution. **Bridge (v61, `scripts/probes/bridge.py`):** replays of recorded inputs reproduce
-   the weights; lab and world agree once a lesson is the world's (one tick of pain); pain intensity saturates in
-   `us_pain` (tanh), so only learning rates size a lesson; at a real arrival learning lowers the bite on poison by
-   only 0.04-0.06, though a lab readout of the same weights shows much more (with easy looks 0.26 vs 0.47). **Next:**
-   find what in the arrival state mutes the learned aversion (lab readout started from the world state at arrival;
-   body inputs, side eyes, the approach as it really happens), then decide the world / balance change with the user.
-1. **Then: the dopamine critic built from cells** (2.3 frozen 2026-10-19, tag `stage-2.3`), as its own
-   stage on top of 2.3: the TD formula split into cells (dopamine cells with a baseline, the value difference as
-   synapses); then gamma, the value scale and the taste weight become evolvable (user: not while they are a
-   formula). Open from 2.3: `value_av` is unused (keep or trim, with the user); no blocking in the lab; a sense of
-   time since a cue (the relief burst at cue offset); 100 generations were needed (the main - control gap appears
-   only after generation 40), so keep 100 for learning stages. Probe first (lab tests, generation 0), agree new
+0. **Done (2026-10-20): the critic stage is 2.3h** (frozen, tag `stage-2.3h`, on the critic page; 2.3 off the chain).
+   The road there (STAGE_LOG v58-v65): in the 2.3 world no creature judged a bush by its look (a first bite on
+   every bush, the visit ended by the pain); the learned aversion was real but held below the aversive cells'
+   threshold by inherited hit / near inhibition, a world lesson being one tick of pain; the reversal punished strong
+   aversion learning, so evolution lowered it. A harsh world of small meals (poison as costly as food is good)
+   makes learning indispensable (off: half the fitness lost), and fifty calm generations before the reversal let
+   caution by look evolve first. Tools from this work: `scripts/probes/bridge.py` (record raw inputs, replay them,
+   counterfactuals at real arrivals), `first_bite.py`, `bite_trace.py`, `rebalance.py`, `lab_mixed.py`,
+   `lab_critic.py`; `Stage.schedule`; run checkpoints; poison per phase in dashboards.
+1. **Next: the dopamine critic built from cells**, as its own stage on top of 2.3h (its harsh world): the TD formula
+   split into cells (dopamine cells with a baseline, the value difference as synapses); then gamma, the value scale
+   and the taste weight become evolvable (user: not while they are a formula). Open from 2.3h: `value_app` is unused
+   in this world (keep or trim, with the user; in 2.3 it was `value_av`); blocking only weakly; a sense of time since
+   a cue (the relief burst at cue offset, v59); the touch-gated pallium (`pallium_touch`) helped the critic in the lab
+   but cost fitness in the harsh world (x.harsh, one seed), not used. Probe first (lab tests, generation 0), agree new
    mechanisms with the user.
    Earlier (2.2 frozen, tag `stage-2.2`, `flee` and `fed` kept). Old chapter 2 definitions (`old2.x`, `x.td` in
    `stages.py`) are stale.
@@ -145,9 +136,9 @@ remapping the stored populations and freezing again.
   - `life/brain.py` has long blocks of JAX math without comments; for example the plasticity coefficients
     `Genome.A`-`D` are defined without saying what they are (for the hebb rule: dw = eta * mod * (A pre post + B pre +
     C post + D); the other rules use A and C differently, see `plasticity_rule`).
-  - Recordings do not store what each object is in that life (poison or good, per phase with a reversal); the
-    dashboard and the book infer it from which types hurt after being eaten. Store the rules' food and pain values
-    (per phase) with every recording (`save_recording` already gets the appearances) and read them there.
+  - (Done 2026-10-20) Recordings store the life's food and pain values (`save_recording(rules=...)`), and the
+    dashboard and the book's strips mark poison per phase of a life (`dashboard.poison_phases`; older recordings:
+    inferred per phase from the bites).
   - An example of a bug this caused: an `abcd` set on a projection is silently replaced by the inherited genes
     (`remap_genomes` carries A-D over for a projection that keeps its rule), which flipped the sign of the `td`
     critic variant (STAGE_LOG v54).

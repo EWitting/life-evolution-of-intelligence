@@ -44,7 +44,11 @@
 .lb-controls button:hover, .lb-controls select:hover { border-color: var(--lb-ink2); }
 .lb-controls input[type=range] { flex: 1; min-width: 120px; }
 .lb-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.82rem; color: var(--lb-ink2); }
-.lb-brainlegend { margin-top: 0.45rem; }
+.lb-braincap { position: relative; margin-top: 0.4rem; font-size: 0.82rem; }
+.lb-legbtn { font: inherit; padding: 0; color: var(--bs-link-color, #2780e3); background: none; border: none; text-decoration: underline; cursor: pointer; }
+.lb-brainlegend { position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 4px); padding: 0.55rem 0.8rem; background: var(--lb-surface);
+                  border: 1px solid var(--lb-axis); border-radius: 8px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15); }
+.lb-brainlegend[hidden] { display: none; }
 
 /* charts */
 .lb-grid { stroke: var(--lb-gridline); stroke-width: 1; }

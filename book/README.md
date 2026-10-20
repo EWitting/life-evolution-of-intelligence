@@ -87,7 +87,7 @@ public repository.
 |---|---|---|
 | `status` | a note when the runs are provisional, fewer than three seeds, or not evaluated | |
 | `settings` | world, senses and evolution settings, in a box that is closed until clicked (`data-open` opens it) | |
-| `brain` | regions and projections; hard-wired dark, new in this stage outlined | |
+| `brain` | regions and projections; hard-wired dark, new in this stage outlined; hover texts from `data/glossary.json`, the legend behind a "Legend" link under the diagram | |
 | `curves` | main and control over the generations, every seed and the mean | |
 | `summary` | results table: last generations, re-evaluation, head to head | `--evaluate` for the last two |
 | `lesions` | fitness with each region silenced, per seed | `--evaluate` |

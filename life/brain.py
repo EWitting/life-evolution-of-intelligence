@@ -49,6 +49,8 @@ class BrainState(NamedTuple):
                        # outside the plastic block), signed and without the gain part; computed once at birth
     wg: tuple = ()     # the same for the gain part (projections with gain)
     xd: tuple | jnp.ndarray = ()   # [N] activity of the step before x (only with ProjectionSpec.elig_delay)
+    wl: tuple = ()     # per update phase: the fixed weights of slow synapses (ProjectionSpec.lag), applied to the
+                       # activity of the previous tick
 
 
 class Layout(NamedTuple):
@@ -109,6 +111,8 @@ class Layout(NamedTuple):
     has_delay: bool = False
     per_slot: jnp.ndarray | None = None     # [N, N] 1 where synapses belong to the population slot (ProjectionSpec.per_slot)
     has_per_slot: bool = False
+    lag: jnp.ndarray | None = None          # [N, N] 1 for slow synapses (ProjectionSpec.lag)
+    has_lag: bool = False
 
     def region(self, name: str) -> slice:
         i = self.names.index(name)
@@ -150,7 +154,7 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
     allowed, density, o2o, gain, evolve_w, tune = z(), z(), z(), z(), z(), z()
     proj_id, rule, mod_idx = z(np.int32, -1), z(np.int32), z(np.int32, -1)
     elig, dep_U, dep_rec, eta_init, decay = z(), z(), z(), z(), z()
-    centred, delay, per_slot = z(), z(), z()
+    centred, delay, per_slot, lag = z(), z(), z(), z()
     w_init = z(v=np.nan)
     abcd = np.zeros((4, n, n), np.float32)
     teacher = -np.ones(n, np.int32)
@@ -213,6 +217,8 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
         delay[s, d] = float(p.elig_delay)
         assert not p.per_slot or (not p.evolve and p.w_init is None), f"projection {key}: per_slot needs evolve=False, no w_init"
         per_slot[s, d] = float(p.per_slot)
+        assert not p.lag or p.rule == "fixed", f"projection {key}: a slow synapse (lag) cannot be plastic"
+        lag[s, d] = float(p.lag)
         gain[s, d] = float(p.kind == "gain")
         evolve_w[s, d] = float(p.evolve)
         assert not (p.tune and (p.evolve or p.w_init is None)), f"projection {key}: tune needs evolve=False and w_init"
@@ -279,7 +285,8 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
                   rec_gain=j(rec_gain), rec_bias=j(rec_bias), has_receptors=bool(rec_gain.any() or rec_bias.any()),
                   mod_accum=tuple(float(m.accumulate) for m in mods) if any(m.accumulate for m in mods) else (),
                   elig_delay=j(delay), has_delay=bool(delay.any()),
-                  per_slot=j(per_slot * allowed), has_per_slot=bool((per_slot * allowed).any()))
+                  per_slot=j(per_slot * allowed), has_per_slot=bool((per_slot * allowed).any()),
+                  lag=j(lag * allowed), has_lag=bool((lag * allowed).any()))
 
 
 def constrain(layout: Layout, w: jnp.ndarray, w_max: float) -> jnp.ndarray:
@@ -334,12 +341,12 @@ def init_state(genome: Genome, layout: Layout, w_max: float = 4.0, key: jax.Arra
         w_rand = jax.random.normal(k2, (n, n)) / jnp.sqrt(fan_in)
         w_rand = jnp.where((layout.sign != 0)[:, None], jnp.abs(w_rand), w_rand)
         w = jnp.where(pl, w_rand * mask, w)
-    ws, wg = _fixed_weights(layout, w)
+    ws, wg, wl = _fixed_weights(layout, w)
     return BrainState(x=jnp.zeros(n, jnp.float32), w=w, tr=jnp.zeros(n, jnp.float32),
                       e=jnp.zeros((len(layout.pl_rows), len(layout.pl_cols)), jnp.float32),
                       u=jnp.ones((len(layout.pl_rows), len(layout.pl_cols)), jnp.float32),
                       mod=jnp.zeros(max(m, 1), jnp.float32), g=jnp.zeros(n, jnp.float32), ws=ws, wg=wg,
-                      xd=jnp.zeros(n, jnp.float32) if layout.has_delay else ())
+                      xd=jnp.zeros(n, jnp.float32) if layout.has_delay else (), wl=wl)
 
 
 def block_genome(layout: Layout, genome: Genome) -> Genome:
@@ -361,9 +368,13 @@ def _fixed_weights(layout: Layout, w: jnp.ndarray) -> tuple:
         w = w.at[np.ix_(np.asarray(layout.pl_rows), np.asarray(layout.pl_cols))].set(0.0)
     eff = effective(layout, w)
     add = eff * (1.0 - layout.gain) if layout.has_gain else eff
+    wl = ()
+    if layout.has_lag:   # slow synapses act on the previous tick's activity: kept apart from the others
+        wl = tuple((add * layout.lag)[:, np.asarray(cols)] for cols in layout.phases)
+        add = add * (1.0 - layout.lag)
     ws = tuple(add[:, np.asarray(cols)] for cols in layout.phases)
     wg = tuple((eff * layout.gain)[:, np.asarray(cols)] for cols in layout.phases) if layout.has_gain else ()
-    return ws, wg
+    return ws, wg, wl
 
 
 def _block_in_phases(layout: Layout) -> tuple:
@@ -469,6 +480,8 @@ def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, ob
         def drive(xin, pi):
             """Input to the neurons of phase pi: additive part and (with gain) the log gain."""
             hk = xin @ state.ws[pi]
+            if layout.has_lag:   # slow synapses: the activity at the start of the tick (the previous tick's)
+                hk = hk + state.x @ state.wl[pi]
             lg = xin @ state.wg[pi] if layout.has_gain else 0.0
             if plastic and len(blocks[pi][0]):
                 sel, pos = blocks[pi]
@@ -537,7 +550,7 @@ def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, ob
         action = jax.random.categorical(key, logits / cfg.action_temperature)
     else:
         action = jnp.argmax(logits)
-    new = BrainState(x=x, w=w, tr=tr, e=e, u=u, mod=mod, g=g, ws=state.ws, wg=state.wg, xd=xd)
+    new = BrainState(x=x, w=w, tr=tr, e=e, u=u, mod=mod, g=g, ws=state.ws, wg=state.wg, xd=xd, wl=state.wl)
     if with_logits:
         return new, action.astype(jnp.int32), logits / cfg.action_temperature if cfg.action_temperature > 0 else logits
     return new, action.astype(jnp.int32)

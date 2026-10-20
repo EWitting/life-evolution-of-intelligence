@@ -362,7 +362,7 @@ def extend(base: BrainConfig, regions=(), projections=(), modulators=(), **kw) -
 def fixed(src, dst, w, **kw):
     """A hard-wired projection (every synapse present, designed weight w): innate structure. Evolution cannot
     rewire it or flip its sign, but it may scale the whole projection (tune; ADR-016 amended)."""
-    return P(src, dst, density=1.0, w_init=w, evolve=False, tune=True, **kw)
+    return P(src, dst, density=1.0, w_init=w, evolve=False, **{"tune": True, **kw})
 
 
 # Action indices on the motor region 'out' (actions.py): NOOP 0, FORWARD 1, TURN_LEFT 2, TURN_RIGHT 3, USE 4, EAT 5
@@ -1408,14 +1408,64 @@ def dopamine_cells(brain: BrainConfig, delay: bool = False) -> BrainConfig:
         R("dopamine", 1, sign="exc", alpha=1.0, bias=at, evolve_bias=False, phase=pal + 3, group="midbrain/dopamine")),
         projections=projections + (
             P("in", "habenula", src_select=("pain",), density=1.0, w_init=HAB_PAIN, evolve=False, tune=True),
-            fixed("habenula", "dopamine", HAB_DA), fixed("us_taste", "dopamine", DA_TASTE),
+            # the outputs of tonically active cells are not tuned: a stronger one would move the dopamine cell's
+            # rest away from DA_REST, a standing error (STAGE_LOG v67)
+            fixed("habenula", "dopamine", HAB_DA, tune=False), fixed("us_taste", "dopamine", DA_TASTE),
             fixed("value_app", "dopamine", VAL_DA), fixed("value_av", "habenula", VAL_HAB)),
         modulators=tuple(m for m in brain.modulators if m.name not in ("da", "da_neg")) + (
             Mod("da", pos="dopamine", baseline=DA_REST, scale=DA_SCALE),
             Mod("da_neg", pos="dopamine", baseline=DA_REST, scale=-DA_SCALE)))
 
 
+# The TD form (STAGE_LOG v67; agreed with the user 2026-10-20): each value reaches the dopamine signal twice.
+#   fast, this tick: value_app -| ventral_pallidum -| dopamine (disinhibition: a rising good value is a burst);
+#                    value_av -| gp_habenular -| habenula (a rising bad value releases the habenula: a pause)
+#   slow, a tick late: value_app -| dopamine, value_av -| habenula through slow synapses (ProjectionSpec.lag: the
+#                    value of the tick before)
+# error = taste - pain + gamma (V_app - V_av)(t) - (V_app - V_av)(t-1), gamma = fast / slow strength (tunable). The
+# slow path is the striosomes' direct, slower inhibition of the dopamine cells (the Houk-Adams-Barto critic); the
+# habenula-projecting pallidum (GPh; Stephenson-Jones et al. 2013 in the lamprey, 2016 in mice) carries the bad-news
+# path; a slow striosomal path onto the habenula is the plausible analogue, a modelling choice. The pallidal cells
+# rest at 0.5. Strengths from the formula's value scale 3 and gamma 0.5 at the cells' working point (tanh' = 0.75 at
+# rest 0.5): the error is about 1.5 x the dopamine cell's change of drive.
+TD_SLOW_DA, TD_SLOW_HAB = 2.0, 2.67     # value_app -| dopamine, value_av -| habenula (slow synapses)
+# the fast path's input strengths set gamma (x1.5 of the formula's 0.5, about 0.75: generation 0 on frozen 2.3h, 16
+# worlds: gamma ~0.25 -88, 0.5 base 978, 0.75 +82 (1060, the formula 1072), 1.0 -144; tunable, STAGE_LOG v67)
+TD_VAL_VP, TD_VP_DA = 2.0, 1.0          # value_app -| ventral_pallidum, ventral_pallidum -| dopamine
+TD_VAL_GPH, TD_GPH_HAB = 2.67, 1.0      # value_av -| gp_habenular, gp_habenular -| habenula
+VSTR = "forebrain/basal_ganglia/ventral_striatum"
+PALLIDUM = "forebrain/basal_ganglia/pallidum"
+
+
+def dopamine_td(brain: BrainConfig) -> BrainConfig:
+    """`brain` (with the formula critic) with the TD error computed by cells: dopamine_cells (delay on) with the
+    direct value links made slow and fast pallidal paths added."""
+    b = dopamine_cells(brain, delay=True)
+    rest = float(np.arctanh(0.5))
+    pal = next(r.phase for r in b.regions if r.name == "pallium")
+    regions = []
+    for r in b.regions:
+        if r.name in ("value_app", "value_av"):
+            r = replace(r, group=VSTR)
+        elif r.name == "habenula":   # rests at HAB_REST with the GP-habenular cell at its rest
+            r = replace(r, bias=rest + TD_GPH_HAB * 0.5, phase=pal + 3)
+        elif r.name == "dopamine":   # rests at DA_REST with the habenula and the ventral pallidum at theirs
+            r = replace(r, bias=rest + HAB_DA * HAB_REST + TD_VP_DA * 0.5, phase=pal + 4)
+        regions.append(r)
+    tonic = lambda n: R(n, 1, sign="inh", alpha=1.0, bias=rest, evolve_bias=False, phase=pal + 2, group=PALLIDUM)
+    slow = {("value_app", "dopamine"): TD_SLOW_DA, ("value_av", "habenula"): TD_SLOW_HAB}
+    projections = tuple(replace(p, w_init=slow[(p.src, p.dst)], lag=True) if (p.src, p.dst) in slow else p
+                        for p in b.projections)
+    return replace(b, regions=tuple(regions) + (tonic("ventral_pallidum"), tonic("gp_habenular")),
+                   projections=projections + (
+                       fixed("value_app", "ventral_pallidum", TD_VAL_VP),
+                       fixed("ventral_pallidum", "dopamine", TD_VP_DA, tune=False),
+                       fixed("value_av", "gp_habenular", TD_VAL_GPH),
+                       fixed("gp_habenular", "habenula", TD_GPH_HAB, tune=False)))
+
+
 B24 = dopamine_cells(B23)
+B24TD = dopamine_td(B23)
 B24D = dopamine_cells(B23, delay=True)
 # Draft for the probes (lab tests, generation 0): the 2.3h world as frozen (reversal at 800), from the 2.3h population
 stage(Stage("x.dacells", "x_dopamine_cells", "2.3h", B24, replace(W23, **HARSH_REV_WORLD), VISION_CH1, BODY_17,
@@ -1423,10 +1473,24 @@ stage(Stage("x.dacells", "x_dopamine_cells", "2.3h", B24, replace(W23, **HARSH_R
             **{**_S15, "generations": 100}, evolution=EVOLUTION_2EP, control_brain=B23,
             notes="DRAFT: the critic built from cells (one dopamine cell with a resting rate, habenula, inhibitory "
                   "striatal value cells; Rescorla-Wagner form); control the formula critic"))
+stage(Stage("x.datd", "x_dopamine_td", "2.3h", B24TD, replace(W23, **HARSH_REV_WORLD), VISION_CH1, BODY_17,
+            lambda exp: pallium_world(exp, reverse=True, one_berry=1.0),
+            **{**_S15, "generations": 100}, evolution=EVOLUTION_2EP, control_brain=B23,
+            notes="DRAFT: the TD critic built from cells (pallidal fast paths, striosomal slow paths); control the "
+                  "formula critic"))
 stage(Stage("x.dacellsd", "x_dopamine_cells_delay", "2.3h", B24D, replace(W23, **HARSH_REV_WORLD), VISION_CH1, BODY_17,
             lambda exp: pallium_world(exp, reverse=True, one_berry=1.0),
             **{**_S15, "generations": 100}, evolution=EVOLUTION_2EP, control_brain=B23,
             notes="DRAFT: x.dacells with the error teaching the synapses of a tick earlier (elig_delay)"))
+
+# Stage 2.4: the critic built from cells (TD form), on top of 2.3h in its world (the reversal from generation 0: the
+# population has lived with it). Control: the formula critic of 2.3h. Judged by use and by main not clearly worse.
+stage(Stage("2.4", "s2_4_dopamine", "2.3h", B24TD, replace(W23, **HARSH_REV_WORLD), VISION_CH1, BODY_17,
+            lambda exp: pallium_world(exp, reverse=True, one_berry=1.0),
+            **{**_S15, "generations": 100}, evolution=EVOLUTION_2EP, control_brain=B23,
+            notes="dopamine critic built from cells: a dopamine cell with a resting rate, habenula, inhibitory "
+                  "ventral striatal value cells with fast pallidal and slow striosomal paths (TD); control the "
+                  "formula critic"))
 
 # ------------------------------------------------------------------ running
 

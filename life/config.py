@@ -158,6 +158,9 @@ class ProjectionSpec:
                                      # slow average (its activity trace, RegionSpec.trace_tau; BrainConfig.in_trace_tau
                                      # for inputs): the synapse learns from what is unusual about the input, not from
                                      # what is always there (a covariance rule). Transmission is not changed.
+    lag: bool = False                # a slow synapse: it passes on the source's rate of the previous tick, not of this
+                                     # one (fixed projections only). With a fast path from the same cells the target
+                                     # sees a change of activity (the slow striosomal path of a TD critic)
     elig_delay: bool = False         # with elig_tau: the eligibility trace takes the source's activity of one tick
                                      # earlier, so a modulator computed from this tick's activity (a TD error) teaches
                                      # the synapses of the moment it is about, not those active as it arrives

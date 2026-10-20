@@ -149,7 +149,7 @@ def conditioning(exp, pop, protocol: dict, sim: float, n_agents: int = 24, seed:
         # (vis+0.near 0.4, two cells off; at the mouth 0.8), as a creature walking up to a bush
         n = protocol.get("lead", 1)
         far = n - 1 if protocol.get("approach") else 0
-        return [obs(cues, near=0.4)] * far + [obs(cues)] * (n - far) + [obs(cues, **out) for _ in range(3)] + ([obs(pain=0.3)] if kind == "pain" else [obs()]) \
+        return [obs(cues, near=0.4)] * far + [obs(cues)] * (n - far) + [obs(cues, **out) for _ in range(protocol.get("outcome_ticks", 3))] + ([obs(pain=0.3)] if kind == "pain" else [obs()]) \
             + [obs()] * 4
 
     one = lambda g, st, o: B.step(exp.brain, L, g, st, o, jnp.zeros(3), jax.random.PRNGKey(0))[0]
@@ -162,11 +162,17 @@ def conditioning(exp, pop, protocol: dict, sim: float, n_agents: int = 24, seed:
     av = L.region("valence_av")
     val = (L.region("value_av"), L.region("value_app")) if "value_av" in L.names else None
 
-    def readout(st, o):
+    # the test cue: test_far ticks seen from afar (as a creature walking up to it: the look adapts meanwhile), then
+    # test_ticks at the mouth (default 3; 1 = the first tick at the mouth, where the world's bite is decided)
+    t_far, t_mouth = protocol.get("test_far", 0), protocol.get("test_ticks", 3)
+
+    def readout(st, o, o_far):
         s2 = init(frozen, keys)._replace(w=st.w, ws=st.ws, wg=st.wg)
         for _ in range(40):
             s2 = step(frozen, s2, blank)
-        for _ in range(3):
+        for _ in range(t_far):
+            s2 = step(frozen, s2, o_far)
+        for _ in range(t_mouth):
             s2 = step(frozen, s2, o)
         hall = jax.vmap(lambda x, w, b: x @ B.effective(L, w) + b)(s2.x, s2.w, frozen.b)
         p = np.asarray(jax.nn.softmax(hall[:, -L.n_out:] * exp.brain.logit_gain / exp.brain.action_temperature, axis=-1))
@@ -174,11 +180,11 @@ def conditioning(exp, pop, protocol: dict, sim: float, n_agents: int = 24, seed:
         v = x[:, val[0]].mean(-1) - x[:, val[1]].mean(-1) if val else np.zeros(NA)
         return np.stack([x[:, av].mean(-1), p[:, 4] + p[:, 5], v, np.asarray(hall)[:, av].mean(-1)], -1)
 
-    tests = {k: obs(c) for k, c in protocol["tests"].items()}
+    tests = {k: (obs(c), obs(c, near=0.4)) for k, c in protocol["tests"].items()}
     st = init(pop, keys)
     for _ in range(4):
         st = step(pop, st, blank)
-    res = {k: [readout(st, o)] for k, o in tests.items()}
+    res = {k: [readout(st, *o)] for k, o in tests.items()}
     sig = []
     for kind, cues, n in protocol["train"]:
         for _ in range(n):
@@ -188,5 +194,5 @@ def conditioning(exp, pop, protocol: dict, sim: float, n_agents: int = 24, seed:
                 tr.append(np.asarray(st.mod[:, mi]))
             sig.append(np.stack(tr, -1))
             for k, o in tests.items():
-                res[k].append(readout(st, o))
+                res[k].append(readout(st, *o))
     return dict(tests={k: np.stack(v) for k, v in res.items()}, signal=np.stack(sig))

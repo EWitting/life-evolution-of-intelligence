@@ -3112,3 +3112,50 @@ follows the metabolic rate): lives of about 2500 ticks with about 26 painful bit
 **Evolution, seed 0** (draft stage `x.onet`: main `pallium_touch(B23)`, control the 2.3 brain, same world, warm
 start from frozen 2.3 seed 0, 100 generations, EVOLUTION_NEW; about 40 s per generation). Generation 0 in the run:
 main 2030, control 2050, poison share of bites 0.48 in both.
+By generation 70 (block means of 10): main 1959 -> 2200, control 2010 -> 2222; **poison share of bites 0.48-0.49
+in main and 0.48 in control throughout**: no look discrimination evolves in either within 70 generations.
+
+**Where lab and world part** (lab on frozen 2.3, three seeds x 24; `labtests` readout options `test_far` /
+`test_ticks`, new; `scripts/probes/lab_mixed.py`, new):
+- P(bite) on the trained look in the lab: one painful trial takes it from 0.50 to 0.16-0.19, two to 0.02 (plain and
+  pnt alike, readout as before: a rested brain, the cue 3 ticks at the mouth). Read on the first tick at the mouth
+  after a sudden appearance: no effect (0.49 after two trials, 0.25 after 24); after 8 ticks from afar and one at
+  the mouth (as the world decides a bite): 0.18, 0.02 (pnt: 0.34, 0.16, 0.04 after 6). The aversion needs a few
+  ticks of the look to build up, which an approach gives.
+- Interleaved good meals (1 pain lesson on A, 3 good meals of B, 6 rounds): A 0.05 / B 0.83 (pnt 0.16 / 0.81).
+  With the world's XOR looks (pain on X++ and X--, 3 good meals of X+- and X-+ each): poison corners 0.08, good
+  0.54 (pnt 0.15 / 0.58). Drive of the aversive cells: -1.53 at start, +0.5 per painful lesson.
+- Hunger: in the 2.3 recordings P(bite) on a known poison type (3+ painful bites earlier) is 0.4-0.55 at every
+  stomach fullness; not the gap.
+- **In the world the learning separates the types, but about 15x more weakly per lesson.** Learned drive onto
+  `valence_av` from the mean pallium code of each type at arrival, with the weight snapshots of the 2.3 recording
+  (seed 0): critic tick 300 poison 0.15 / good 0.06, tick 700 0.28 / 0.10 (control 0.11 / 0.04); the look synapses
+  carry nothing (+-0.02). After about 5-8 painful bites by tick 700 that is 0.03 per lesson against 0.5 in the lab.
+  Known parts of the difference: a lab lesson is three ticks of pain, a world bite one (pain_decay 0); the
+  in-view ticks before a bite give a positive error that, negated, unteaches the aversion of the same code (the
+  2.3 brain teaches its aversion with `da_neg`).
+- **One tick of pain per lesson** (lab option `outcome_ticks`, new; XOR protocol as above, plain brain): drive
+  +0.2 for the first lesson, then about +0.1 per lesson (three ticks: +0.5); P(bite) poison / good corners after 6
+  rounds 0.22 / 0.60 (three ticks: 0.08 / 0.54). A world bite gives one tick of pain (`pain_decay` 0 since W15), so
+  each lesson is three to five times weaker than the lab's; the rest of the factor 15 is still open.
+
+**Seed 0 finished** (`runs/x_one_touch/20261020-110332`, `runs/x_one_touch_control/20261020-110338`). Last 50
+generations: main 2216 +- 14, control 2305 +- 10 (main - control about -90); poison share 0.493 / 0.477. Recordings
+(`first_bite.py <run dirs>`): P(bite) per visit, main, poison / good before the switch 0.42 / 0.43, after it
+0.41 / 0.39 (control 0.41 / 0.47, 0.39 / 0.39); on a poison type with 0, 1-2, 3-5, 6+ earlier painful bites
+0.29, 0.43, 0.49, 0.64 (rising, as in 2.3). The split by stomach fullness is confounded (a creature that does not
+bite stays hungry), so not used. **Evolved learning rates** (median per projection; frozen 2.3 seed 0 -> main /
+control): look -> valence_av 0.041 -> 0.018 / 0.018; pallium -> valence_av 0.070 -> 0.043 / 0.108; **pallium ->
+value_app 0.069 -> 0.223 / 0.236**; pallium -> value_av 0.024 -> 0.025 / 0.007. Evolution triples the appetitive
+value learning in both and turns the aversion learning down in main: in this world too, what pays is a learned
+appetite for bushes, not caution by look.
+
+**Lingering pain at generation 0** (x.onet, frozen 2.3 seed 0, 16 worlds; `pain_decay` 0.5 = 1, 0.5, 0.25 ...
+after a poison bite): 1754 vs 1935 at 0; after the switch good / poison 16.8 / 15.1 (at 0: 20.1 / 19.1); learning
+on - off +106 vs +121. A hint of discrimination at a cost in food; not evolved.
+
+Summary: `pnt` works in the lab (the far view no longer drains the value at the mouth), but in the world neither
+brain learns caution by look, at generation 0 or after 100 generations; a world lesson (one tick of pain) is three
+to five times weaker than the lab's, and the rest of the gap (about 15x in learned drive per lesson) is open.
+Not tried yet: a stronger single lesson (pain value per bite, `poison_pain`), the unteaching by the positive error
+during the approach (`da_neg` on the pain-taught synapses), a lab readout from the world's own weight snapshots.

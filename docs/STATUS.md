@@ -75,9 +75,13 @@ remapping the stored populations and freezing again.
    (gamma 0.5) and the pain is never predicted in the world (error -0.9 after 11+ painful bites; lab ceiling -0.50,
    -0.87 with the cue in view 16 ticks before). One-berry bushes (`berry_world(one_berry=3)`, draft `x.one`) make
    the berry counts readable (fitness 1061 vs 1415 at generation 0; F <= 2 starves) but do not fix this alone.
-   **To decide with the user** before the cell-built critic: a state that changes as the bush nears (value cells or
-   pallium reading `no_touch` / distance, v55 `pnt`; or a time-since-cue memory), and the one-berry world (F = 3)
-   for the next stage.
+   **Then (user, 2026-10-20; STAGE_LOG v60):** `pnt` (`stages.pallium_touch`) in a tuned one-berry world, draft
+   stage `x.onet` (born 0.75 full, hunger 0.015): works in the lab, but after 100 generations (seed 0) neither main
+   nor control judges a bush by its look (poison share 0.49 / 0.48; main - control about -90); evolution triples
+   the appetitive value learning and turns the aversion learning down. A world lesson is one tick of pain, three to
+   five times weaker than the lab's; about a factor 3-5 more is unexplained. **Next:** find the rest of the lab-world
+   gap before more evolution (lab readout from the world's weight snapshots; the approach's positive error
+   unteaching the aversion through `da_neg`; a stronger single lesson, `poison_pain`, at generation 0).
 1. **Then: the dopamine critic built from cells** (2.3 frozen 2026-10-19, tag `stage-2.3`), as its own
    stage on top of 2.3: the TD formula split into cells (dopamine cells with a baseline, the value difference as
    synapses); then gamma, the value scale and the taste weight become evolvable (user: not while they are a

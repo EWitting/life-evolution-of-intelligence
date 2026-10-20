@@ -44,6 +44,8 @@ def visits(run: Path):
     reg = {n: slice(o, o + z) for n, o, z in zip(lay["names"], lay["offsets"], lay["sizes"])}
     cells = [n for n in ("valence_av", "valence_app", "value_av", "value_app") if n in reg]
     x = rec["x"]
+    cfg = json.load(open(run / "config.json"))
+    full_food = cfg["world"]["max_food"]
     out = []
     for c in range(N):
         prior = {}                     # (berry, phase) -> painful bites so far
@@ -63,6 +65,7 @@ def visits(run: Path):
             first_hurt = bool(got) and pain[got[0], c] > 0.5
             out.append(dict(poison=hurt[(berry, ph)], ph=ph, len=t - t0, bite=len(bt) > 0, bite0=act[t0, c] in BITE,
                             n=len(got), first_hurt=first_hurt, prior=prior.get((berry, ph), 0),
+                            food=float(rec["food"][t0, c] / full_food),
                             **{n: float(x[t0, c, reg[n]].astype(np.float32).mean()) for n in cells}))
             prior[(berry, ph)] = prior.get((berry, ph), 0) + sum(pain[u, c] > 0.5 for u in got)
     return out
@@ -87,6 +90,15 @@ def table(vs, label):
         for lo, hi in ((0, 0), (1, 2), (3, 5), (6, 99)):
             v = [x for x in vs if x["ph"] == ph and x["poison"] and lo <= x["prior"] <= hi]
             row.append(f"{lo}-{hi}: {np.mean([x['bite'] for x in v]):.2f} [{len(v)}]" if v else f"{lo}-{hi}: -")
+        print(f"    {['before', 'after'][ph]:6s} " + "   ".join(row))
+    print("  by fullness of the stomach on arrival (poison now, 3+ painful bites earlier / good now): P(bite) per visit [visits]")
+    for ph in (0, 1):
+        row = []
+        for lo, hi in ((0, 0.25), (0.25, 0.5), (0.5, 0.75), (0.75, 1.01)):
+            a = [x for x in vs if x["ph"] == ph and x["poison"] and x["prior"] >= 3 and lo <= x["food"] < hi]
+            b = [x for x in vs if x["ph"] == ph and not x["poison"] and lo <= x["food"] < hi]
+            f = lambda xs: f"{np.mean([x['bite'] for x in xs]):.2f} [{len(xs)}]" if xs else "-"
+            row.append(f"{lo:.2f}-{min(hi, 1):.2f}: {f(a)} / {f(b)}")
         print(f"    {['before', 'after'][ph]:6s} " + "   ".join(row))
     cells = [n for n in ("valence_av", "valence_app", "value_av", "value_app") if n in vs[0]]
     print("  cells on the first tick of a visit (mean rate), by kind now and painful bites from that type earlier:")

@@ -1,6 +1,6 @@
 """How much of the pain can the 2.3 critic predict away in the lab? The frozen 2.3 populations (last generation, three
 seeds, 24 creatures each), a new look A followed by pain on every trial (labtests `conditioning`), 60 trials:
-    python scripts/probes/critic_ceiling.py [x1 x5 x20] [lead=1,4,8,16] [approach] [v=pnt]
+    python scripts/probes/critic_ceiling.py [x1 x5 x20] [lead=1,4,8,16] [approach] [v=pnt] [test=8,1]
 lead=a,b,..: the cue is in view for that many ticks before the first bite (labtests protocol "lead"; default 1),
 as when a creature walks up to a bush it can see. xK multiplies the learning rates of pallium -> value_app / value_av by K (x1 = as evolved), to tell too few trials
 from a ceiling. Per trial: the error on the cue tick, mean over the three bites, on the tick after the cue is gone
@@ -20,16 +20,19 @@ from variants import variant
 s = S.STAGES["2.3"]
 D = json.load(open("book/data/2.3.json"))
 N = 60
-proto = dict(train=[("pain", {"vis+0": "A"}, N)], tests={"A": {"vis+0": "A"}})
+proto = dict(train=[("pain", {"vis+0": "A"}, N)], tests={"A": {"vis+0": "A"}, "B": {"vis+0": "B"}})
 show = [1, 2, 6, 12, 24, 40, 60]
 V = next((a[2:] for a in sys.argv[1:] if a.startswith("v=")), "base")   # v=pnt: a brain variant (variants.py)
 proto["approach"] = "approach" in sys.argv[1:]                         # the cue seen from afar before the mouth
+# test=F,M: the readout cue F ticks from afar, then M at the mouth (labtests test_far / test_ticks; default 0,3)
+_t = next((a[5:] for a in sys.argv[1:] if a.startswith("test=")), "0,3").split(",")
+proto["test_far"], proto["test_ticks"] = int(_t[0]), int(_t[1])
 leads = [int(v) for a in sys.argv[1:] if a.startswith("lead=") for v in a[5:].split(",")] or [1]
 mults = [a for a in sys.argv[1:] if a.startswith("x")] or ["x1", "x5", "x20"]
 for arg, lead in [(m, l) for m in mults for l in leads]:
     K = float(arg[1:])
     proto["lead"] = lead
-    sig, val = [], []
+    sig, val, pb = [], [], []
     for r in D["runs"]["main"]:
         run = Path("runs") / r["dir"]
         exp = S.make_exp(s, variant(s.brain, V), "lab", 1, 0)
@@ -45,8 +48,11 @@ for arg, lead in [(m, l) for m in mults for l in leads]:
         res = conditioning(exp, pop._replace(eta=eta), proto, S.PALLIUM_SIM)
         sig.append(res["signal"].mean(1))                 # trials x ticks
         val.append(res["tests"]["A"][:, :, 2].mean(1))    # trials + 1
-    sig, val = np.mean(sig, 0), np.mean(val, 0)
+        pb.append([res["tests"][c][:, :, 1].mean(1) for c in ("A", "B")])   # P(bite) at the mouth, trained / untrained look
+    sig, val, pb = np.mean(sig, 0), np.mean(val, 0), np.mean(pb, 0)
+    print(f"  P(bite) at the mouth, trained look A / untrained B: before {pb[0, 0]:.2f} / {pb[1, 0]:.2f}")
     for t in show:
         q = sig[t - 1, lead - 1:]                         # from the last cue-only tick on
         print(f"  trial {t:2d}: cue onset {sig[t - 1, 0]:+.2f}  cue, mean of later ticks {sig[t - 1, 1:lead].mean() if lead > 1 else 0:+.2f}"
-              f"  bites {q[1:4].mean():+.2f}  after {q[4]:+.2f}   aversive value after the trial {val[t]:+.2f}")
+              f"  bites {q[1:4].mean():+.2f}  after {q[4]:+.2f}   aversive value after the trial {val[t]:+.2f}"
+              f"   P(bite) A / B {pb[0, t]:.2f} / {pb[1, t]:.2f}")

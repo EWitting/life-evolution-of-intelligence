@@ -65,6 +65,42 @@ def poison_objects(names: list[str], ate, pain) -> list[bool]:
     return [hurt.get(food(i), False) for i in range(len(names))]
 
 
+def phase_of_ticks(T: int, world: dict) -> np.ndarray:
+    """The phase (0 / 1) of the rules at every tick of a life: 1 from WorldConfig.switch_tick on, or back and forth
+    every switch_every ticks from then on (life.run.make_simulate)."""
+    t = np.arange(T)
+    sw, ev = int(world.get("switch_tick", 0) or 0), int(world.get("switch_every", 0) or 0)
+    if not sw:
+        return np.zeros(T, int)
+    if ev:
+        return ((t >= sw) & (((t - sw) // ev) % 2 == 0)).astype(int)
+    return (t >= sw).astype(int)
+
+
+def poison_phases(names: list[str], rec, world: dict):
+    """Which objects are of a poison kind: a list per object as poison_objects, or, in a world whose rules switch
+    within a life, {"phases": [list, list], "switch_tick", "switch_every"} (dashboard.html shows the right one at
+    every tick). From the rules stored with the recording (save_recording) when there; otherwise read from the
+    bites of each phase."""
+    ate, pain = rec["ate"][:len(rec["pain"])], rec["pain"]
+    sw, ev = int(world.get("switch_tick", 0) or 0), int(world.get("switch_every", 0) or 0)
+    idx = {n: i for i, n in enumerate(names)}
+    def food(i):   # a bush (full or empty) takes the effect of its berry, the object after the full bush
+        n = names[i].replace("Empty ", "")
+        return idx[n] + 1 if n.endswith("Bush") and n in idx else i
+    if "pain_value" in rec:
+        pv = np.asarray(rec["pain_value"]).reshape(-1, len(names))
+        lists = [[bool(row[food(i)] > 0) for i in range(len(names))] for row in pv]
+    elif sw:
+        ph = phase_of_ticks(len(pain), world)
+        lists = [poison_objects(names, ate[ph == p], pain[ph == p]) for p in (0, 1)]
+    else:
+        lists = [poison_objects(names, ate, pain)]
+    if len(lists) == 1 or not sw:
+        return lists[0]
+    return {"phases": lists, "switch_tick": sw, "switch_every": ev}
+
+
 def _light(data: dict, rec, x: np.ndarray, w_max: float, eta_max: float) -> dict:
     """The light export (book/README.md): three arrays make up almost all of a dashboard's size. Activations
     and weights are kept for a few agents (the best one and others spread evenly over the recorded sample, which
@@ -123,7 +159,7 @@ def build_data(run_dir: Path, light: bool = False) -> dict:
     else:
         appearance = [appearance_for(int(o), k).tolist() for o in rs["ohol_id"]]
     colours = [[0.5 + 0.45 * float(c) for c in a[:3]] if o else [1, 1, 1] for a, o in zip(appearance, rs["ohol_id"])]
-    poison = poison_objects(rs["names"], rec["ate"][:len(rec["pain"])], rec["pain"]) if "ate" in rec else [False] * len(rs["names"])
+    poison = poison_phases(rs["names"], rec, cfg["world"]) if "ate" in rec else [False] * len(rs["names"])
     w_max = cfg["brain"]["w_max"]
     eta_max = cfg["evolution"]["eta_max"]
     try:

@@ -348,8 +348,12 @@ def life_strip(run: Path, agent: int, t0: int, t1: int, regions: tuple, inputs: 
     app = rec["appearance"] if "appearance" in rec else np.zeros((len(rs["names"]), k))
     # what eating each object did in this recording: the stage's poison is set per world, not in ruleset.json
     effect = {}                                  # by the pain it gave, not by the stomach: a bite when full gains nothing
-    for o in np.unique(ate[ate > 0]):
-        effect[int(o)] = "poison" if np.mean(pain[ate == o] > 0.5) > 0.5 else "food"
+    # in a world whose rules switch within a life: from the bites of the phase the strip is in (dashboard.phase_of_ticks)
+    from .dashboard import phase_of_ticks
+    ph = phase_of_ticks(len(pain), cfg["world"])
+    same = ph == ph[min(t0, len(ph) - 1)]
+    for o in np.unique(ate[same][ate[same] > 0]):
+        effect[int(o)] = "poison" if np.mean(pain[same][ate[same] == o] > 0.5) > 0.5 else "food"
     # a bush is judged by its berry (the next object id, as in scripts/probes/events.py)
     names = rs["names"]
     kind = lambda n: "empty bush" if "Empty" in n else "bush" if n.endswith("Bush") else "other"

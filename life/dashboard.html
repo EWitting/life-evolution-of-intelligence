@@ -576,11 +576,16 @@ function skull(ctx, x, y, d) {
   ctx.fillStyle = '#d0242b'; ctx.beginPath(); ctx.arc(-k * 0.33, -k * 0.08, k * 0.24, 0, 7); ctx.arc(k * 0.33, -k * 0.08, k * 0.24, 0, 7); ctx.fill();
   ctx.restore();
 }
-const POISON = M.poison || [];
+// poison kinds: one list, or one per phase of a life when the rules switch (dashboard.poison_phases). Frame t shows
+// the world after tick t, whose bushes are eaten under the rules of tick t + 1
+const PZ = Array.isArray(M.poison) || !M.poison ? {phases: [M.poison || []], switch_tick: 0, switch_every: 0} : M.poison;
+const phaseAt = tt => !PZ.switch_tick || tt < PZ.switch_tick ? 0
+  : PZ.switch_every ? (Math.floor((tt - PZ.switch_tick) / PZ.switch_every) % 2 === 0 ? 1 : 0) : 1;
+const poisonNow = () => PZ.phases[Math.min(phaseAt(t + 1), PZ.phases.length - 1)];
 const markPoison = () => $('markPoison').checked;
 function paintObject(ctx, x, y, o, useS) {   // in cell units
   paintThing(ctx, x, y, o, useS);
-  if (POISON[o] && markPoison()) skull(ctx, x + 0.74, y + 0.26, 0.5);
+  if (markPoison() && poisonNow()[o]) skull(ctx, x + 0.74, y + 0.26, 0.5);
 }
 function paintThing(ctx, x, y, o, useS) {
   const im = useS ? sprites[String(M.ohol_id[o])] : null;
@@ -591,7 +596,7 @@ function paintThing(ctx, x, y, o, useS) {
   } else { ctx.fillStyle = objColour[o]; ctx.fillRect(x + 0.1, y + 0.1, 0.8, 0.8); }
 }
 function syncCache(useS) {
-  const g = grid.a, base = t * H * W, mode = (useS ? 'sprites' : 'plain') + (markPoison() ? '+poison' : '');
+  const g = grid.a, base = t * H * W, mode = (useS ? 'sprites' : 'plain') + (markPoison() ? '+poison' + phaseAt(t + 1) : '');
   const full = !cache || cacheMode !== mode;
   if (full) {
     if (!cache) { cache = document.createElement('canvas'); cache.width = W * CC; cache.height = H * CC; cacheCtx = cache.getContext('2d'); cacheGrid = new Int16Array(H * W); }
@@ -696,8 +701,10 @@ document.querySelectorAll('[data-follow]').forEach(b => b.addEventListener('clic
 function toggleFollow() { followOn = !followOn; store.set('follow', followOn); document.querySelectorAll('[data-follow]').forEach(el => el.classList.toggle('on', followOn)); if (followOn) setTick(t, true); }
 $('legendObjects').innerHTML = M.names.map((n, i) => {
   if (!i) return '';
-  const url = DATA.sprites[String(M.ohol_id[i])];
-  return `<span class="chip" title="retina colour of ${n}">${url ? `<img src="${url}" alt="">` : ''}<i style="background:${objColour[i]}"></i>${n}${POISON[i] ? ' <b style="color:#d0242b">☠ poison</b>' : M.food_value[i] ? ` <span class="muted">food ${M.food_value[i]}</span>` : ''}</span>`;
+  const url = DATA.sprites[String(M.ohol_id[i])], P = PZ.phases;
+  const pz = P.length > 1 && P[0][i] !== P[1][i] ? ` <b style="color:#d0242b">☠ poison ${P[0][i] ? `until tick ${PZ.switch_tick}` : `from tick ${PZ.switch_tick}`}</b>`
+    : P[0][i] ? ' <b style="color:#d0242b">☠ poison</b>' : '';
+  return `<span class="chip" title="retina colour of ${n}">${url ? `<img src="${url}" alt="">` : ''}<i style="background:${objColour[i]}"></i>${n}${pz || (M.food_value[i] ? ` <span class="muted">food ${M.food_value[i]}</span>` : '')}</span>`;
 }).join('');
 
 // ---------- agent panel ----------

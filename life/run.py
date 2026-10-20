@@ -256,9 +256,13 @@ def recording_lock(verbose: bool = True):
 
 def save_recording(out_dir: Path, exp: ExperimentConfig, ruleset: Ruleset, layout: brain.Layout, pop: brain.Genome,
                    recs: dict, best: int, rows: list[dict] | None = None, dashboard: bool = True,
-                   appearance=None):
-    """Write recording.npz (+ genome arrays needed to interpret it) and the interactive dashboard."""
+                   appearance=None, rules: RuleArrays | None = None):
+    """Write recording.npz (+ genome arrays needed to interpret it) and the interactive dashboard. `rules`: the
+    rules of the recorded life; their food and pain values are stored (per phase, [2, M], with a reversal), so that
+    what is poison when is known exactly (dashboard.poison_phases)."""
     extra = {} if appearance is None else {"appearance": np.asarray(appearance, np.float32)}
+    if rules is not None:
+        extra.update(food_value=np.asarray(rules.food_value, np.float32), pain_value=np.asarray(rules.pain_value, np.float32))
     np.savez_compressed(out_dir / "recording.npz", best=best, w0=np.asarray(pop.w0, np.float16), **extra,
                         eta=np.asarray(pop.eta, np.float16), mask=np.asarray(pop.mask, np.uint8),
                         **{k: np.asarray(v) for k, v in recs.items()})
@@ -374,7 +378,7 @@ def run_evolution(exp: ExperimentConfig, ruleset: Ruleset, fitness_fn: Callable[
     with recording_lock(verbose):   # the population is saved already; the recording needs much more memory
         _, recs = sim_rec(rules0, pop_rec, ep_keys[0])   # episode 0 of the last generation again, recording on
         save_recording(out_dir, exp, ruleset, layout, pop_rec, recs, best_rec, rows, dashboard=dashboard,
-                       appearance=app)
+                       appearance=app, rules=rules_last)
         del recs
     if verbose:
         print(f"wrote {out_dir}" + ("  (open dashboard.html in a browser)" if dashboard else ""))

@@ -3419,3 +3419,29 @@ Generation 0 (frozen 2.3h seed 0, 16 worlds; formula 1072, Rescorla-Wagner cells
 **+82 +- 18 (1060)**, -144 +- 42. Set to x1.5 (gamma about 0.75).
 **Stage 2.4** (`s2_4_dopamine`): B24TD in the 2.3h world (reversal at 800 from generation 0), from frozen 2.3h seed 0,
 control the formula critic (B23), EVOLUTION_2EP, at most 100 generations with smart early stopping. Seed 0 running.
+
+## v68 (2026-10-21): 2.4 seed 0 stopped; the cells' value scale was 3x too large; rerun
+
+First run of 2.4 (gamma about 0.75, 2 episodes): last 10 generations main / control at 10: 1004 / 1030, 20: 944 /
+1051, 30: 922 / 1078, 40: 1001 / 1066, 50: 956 / 1320; stopped at 53 / 55 (early stopping: the gap grew). Checkpoints
+(generation 49) re-evaluated in the same 16 worlds: cells 1010 +- 49 (value learning off +94 +- 37), formula 1246 +- 71
+(value learning off -69 +- 23). Cutting the formula's value -> valence links costs nothing (-9 +- 17), so not that.
+Recordings (`record.py`, new options FILE / BRAIN / NAME; `runs/_rec24/`; `scripts/probes/cell_trace.py`, new: cells
+around bites and at arrivals) at generation 0: the two errors alike on average in the world (painful bite -0.92 vs
+-0.94 on the tick after, good bite +0.25 vs +0.27, no burst after a painful bite: the lab's came from its lingering
+pain); the value cells nearly silent in both (0.01-0.04; their learning rates are tiny, from 2.3h). A regression of
+the cells' error on the value cells (quiet ticks): da ~ +6.85 V_app(t) -8.38 V_app(t-1) -6.58 V_av(t) +8.35 V_av(t-1)
+at generation 0 (R^2 0.95): **a value scale of about 8.4 instead of 3**, as every value cell has its own synapse (the
+strengths had been set per unit of mean value but applied per synapse); noise 3x the formula's from the same cells.
+At generation 49: +6.70 / -6.67 / -5.35 / +5.72: evolution had pushed gamma to about 1 (slow path weakened), the only
+way it had to damp the oversized prediction term.
+Fix: path strengths divided by the number of value cells. Generation 0 again (frozen 2.3h seed 0, 16 worlds): gamma
+0.5 1041 +- 74, 0.75 +34 +- 16, **0.9 +56 +- 18 (1098; the formula 1072)**, value learning off 1082. Set to gamma about
+0.9 (`TD_VAL_VP` 2.4, `TD_VAL_GPH` 3.2). The gamma sweep of v67 and the Rescorla-Wagner numbers of v66 were made with
+the scale error (the RW conclusion, a relief error at the cue, does not depend on the scale).
+Also from the traces (both critics alike): at the first tick of a visit the pallium's input to the aversive cells
+separates poison from good (+1.0 to +1.2 vs +0.2 to +0.3), the look synapses' does not (+1.4 to +1.8 on poison, +2.2 to
++3.5 on good bushes not bitten): the look pathway learns a general "bushes hurt" that swings with each meal, and about
+80% of visits to good bushes end without a bite. `bite_trace.py` now takes the weights from before a visit (it took the
+snapshot after the visit's block, which already held the lesson of a bite in it; the split in v61 is affected).
+2.4 seed 0 restarted with the fix.

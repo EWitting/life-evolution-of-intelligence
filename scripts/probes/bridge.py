@@ -5,6 +5,7 @@ them) with parts of the stream removed, and read the learned weights out as in t
                                            [world_field=value ...]
     python scripts/probes/bridge.py replay <name> [conditions ...] [AT=800]
     python scripts/probes/bridge.py arrive <name> [AT=800]
+    python scripts/probes/bridge.py swap <name> [AT=800]
 record: the run's last population (default frozen 2.3 seed 0), 64 creatures in the stage's world scaled to them
 (as life.book reversal_life), one world, to runs/bridge/<name>.npz. SIM / XOR: the novel looks' similarity to the
 original bush and whether they are XOR corners (XOR=0: a random direction per type, so every type is easy to tell
@@ -246,10 +247,93 @@ def arrive(name, at):
         print(f"  {'all ' + ('poison' if kk else 'good'):24s} " + "  ".join(f"{m:15.2f}" for m in v.mean(0)) + f"  [{len(v)}]")
 
 
+def swap(name, at):
+    """At every real arrival (first tick of a visit to a full bush, ticks AT/2 to AT), the effect of learning on the
+    bite: P(bite) with the weights of that moment minus P(bite) with the weights of birth, in five situations that go
+    from the lab readout to the world one step at a time:
+        lab        a rested brain (activity and averages cleared), stomach 0.5 and nothing else, the bush's look 8
+                   ticks from afar (near 0.4) and one at the mouth: the lab readout, with the weights of the arrival
+        +body      ... with the creature's own body inputs of the arrival tick (stomach, skin, age, pain, held, sound)
+        +approach  ... and the creature's own eye inputs of the 8 ticks before the arrival and of the arrival
+                   (all eyes, the real approach), its body inputs of each of those ticks
+        +state     the same 9 real ticks from the creature's own brain state 9 ticks before the arrival (not rested)
+        world      the decision as it was (the brain's state at the arrival, one step)"""
+    meta = json.loads((OUT / f"{name}.json").read_text())
+    d = dict(np.load(OUT / f"{name}.npz"))
+    s, exp, pop = setup(meta)
+    rs, _ = s.build(exp)
+    L = make_layout(exp)
+    names = list(L.in_names)
+    K = exp.vision.appearance_dim
+    obs, sig = jnp.asarray(d["obs"][:at]), jnp.asarray(d["sig"][:at])
+    T, N, n_in = obs.shape
+    kind = kinds(rs, d["pain_value"], 0)
+    app = jnp.asarray(d["appearance"].reshape(-1, *d["appearance"].shape[-2:])[0])
+    front = jnp.asarray(d["front"][:at].astype(np.int32))
+    vis = np.array([n.startswith("vis") for n in names])
+    a_app = np.array([names.index(f"vis+0.app{k}") for k in range(K)])
+    blank = np.zeros(n_in, np.float32)
+    blank[names.index("food")] = 0.5
+    if "temperature" in names:
+        blank[names.index("temperature")] = 0.5
+    blank = jnp.asarray(blank)
+    keys = jax.random.split(SLOT_KEY, N)
+    gb = B.block_genome(L, pop)
+    gf = gb._replace(eta=jnp.zeros_like(gb.eta))
+    born = jax.vmap(lambda g, k: B.init_state(g, L, key=k))(pop, keys)
+    st1 = jax.vmap(lambda g, st_, o, sg: B.step(exp.brain, L, g, st_, o, sg, jax.random.PRNGKey(0), with_logits=True))
+    pb = lambda lg: jax.nn.softmax(lg, -1)[:, 4] + jax.nn.softmax(lg, -1)[:, 5]
+    z = jnp.zeros((N, 3), jnp.float32)
+    visv = jnp.asarray(vis)
+
+    def run(st, seq):   # seq: 9 x N x n_in; returns P(bite) on the last tick
+        lg = None
+        for j in range(9):
+            st, _, lg = st1(gf, st, seq[j], z)
+        return pb(lg)
+
+    def body(carry, t):
+        c, hist = carry                      # hist: the states of the last 9 ticks (oldest first), for +state
+        look = app[front[t]]                 # N x K: the look of what is at the mouth now
+        lab_o = lambda near: jnp.broadcast_to(blank, (N, n_in)).at[:, names.index("vis+0.hit")].set(1.0)             .at[:, names.index("vis+0.near")].set(near).at[:, a_app].set(look)
+        lab_seq = jnp.stack([lab_o(0.4)] * 8 + [lab_o(0.8)])
+        own = lambda j: obs[jnp.maximum(t - 8 + j, 0)]
+        body_seq = jnp.stack([jnp.where(visv, lab_seq[j], obs[t]) for j in range(9)])
+        appr_seq = jnp.stack([own(j) for j in range(9)])
+        out = []
+        for w in (c.w, born.w):
+            rest = born._replace(w=w)
+            then = jax.tree_util.tree_map(lambda h: h[0], hist)._replace(w=w)
+            out += [run(rest, lab_seq), run(rest, body_seq), run(rest, appr_seq), run(then, appr_seq),
+                    pb(st1(gf, c._replace(w=w), obs[t], sig[t])[2])]
+        new = st1(gb, c, obs[t], sig[t])[0]
+        hist = jax.tree_util.tree_map(lambda h, x: jnp.concatenate([h[1:], x[None]]), hist, c)
+        return (new, hist), jnp.stack(out)
+
+    hist0 = jax.tree_util.tree_map(lambda x: jnp.repeat(x[None], 9, 0), born)
+    _, P = jax.lax.scan(body, (born, hist0), jnp.arange(T))
+    P = np.asarray(P)                          # T x 10 x N: learned (5), born (5)
+    full_bush = np.array([n.endswith("Wild Gooseberry Bush") and "Empty" not in n for n in rs.names])
+    fr, alive = d["front"][:at], d["alive"][:at]
+    labels = ["lab", "+body", "+approach", "+state", "world"]
+    print(f"\n{name}: P(bite) at real arrivals, learned weights (born weights) and the effect of learning")
+    for lo, hi in ((at // 2, at), (3 * at // 4, at)):
+        print(f"  ticks {lo}-{hi}")
+        for kk in (True, False):
+            sel = [(t, c) for c in range(N) for t in range(max(lo, 1), hi)
+                   if alive[t, c] and full_bush[fr[t, c]] and fr[t, c] in kind and kind[fr[t, c]] == kk and fr[t - 1, c] != fr[t, c]]
+            v = np.array([P[t, :, c] for t, c in sel])
+            m = v.mean(0)
+            print(f"    {'poison' if kk else 'good':6s} [{len(sel):4d}] " + "  ".join(
+                f"{l} {m[i]:.2f} ({m[i + 5]:.2f}) {m[i] - m[i + 5]:+.2f}" for i, l in enumerate(labels)))
+
+
 if __name__ == "__main__":
     what, name, rest = sys.argv[1], sys.argv[2], sys.argv[3:]
     if what == "record":
         record(name, rest)
+    elif what == "swap":
+        swap(name, int(next((a[3:] for a in rest if a.startswith("AT=")), 800)))
     elif what == "arrive":
         arrive(name, int(next((a[3:] for a in rest if a.startswith("AT=")), 800)))
     else:

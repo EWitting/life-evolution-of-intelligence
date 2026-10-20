@@ -3201,3 +3201,21 @@ decision at the bush does not use them. Input adaptation lowers bites on everyth
 gap. x.onet's own weights read out at 0.95 / 0.97 (drive -1.39 / -1.42): after 100 generations it learns almost no
 aversion. Open: why the same weights move the lab readout (8 ticks from afar, stomach 0.5, nothing else in view)
 so much more than the decision at a real arrival.
+
+**Correction and the path to the bite** (same day, later). `bridge.py swap`: at every real arrival the effect of
+learning (learned minus birth weights) in five situations from the lab readout to the world. The readout gap of
+the easy-looks world (0.26 / 0.47) was mostly innate: with birth weights 0.18 / 0.30; learning adds +0.04 / +0.09.
+In w23 (lab readout at the arrival's weights) learning gives poison -0.09, good +0.35: mostly a learned appetite for
+the good types. Replaying the real 9 ticks from the real state reproduces the world (0.54 / 0.54). So the learned
+aversion is weak in the world, not unused; "the weights know" above was wrong.
+`scripts/probes/bite_trace.py` (new; frozen 2.3 seed 0 recording, first tick of visits before tick 800, poison
+after 2+ painful bites from that type): when it bites a known poison the aversive cells are silent (0.001; held
+back 0.077), and so is `no_feed` (0.003; held back 0.137, which then inhibits the bite outputs by -1.15 and grasp by
+-0.41). `hungry` inhibits `no_feed` only slightly (-0.03 to -0.05). Input to `valence_av` on those ticks: learned
+looks +0.50 and pallium +0.37 and value_av +0.14 on a known poison (good: -0.43, +0.05, +0.05), so the learned
+aversion separates the kinds by about 1.3; but the other eye inputs give -2.35 (hit and near of every eye: vis-60.hit
+-0.69, vis+0.near -0.39, vis+60.hit -0.32, vis+30.near -0.30, vis+0.hit -0.22, ...; inherited weights, e.g.
+vis+0.near -0.50, vis+0.hit -0.23) and the bias -0.5 to -0.7. **The learned aversion is real but stays about 2 below
+the aversive cells' threshold**: an innate "things near me are not alarming" inhibition, evolved in chapter 1, masks
+it. Seven one-tick lessons give about +1; breaking through needs about +3 (the old lab trials reached +2.8 in 12
+three-tick lessons).

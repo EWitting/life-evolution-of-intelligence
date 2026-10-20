@@ -2,14 +2,14 @@
 
 [Learning from surprise]{.lb-subtitle}
 
-<div data-life="status" data-stage="2.3h"></div>
+<div data-life="status" data-stage="2.3c"></div>
 
 ::: {.lb-takeaway}
-**New:** cells that predict how good or bad the next moments will be, and a teaching signal that is the *surprise*:
-what happened minus what was predicted. This is the role of dopamine.
+**New:** cells that predict how good or bad the next moments will be, and a dopamine cell whose firing is the
+*surprise*: what happened minus what was predicted, a burst above its resting rate for better, a pause for worse.
 
 **Result:** in a world whose poisons change, creatures with the critic live better than creatures taught by pain
-alone, in all three seeds, and they need the cells that predict bad things. In the lab the signal moves from the
+alone, and after the change they still tell the kinds apart by their look. In the lab the signal moves from the
 pain to its warning, as in recordings of dopamine cells, and an aversion fades when the pain stops coming, which
 pain alone cannot do.
 :::
@@ -23,20 +23,22 @@ and goes on eating what now hurts it until each new pain has been learned.
 The new teacher is a **critic**. It keeps an expectation and teaches with the difference. An expected pain teaches
 nothing new; a pain that fails to come is a pleasant surprise, and that undoes the aversion.
 
-<div data-life="brain" data-stage="2.3h"></div>
+<div data-life="brain" data-stage="2.3c"></div>
 
 ## The circuit
 
-- **Value cells** read the pallium and learn, within the life, how good (`value_app`) and how bad (`value_av`) the
-  next few moments will be when a bush looks like this.
-- **The surprise** is computed every tick: *taste − pain + prediction now − prediction a moment ago*. When things
-  go as predicted the terms cancel. A bite that tastes better than predicted makes it positive; a pain, or a
-  prediction that falls, makes it negative.
-- **It teaches** the value cells, so the predictions improve, and every synapse that pain taught before (look and
-  pallium onto the *bad* cells): a bad surprise strengthens the aversion, a good one weakens it.
-
-In the model the surprise is a formula; in the brain it is the firing of dopamine cells. Building it from cells is
-the next step.
+- **The dopamine cell** fires at a steady resting rate. Its rate minus that rest is the surprise: above it, things
+  went better than expected; below it, worse. Taste excites it. Pain excites the **habenula**, which silences it.
+- **Value cells** in the ventral striatum read the pallium and learn, within the life, how good (`value_app`) and
+  how bad (`value_av`) the next moments will be when a bush looks like this. Like all striatal cells they inhibit.
+  The good ones learn from bursts, the bad ones from pauses: the two learning rules of the striatum's two cell types.
+- **Each prediction reaches the dopamine cell twice.** Fast, through steadily active cells of the pallidum that it
+  inhibits (`ventral_pallidum`, `gp_habenular`): a rising good prediction releases dopamine at once, a rising bad one
+  releases the habenula. And slowly, directly, a moment late. Fast minus slow is the *change* of prediction, so the
+  surprise is *taste − pain + prediction now − prediction a moment ago*: when things go as predicted, the terms
+  cancel.
+- **The surprise teaches** the value cells, so the predictions improve, and every synapse that pain taught before
+  (look and pallium onto the *bad* cells): a bad surprise strengthens the aversion, a good one weakens it.
 
 ## Biology
 
@@ -45,6 +47,12 @@ out worse. In the classic recordings in monkeys they fire at a drop of juice; on
 juice, they fire at the light instead; and when the juice is then left out, they pause at the moment it should have
 come. This is the teaching signal of *temporal-difference learning*, a method from machine learning that predicted
 these recordings.
+
+How the expectation is subtracted is the work of the basal ganglia. The ventral striatum (nucleus accumbens) learns
+what a sight predicts and reaches the dopamine cells in two ways: directly, with slow inhibition, and through the
+ventral pallidum, whose steady inhibition of the dopamine cells it lifts. Bad news takes a parallel route through a
+part of the pallidum that drives the habenula, which pauses the dopamine cells; it was described in the lamprey, the
+oldest living vertebrate line. The same striatum, pallidum and dopamine signal will later choose actions.
 
 Insects run the same scheme in the mushroom body (the counterpart of the pallium), with separate dopamine cells for
 reward and for punishment. Mammals mostly signal both with one population of cells, as this model does.
@@ -58,18 +66,18 @@ creature has time for many lessons. For the first half of the evolution the kind
 at tick 800 of every life, the two poison kinds of bush turn good and the two good kinds turn poison, their looks
 unchanged.
 
-<div data-life="settings" data-stage="2.3h"></div>
+<div data-life="settings" data-stage="2.3c"></div>
 
 ## Did it work?
 
-<div data-life="verdict" data-stage="2.3h" data-used="no_plasticity,value_av,pallium"></div>
+<div data-life="verdict" data-stage="2.3c" data-used="no_plasticity,value_av,pallium"></div>
 
 The critic pays, alone and when the two kinds share a world. Without learning half the fitness is lost: in this
 world a creature that does not learn which bushes hurt cannot live. Of the critic's cells, those that predict bad
 things (`value_av`) are used; those that predict good things (`value_app`) are not. The critic's lesson here is
 "this no longer hurts": a pain that was predicted and does not come.
 
-<div data-life="lines" data-stage="2.3h" data-example="reversal_life"></div>
+<div data-life="lines" data-stage="2.3c" data-example="reversal_life"></div>
 
 **Both learn the look; after the switch the critic keeps it right.** Early in life both kinds of creature bite the
 bushes that hurt less often than the good ones. After tick 800 both soon stop eating the bushes that turned poison,
@@ -82,13 +90,13 @@ before the switch; the pain teacher's do so in one seed of three.
 The theory makes sharp predictions, and they can be tested on one creature at a time. A new bush is put in front of
 it; it bites three times and feels pain each time; after a pause the next trial begins.
 
-<div data-life="lines" data-stage="2.3h" data-example="dopamine_shift"></div>
+<div data-life="lines" data-stage="2.3c" data-example="dopamine_shift"></div>
 
 **The surprise moves to the warning.** At the first painful meal the signal drops at the bites. After a few meals it
 drops as soon as the bush appears, and less at the bites. When the pain is then left out, the signal turns positive
 where the pain should have been, as in the monkey recordings.
 
-<div data-life="bars" data-stage="2.3h" data-example="conditioning_lab" data-rows="0,1" data-col0="critic" data-col1="pain teacher"></div>
+<div data-life="bars" data-stage="2.3c" data-example="conditioning_lab" data-rows="0,1" data-col0="critic" data-col1="pain teacher"></div>
 
 **Extinction:** when the pain stops, the critic's aversion fades to a fraction over twelve meals; the pain
 teacher's does not change at all, since nothing in it can weaken a lesson.
@@ -96,18 +104,18 @@ teacher's does not change at all, since nothing in it can weaken a lesson.
 ## Full results
 
 ::: {.callout-note collapse="true" title="Fitness over the generations"}
-<div data-life="curves" data-stage="2.3h"></div>
+<div data-life="curves" data-stage="2.3c"></div>
 
 The kinds swap within a life from generation 50 on; until then each kind keeps its meaning, and fitness falls for
 both at the change.
 :::
 
 ::: {.callout-note collapse="true" title="All fitness measures"}
-<div data-life="summary" data-stage="2.3h"></div>
+<div data-life="summary" data-stage="2.3c"></div>
 :::
 
 ::: {.callout-note collapse="true" title="All lesions"}
-<div data-life="lesions" data-stage="2.3h"></div>
+<div data-life="lesions" data-stage="2.3c"></div>
 
 The large losses for `value_app_prev` and `value_av_prev` are not a sign of use. These cells hold a copy of the
 prediction a moment ago, and the surprise is the difference between the two. Silencing only the copy leaves an
@@ -115,13 +123,13 @@ error that never cancels, and this error unteaches every aversion.
 :::
 
 ::: {.callout-note collapse="true" title="The lab and the switch in numbers"}
-<div data-life="table" data-stage="2.3h" data-example="conditioning_lab"></div>
+<div data-life="table" data-stage="2.3c" data-example="conditioning_lab"></div>
 
 **Blocking** (last two rows) is a test of the theory: a second warning sign, added to one that already predicts the
 pain, should be learned less than one added to a sign that predicted nothing. The critic shows a small effect in
 that direction; the pain teacher none.
 
-<div data-life="table" data-stage="2.3h" data-example="reversal_bites"></div>
+<div data-life="table" data-stage="2.3c" data-example="reversal_bites"></div>
 :::
 
 ::: {.callout-note collapse="true" title="What it took"}
@@ -137,8 +145,19 @@ that direction; the pain teacher none.
   that the first generation has learners to select; evolution kept it high.
 - **A calm start.** With the swap from the first generation, the lesson that the look matters had to be learned in
   a world that keeps changing its mind; with fifty generations without it, caution by look evolves first.
+- **Both paths.** With only the slow, direct inhibition the dopamine cell compares what happens with what was
+  predicted for this very moment. A known poison bush in view then predicts pain before any pain comes, and that
+  reads as relief: on every step of the approach it unlearned the aversion, and the creatures did worse than with no
+  predictions at all. The fast path through the pallidum turns the comparison into one between now and a moment ago,
+  so a view that stays the same is no surprise.
+- **A first version of this page** computed the surprise with a formula instead of cells. The creatures with the
+  formula did a little better than these; the cells are kept because they are how the brain does it and because
+  the basal ganglia that follow are built from the same parts.
 - **The right moment.** The surprise of a tick is about the step that led to it, so it changes the synapses that
   were active a tick earlier (real synapses are changed by dopamine that arrives a second or two late).
+- **Steady cells keep their strength.** Evolution may tune how strongly the predictions reach the dopamine cell,
+  but not the outputs of the steadily active cells: changing those moved the dopamine cell's resting rate, and a
+  surprise that never settles at zero.
 - **A short horizon.** Nothing tells the creature how long a pain will last while the bush is in view, so the
   predictions look only a few ticks ahead. A sense of time since a warning is for a later stage.
 - **Wiring of its own.** The pallium's random wiring belongs to the creature's place in the population, not to its
@@ -147,4 +166,4 @@ that direction; the pain teacher none.
 
 ## Runs
 
-<div data-life="runs" data-stage="2.3h"></div>
+<div data-life="runs" data-stage="2.3c"></div>

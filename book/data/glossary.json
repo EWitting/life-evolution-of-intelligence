@@ -23,7 +23,11 @@
     "value_app": "Predicts how good the next few moments will be for what the creature sees; learned within the life from the surprise.",
     "value_av": "Predicts how bad the next few moments will be for what the creature sees; learned within the life from the surprise.",
     "value_app_prev": "A copy of value_app one tick ago: the prediction a moment ago, one of the terms of the surprise.",
-    "value_av_prev": "A copy of value_av one tick ago: the prediction a moment ago, one of the terms of the surprise."
+    "value_av_prev": "A copy of value_av one tick ago: the prediction a moment ago, one of the terms of the surprise.",
+    "dopamine": "The dopamine cell: it fires at a steady resting rate; a burst above it means better than expected, a pause below it worse. Its rate minus the rest is the surprise that teaches.",
+    "habenula": "Carries bad news to the dopamine cell: pain excites it, and it silences dopamine. A predicted pain holds it down, so a pain that fails to come makes dopamine burst.",
+    "ventral_pallidum": "A steadily active cell that holds the dopamine cell back; the cells that predict good things inhibit it, so a rising good prediction releases dopamine at once (the fast path).",
+    "gp_habenular": "A steadily active cell of the pallidum that holds the habenula back; the cells that predict bad things inhibit it, so a rising bad prediction excites the habenula and pauses dopamine (the fast path)."
   },
   "groups": {
     "ganglion": "A small net of evolved cells between the senses and the motor neurons: the first brain, like the nerve cords of a worm.",
@@ -36,14 +40,19 @@
     "affect": "Lasting states built up by modulators: alarm after repeated pain, contentment after good meals.",
     "forebrain": "The front of the brain, where what is seen is learned about within a life.",
     "forebrain/pallium": "The roof of the forebrain; in mammals most of it became the cerebral cortex.",
-    "forebrain/basal_ganglia": "The critic: cells that learn to predict good and bad outcomes, and whose change of prediction is part of the surprise that dopamine signals."
+    "forebrain/basal_ganglia": "The critic: cells that learn to predict good and bad outcomes, and whose change of prediction is part of the surprise that dopamine signals.",
+    "epithalamus": "Above the thalamus: the habenula, a relay of bad news to the dopamine cells.",
+    "midbrain": "The midbrain: here the cells that broadcast dopamine.",
+    "midbrain/dopamine": "The dopamine cells of the midbrain (VTA and substantia nigra), which report surprise to the whole forebrain.",
+    "forebrain/basal_ganglia/ventral_striatum": "The ventral striatum (nucleus accumbens): inhibitory cells that learn from the pallium what a sight predicts, and report it to the dopamine cells slowly (directly) and fast (through the pallidum).",
+    "forebrain/basal_ganglia/pallidum": "The pallidum: steadily active cells through which the striatum acts, by inhibiting them."
   },
   "modulators": {
     "us_av": "The pain teacher's signal: it lets the synapses onto the bad cells grow.",
     "us_app": "The taste teacher's signal: it lets the synapses onto the good cells grow.",
     "alarm": "Released by pain and cleared slowly: a running sum of recent pain that drives flee.",
     "serotonin": "Released by fed and cleared slowly: a running sum of recent good bites that drives settle.",
-    "da": "Dopamine, the surprise: taste minus pain, plus the prediction now, minus the prediction a moment ago. It teaches the value cells.",
+    "da": "Dopamine, the surprise: taste minus pain, plus the prediction now, minus the prediction a moment ago. In the critic built from cells it is the dopamine cell's rate minus its rest. It teaches the value cells.",
     "da_neg": "The same surprise with its sign turned round, for the synapses onto the bad cells: a bad surprise strengthens the aversion, a good one weakens it."
   }
 }

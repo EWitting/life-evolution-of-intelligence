@@ -3445,3 +3445,25 @@ separates poison from good (+1.0 to +1.2 vs +0.2 to +0.3), the look synapses' do
 80% of visits to good bushes end without a bite. `bite_trace.py` now takes the weights from before a visit (it took the
 snapshot after the visit's block, which already held the lesson of a bite in it; the split in v61 is affected).
 2.4 seed 0 restarted with the fix.
+
+## v69 (2026-10-21): 2.4 seed 0 with the corrected cells: functional, beats the pain teacher; the page version 2.3c
+
+2.4 seed 0, rerun with the value scale fixed and gamma about 0.9 (two runs side by side, the WSL file cache dropped by
+a monitor whenever it passed 1.2 GB; Windows kept 3-6 GB free). Last 10 generations main / control (formula): at 23
+982 / 1036, 32 1008 / 1100, 41 1114 / 1138, 53 1114 / 1228, 61 1133 / 1214, 70 1110 / 1178, 82 1116 / 1178, 100
+1236 / 1387. Checkpoint 39: path strengths drift in both directions across genomes (pain -> habenula median 2.21,
+range 1.40-3.69; taste -> dopamine 0.18; value_av -> gp_habenular 0.85 vs 1.07 designed), unlike the first run (pain
+down to 1.43-1.63): drift more than selection; the tunable strengths add variation the formula lacks.
+User's criterion (2026-10-21): the cell critic is an improvement for its realism and for the later basal ganglia
+stages if it works and beats the pain teacher at the reversal; it need not match the formula. Final populations in
+the same 16 worlds (`rebalance.py`): **cells 1178 +- 74** (value learning off -69 +- 40: the predictions now pay;
+learning off -605), formula 1252 +- 84, **pain teacher (2.3h control, seed 0) 943 +- 31**. Good / poison berries
+after the switch: cells 16.6 / 8.7 (poison share 0.34), formula 17.2 / 7.8 (0.31), pain teacher 8.4 / 5.8 (0.41).
+Lab (`lab_critic.py`, 24 creatures): extinction 9.7 -> 1.6 (pain teacher 9.6 -> 9.6); error on the sixth painful
+meal: bush -0.21, bites -0.78, after +0.03 (the burst after the cue goes has shrunk in evolution); first meal without
+pain +0.33 at the bites. XOR meals with world-like lessons: poison 0.05 / good 0.22 after six rounds (pain teacher
+0.04 / 0.37).
+User: the cell version replaces the formula on the critic page, with no intermediate stage. So the page version is
+**2.3c**: 2.3h's design with the cell critic (B24TD), from frozen 2.2, the harsh world, fifty calm generations, the
+aversion learning rates x10 at the start, control the 2.2 brain (the pain teacher), EVOLUTION_2EP; three seeds running
+as pairs.

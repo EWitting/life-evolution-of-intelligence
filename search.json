@@ -114,7 +114,7 @@
     "href": "roadmap.html",
     "title": "Roadmap",
     "section": "",
-    "text": "Chapter 1: steering\nThis page says where the book is going. The first chapter is written and the second has begun. Everything after that is a plan, and the plan changes as the experiments come in: stages have already been moved, merged and left out, and that will happen again.\nThe order follows the five breakthroughs of A Brief History of Intelligence. Each is one chapter, each belongs to a group of animals, and each builds on the brain of the chapter before it.\nThe brain of a small worm. It turns what it sees into movement (Steering), sorts the world into good and bad (Valence), stops reacting to what is always there (Habituation), learns in one life which new foods hurt (Association), looks after hunger and cold (Drives), and stays in a state for a while after a meal or a poison bite, a state that builds up over several bites (Affect).\nThis creature learns one thing: what to stay away from. It cannot learn what is worth going to, and it cannot learn what to do.",
+    "text": "Chapter 1: steering\nThis page says where the book is going. The first chapter is written and the second has begun. Everything after that is a plan, and the plan changes as the experiments come in: stages have already been moved, merged and left out, and that will happen again.\nThe order follows the five breakthroughs of A Brief History of Intelligence. Each is one chapter, each belongs to a group of animals, and each builds on the brain of the chapter before it.\nThe brain of a small worm. It turns what it sees into movement (Steering), sorts the world into good and bad (Valence), stops reacting to what is always there (Habituation), learns in one life which new foods hurt (Association), looks after hunger and cold (Drives), and stays in a state for a while after a meal or a poison bite, a state that builds up over several bites (Affect). Last, a region with random wiring spreads the look of a thing out over many cells, so that things that look alike can still be told apart, even when only a combination of features says which is which (Pallium). Insects have such a region, the mushroom body; in vertebrates it is the oldest part of the pallium.\nThis creature learns one thing: what to stay away from, taught by pain. It cannot learn what is worth going to, it cannot unlearn, and it cannot learn what to do.",
     "crumbs": [
       "Roadmap"
     ]
@@ -124,7 +124,7 @@
     "href": "roadmap.html#chapter-2-reinforcing",
     "title": "Roadmap",
     "section": "Chapter 2: reinforcing",
-    "text": "Chapter 2: reinforcing\nThe brain of an early fish. The first vertebrates hunted in open water, and nearly all the parts of the vertebrate brain were already there. This chapter adds them in the following order.\n\nThe pallium (page). The first region whose wiring is random and not shaped by evolution. It spreads the look of a thing out over many cells, so that things that look alike can still be told apart, even when only a combination of features says which is which. In chapter 1, what the creature learned about one food spread to the foods that resembled it.\nDopamine. A cell that fires when things turn out better than expected, and falls silent when they turn out worse. With it the creature learns what predicts food, and what predicts the thing that predicts food. It also learns to like, which chapter 1 could not do.\nHands. Until here the creature eats what it grasps. Now it can pick something up, hold it and eat it later, so that there is something to choose between.\nThe basal ganglia. The same dopamine signal teaches which action to take. This is learning by trial and error, as in a rat that learns to press a lever.\nCuriosity. New things become a little rewarding in themselves, so that the creature tries what it does not know yet.\n\nParked until these work: a map of places and the routes between them (the hippocampus), precise timing (the cerebellum), and modulators that set how fast the creature learns when its world is steady or changing.\nTwo things change in how the stages are done. The circuits are designed and tested before any evolution, and evolution then tunes them, in fewer generations than in chapter 1. And the learning stages get lab experiments: one creature in a scripted situation, as in an animal lab, to see whether it learns the way real animals do.",
+    "text": "Chapter 2: reinforcing\nThe brain of an early fish. The first vertebrates hunted in open water, and nearly all the parts of the vertebrate brain were already there. What they add is learning from surprise: the difference between what happened and what was expected. This chapter adds the parts in the following order.\n\nDopamine (Critic). A cell that fires when things turn out better than expected, and falls silent when they turn out worse. With it the creature learns what predicts food, and what predicts the thing that predicts food. It also learns to like, and to unlearn, which chapter 1 could not do.\nHands. Until here the creature eats what it grasps. Now it can pick something up, hold it and eat it later, so that there is something to choose between.\nThe basal ganglia. The same dopamine signal teaches which action to take. This is learning by trial and error, as in a rat that learns to press a lever.\nCuriosity. New things become a little rewarding in themselves, so that the creature tries what it does not know yet.\nThe hippocampus. A map of places, made from the creature’s sense of its own movement and from landmarks, so that it can learn where food is, not only what it looks like, and go back there when it is out of sight. It comes after the basal ganglia: a map is of use only to a creature that can learn which way to turn at a place. Goldfish without this part of the pallium can still learn to swim to a marker, but no longer to a place.\n\nParked until these work: precise timing (the cerebellum), and modulators that set how fast the creature learns when its world is steady or changing.\nTwo things change in how the stages are done. The circuits are designed and tested before any evolution, and evolution then tunes them, in fewer generations than in chapter 1. And the learning stages get lab experiments: one creature in a scripted situation, as in an animal lab, to see whether it learns the way real animals do.",
     "crumbs": [
       "Roadmap"
     ]
@@ -134,7 +134,7 @@
     "href": "roadmap.html#chapter-3-simulating",
     "title": "Roadmap",
     "section": "Chapter 3: simulating",
-    "text": "Chapter 3: simulating\nThe brain of an early mammal, and its new part, the neocortex. The cortex learns to predict what the creature will sense next. Once it can do that, it can be run without the world: the creature stops at a choice, plays out each option, and picks the one that ends best.\nThe planned stages: a cortex that predicts, trying actions in the head at a choice point, replaying experience during rest and sleep, holding a goal through distractions, and remembering a single event.\nThe tests are the classic ones from the rat lab. An animal that explored a maze without reward goes straight to food that appears there later. An animal whose path is blocked takes a detour. An animal that has had enough of one food stops working for it at once.",
+    "text": "Chapter 3: simulating\nThe brain of an early mammal, and its new part, the neocortex. The cortex learns to predict what the creature will sense next. Once it can do that, it can be run without the world: the creature stops at a choice, plays out each option, and picks the one that ends best.\nThe planned stages: a cortex that predicts, trying actions in the head at a choice point, routes stored on the map of chapter 2 and replayed during rest and sleep, holding a goal through distractions, and remembering a single event.\nThe tests are the classic ones from the rat lab. An animal that explored a maze without reward goes straight to food that appears there later. An animal whose path is blocked takes a detour. An animal that has had enough of one food stops working for it at once.",
     "crumbs": [
       "Roadmap"
     ]
@@ -658,7 +658,7 @@
     "href": "affect.html#the-world",
     "title": "Affect",
     "section": "The world",
-    "text": "The world\nThe bushes now grow in patches, mostly of one kind: after good meals the neighbouring bushes are probably good, after poison bites probably poison. Not every bush in a patch is of the patch’s kind, so knowing a bush by its look, the lesson of the association stage, still has a job.\nThe world is also four times larger for the same number of creatures, with more food, so that creatures take less food from each other and what a better forager gains is not hidden. This is the world the next chapter starts in. The rest is as before: cold, hot springs, and four kinds of berry bush, new in every life, half of them poison.",
+    "text": "The world\nThe bushes now grow in patches, mostly of one kind: after good meals the neighbouring bushes are probably good, after poison bites probably poison. Not every bush in a patch is of the patch’s kind, so knowing a bush by its look, the lesson of the association stage, still has a job.\nThe world is also four times larger for the same number of creatures, with more food, so that creatures take less food from each other and what a better forager gains is not hidden. The next stage keeps this world. The rest is as before: cold, hot springs, and four kinds of berry bush, new in every life, half of them poison.",
     "crumbs": [
       "Chapter 1: steering",
       "<span class='chapter-number'>6</span>  <span class='chapter-title'>Affect</span>"
@@ -680,7 +680,7 @@
     "href": "affect.html#full-results",
     "title": "Affect",
     "section": "Full results",
-    "text": "Full results\n\n\n\n\n\n\nNoteFitness over the generations\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nNoteAll fitness measures\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nNoteAll lesions, and what is not used here\n\n\n\n\n\n\n\n\nrest, through which both staying after a meal and staying in the warmth act, costs more than fed or settle.\nTwo older circuits are not used in this world:\n\ncold and warm_seek. A fed creature that walks off in search of warmth leaves the good ground; staying where the food is turns out to be worth more.\nLearning. In these patches the look of a bush and the ground it stands on say much the same thing, and the creatures lean on the ground: two poison bites and the alarm carries them off. The learning rate is still there in every seed. What keeps learning from paying is that a lesson about one berry spreads to the berries that look like it, the problem the next chapter starts with.\n\nNeither was removed: the next stages need the learning.\n\n\n\n\n\n\n\n\n\nNoteAfter a bite\n\n\n\n\n\n\n\n\nAfter poison bites the creatures take a few more steps than the old brain, after a good meal a few fewer. The differences are small in this measure because one bite alone no longer sets a state off.\n\n\n\n\n\n\n\n\n\nNoteHow a life is spent\n\n\n\n\n\n\n\n\nBoth populations stand still for most of their life, much of it biting at nothing: a creature held in place by rest still has its grasp programme, and a bite costs little.",
+    "text": "Full results\n\n\n\n\n\n\nNoteFitness over the generations\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nNoteAll fitness measures\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nNoteAll lesions, and what is not used here\n\n\n\n\n\n\n\n\nrest, through which both staying after a meal and staying in the warmth act, costs more than fed or settle.\nTwo older circuits are not used in this world:\n\ncold and warm_seek. A fed creature that walks off in search of warmth leaves the good ground; staying where the food is turns out to be worth more.\nLearning. In these patches the look of a bush and the ground it stands on say much the same thing, and the creatures lean on the ground: two poison bites and the alarm carries them off. The learning rate is still there in every seed. What keeps learning from paying is that a lesson about one berry spreads to the berries that look like it, the problem the next stage takes on.\n\nNeither was removed: the next stages need the learning.\n\n\n\n\n\n\n\n\n\nNoteAfter a bite\n\n\n\n\n\n\n\n\nAfter poison bites the creatures take a few more steps than the old brain, after a good meal a few fewer. The differences are small in this measure because one bite alone no longer sets a state off.\n\n\n\n\n\n\n\n\n\nNoteHow a life is spent\n\n\n\n\n\n\n\n\nBoth populations stand still for most of their life, much of it biting at nothing: a creature held in place by rest still has its grasp programme, and a bite costs little.",
     "crumbs": [
       "Chapter 1: steering",
       "<span class='chapter-number'>6</span>  <span class='chapter-title'>Affect</span>"
@@ -704,7 +704,7 @@
     "section": "",
     "text": "The circuit\nTelling look-alikes apart\nSince the association stage the creature learns from pain which bushes to avoid, on the look of a bush: a handful of colour features. That works when poison and good food differ in some feature. It fails when what makes a bush poison is a combination: here a bush is poison when its two colour features are both high or both low, and good when one is high and the other low. Whatever a lesson on the features teaches about one poison, it teaches the opposite about the other.\nThis stage adds a new region in front of the learning, the pallium.\nOnly the eye ahead feeds the pallium: at a bite, the side eyes see neighbouring bushes, and those would be blamed too. A creature turns to a bush before it bites it, so the eye ahead sees the one that counts.",
     "crumbs": [
-      "Chapter 2: reinforcing",
+      "Chapter 1: steering",
       "<span class='chapter-number'>7</span>  <span class='chapter-title'>Pallium</span>"
     ]
   },
@@ -715,7 +715,7 @@
     "section": "",
     "text": "pallium: 128 cells. Each reads the colour features of the eye that points straight ahead, through synapses of random strength. The wiring is random and evolution does not shape it: what matters is that every cell is different, not what each one is.\nFew cells at a time. Only the two cells that receive the most input fire; the others are held silent. (Real brains do this with inhibitory cells that every active cell excites; the model takes the shortcut and keeps the strongest two, called k-winners-take-all.) Because so few cells fire, two kinds of bush that share most of their look share almost none of their active cells.\nThe lesson. Pain teaches the synapses from the pallium onto the bad cells, by the same rule that has taught the synapses from the look since the association stage. The old route stays and still learns too; evolution sets how fast each route learns.",
     "crumbs": [
-      "Chapter 2: reinforcing",
+      "Chapter 1: steering",
       "<span class='chapter-number'>7</span>  <span class='chapter-title'>Pallium</span>"
     ]
   },
@@ -724,9 +724,9 @@
     "href": "pallium.html#biology",
     "title": "Pallium",
     "section": "Biology",
-    "text": "Biology\nThe pallium is the roof of the forebrain of all vertebrates; in mammals most of it became the cerebral cortex. Its oldest part handles smell: in the piriform cortex every cell receives input from a random handful of smell channels, and only a few percent of the cells respond to any one smell. Insects arrived at the same design on their own in the mushroom body: about fifty smell channels fan out onto thousands of cells, a few percent of which fire, held down by a single inhibitory cell that all of them excite. Such a random, sparse expansion separates inputs that overlap, which is why a fly can learn to avoid one smell and not its look-alike.\nA fish turns to its prey before it strikes, and many fish have a patch of the retina with denser cells for this; the eye ahead stands for that. That the first vertebrate pallium did this job for vision is a guess of the model; that it began as such a sensory region is not.",
+    "text": "Biology\nInsects and vertebrates both have a region built for telling look-alikes apart. In the insect mushroom body, about fifty smell channels fan out onto thousands of cells, a few percent of which fire, held down by a single inhibitory cell that all of them excite; dopamine cells then teach the synapses at its output what each pattern means. The vertebrate pallium, the roof of the forebrain (in mammals most of it became the cerebral cortex), has the same design in its oldest part, the piriform cortex: every cell receives input from a random handful of smell channels, and only a few percent of the cells respond to any one smell. Such a random, sparse expansion separates inputs that overlap, which is why a fly can learn to avoid one smell and not its look-alike.\nWhether the two are one invention is open. The mushroom bodies of marine worms are built from the same set of genes as the vertebrate pallium, which suggests that a common, worm-like ancestor already had such a region; insects and vertebrates may also have arrived at it twice. Either way the design is old and simple, and in this book it closes the first chapter: it is still taught by pain alone, as in the association stage. It keeps the vertebrate name, pallium, because the later stages build on it.\nA creature turns to a bush before it bites it, so the eye ahead stands for the part of the senses that an animal points at its food. That the first such region did this job for vision, and not only for smell, is a guess of the model.",
     "crumbs": [
-      "Chapter 2: reinforcing",
+      "Chapter 1: steering",
       "<span class='chapter-number'>7</span>  <span class='chapter-title'>Pallium</span>"
     ]
   },
@@ -737,7 +737,7 @@
     "section": "The world",
     "text": "The world\nThe world of the affect stage, with two changes. The four new kinds of bush in every life have looks on the corners of a square, as in the figure above. And the patches are mixed: every patch holds every kind, so where a bush grows says nothing about what it is, and the look has to do the job.",
     "crumbs": [
-      "Chapter 2: reinforcing",
+      "Chapter 1: steering",
       "<span class='chapter-number'>7</span>  <span class='chapter-title'>Pallium</span>"
     ]
   },
@@ -748,7 +748,7 @@
     "section": "Did it work?",
     "text": "Did it work?\n\n\n\nThe pallium is used in every seed. Switching off all learning costs more than the pallium alone, because the look still learns as well. Against the old brain, the new brain is ahead in every seed when the two share a world. Measured apart, one seed is level: one life per creature makes that measure noisy.\n\nIn the lab\nThe sharpest test is outside the world. One creature at a time eats from four new bushes, two poison and two good, twice each, and is then shown each bush again. How likely is it to bite?\n\n\n\nLearning on the look alone makes the creature shy of all four bushes alike: it cannot tell the kinds apart. Learning through the pallium alone more than halves the bites at poison and leaves the good bushes almost untouched. With both routes learning, as in the world, the creature is shy of the good bushes too, but less than of the poison.",
     "crumbs": [
-      "Chapter 2: reinforcing",
+      "Chapter 1: steering",
       "<span class='chapter-number'>7</span>  <span class='chapter-title'>Pallium</span>"
     ]
   },
@@ -757,9 +757,9 @@
     "href": "pallium.html#full-results",
     "title": "Pallium",
     "section": "Full results",
-    "text": "Full results\n\n\n\n\n\n\nNoteFitness over the generations\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nNoteAll fitness measures\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nNoteAll lesions\n\n\n\n\n\n\n\n\nOf the states of the affect stage only the one that settles the creature at food is still used, a little; fleeing and being fed no longer matter. In mixed patches the place says little about a bush; its look says more.\n\n\n\n\n\n\n\n\n\nNoteThe lab in numbers\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nNoteWhat it took\n\n\n\n\n\n\nMixed patches. In patches of mostly one kind, the place answered the question first: a poison bite or two and the alarm carried the creature off, and knowing a poison by its look saved only the first bite at the next bush of that kind. Evolution then turned the lessons down.\nFewer cells at a time. With four cells active instead of two, a lesson spread twice as far to the good bushes.\nEvolution still damps aversion close up. In every population the inputs that see a bush right ahead hold the bad cells down: approach what is in front of you. A lesson has to overcome that before it can stop a bite.\n\nFrom this stage on, how strongly the look inputs adapt (the habituation of chapter 1) is set by evolution too.",
+    "text": "Full results\n\n\n\n\n\n\nNoteFitness over the generations\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nNoteAll fitness measures\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nNoteAll lesions\n\n\n\n\n\n\n\n\nOf the states of the affect stage only the one that settles the creature at food is still used, a little; fleeing and being fed no longer matter. In mixed patches the place says little about a bush; its look says more.\n\n\n\n\n\n\n\n\n\nNoteThe lab in numbers\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nNoteWhat it took\n\n\n\n\n\n\nMixed patches. In patches of mostly one kind, the place answered the question first: a poison bite or two and the alarm carried the creature off, and knowing a poison by its look saved only the first bite at the next bush of that kind. Evolution then turned the lessons down.\nFewer cells at a time. With four cells active instead of two, a lesson spread twice as far to the good bushes.\nEvolution still damps aversion close up. In every population the inputs that see a bush right ahead hold the bad cells down: approach what is in front of you. A lesson has to overcome that before it can stop a bite.\n\nFrom this stage on, how strongly the look inputs adapt (the habituation stage) is set by evolution too.",
     "crumbs": [
-      "Chapter 2: reinforcing",
+      "Chapter 1: steering",
       "<span class='chapter-number'>7</span>  <span class='chapter-title'>Pallium</span>"
     ]
   },
@@ -770,7 +770,7 @@
     "section": "Runs",
     "text": "Runs",
     "crumbs": [
-      "Chapter 2: reinforcing",
+      "Chapter 1: steering",
       "<span class='chapter-number'>7</span>  <span class='chapter-title'>Pallium</span>"
     ]
   },

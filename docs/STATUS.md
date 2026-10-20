@@ -80,8 +80,12 @@ remapping the stored populations and freezing again.
    nor control judges a bush by its look (poison share 0.49 / 0.48; main - control about -90); evolution triples
    the appetitive value learning and turns the aversion learning down. A world lesson is one tick of pain, three to
    five times weaker than the lab's; about a factor 3-5 more is unexplained. **Next:** find the rest of the lab-world
-   gap before more evolution (lab readout from the world's weight snapshots; the approach's positive error
-   unteaching the aversion through `da_neg`; a stronger single lesson, `poison_pain`, at generation 0).
+   gap before more evolution. **Bridge (v61, `scripts/probes/bridge.py`):** replays of recorded inputs reproduce
+   the weights; lab and world agree once a lesson is the world's (one tick of pain); pain intensity saturates in
+   `us_pain` (tanh), so only learning rates size a lesson; at a real arrival learning lowers the bite on poison by
+   only 0.04-0.06, though a lab readout of the same weights shows much more (with easy looks 0.26 vs 0.47). **Next:**
+   find what in the arrival state mutes the learned aversion (lab readout started from the world state at arrival;
+   body inputs, side eyes, the approach as it really happens), then decide the world / balance change with the user.
 1. **Then: the dopamine critic built from cells** (2.3 frozen 2026-10-19, tag `stage-2.3`), as its own
    stage on top of 2.3: the TD formula split into cells (dopamine cells with a baseline, the value difference as
    synapses); then gamma, the value scale and the taste weight become evolvable (user: not while they are a

@@ -15,9 +15,15 @@ than control (user, 2026-10-01). One life is mostly luck, so a design is checked
    evolution, with results in the book (BRAIN_EVOLUTION principle 4).
 2. **Generation 0, paired**: `scripts/probes/gen0.py` (parent population, mechanism on vs off, same worlds). A
    diagnostic, not a gate: a neutral or mildly negative result can still go on to evolution.
-3. **Evolution**: main vs control, 64 genomes x 4 siblings, recombination, **100 generations** (user, 2026-10-17:
-   long enough to tell whether a circuit is used, short of full convergence at about 160, STAGE_LOG v44), weight
-   mutation 0.1, learning rates mutating multiplicatively (`eta_log_std` 0.3, `Stage.evolution`), three seeds:
+3. **Evolution**: main vs control, 64 genomes x 4 siblings, recombination, at most **100 generations** (user,
+   2026-10-17: long enough to tell whether a circuit is used, short of full convergence at about 160, STAGE_LOG v44),
+   weight mutation 0.1, learning rates mutating multiplicatively (`eta_log_std` 0.3, `Stage.evolution`), **2 episodes
+   per generation** for new stages (`EVOLUTION_2EP`, user 2026-10-20), three seeds.
+   **Smart early stopping is the default** (user, 2026-10-20): runs write `checkpoint.npz` every 10 generations; the
+   agent running them reads the training curves and checkpoints (learning rates, recordings, quick lesions) and stops
+   a run once the trends are clear and the main - control outcome is unlikely to change. Convergence is not required.
+   Exception: a stage whose world changes over the generations (`Stage.schedule`, e.g. 2.3h: no reversal for the
+   first 50) runs at least into the changed world far enough to judge it.
 
        stages replicate <key>      two more seeds of main and control
        stages summary <key>        last 50 generations (+ re-evaluation in 8 shared worlds), +- s.e. over seeds

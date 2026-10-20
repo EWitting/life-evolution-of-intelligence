@@ -1202,7 +1202,12 @@ stage(Stage("2.2", "s2_2_pallium", "1.8", B22P, W22, VISION_CH1, BODY_17, palliu
 EPISODES = 4                     # worlds per generation: 16 lives per genome (4 siblings x 4 worlds) nearly double the
                                  # selection accuracy for 2.3x the GPU time; one large world or many small ones do no
                                  # better (STAGE_LOG v52). Frozen stages ran with 1 and keep it.
-EVOLUTION_NEW = (("eta_log_std", 0.3), ("episodes", EPISODES))   # Stage.evolution of every stage from the dopamine critic on
+EVOLUTION_NEW = (("eta_log_std", 0.3), ("episodes", EPISODES))   # Stage.evolution of 2.3 (frozen) and its drafts
+# Stage.evolution of new stages from 2026-10-20 on (user): 2 worlds per generation, 8 lives per genome. The time of a
+# generation grows with the lives simulated (a generation ends when every creature is dead), and the harsh-world
+# populations live 2-3x longer than those of v52 (more time per life to tell genomes apart): 4 episodes took 30-40 s
+# per generation, 2 take about half (cost probe 2026-10-20: 8.7 s vs 4.1 s at generation 0)
+EVOLUTION_2EP = (("eta_log_std", 0.3), ("episodes", 2))
 
 # Draft of the dopamine critic (2026-10-19): the 2.2 brain and world, for the generation-0 probes on the frozen 2.2
 # population (`gen0.py` with variant `td`); the stage proper is defined once the probes settle the design.
@@ -1362,7 +1367,7 @@ def calm_first(generations: int):
 HARSH_CALM = 50   # 2.3h: generations without the reversal first (user, 2026-10-20: one stage, no intermediate one)
 stage(Stage("2.3h", "s2_3h_critic", "2.2", B23, replace(W23, **HARSH_REV_WORLD), VISION_CH1, BODY_17,
             lambda exp: pallium_world(exp, reverse=True, one_berry=1.0),
-            **{**_S15, "generations": 100}, evolution=EVOLUTION_NEW, control_brain=per_slot_pallium(B22P),
+            **{**_S15, "generations": 100}, evolution=EVOLUTION_2EP, control_brain=per_slot_pallium(B22P),
             adapt_init=av_eta_init, schedule=calm_first(HARSH_CALM),
             notes="CANDIDATE: dopamine critic as a formula in the harsh world (one berry worth one, poison as costly, "
                   "low metabolic rate); the reversal at 800 from generation HARSH_CALM on; control the 2.2 brain"))

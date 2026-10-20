@@ -19,7 +19,8 @@ One life is mostly luck and an evolution run mixes many confounders, so fitness 
    the same worlds. A diagnostic, not a gate; balances and scales may need adjusting at generation 0 when a
    module is added.
 3. **Evolution**: one seed first, three seeds for a claim; then look inside the finished run (lesions, learned
-   weights, traces) before starting the next one.
+   weights, traces) before starting the next one. Stop runs early once trends are clear and the main - control
+   outcome is unlikely to change (read `checkpoint.npz`, written every 10 generations); convergence is not required.
 
 ## Standing rules
 

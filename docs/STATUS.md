@@ -67,16 +67,17 @@ remapping the stored populations and freezing again.
 
 ## Next steps
 
-0. **Resume here, first (user, 2026-10-20): does any brain judge a bush by its look before the first bite?**
-   `scripts/probes/reversal_variants.py` on the frozen 2.3 populations (last generation, main and control; STAGE_LOG
-   v58): with swaps every 400 ticks both switch within 100 ticks at every swap, equally; with **one berry per bush**
-   (worth 3, regrowing as 3) neither tells poison from good at all (P(bite) at the mouth 0.46 / 0.46 critic, 0.55 /
-   0.58 control, no crossover). So the crossover in the book figure is mostly the visit-ending reflex (stop at the
-   first painful berry, eat all six of a good bush), not a learned aversion to the look, though the lab shows the
-   aversion is learned. The book page stays as it is for now (user). To find out: the chance of a first bite on
-   arriving at a bush in the 2.3 world; why lab learning does not show in the world (strength, the readout through
-   `valence_av`, evolution favouring "bite once and see"); whether a world of one-bite bushes (evolved in, from
-   generation 0) makes the look matter. Tackle this before the cell-based critic.
+0. **Answered (2026-10-20, STAGE_LOG v58, v59): no 2.3 brain judges a bush by its look.** In the recordings the first
+   bite on arrival is as likely on poison as on good (0.43-0.52) and does not fall with earlier pain from that type;
+   all discrimination is the second bite. The learning that pays (-254 at generation 0 without it) is the critic's
+   learned appetite for bushes (`value_app` -> `valence_app`), not an aversion. Cause: the critic's state is only
+   the look ahead, without distance or time, so a look in view for many ticks before the bite drains its own value
+   (gamma 0.5) and the pain is never predicted in the world (error -0.9 after 11+ painful bites; lab ceiling -0.50,
+   -0.87 with the cue in view 16 ticks before). One-berry bushes (`berry_world(one_berry=3)`, draft `x.one`) make
+   the berry counts readable (fitness 1061 vs 1415 at generation 0; F <= 2 starves) but do not fix this alone.
+   **To decide with the user** before the cell-built critic: a state that changes as the bush nears (value cells or
+   pallium reading `no_touch` / distance, v55 `pnt`; or a time-since-cue memory), and the one-berry world (F = 3)
+   for the next stage.
 1. **Then: the dopamine critic built from cells** (2.3 frozen 2026-10-19, tag `stage-2.3`), as its own
    stage on top of 2.3: the TD formula split into cells (dopamine cells with a baseline, the value difference as
    synapses); then gamma, the value scale and the taste weight become evolvable (user: not while they are a

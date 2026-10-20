@@ -145,7 +145,7 @@ def conditioning(exp, pop, protocol: dict, sim: float, n_agents: int = 24, seed:
 
     def trial(kind, cues):
         out = dict(pain=dict(pain=1.0), taste=dict(taste=3.0), none={})[kind]
-        return [obs(cues)] + [obs(cues, **out) for _ in range(3)] + ([obs(pain=0.3)] if kind == "pain" else [obs()]) \
+        return [obs(cues)] * protocol.get("lead", 1) + [obs(cues, **out) for _ in range(3)] + ([obs(pain=0.3)] if kind == "pain" else [obs()]) \
             + [obs()] * 4
 
     one = lambda g, st, o: B.step(exp.brain, L, g, st, o, jnp.zeros(3), jax.random.PRNGKey(0))[0]

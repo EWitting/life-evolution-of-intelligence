@@ -128,7 +128,7 @@ def berry_world(exp: ExperimentConfig, n_types: int = 4, poison: tuple = (), per
                 poison_pain: float = 1.0, reverse: bool = False, per_life_sets: tuple = (),
                 appearance_mode: str = "lookalike", novel_looks: tuple = (), novel_sim: float | None = None,
                 weights: dict | None = None, duds: tuple = (), berries: int | None = None,
-                shared_colour: bool = False, novel_xor: bool = False):
+                shared_colour: bool = False, novel_xor: bool = False, one_berry: float = 0.0):
     """Several berry-bush types (the OHOL gooseberry and colour look-alikes; all behave like the gooseberry:
     6 berries, then empty, regrowing after regrow_ticks(exp)), optional wild onions and hot springs.
     poison: types whose berries always drain food and hurt (an inheritable fact). per_life_pool/per_life_k:
@@ -147,16 +147,25 @@ def berry_world(exp: ExperimentConfig, n_types: int = 4, poison: tuple = (), per
     tick stays the same and a smaller bush only means more, smaller visits.
     shared_colour (chapter 2): a novel type's colour is one vector, the same for its bush, berry and empty bush
     (drawn in the directions that none of the three original looks uses). Without it the three get the same
-    coefficients in three different bases, so a bush and its own empty bush are no more alike than chance."""
+    coefficients in three different bases, so a bush and its own empty bush are no more alike than chance.
+    one_berry (> 0): every bush carries one berry worth `one_berry` berries of food (a poison berry stays one bite
+    and poison_food), regrowing in the time that many berries take: a bite is a whole visit, so stopping a visit at
+    the first painful berry no longer helps and only judging the look does (STAGE_LOG v58, v59)."""
     berries = int(BUSH_BERRIES if berries is None else berries)
+    if one_berry:
+        berries = 1
     data = ohol.load()
     ids = [BUSH, BERRY, EMPTY_BUSH] + ([ONION_PLANT, ONION] if onions else []) + ([HOT_SPRING] if springs else [])
     sets = [(variant(v), COLOURS[v - 1] + " ") for v in range(1, n_types)]
     rs = ohol.slice_ruleset(data, ids, ticks_per_second=exp.world.ticks_per_ohol_second,
                             max_decay_ticks=exp.world.max_decay_ticks, clone_sets=sets,
-                            extra_decays={EMPTY_BUSH: (BUSH, regrow_ticks(exp, berries))})
+                            extra_decays={EMPTY_BUSH: (BUSH, regrow_ticks(exp, one_berry or berries))})
     for v in range(n_types):
-        rs.num_uses[rs.local(variant(v)[BUSH])] = berries
+        b = rs.local(variant(v)[BUSH])
+        rs.num_uses[b] = berries
+        if one_berry:   # OHOL counts uses only above 1: a bush of one use would never take its last-use transition
+            rs.use_table[:, b] = rs.last_use_table[:, b]
+            rs.food_value[rs.local(variant(v)[BERRY])] *= one_berry
     for v in duds:   # no transition from USE on this bush
         b = rs.local(variant(v)[BUSH])
         rs.use_table[:, b] = -1
@@ -677,14 +686,15 @@ ANC_POISON_WEIGHT = 0.0   # spawn weight of the ancestral poison type (0: none)
 
 
 def learning_world(exp, reverse: bool = False, springs: float = 0.0, berries: int | None = None,
-                   shared_colour: bool = False, novel_sim: float | None = None, novel_xor: bool = False):
+                   shared_colour: bool = False, novel_sim: float | None = None, novel_xor: bool = False,
+                   one_berry: float = 0.0):
     """Four novel berry types (two of them poison, drawn per life, with a look drawn per life), one ancestral good
     and one ancestral poison type, no onions. NOVEL_WEIGHT sets how much of the supply is novel: familiar food
     should keep a non-learner alive, novel food should be worth trying."""
     return berry_world(exp, 6, poison=(4,), per_life_pool=NOVEL, per_life_k=2, springs=springs, reverse=reverse,
                        novel_looks=NOVEL, novel_sim=NOVEL_SIM if novel_sim is None else novel_sim, poison_food=POISON_FOOD, onions=False,
                        weights={0: STAPLE_WEIGHT, 4: ANC_POISON_WEIGHT, **{v: NOVEL_WEIGHT for v in NOVEL}},
-                       berries=berries, shared_colour=shared_colour, novel_xor=novel_xor)
+                       berries=berries, shared_colour=shared_colour, novel_xor=novel_xor, one_berry=one_berry)
 
 
 _S15 = dict(row_extra=poison_metrics, plastic=True, generations=40, ticks=LIFE_15, eta_max=1.0, dense_plastic=True)
@@ -1165,8 +1175,8 @@ B22P = extend(B18S, regions=(R("pallium", PALLIUM_N, sign="exc", alpha=1.0, bias
                              elig_tau=CS_ELIG["valence_av"], abcd=(0.0, 1.0, 0.0, 0.0), density=1.0)), **_GENE)
 
 
-def pallium_world(exp, novel_sim: float | None = None, xor: bool = True, reverse: bool = False):
-    return learning_world(exp, springs=SPRINGS_17, berries=LEARN_BERRIES, novel_xor=xor, reverse=reverse,
+def pallium_world(exp, novel_sim: float | None = None, xor: bool = True, reverse: bool = False, one_berry: float = 0.0):
+    return learning_world(exp, springs=SPRINGS_17, berries=LEARN_BERRIES, novel_xor=xor, reverse=reverse, one_berry=one_berry,
                           novel_sim=PALLIUM_SIM if novel_sim is None else novel_sim)
 
 
@@ -1260,6 +1270,14 @@ stage(Stage("2.3", "s2_3_critic", "2.2", B23, W23, VISION_CH1, BODY_17, lambda e
             **{**_S15, "generations": 100}, evolution=EVOLUTION_NEW, control_brain=per_slot_pallium(B22P),
             notes="dopamine critic as a formula: value cells on the pallium, one TD error teaching them and, negated, "
                   "every synapse the pain teacher taught; reversal world (poison and good novel types swap at tick 800)"))
+
+# Draft (not on the chain): the 2.3 brain and world with one-berry bushes (berry_world one_berry), for generation-0
+# probes of the next stage. ONE_BERRY: the food of the one berry, in berries (STAGE_LOG v59)
+ONE_BERRY = 3.0
+stage(Stage("x.one", "x_one_berry", "2.3", B23, W23, VISION_CH1, BODY_17,
+            lambda exp: pallium_world(exp, reverse=True, one_berry=ONE_BERRY),
+            **{**_S15, "generations": 100}, evolution=EVOLUTION_NEW, control_brain=per_slot_pallium(B22P),
+            notes="DRAFT: 2.3 with one berry per bush (a bite is a whole visit)"))
 
 # ------------------------------------------------------------------ running
 

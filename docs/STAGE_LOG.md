@@ -3030,3 +3030,52 @@ every N ticks from switch_tick; 0 = one switch).
 So the crossover in the 6-berry world is mostly bites per visit (stop at the first painful berry), which reverses by
 itself; a learned aversion by look hardly shows in the world although the lab shows one. Open, first next session
 (STATUS step 0).
+
+## v59 (2026-10-20): why the 2.3 critic does not judge a bush by its look; one-berry bushes
+
+Probes on the frozen 2.3 populations (last generation); no stage was run.
+
+**First bite on arrival** (`scripts/probes/first_bite.py`, read from the recordings of the last generation, one
+world of 64 creatures per seed, no new simulation; a visit = consecutive ticks with the same full bush at the
+mouth). Pooled over three seeds, main (control): P(any bite in a visit) before the switch poison 0.46 (0.49), good
+0.52 (0.50); after it poison 0.43 (0.41), good 0.47 (0.42). The bite comes on the first tick of the visit or not at
+all. A second bite after a painful first: 0.05-0.09 (0.04-0.06); after a good first: 0.92-0.97. P(bite) on a poison
+type does not fall with earlier painful bites from that same type (before the switch 0.40 with none, 0.48-0.51
+with 1-10+; control 0.42 -> 0.49-0.59). **No brain judges a bush by its look; all of the discrimination is the
+second bite.** At arrival the aversive cells are low and alike for poison and good (main, after the switch, 0.16 vs
+0.14); main's appetitive cells are about three times the control's (0.35-0.39 vs 0.10-0.12), driven by `value_app`
+(0.05-0.11, somewhat higher on good types).
+
+**Where the learning pays** (`gen0.py`, frozen 2.3 seed 0 on its own brain, 16 paired worlds, 2.3 world): intact
+1415 +- 35; look -> aversion learning off (`in->valence_av[vis*.app*]`, `pallium->valence_av`) -47 +- 15; critic
+value learning off (`pallium->value_app`, `pallium->value_av`) **-254 +- 28**; all learning off -268 +- 24. Without
+the value learning the creatures eat fewer good berries (63.6 vs 79.7 after the switch) and fewer poison (12.4 vs
+15.0). So the no_plasticity lesion (83%) measures a learned appetite for bushes (value_app -> valence_app), not
+an aversion by look: the user's hunch holds for discrimination, but evolution did not switch learning off.
+
+**Why the lab error only partly cancels the pain** (`scripts/probes/critic_ceiling.py`, conditioning, A -> pain,
+60 trials, three seeds x 24 creatures). Evolved rates: bites -0.97 (trial 1), -0.67 (6), -0.53 (24), -0.50 (60); cue
+-0.40; the tick after the cue is gone +0.40. Value learning x5: -0.55 at 60; x20: -0.71 (overshoot). Not too few
+trials: a ceiling. The state is only "which look is ahead", and da = -pain - 1.5 V(t) + 3 V(t-1) (gamma 0.5, scale
+3): while the cue stays in view the value drains by (1 - gamma) per tick, so every in-view tick gives a positive
+error, and the tick after the cue goes gives the relief burst, both credited to the cue (`elig_delay`). Cue in view
+for 1 / 4 / 8 / 16 ticks before the bites (protocol option `lead`, new): bites at trial 60 -0.50 / -0.57 / -0.75 /
+-0.87, with +0.44 / +0.30 / +0.15 per in-view tick.
+**In the world** (recordings, `mod` da) the error one tick after a painful bite is -0.97 at the first one and
+-0.89 to -0.96 after 11 or more: the pain is never predicted. A bush is usually in view for many ticks before
+arrival (median 15-18 ticks with something ahead), and a visit holds one painful bite, not three. The pallium code
+at arrival is stable per type (cosine 0.59-0.66 within a type, 0.03-0.05 between), so the code is not the problem;
+the state without distance or time is (v54, v55: TD needs a state that changes as the outcome nears).
+
+**One-berry bushes** (`berry_world(one_berry=F)`, new, default off; draft stage `x.one` = 2.3 with one berry worth
+`ONE_BERRY` berries; generation 0 of frozen 2.3 seed 0, 16 worlds; phases before / after the switch):
+| F | intact | look -> aversion off | value learning off | all off | good / poison eaten (after the switch) |
+|---|---|---|---|---|---|
+| 6 berries (2.3) | 1415 | -47 +- 15 | -254 +- 28 | -268 +- 24 | 79.7 / 15.0 |
+| 3 | 1061 | -29 +- 18 | -120 +- 18 | -147 +- 18 | 15.2 / 13.9 |
+| 2 | 523 | +22 +- 15 | -73 +- 13 | -92 +- 10 | 7.7 / 7.0 |
+| 1 | 72 | -1 | -3 | -4 | (dead by tick 220) |
+At F = 3 the berry counts read directly as decisions (good 15.2 vs poison 13.9: no discrimination at all), and
+trying every bush costs a third of a good bush instead of a sixth. F <= 2 starves the population. One-berry bushes
+alone do not make the look matter at generation 0, since the critic cannot learn an aversive value from a look seen
+from afar in either world.

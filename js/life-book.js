@@ -228,8 +228,133 @@
   let layoutP;
   const loadLayout = () => layoutP || (layoutP = fetch('data/brain_layout.json').then(r => r.ok ? r.json() : null).catch(() => null));
   function brain(root, D) { return loadLayout().then(L => drawBrain(root, D, L)); }
+  // The diagram is drawn in fixed units and scaled to the page (a brain diagram may use the page's full width,
+  // book/wide-brain.lua). Its width is capped so that the region names are never larger on screen than NAME times
+  // the text; where it is scaled down further, the text grows inside the boxes (CSS --k, up to what fits). A diagram
+  // whose names are still smaller than SMALL times the text gets a button that opens it full screen, with zoom
+  // (wheel, pinch, buttons) and pan (drag). show(crop) moves the view to the box crop() returns, or to all of it.
+  const NAME = 0.85, SMALL = 0.7, DESIGN = 12.5;   // DESIGN: the names' font size in diagram units (life-book.css)
+  function brainView(root, svg, full, BW) {
+    const frame = svg.parentNode, wrap = frame.parentNode, btn = frame.querySelector('.lb-expand');
+    const textPx = () => parseFloat(getComputedStyle(root.parentNode).fontSize) || 16;
+    const setVB = b => svg.setAttribute('viewBox', b.map(v => v.toFixed(1)).join(' '));
+    const kOf = scale => Math.min(kfit || 1, Math.max(1, NAME * textPx() / (DESIGN * scale)));
+    let vb = full.slice(), kfit = 0, zoom = null, anim = 0, shown = false;
+    const V = {bar: null};
+    function measure() {   // how much larger the text may be drawn and still fit its box: a region's name and kind, a socket's name
+      let k = 1.25, ok = false;
+      svg.querySelectorAll('.lb-reg').forEach(g => {
+        const inner = g.transform.baseVal.numberOfItems > 0;
+        g.querySelectorAll(inner ? 'text' : 'text[text-anchor=middle]').forEach(t => {
+          const len = t.getComputedTextLength();
+          if (len > 0) { ok = true; k = Math.min(k, (inner ? BW - 14 : 98) / len); }
+        });
+      });
+      return ok ? Math.max(1, k) : 0;
+    }
+    function size() {
+      if (zoom) return;
+      const avail = root.clientWidth; if (!avail) return;
+      const cap = NAME * textPx() / DESIGN;   // the largest scale: names at NAME times the text
+      const w = Math.min(avail, vb[2] * cap), scale = w / vb[2];
+      svg.style.width = wrap.style.maxWidth = w + 'px';   // the view buttons and the legend line up with the diagram
+      if (!kfit) kfit = measure();
+      const k = kOf(scale);
+      svg.style.setProperty('--k', k.toFixed(3));
+      btn.hidden = DESIGN * k * scale >= SMALL * textPx();
+    }
+    // the bounding box of some elements of the diagram, with a margin, grown until it cuts none of the elements in
+    // whole; all of the diagram when that is most of it anyway
+    V.box = (els, whole = []) => {
+      const bb = e => {
+        const b = e.getBBox(), t = e.transform && e.transform.baseVal.numberOfItems ? e.transform.baseVal.consolidate().matrix : {e: 0, f: 0};
+        return b.width || b.height ? [b.x + t.e, b.y + t.f, b.x + b.width + t.e, b.y + b.height + t.f] : null;
+      };
+      let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+      const add = b => { x0 = Math.min(x0, b[0]); y0 = Math.min(y0, b[1]); x1 = Math.max(x1, b[2]); y1 = Math.max(y1, b[3]); };
+      els.map(bb).filter(Boolean).forEach(add);
+      if (x0 > x1) return full;
+      const P = 18;
+      x0 -= P; y0 -= P; x1 += P; y1 += P;
+      const rest = whole.map(bb).filter(Boolean);
+      for (let grew = true; grew;) {
+        grew = false;
+        for (const b of rest) if (b[0] < x1 && b[2] > x0 && b[1] < y1 && b[3] > y0 && (b[0] < x0 || b[2] > x1 || b[1] < y0 || b[3] > y1)) { add([b[0] - P, b[1] - P, b[2] + P, b[3] + P]); grew = true; }
+      }
+      x0 = Math.max(full[0], x0); y0 = Math.max(full[1], y0); x1 = Math.min(full[0] + full[2], x1); y1 = Math.min(full[1] + full[3], y1);
+      return (x1 - x0) * (y1 - y0) > 0.8 * full[2] * full[3] ? full : [x0, y0, x1 - x0, y1 - y0];
+    };
+    V.show = crop => {
+      const b = crop ? crop() : full;
+      if (zoom) { vb = b; zoom.fit(); return; }
+      if (!shown) { shown = true; vb = b; setVB(vb); size(); return; }
+      const from = vb.slice(), t0 = performance.now(), id = ++anim;
+      const step = now => {
+        if (id !== anim || zoom) return;
+        const f = Math.min(1, (now - t0) / 350), e = f < 0.5 ? 2 * f * f : 1 - 2 * (1 - f) * (1 - f);
+        vb = from.map((v, i) => v + (b[i] - v) * e); setVB(vb); size();
+        if (f < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    };
+    function open() {
+      hideTip();
+      const ov = el('div', 'lb-zoom lb-root', '<div class="lb-zoombar"><span class="lb-zoomsp"></span>'
+        + '<button type="button" data-z="in" title="zoom in">+</button><button type="button" data-z="out" title="zoom out">−</button>'
+        + '<button type="button" data-z="fit" title="fit to the screen">fit</button><button type="button" data-z="close" title="close (Esc)">✕</button></div>'
+        + '<div class="lb-zoomstage"></div><div class="lb-zoomhint">wheel or pinch to zoom, drag to pan</div>');
+      const zbar = ov.firstChild, stage = ov.children[1];
+      if (V.bar) zbar.insertBefore(V.bar, zbar.firstChild);
+      stage.appendChild(svg); document.body.appendChild(ov);
+      document.documentElement.style.overflow = 'hidden'; svg.style.width = '';
+      let z = vb;
+      const rect = () => stage.getBoundingClientRect();
+      const fit = () => {
+        const r = rect(), s = Math.min(r.width / vb[2], r.height / vb[3]) * 0.96;
+        z = [vb[0] + vb[2] / 2 - r.width / s / 2, vb[1] + vb[3] / 2 - r.height / s / 2, r.width / s, r.height / s]; setVB(z);
+        svg.style.setProperty('--k', kOf(s).toFixed(3));
+      };
+      const at = (cx, cy, f) => {   // zoom by f around a point on the screen
+        const r = rect(), ux = z[0] + (cx - r.left) / r.width * z[2], uy = z[1] + (cy - r.top) / r.height * z[3];
+        f = z[2] / Math.min(4 * Math.max(full[2], full[3] * r.width / r.height), Math.max(1.5 * BW, z[2] / f));
+        z = [ux - (ux - z[0]) / f, uy - (uy - z[1]) / f, z[2] / f, z[3] / f]; setVB(z);
+      };
+      const pan = (dx, dy) => { const r = rect(); z = [z[0] - dx / r.width * z[2], z[1] - dy / r.height * z[3], z[2], z[3]]; setVB(z); };
+      const pts = new Map();
+      const two = () => { const [a, b] = [...pts.values()]; return {d: Math.hypot(a.x - b.x, a.y - b.y), x: (a.x + b.x) / 2, y: (a.y + b.y) / 2}; };
+      stage.addEventListener('pointerdown', e => { pts.set(e.pointerId, {x: e.clientX, y: e.clientY}); stage.setPointerCapture(e.pointerId); stage.classList.add('lb-grab'); });
+      stage.addEventListener('pointermove', e => {
+        const p = pts.get(e.pointerId); if (!p) return;
+        if (pts.size === 1) { pan(e.clientX - p.x, e.clientY - p.y); p.x = e.clientX; p.y = e.clientY; return; }
+        const a = two(); p.x = e.clientX; p.y = e.clientY; const b = two();
+        pan(b.x - a.x, b.y - a.y); if (a.d > 0) at(b.x, b.y, b.d / a.d);
+      });
+      const up = e => { pts.delete(e.pointerId); if (!pts.size) stage.classList.remove('lb-grab'); };
+      stage.addEventListener('pointerup', up); stage.addEventListener('pointercancel', up);
+      stage.addEventListener('wheel', e => { e.preventDefault(); at(e.clientX, e.clientY, Math.exp(-e.deltaY * (e.deltaMode ? 0.05 : 0.002))); }, {passive: false});
+      const key = e => { if (e.key === 'Escape') close(); };
+      function close() {
+        hideTip();
+        frame.insertBefore(svg, btn); if (V.bar) wrap.insertBefore(V.bar, frame);
+        ov.remove(); document.documentElement.style.overflow = '';
+        document.removeEventListener('keydown', key); window.removeEventListener('resize', fit);
+        zoom = null; setVB(vb); size();
+      }
+      zbar.addEventListener('click', e => {
+        const a = e.target.dataset.z, r = rect();
+        if (a === 'in' || a === 'out') at(r.left + r.width / 2, r.top + r.height / 2, a === 'in' ? 1.4 : 1 / 1.4);
+        else if (a === 'fit') fit(); else if (a === 'close') close();
+      });
+      document.addEventListener('keydown', key); window.addEventListener('resize', fit);
+      zoom = {fit}; fit();
+    }
+    btn.addEventListener('click', open);
+    new ResizeObserver(() => size()).observe(root);
+    setVB(vb); size();
+    return V;
+  }
   function drawBrain(root, D, L) {
-    const REG = D.brain.regions, PROJ = D.brain.projections, MODL = D.brain.modulators || [], BW = 122, BH = 38, pos = {};
+    const REG = D.brain.regions, PROJ = D.brain.projections, MODL = D.brain.modulators || [], BW = 122, BH = 38, GAPW = 80, pos = {};   // GAPW: the space between two columns (tools/brain_layout uses the same)
     const A = L && L.stages && L.stages[D.stage.key];
     const atlas = !!A && REG.every(r => A.pos[r.name]);
     // cells and group boxes take the colour of their top-level group: the layout file's hues (the same in every
@@ -239,7 +364,7 @@
     const blk = {}, sock = {};   // with the layout: the senses / motor blocks' extent [y0, y1] and their sockets, in px
     let AH, SVGW;
     if (atlas) {
-      const CW = BW + 110, STEP = BH + 26, rows = [...Object.values(A.pos).map(p => p[1]), ...Object.values(A.blocks).flat()];
+      const CW = BW + GAPW, STEP = BH + 26, rows = [...Object.values(A.pos).map(p => p[1]), ...Object.values(A.blocks).flat()];
       const W0 = 40 + BW + (A.cols - 1) * CW;   // at least as wide as the depth layout: small brains are not blown up
       SVGW = Math.max(720, W0);
       const top = Math.min(...rows) - 0.5, X = c => (SVGW - W0) / 2 + 20 + BW / 2 + c * CW, Y = r => 30 + (r - top) * STEP;
@@ -264,7 +389,7 @@
     const STEP = BH + 26, GAP = 40, SUB = 26;   // SUB: extra room where a sub-group starts (its box and label)
     const subs = mem => mem.filter((r, i) => i && r.group !== mem[i - 1].group).length;
     const colH = colKeys.map(c => colsOf[c].reduce((s, k) => s + units.get(k).length * STEP + subs(units.get(k)) * SUB + GAP, -GAP));
-    AH = Math.max(160, Math.max(...colH) + 70); SVGW = Math.max(720, 40 + colKeys.length * (BW + 110) - 110);
+    AH = Math.max(160, Math.max(...colH) + 70); SVGW = Math.max(720, 40 + colKeys.length * (BW + GAPW) - GAPW);
     colKeys.forEach((c, ci) => {
       const x = colKeys.length > 1 ? 20 + BW / 2 + ci * (SVGW - 40 - BW) / (colKeys.length - 1) : SVGW / 2;
       let y = (AH - colH[ci]) / 2 + BH / 2 + 16;
@@ -376,7 +501,7 @@
           + `<text class="lb-regname" x="${f1(x0 + 2)}" y="${f1(b0 - 6)}">${esc(r.name)} <tspan class="lb-regsub">${r.name === 'in' ? 'senses' : 'motor neurons'} · ${r.size}</tspan></text>`;
         for (const [n, [x, y]] of Object.entries(sock)) if (n.startsWith(r.name + ':')) {
           const sx = r.name === 'in' ? x - SW : x;
-          s += `<rect class="lb-sock" x="${f1(sx)}" y="${f1(y - SH / 2)}" width="${SW}" height="${SH}" rx="4"/><text class="lb-regsub" x="${f1(sx + SW / 2)}" y="${f1(y + 3.5)}" text-anchor="middle">${esc(n.slice(r.name.length + 1))}</text>`;
+          s += `<rect class="lb-sock" data-s="${esc(n)}" x="${f1(sx)}" y="${f1(y - SH / 2)}" width="${SW}" height="${SH}" rx="4"/><text class="lb-regsub" x="${f1(sx + SW / 2)}" y="${f1(y + 3.5)}" text-anchor="middle">${esc(n.slice(r.name.length + 1))}</text>`;
         }
         s += '</g>';
         continue;
@@ -387,7 +512,8 @@
     }
     s += '</svg>';
     const anyNew = REG.some(r => r.new);
-    root.innerHTML = s + `<div class="lb-legend lb-brainlegend"><span><i class="lb-key lb-hardkey"></i>hard-wired (designed; evolution tunes only the strength)</span><span><i class="lb-key lb-evokey"></i>evolved</span>${PROJ.some(p => p.rule !== 'fixed') ? '<span><i class="lb-key lb-learnkey"></i>learned within a life</span>' : ''}<span>▸ excites</span><span>⊣ inhibits</span><span>● senses, mixed signs</span>${MODS.length ? '<span><i class="lb-key lb-modkey"></i>modulator: released by one cell, acts on a cell or on the learning of a projection</span>' : ''}${anyNew ? '<span><i class="lb-key lb-newkey"></i>added in this stage</span>' : ''}<span class="lb-muted">line width = total synaptic strength arriving at one target neuron, mean of the final population</span></div>`;
+    root.innerHTML = `<div class="lb-brainwrap"><div class="lb-brainframe">${s}<button type="button" class="lb-expand" title="open full screen, to zoom and pan" aria-label="open full screen">⤢</button></div>` + `<div class="lb-legend lb-brainlegend"><span><i class="lb-key lb-hardkey"></i>hard-wired (designed; evolution tunes only the strength)</span><span><i class="lb-key lb-evokey"></i>evolved</span>${PROJ.some(p => p.rule !== 'fixed') ? '<span><i class="lb-key lb-learnkey"></i>learned within a life</span>' : ''}<span>▸ excites</span><span>⊣ inhibits</span><span>● senses, mixed signs</span>${MODS.length ? '<span><i class="lb-key lb-modkey"></i>modulator: released by one cell, acts on a cell or on the learning of a projection</span>' : ''}${anyNew ? '<span><i class="lb-key lb-newkey"></i>added in this stage</span>' : ''}<span class="lb-muted">line width = total synaptic strength arriving at one target neuron, mean of the final population</span></div></div>`;
+    const svg = root.querySelector('.lb-brain'), view = brainView(root, svg, [0, 0, SVGW, H], BW);
     // three views. "all cells": only what this stage added and what it connects to directly: new projections,
     // projections into or out of a new region, and the modulator lines of a new modulator or of a new region; a
     // modulator line onto a projection brings that projection along. Regions stay in place; the ones none of it
@@ -408,13 +534,18 @@
       const inShut = gp => shut.some(o => gp.startsWith(o + '/'));
       root.querySelectorAll('[data-g]').forEach(g => { g.classList.toggle('lb-shut', shut.includes(g.dataset.g) && !inShut(g.dataset.g)); g.classList.toggle('lb-inshut', inShut(g.dataset.g)); });
       root.querySelectorAll('.lb-reg').forEach(g => { const r = REG.find(o => o.name === g.dataset.r); g.classList.toggle('lb-inshut', !!r.group && (shut.includes(r.group) || inShut(r.group))); });
-      const svg = root.querySelector('.lb-brain'), bar = el('div', 'lb-focusbar', '<span class="lb-muted">Show</span>'
+      const bar = el('div', 'lb-focusbar', '<span class="lb-muted">Show</span>'
         + '<button type="button" data-f="2" title="what this stage added and what it connects to directly; other groups as outlines">new circuit</button>'
         + '<button type="button" data-f="1" title="what this stage added and what it connects to directly, among all cells">all cells</button>'
         + '<button type="button" data-f="0" title="every region and connection of this brain">everything</button>');
-      const set = f => { svg.classList.toggle('lb-focus', f > 0); svg.classList.toggle('lb-outline', f > 1); bar.querySelectorAll('button').forEach(b => b.classList.toggle('lb-on', +b.dataset.f === f)); };
+      const set = f => { svg.classList.toggle('lb-focus', f > 0); svg.classList.toggle('lb-outline', f > 1); bar.querySelectorAll('button').forEach(b => b.classList.toggle('lb-on', +b.dataset.f === f)); view.show(f > 1 ? crop : null); };
+      // the view "new circuit" is cropped to what it shows: the regions, lines and the senses / motor sockets it uses,
+      // and every other region or group name the box would cut (group outlines may be cut)
+      const usedS = new Set(); for (const i of showP) for (const [a, b] of ENDS[i]) usedS.add(a).add(b);
+      const crop = () => view.box([...svg.querySelectorAll('.lb-edge:not(.lb-ctx), .lb-mod:not(.lb-ctx)'), ...[...svg.querySelectorAll('.lb-reg:not(.lb-ctx):not(.lb-inshut)')].filter(g => !isBlock(g.dataset.r)), ...[...svg.querySelectorAll('.lb-sock')].filter(r => usedS.has(r.dataset.s))],
+        [...[...svg.querySelectorAll('.lb-reg:not(.lb-inshut)')].filter(g => !isBlock(g.dataset.r)), ...svg.querySelectorAll('.lb-grouplabel, .lb-gcentre')]);
       bar.addEventListener('click', e => { if (e.target.dataset.f) set(+e.target.dataset.f); });
-      root.insertBefore(bar, svg); set(2);
+      svg.parentNode.parentNode.insertBefore(bar, svg.parentNode); view.bar = bar; set(2);
     }
     const sel = p => p.src_select.length ? ` [${p.src_select.join(', ')}]` : '';
     root.querySelectorAll('.lb-edge').forEach(g => {

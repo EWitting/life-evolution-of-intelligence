@@ -57,3 +57,25 @@ def test_projection_indices_and_rounding():
     assert rows == [5, 6] and cols == [8]
     assert book._round({"a": [1.23456, float("nan"), np.float32(1234567.0)], "n": 3}) == {"a": [1.235, None, 1235000.0], "n": 3}
     assert book._decimals([1.0, 1e-9, 0.12345]) == [1, 0, 0.123]
+
+
+def test_glossary_covers_every_diagram():
+    """Every region, group (by full path) and modulator of an exported stage has a hover text (book/README.md)."""
+    import json
+    terms = json.loads((book.DATA_DIR / "glossary.json").read_text(encoding="utf-8"))
+    missing = set()
+    for f in sorted(book.DATA_DIR.glob("*.json")):
+        b = json.loads(f.read_text(encoding="utf-8")).get("brain")
+        if not b:
+            continue
+        for r in b["regions"]:
+            if r["name"] not in terms["cells"]:
+                missing.add(f"cells: {r['name']} ({f.stem})")
+            parts = (r.get("group") or "").split("/")
+            for i in range(len(parts) if parts[0] else 0):
+                if "/".join(parts[:i + 1]) not in terms["groups"]:
+                    missing.add(f"groups: {'/'.join(parts[:i + 1])} ({f.stem})")
+        for m in b.get("modulators", []):
+            if m["name"] not in terms["modulators"]:
+                missing.add(f"modulators: {m['name']} ({f.stem})")
+    assert not missing, "no hover text in book/data/glossary.json for " + ", ".join(sorted(missing))

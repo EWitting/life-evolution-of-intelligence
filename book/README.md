@@ -61,6 +61,18 @@ stage before its page is written); use its forward mode, or
 pin the existing regions, so that the earlier diagrams do not change. Dashboards exported after the file exists
 offer the same layout (link "book layout" under the architecture diagram).
 
+## Hover texts of the diagrams
+
+Hovering a cell, a group box or a modulator line in a brain diagram shows a short text from `data/glossary.json`
+(kept by hand, not written by the export): `cells` by region name, `groups` by their **full path**
+(`valence/gates`, `forebrain/basal_ganglia`: two groups may share a last name), `modulators` by name. One or two
+plain sentences on what it does, in the book's words ("creature", no numbers that a run could change).
+
+**A stage that adds a cell, a group or a modulator adds its entry in the same change.**
+`tests/test_book.py::test_glossary_covers_every_diagram` fails for every region, group path or modulator of an
+exported stage that has no entry. When a cell's role changes in a later stage, update its text: there is one text
+per name for all pages.
+
 ## Preview and publish
 
     quarto preview book                          # local preview in the browser, reloads on save

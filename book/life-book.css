@@ -119,6 +119,7 @@
 .lb-brain .lb-gtop { fill: hsl(var(--h) 50% 75% / 0.16); stroke: hsl(var(--h) 35% 55%); }
 .quarto-dark .lb-brain .lb-cell { fill: hsl(var(--h) 28% 21%); }
 .quarto-dark .lb-brain .lb-gtop { fill: hsl(var(--h) 35% 40% / 0.14); stroke: hsl(var(--h) 25% 42%); }
+.lb-grouplabel, .lb-gcentre { pointer-events: none; }   /* hovering a group's name shows the group's text (its box) */
 .lb-grouplabel { font-size: calc(10px * min(var(--k, 1), 1.2)); fill: var(--lb-ink2); paint-order: stroke; stroke: var(--lb-surface); stroke-width: 4px; }
 .lb-hard { stroke: var(--lb-hard); } .lb-hard-fill { fill: var(--lb-hard); }
 .lb-evolved { stroke: var(--lb-evolved); } .lb-evolved-fill { fill: var(--lb-evolved); }

@@ -1,0 +1,49 @@
+{
+  "_about": "Hover texts of the brain diagrams (js/life-book.js): one or two plain sentences per cell, group and modulator, about what it does. Groups by their full path (valence/gates, not gates). Every region, group and modulator of an exported stage needs an entry (tests/test_book.py checks it); see book/README.md.",
+  "cells": {
+    "in": "The senses: the eyes (what lies ahead and to the sides), sound, taste, pain, the skin's warmth, the stomach, what the creature holds, and its age.",
+    "out": "The motor neurons, one per action: wait, step forward, turn left, turn right, use, eat, call. The most active one is carried out.",
+    "ganglion_e": "Excitatory cells of the ganglion. Their wiring is entirely evolved and none of them has a fixed meaning.",
+    "ganglion_i": "Inhibitory cells of the ganglion. Their wiring is entirely evolved and none of them has a fixed meaning.",
+    "valence_app": "The good cells. Taste is wired to them, and they drive the bite. The look of a bush can come to excite them too.",
+    "valence_av": "The bad cells. Pain is wired to them; they turn the creature away and stop the bite. The look of a bush that hurt before comes to excite them.",
+    "no_feed": "Driven by the bad cells, it blocks the bite.",
+    "no_touch": "A gate: it fires whenever nothing is within reach and holds grasp shut.",
+    "grasp": "When it fires, the creature bites what is in front of it.",
+    "us_pain": "The pain teacher, driven by pain alone. When it fires, it releases the signal that teaches the synapses onto the bad cells.",
+    "us_taste": "The taste teacher, driven by taste alone: the good outcome, one of the terms of the surprise.",
+    "cold": "Fires while the skin is cold.",
+    "warm_seek": "Driven by cold: keeps the creature stepping forward while it is cold.",
+    "rest": "Fires while the skin is warm and holds the forward step back, so the creature stays where it is warm or where it settled.",
+    "hungry": "Fires when the stomach is less than about two-thirds full and shuts warm_seek and rest: a hungry creature forages.",
+    "flee": "Driven by the modulator alarm: after repeated pain, the creature keeps going forward for a while, out of the poisoned ground.",
+    "fed": "Fires when the creature tastes food and releases serotonin.",
+    "settle": "Driven by serotonin: after several good bites it switches on rest, so the creature stays where it ate.",
+    "pallium": "128 cells, each reading the colours seen straight ahead through random synapses. Only the two most driven fire, so look-alike bushes activate different cells.",
+    "value_app": "Predicts how good the next few moments will be for what the creature sees; learned within the life from the surprise.",
+    "value_av": "Predicts how bad the next few moments will be for what the creature sees; learned within the life from the surprise.",
+    "value_app_prev": "A copy of value_app one tick ago: the prediction a moment ago, one of the terms of the surprise.",
+    "value_av_prev": "A copy of value_av one tick ago: the prediction a moment ago, one of the terms of the surprise."
+  },
+  "groups": {
+    "ganglion": "A small net of evolved cells between the senses and the motor neurons: the first brain, like the nerve cords of a worm.",
+    "valence": "Good and bad: cells whose meaning is fixed by their wiring to taste and pain, and the cells through which they act on biting.",
+    "valence/gates": "Cells that hold an action shut until it can be done.",
+    "valence/programmes": "Cells that run one action when they fire.",
+    "us": "The teachers: cells driven by something that matters without any learning (pain, taste). US stands for unconditioned stimulus.",
+    "hypothalamus": "The body's needs: cells that read the stomach and the skin's warmth and switch behaviour between foraging and staying warm.",
+    "thermotaxis": "Moving towards warmth.",
+    "affect": "Lasting states built up by modulators: alarm after repeated pain, contentment after good meals.",
+    "forebrain": "The front of the brain, where what is seen is learned about within a life.",
+    "forebrain/pallium": "The roof of the forebrain; in mammals most of it became the cerebral cortex.",
+    "forebrain/basal_ganglia": "The critic: cells that learn to predict good and bad outcomes, and whose change of prediction is part of the surprise that dopamine signals."
+  },
+  "modulators": {
+    "us_av": "The pain teacher's signal: it lets the synapses onto the bad cells grow.",
+    "us_app": "The taste teacher's signal: it lets the synapses onto the good cells grow.",
+    "alarm": "Released by pain and cleared slowly: a running sum of recent pain that drives flee.",
+    "serotonin": "Released by fed and cleared slowly: a running sum of recent good bites that drives settle.",
+    "da": "Dopamine, the surprise: taste minus pain, plus the prediction now, minus the prediction a moment ago. It teaches the value cells.",
+    "da_neg": "The same surprise with its sign turned round, for the synapses onto the bad cells: a bad surprise strengthens the aversion, a good one weakens it."
+  }
+}

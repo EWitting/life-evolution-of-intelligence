@@ -690,7 +690,7 @@ def strip_sprites() -> Path:
     ids, agents = set(), set(range(4))           # bodies 0-3 dress the other animals in a strip
     from .dashboard import PEOPLE                # the dashboard dresses agent i as body i % PEOPLE
     for f in sorted(DATA_DIR.glob("*.json")):
-        if f.name in ("sprites.json", "brain_layout.json"):
+        if f.name in ("sprites.json", "brain_layout.json", "glossary.json"):
             continue
         data, changed = json.loads(f.read_text(encoding="utf-8")), False
         for x in (data.get("extras") or {}).values():

@@ -32,8 +32,6 @@ format:
       light: cosmo
       dark: darkly
     css: life-book.css
-    filters:
-      - wide-brain.lua
     toc: true
     number-sections: false
     include-after-body:

@@ -408,16 +408,16 @@ ul.task-list li input[type="checkbox"] {
 
 
 <p><span class="lb-subtitle">Learning from surprise</span></p>
-<div data-life="status" data-stage="2.3">
+<div data-life="status" data-stage="2.3h">
 
 </div>
 <div class="lb-takeaway">
 <p><strong>New:</strong> cells that predict how good or bad the next moments will be, and a teaching signal that is the <em>surprise</em>: what happened minus what was predicted. This is the role of dopamine.</p>
-<p><strong>Result:</strong> in a world whose poisons change, creatures with the critic eat more and live longer than creatures taught by pain alone (10% more fitness, in all three seeds), and silencing the prediction of good things costs them a fifth of it. In the lab the signal moves from the pain to its warning, as in recordings of dopamine cells.</p>
+<p><strong>Result:</strong> in a world whose poisons change, creatures with the critic live better than creatures taught by pain alone, in all three seeds, and they need the cells that predict bad things. In the lab the signal moves from the pain to its warning, as in recordings of dopamine cells, and an aversion fades when the pain stops coming, which pain alone cannot do.</p>
 </div>
-<p>So far pain has been the teacher. Every painful bite strengthens the aversion to what the creature was looking at, and nothing weakens it again. That works as long as the world keeps its promises. In this stage it does not: halfway through a life the poison bushes turn good and the good ones turn poison. <strong>A teacher that only speaks when it hurts cannot say “this is no longer bad”</strong>, so a creature taught by pain keeps avoiding what is now its best food.</p>
+<p>So far pain has been the teacher. Every painful bite strengthens the aversion to what the creature was looking at, and nothing weakens it again. That works as long as the world keeps its promises. In this stage it does not: from tick 800 of a life on, the poison bushes are good and the good ones poison. <strong>A teacher that only speaks when it hurts cannot say “this is no longer bad”</strong>, so a creature taught by pain keeps avoiding what is now its best food, and goes on eating what now hurts it until each new pain has been learned.</p>
 <p>The new teacher is a <strong>critic</strong>. It keeps an expectation and teaches with the difference. An expected pain teaches nothing new; a pain that fails to come is a pleasant surprise, and that undoes the aversion.</p>
-<div data-life="brain" data-stage="2.3">
+<div data-life="brain" data-stage="2.3h">
 
 </div>
 <section id="the-circuit" class="level2">
@@ -436,32 +436,32 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="the-world" class="level2">
 <h2 class="anchored" data-anchor-id="the-world">The world</h2>
-<p>The world of the pallium stage, with one change: at tick 800 of every life the two poison kinds of new bush turn good and the two good kinds turn poison. Their looks stay the same.</p>
-<div data-life="settings" data-stage="2.3">
+<p>The world of the pallium stage made harder, so that learning cannot be done without. A bush carries a single berry, and a poison berry costs as much food as a good one gives: biting every bush once to see gains nothing, only judging a bush by its look does. Meals are small and the body burns slowly, so one bad bite never kills and a creature has time for many lessons. For the first half of the evolution the kinds keep their meaning; from then on, at tick 800 of every life, the two poison kinds of bush turn good and the two good kinds turn poison, their looks unchanged.</p>
+<div data-life="settings" data-stage="2.3h">
 
 </div>
 </section>
 <section id="did-it-work" class="level2">
 <h2 class="anchored" data-anchor-id="did-it-work">Did it work?</h2>
-<div data-life="verdict" data-stage="2.3" data-used="value_app,value_av,no_plasticity">
+<div data-life="verdict" data-stage="2.3h" data-used="no_plasticity,value_av,pallium">
 
 </div>
-<p>The critic pays: about 130 more fitness than the pain teacher when each lives alone, and about 180 more when the two share a world. Its learning is needed (without any learning a fifth is lost), and so are the cells that predict good things (<code>value_app</code>). The cells that predict bad things (<code>value_av</code>) are not used: pain arrives with the bite, so there is little to predict about it ahead of time.</p>
-<div data-life="lines" data-stage="2.3" data-example="reversal_life">
+<p>The critic pays, alone and when the two kinds share a world. Without learning half the fitness is lost: in this world a creature that does not learn which bushes hurt cannot live. Of the critic’s cells, those that predict bad things (<code>value_av</code>) are used; those that predict good things (<code>value_app</code>) are not. The critic’s lesson here is “this no longer hurts”: a pain that was predicted and does not come.</p>
+<div data-life="lines" data-stage="2.3h" data-example="reversal_life">
 
 </div>
-<p><strong>Both kinds of creature switch.</strong> After tick 800 both stop eating the bushes that turned poison and start eating the ones that turned good, at almost the same rate. The pain teacher manages this in another way: a look that has been seen often stirs the senses less, so an old aversion weakens on its own. The critic’s creatures eat more throughout, before and after the switch, and more of them are still alive at the end.</p>
+<p><strong>Both learn the look; after the switch the critic keeps it right.</strong> Early in life both kinds of creature bite the bushes that hurt less often than the good ones. After tick 800 both soon stop eating the bushes that turned poison, since every bite of them hurts. What differs is the first bite at a bush: the critic’s creatures go on biting the bushes that are good now more often than those that are poison now, in all three seeds, though less sharply than before the switch; the pain teacher’s do so in one seed of three.</p>
 <section id="in-the-lab" class="level3">
 <h3 class="anchored" data-anchor-id="in-the-lab">In the lab</h3>
 <p>The theory makes sharp predictions, and they can be tested on one creature at a time. A new bush is put in front of it; it bites three times and feels pain each time; after a pause the next trial begins.</p>
-<div data-life="lines" data-stage="2.3" data-example="dopamine_shift">
+<div data-life="lines" data-stage="2.3h" data-example="dopamine_shift">
 
 </div>
-<p><strong>The surprise moves to the warning.</strong> At the first painful meal the signal drops at the bites. After a few meals it drops as soon as the bush appears, and much less at the bites. When the pain is then left out, the signal turns positive where the pain should have been, as in the monkey recordings.</p>
-<div data-life="bars" data-stage="2.3" data-example="conditioning_lab" data-col0="critic" data-col1="pain teacher">
+<p><strong>The surprise moves to the warning.</strong> At the first painful meal the signal drops at the bites. After a few meals it drops as soon as the bush appears, and less at the bites. When the pain is then left out, the signal turns positive where the pain should have been, as in the monkey recordings.</p>
+<div data-life="bars" data-stage="2.3h" data-example="conditioning_lab" data-rows="0,1" data-col0="critic" data-col1="pain teacher">
 
 </div>
-<p><strong>Extinction</strong> (first two rows): when the pain stops, the critic’s aversion fades by a third over twelve meals, and the pain teacher’s does not change. <strong>Blocking</strong> (last two rows) did not show: the theory predicts that a second warning sign, added to one that already predicts the pain, is learned less. Here neither creature learned the second sign at all in three bites, so there was nothing to block.</p>
+<p><strong>Extinction:</strong> when the pain stops, the critic’s aversion fades to a fraction over twelve meals; the pain teacher’s does not change at all, since nothing in it can weaken a lesson.</p>
 </section>
 </section>
 <section id="full-results" class="level2">
@@ -478,9 +478,10 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <div id="callout-1" class="callout-1-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<div data-life="curves" data-stage="2.3">
+<div data-life="curves" data-stage="2.3h">
 
 </div>
+<p>The kinds swap within a life from generation 50 on; until then each kind keeps its meaning, and fitness falls for both at the change.</p>
 </div>
 </div>
 </div>
@@ -496,7 +497,7 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <div id="callout-2" class="callout-2-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<div data-life="summary" data-stage="2.3">
+<div data-life="summary" data-stage="2.3h">
 
 </div>
 </div>
@@ -514,7 +515,7 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <div id="callout-3" class="callout-3-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<div data-life="lesions" data-stage="2.3">
+<div data-life="lesions" data-stage="2.3h">
 
 </div>
 <p>The large losses for <code>value_app_prev</code> and <code>value_av_prev</code> are not a sign of use. These cells hold a copy of the prediction a moment ago, and the surprise is the difference between the two. Silencing only the copy leaves an error that never cancels, and this error unteaches every aversion.</p>
@@ -533,10 +534,11 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <div id="callout-4" class="callout-4-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<div data-life="table" data-stage="2.3" data-example="conditioning_lab">
+<div data-life="table" data-stage="2.3h" data-example="conditioning_lab">
 
 </div>
-<div data-life="table" data-stage="2.3" data-example="reversal_bites">
+<p><strong>Blocking</strong> (last two rows) is a test of the theory: a second warning sign, added to one that already predicts the pain, should be learned less than one added to a sign that predicted nothing. The critic shows a small effect in that direction; the pain teacher none.</p>
+<div data-life="table" data-stage="2.3h" data-example="reversal_bites">
 
 </div>
 </div>
@@ -555,11 +557,13 @@ ul.task-list li input[type="checkbox"] {
 <div id="callout-5" class="callout-5-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
 <ul>
-<li><strong>A world that changes.</strong> Where poison stays poison, the critic did no better than pain: pain comes at the bite, and a pain teacher learns from it directly. Unlearning is what only the critic can do.</li>
+<li><strong>A world where the look matters.</strong> In the first version of this stage (the pallium’s world, six berries to a bush, reversal from the start) neither kind of creature judged a bush by its look before biting: they bit every bush once and stopped if it hurt. The critic paid there only by a learned appetite for bushes in general. A learned aversion was there, but too weak to stop a bite: one painful bite is one tick of pain, and the lesson stayed below what the aversive cells need to fire. Evolution then turned the aversion learning down.</li>
+<li><strong>A harsh world, with room for mistakes.</strong> A poison bite costing as much as a good one gives makes trying everything worthless. Making it dearer alone killed the creatures before they could learn; smaller meals and a slower metabolism spread the same risk over many decisions.</li>
+<li><strong>Learning to start with.</strong> The aversion learning starts ten times stronger than the pallium stage left it, so that the first generation has learners to select; evolution kept it high.</li>
+<li><strong>A calm start.</strong> With the swap from the first generation, the lesson that the look matters had to be learned in a world that keeps changing its mind; with fifty generations without it, caution by look evolves first.</li>
 <li><strong>The right moment.</strong> The surprise of a tick is about the step that led to it, so it changes the synapses that were active a tick earlier (real synapses are changed by dopamine that arrives a second or two late).</li>
 <li><strong>A short horizon.</strong> Nothing tells the creature how long a pain will last while the bush is in view, so the predictions look only a few ticks ahead. A sense of time since a warning is for a later stage.</li>
-<li><strong>Taste counts less than pain.</strong> Whether a bite follows a look depends on a decision the pallium does not see, so taste can be only half predicted; at full weight the unpredicted taste drowned the lessons.</li>
-<li><strong>Wiring of its own.</strong> The pallium’s random wiring now belongs to the creature’s place in the population, not to its genes, so no lineage can inherit a lucky code.</li>
+<li><strong>Wiring of its own.</strong> The pallium’s random wiring belongs to the creature’s place in the population, not to its genes, so no lineage can inherit a lucky code.</li>
 </ul>
 </div>
 </div>
@@ -567,7 +571,7 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="runs" class="level2">
 <h2 class="anchored" data-anchor-id="runs">Runs</h2>
-<div data-life="runs" data-stage="2.3">
+<div data-life="runs" data-stage="2.3h">
 
 </div>
 

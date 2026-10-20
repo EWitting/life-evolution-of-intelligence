@@ -3219,3 +3219,28 @@ vis+0.near -0.50, vis+0.hit -0.23) and the bias -0.5 to -0.7. **The learned aver
 the aversive cells' threshold**: an innate "things near me are not alarming" inhibition, evolved in chapter 1, masks
 it. Seven one-tick lessons give about +1; breaking through needs about +3 (the old lab trials reached +2.8 in 12
 three-tick lessons).
+
+## v62 (2026-10-20): start values that let the learned aversion act; the reversal punishes it
+
+`no_touch` works: with nothing adjacent (17% of ticks in 2.3, 29% in x.onet) it is at 0.96-0.97 and the bite
+action falls to 0.30 / 0.17 (0.91 / 0.79 with something adjacent). So the inherited hit / near inhibition of the
+aversive cells is not what allows eating up close; it keeps the aversion reflex quiet near anything.
+`scripts/probes/rebalance.py` (new): generation 0 of x.onet (frozen 2.3 seed 0, 16 paired worlds) with start
+values changed: `eta<k>` (look and pallium -> valence_av learning rates x k), `inh<k>` (inherited hit / near / agent
+/ wall / held -> valence_av x k), `bias<d>` (valence_av bias + d). Poison share of the berries eaten after the switch:
+| change | vs base | poison share |
+|---|---|---|
+| base (1935) | | 0.49 |
+| eta0 | -12 +- 15 | 0.49 |
+| eta4 / eta10 / eta20 | +7 +- 26 / -101 +- 33 / -226 +- 39 | 0.47 / 0.45 / 0.44 |
+| inh0.5 / bias1 | -8 +- 21 / +2 +- 24 | 0.49 / 0.48 |
+| eta4+inh0.5 / eta4+bias1 | -36 +- 24 / -34 +- 23 | 0.46 / 0.46 |
+| inh0.5+bias1 | -179 +- 29 | 0.48 (shy of all bushes) |
+| eta4+inh0.5+bias1 | -292 +- 31 | 0.43 |
+| eta10+inh0.5 / eta10+bias1 | -218 +- 38 / -210 +- 39 | 0.43 / 0.44 |
+Lowering the threshold alone does nothing or makes the creatures shy of everything; the learning rate is what
+discriminates. **The reversal is what makes it cost**: with no switch in a life (`switch_tick` 4000) eta4
+**+150 +- 33**, eta10 +125 +- 54 (poison share 0.47 -> 0.45 / 0.43), eta10+bias1 +32; with the switch at 2000 eta4
++45 +- 20, eta10 -35 +- 33; at 800 (the stage) eta4 +7, eta10 -101. Every lesson turns wrong at the switch and the
+critic cannot unlearn it in time, so evolution lowers the aversion learning rates (v57, v60). The reversal is also
+what made the critic pay (v56): the two goals pull apart in this world.

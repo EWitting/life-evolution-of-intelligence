@@ -1,7 +1,7 @@
 """Bridge between the lab and the world: record lives with the raw inputs every brain received, then replay those
 inputs into the same brains (open loop: what a brain learns depends on its inputs, not on its own actions, given
 them) with parts of the stream removed, and read the learned weights out as in the lab.
-    python scripts/probes/bridge.py record <name> [RUN=<run dir>] [STAGE=2.3] [SIM=0.5] [XOR=1] [PAIN=1] [ONE=0]
+    python scripts/probes/bridge.py record <name> [RUN=<run dir>] [STAGE=2.3] [SIM=0.5] [XOR=1] [PAIN=1] [ONE=0] [MOD=eta4+inh0.5]
                                            [world_field=value ...]
     python scripts/probes/bridge.py replay <name> [conditions ...] [AT=800]
     python scripts/probes/bridge.py arrive <name> [AT=800]
@@ -56,13 +56,18 @@ def setup(meta):
     brain_cfg = s.control_brain if "_control" in run.parent.name else s.brain
     exp = S.make_exp(replace(s, world=world), brain_cfg, "bridge", 1, 0)
     exp = replace(exp, evolution=replace(exp.evolution, siblings=1, record_weights_every=100))
-    return s, exp, load_population(run, exp)
+    pop = load_population(run, exp)
+    if meta.get("mod", "base") != "base":   # start values changed as in rebalance.py (eta4, inh0.5, bias1, ...)
+        sys.path.insert(0, str(Path(__file__).parent))
+        from rebalance import rebalance
+        pop = rebalance(pop, make_layout(exp), meta["mod"])
+    return s, exp, pop
 
 
 def record(name, args):
     kv = dict(a.split("=", 1) for a in args)
     meta = dict(run=kv.pop("RUN", "runs/s2_3_critic/20261019-203352"), stage=kv.pop("STAGE", "2.3"),
-                pain=kv.pop("PAIN", "1.0"), one=kv.pop("ONE", "0"),
+                pain=kv.pop("PAIN", "1.0"), one=kv.pop("ONE", "0"), mod=kv.pop("MOD", "base"),
                 sim=kv.pop("SIM", str(S.PALLIUM_SIM)), xor=kv.pop("XOR", "1"), world=kv)
     s, exp, pop = setup(meta)
     rs, fn = s.build(exp)

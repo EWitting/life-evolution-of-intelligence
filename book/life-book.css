@@ -29,7 +29,7 @@
 .lb-note { background: var(--lb-note); border-left: 3px solid var(--lb-noteline); border-radius: 4px; padding: 0.6rem 0.9rem; font-size: 0.9rem; }
 .lb-note p { margin: 0.15rem 0; }
 
-.lb-tip { position: fixed; display: none; z-index: 50; pointer-events: none; max-width: 340px; background: var(--lb-ink); color: var(--lb-surface);
+.lb-tip { position: fixed; display: none; z-index: 2100; pointer-events: none; max-width: 340px; background: var(--lb-ink); color: var(--lb-surface);
   font: 12px/1.45 system-ui, sans-serif; padding: 6px 9px; border-radius: 5px; }
 .lb-tip .lb-muted { color: inherit; opacity: 0.7; }
 .lb-key { display: inline-block; width: 16px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
@@ -82,8 +82,27 @@
 .lb-reg rect { stroke: var(--lb-axis); stroke-width: 1; }
 .lb-reg rect.lb-sock { fill: var(--lb-surface); stroke: var(--lb-ink2); stroke-width: 0.8; }
 .lb-reg.lb-isnew rect { stroke: var(--lb-new); stroke-width: 2; }
-.lb-regname { font-size: 12.5px; fill: var(--lb-ink); font-weight: 600; }
-.lb-regsub { font-size: 10px; fill: var(--lb-ink2); }
+/* the text grows by --k where the diagram is scaled down (js/life-book.js, brainView); 12.5px is DESIGN there */
+.lb-regname { font-size: calc(12.5px * var(--k, 1)); fill: var(--lb-ink); font-weight: 600; }
+.lb-regsub { font-size: calc(10px * var(--k, 1)); fill: var(--lb-ink2); }
+.lb-brainwrap { margin: 0 auto; }
+.lb-brainframe { position: relative; width: fit-content; max-width: 100%; margin: 0 auto; }
+.lb-brainframe .lb-brain { margin: 0 auto; }
+.lb-expand { position: absolute; top: 6px; right: 6px; width: 30px; height: 30px; padding: 0; font-size: 17px; line-height: 1;
+             color: var(--lb-ink2); background: var(--lb-surface); border: 1px solid var(--lb-axis); border-radius: 6px; cursor: zoom-in; }
+.lb-expand:hover { color: var(--lb-ink); border-color: var(--lb-ink2); }
+.lb-expand[hidden] { display: none; }
+/* full screen: zoom and pan */
+.lb-zoom { position: fixed; inset: 0; z-index: 2000; margin: 0; display: flex; flex-direction: column; background: var(--lb-surface); }
+.lb-zoombar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--lb-border); font-size: 0.82rem; }
+.lb-zoombar .lb-focusbar { margin: 0; }
+.lb-zoomsp { flex: 1; }
+.lb-zoombar > button { font: inherit; min-width: 32px; padding: 2px 9px; border: 1px solid var(--lb-axis); border-radius: 6px; background: transparent; color: var(--lb-ink2); cursor: pointer; }
+.lb-zoombar > button:hover { color: var(--lb-ink); border-color: var(--lb-ink2); }
+.lb-zoomstage { flex: 1; min-height: 0; overflow: hidden; touch-action: none; cursor: grab; }
+.lb-zoomstage.lb-grab { cursor: grabbing; }
+.lb-zoom .lb-brain { width: 100%; height: 100%; border: none; border-radius: 0; }
+.lb-zoomhint { position: absolute; bottom: 8px; left: 12px; font-size: 0.75rem; color: var(--lb-muted); pointer-events: none; }
 .lb-group { fill: rgba(120, 130, 150, 0.06); stroke: var(--lb-axis); stroke-dasharray: 4 3; }
 /* "new circuit" view: other connections hidden, regions they alone touch faded */
 .lb-focusbar { display: flex; align-items: center; gap: 6px; margin: 0 0 4px; font-size: 0.82rem; }
@@ -92,7 +111,7 @@
 .lb-brain.lb-focus .lb-edge.lb-ctx, .lb-brain.lb-focus .lb-mod.lb-ctx { display: none; }
 .lb-brain.lb-focus .lb-reg.lb-ctx { opacity: 0.4; }
 /* view "new circuit": a group the new circuit does not touch is an empty outline with its name in the middle */
-.lb-gcentre { display: none; font-size: 12px; font-weight: 600; fill: var(--lb-ink2); paint-order: stroke; stroke: var(--lb-surface); stroke-width: 4px; }
+.lb-gcentre { display: none; font-size: calc(12px * var(--k, 1)); font-weight: 600; fill: var(--lb-ink2); paint-order: stroke; stroke: var(--lb-surface); stroke-width: 4px; }
 .lb-brain.lb-outline .lb-gcentre.lb-shut { display: inline; }
 .lb-brain.lb-outline .lb-grouplabel.lb-shut, .lb-brain.lb-outline .lb-inshut { display: none; }
 /* the colour of a region and of its top-level group's box: the group's hue (--h, set per element) */
@@ -100,12 +119,12 @@
 .lb-brain .lb-gtop { fill: hsl(var(--h) 50% 75% / 0.16); stroke: hsl(var(--h) 35% 55%); }
 .quarto-dark .lb-brain .lb-cell { fill: hsl(var(--h) 28% 21%); }
 .quarto-dark .lb-brain .lb-gtop { fill: hsl(var(--h) 35% 40% / 0.14); stroke: hsl(var(--h) 25% 42%); }
-.lb-grouplabel { font-size: 10px; fill: var(--lb-ink2); paint-order: stroke; stroke: var(--lb-surface); stroke-width: 4px; }
+.lb-grouplabel { font-size: calc(10px * min(var(--k, 1), 1.2)); fill: var(--lb-ink2); paint-order: stroke; stroke: var(--lb-surface); stroke-width: 4px; }
 .lb-hard { stroke: var(--lb-hard); } .lb-hard-fill { fill: var(--lb-hard); }
 .lb-evolved { stroke: var(--lb-evolved); } .lb-evolved-fill { fill: var(--lb-evolved); }
 .lb-learned { stroke: var(--lb-learned); } .lb-learned-fill { fill: var(--lb-learned); }
 .lb-modline { stroke: var(--lb-mod); stroke-width: 2; stroke-dasharray: 5 4; } .lb-modend { fill: var(--lb-mod); }
-.lb-modlabel { font-size: 10.5px; font-style: italic; fill: var(--lb-mod); paint-order: stroke; stroke: var(--lb-surface); stroke-width: 5px; }
+.lb-modlabel { font-size: calc(10.5px * var(--k, 1)); font-style: italic; fill: var(--lb-mod); paint-order: stroke; stroke: var(--lb-surface); stroke-width: 5px; }
 .lb-modkey { background: repeating-linear-gradient(90deg, var(--lb-mod) 0 4px, transparent 4px 7px); }
 .lb-mod { cursor: default; } .lb-mod:hover .lb-modline { stroke-width: 3; }
 .lb-edge { cursor: default; } .lb-edge:hover path:first-child { stroke: var(--lb-s1); }

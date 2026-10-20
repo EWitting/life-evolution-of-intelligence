@@ -1497,6 +1497,19 @@ stage(Stage("2.4", "s2_4_dopamine", "2.3h", B24TD, replace(W23, **HARSH_REV_WORL
                   "ventral striatal value cells with fast pallidal and slow striosomal paths (TD); control the "
                   "formula critic"))
 
+# The critic page's stage (user, 2026-10-21: the cell version replaces the formula on the page, without an intermediate
+# stage): 2.3h's design with the critic built from cells (B24TD), straight from the pallium stage; the harsh world,
+# fifty calm generations, the aversion learning rates x10 at the start; control the 2.2 brain (the pain teacher).
+# 2.4 (from 2.3h) checked first that the cells work: re-evaluated (16 worlds) cells 1178, formula 1252, pain teacher
+# 943 (STAGE_LOG v69).
+stage(Stage("2.3c", "s2_3c_critic", "2.2", B24TD, replace(W23, **HARSH_REV_WORLD), VISION_CH1, BODY_17,
+            lambda exp: pallium_world(exp, reverse=True, one_berry=1.0),
+            **{**_S15, "generations": 100}, evolution=EVOLUTION_2EP, control_brain=per_slot_pallium(B22P),
+            adapt_init=av_eta_init, schedule=calm_first(HARSH_CALM),
+            notes="dopamine critic built from cells (dopamine cell with a resting rate, habenula, ventral striatal value "
+                  "cells, fast pallidal and slow striosomal paths: TD) in the harsh world; the reversal at 800 from "
+                  "generation HARSH_CALM on; control the 2.2 brain"))
+
 # ------------------------------------------------------------------ running
 
 EVOLUTION_OVERRIDES: dict = {}   # set from the command line (--mutation-prob), applied to every stage

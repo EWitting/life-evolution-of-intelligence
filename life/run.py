@@ -67,6 +67,7 @@ def make_tick(exp: ExperimentConfig, layout: brain.Layout):
     return tick
 
 
+CHECKPOINT_EVERY = 10   # generations between checkpoint.npz writes (the population being evaluated)
 SLOT_KEY = jax.random.PRNGKey(20261019)   # the random draws of the population slots (ProjectionSpec.per_slot)
 
 
@@ -201,13 +202,15 @@ def latest_run(experiment_name: str) -> Path:
     return runs[-1]
 
 
-def load_population(run_dir: Path | str, exp: ExperimentConfig | None = None, seed: int = 0) -> brain.Genome:
+def load_population(run_dir: Path | str, exp: ExperimentConfig | None = None, seed: int = 0,
+                    file: str = "population.npz") -> brain.Genome:
     """The final population of an earlier run (ADR-012). With `exp`, the population is remapped onto exp's
     layout by region and input-feature names (brain.remap_genomes): new regions/projections start silent.
-    If the population size differs from exp.world.num_agents it is tiled or truncated."""
+    If the population size differs from exp.world.num_agents it is tiled or truncated. file="checkpoint.npz": the
+    population of a run's last checkpoint (CHECKPOINT_EVERY), for a run stopped early."""
     run_dir = Path(run_dir)
     old = make_layout(ExperimentConfig.from_json((run_dir / "config.json").read_text()))
-    with np.load(run_dir / "population.npz") as f:
+    with np.load(run_dir / file) as f:
         pop = brain.genome_from_npz(f, old)
     if exp is None:
         return pop
@@ -354,6 +357,11 @@ def run_evolution(exp: ExperimentConfig, ruleset: Ruleset, fitness_fn: Callable[
             np.savez(out_dir / "best_genome.npz", **{k: np.asarray(v[best]) for k, v in pop._asdict().items()})
             np.savez_compressed(out_dir / "population.npz", **{k: np.asarray(v) for k, v in pop._asdict().items()})
         else:
+            if out_dir is not None and gen % CHECKPOINT_EVERY == CHECKPOINT_EVERY - 1:
+                # so that a run stopped early can still be looked into (not a finished run: latest_run and
+                # load_population read population.npz; load this one with load_population(run, file=...))
+                np.savez_compressed(out_dir / "checkpoint.npz", generation=gen,
+                                    **{k: np.asarray(v) for k, v in pop._asdict().items()})
             pop = next_generation(ke, pop, fit, ecfg, layout)
     with open(out_dir / "fitness.csv", "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))

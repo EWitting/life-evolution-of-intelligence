@@ -1307,6 +1307,30 @@ stage(Stage("x.onet", "x_one_touch", "2.3", pallium_touch(B23), replace(W23, **O
             **{**_S15, "generations": 100}, evolution=EVOLUTION_NEW, control_brain=B23,
             notes="DRAFT: one berry per bush; the pallium reads no_touch (look x at the mouth); control: the 2.3 brain"))
 
+# Draft: a harsh world of small meals, no reversal (STAGE_LOG v62-v63). One berry per bush worth one berry (3 food), a
+# poison berry costs as much (POISON_FOOD -3), so trying every bush once gains nothing; a quarter of the metabolic
+# rate of 2.3 (regrowth follows it), born three quarters full, so one bad bite never kills. The aversion learning rates
+# (look and pallium -> valence_av) start x10 in main and control (a start value; evolution moves them from there).
+# Generation 0 (frozen 2.3 seed 0, x.onet brain): base 882, learning x4 +240 +- 34, x10 +443 +- 66 (poison share
+# 0.46 -> 0.40); lives of about 1400 ticks with about 17 painful bites.
+HARSH_WORLD = dict(start_food=0.75, hunger_per_tick=0.005, switch_tick=0)
+AV_LEARN = ("in->valence_av[vis*.app*]", "pallium->valence_av")
+AV_ETA_START = 10.0
+
+
+def av_eta_init(pop, layout):
+    """Start the aversion learning rates AV_ETA_START times their inherited value."""
+    pid, names = np.asarray(layout.proj_id), list(layout.proj_names)
+    sel = jnp.asarray(np.isin(pid, [names.index(n) for n in AV_LEARN if n in names]))[None]
+    return pop._replace(eta=jnp.where(sel, pop.eta * AV_ETA_START, pop.eta))
+
+
+stage(Stage("x.harsh", "x_harsh", "2.3", pallium_touch(B23), replace(W23, **HARSH_WORLD), VISION_CH1, BODY_17,
+            lambda exp: pallium_world(exp, reverse=False, one_berry=1.0),
+            **{**_S15, "generations": 100}, evolution=EVOLUTION_NEW, control_brain=B23, adapt_init=av_eta_init,
+            notes="DRAFT: one berry worth one, poison as costly as a berry is good, low metabolic rate, no reversal; "
+                  "aversion learning starts x10; control: the 2.3 brain"))
+
 # ------------------------------------------------------------------ running
 
 EVOLUTION_OVERRIDES: dict = {}   # set from the command line (--mutation-prob), applied to every stage

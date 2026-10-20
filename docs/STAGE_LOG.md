@@ -3244,3 +3244,44 @@ discriminates. **The reversal is what makes it cost**: with no switch in a life 
 +45 +- 20, eta10 -35 +- 33; at 800 (the stage) eta4 +7, eta10 -101. Every lesson turns wrong at the switch and the
 critic cannot unlearn it in time, so evolution lowers the aversion learning rates (v57, v60). The reversal is also
 what made the critic pay (v56): the two goals pull apart in this world.
+
+## v63 (2026-10-20): a world harsh enough that learning cannot be dropped
+
+User: learning keeps being switched off across stages; perhaps the worlds are tuned to a generation 0 that does not
+learn. Make learning necessary, with room for several bad trials (smaller meals, lower metabolic rate) so that no
+single accident kills. `rebalance.py` (generation 0, x.onet brain on frozen 2.3 seed 0, 16 paired worlds, no reversal
+`switch_tick` 4000; columns: base fitness and lifetime, aversion learning off / x4 / x10 vs base, poison share at x10):
+| world | base (lifetime) | eta0 | eta4 | eta10 | share |
+|---|---|---|---|---|---|
+| one berry 3, hunger 0.015, poison -3 | 2058 (2616) | -4 | +150 +- 33 | +125 +- 54 | 0.43 |
+| ... poison -6 | 727 (1001) | -16 | +103 +- 25 | | |
+| ... poison -9 / -12 / -18 | 352 / 236 / 164 (524 / 368 / 269) | -3 / +2 / +1 | +24 / +3 / -2 | | |
+| one berry 1.5, hunger 0.0075, poison -4.5 | 776 (1146) | -32 +- 12 | +146 +- 21 | +336 +- 51 | 0.40 |
+| ... poison -2.25 | 2263 (2975) | -37 +- 20 | +182 +- 31 | +233 +- 56 | 0.43 |
+| **one berry 1, hunger 0.005, poison -3** | 882 (1425) | -25 +- 14 | +240 +- 34 | **+443 +- 66** | 0.40 |
+| ... poison -1.5 | 2424 (3334) | -27 +- 15 | +170 +- 28 | | |
+A dearer poison alone kills generation 0 before it learns (poison -9: lives of 524 ticks, 5 painful bites). Smaller
+meals at a lower metabolic rate keep the ratio of risk to gain but spread it over more decisions: with one berry
+worth one (3 food), poison as costly (-3) and a quarter of the metabolic rate, trying every bush once gains nothing,
+lives are about 1400 ticks with about 17 painful bites, and stronger aversion learning adds 50% at generation 0.
+Draft stage `x.harsh` (`HARSH_WORLD`, `av_eta_init`: aversion learning rates x10 at the start in main and control),
+seed 0, main (x.onet brain) and control (2.3 brain), 100 generations (`runs/x_harsh/20261020-151214`,
+`runs/x_harsh_control/20261020-151218`; about 30 s per generation). `run.py` now writes `checkpoint.npz` every 10
+generations (`CHECKPOINT_EVERY`; `load_population(run, file="checkpoint.npz")`), so a run stopped early can be
+looked into; this run predates it.
+| generations | main fitness / poison share / lifetime | control |
+|---|---|---|
+| 0-19 | 1343 / 0.36 / 2147 | 1461 / 0.38 / 2226 |
+| 20-39 | 1666 / 0.26 / 2566 | 1817 / 0.30 / 2658 |
+| 40-59 | 1782 / 0.24 / 2636 | 1995 / 0.23 / 2854 |
+| 60-79 | 1866 / 0.22 / 2752 | 2262 / 0.20 / 3100 |
+| 80-99 | 1907 / 0.21 / 2786 | 2217 / 0.21 / 3032 |
+**Caution by look evolves, in both.** Recordings of the last generation (`first_bite.py`), P(bite) per visit, poison /
+good: ticks 0-800 main 0.06 / 0.33, control 0.04 / 0.24; after tick 800 0.01 / 0.17 and 0.01 / 0.15 (in 2.3 and
+x.onet: 0.42 / 0.43). Even poison types with no earlier painful bite are rarely bitten (0.02): part of the caution
+is innate or carried over from the other poison type. Evolved learning rates (median; start x10 of the 2.3 values
+0.041 / 0.070): look -> valence_av main 0.40, control 0.41; pallium -> valence_av 0.25 / 0.53: **the aversion
+learning is kept**. The critic's value learning went down in main (pallium -> value_app 0.069 -> 0.042, -> value_av
+0.024 -> 0.010). The control (no touch-gated pallium; the 2.3 critic) does about 300 better in the last 20
+generations (2217 vs 1907, one seed, training curves). Lives approach the 4000-tick cap late in the run (3570-3730 in
+the last generation), so fitness is nearing its ceiling.

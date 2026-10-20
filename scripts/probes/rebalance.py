@@ -8,7 +8,8 @@ the eyes' hit / near inputs and by their bias.
 Every condition in the same worlds as `base` (the stage's start population: its parent's newest run), paired
 differences. Per condition: fitness, lifetime, good / poison berries per creature before / after the switch, pain,
 and the share of poison among the berries eaten after the switch. A lower-case field=value sets a WorldConfig field
-(switch_tick=4000: no reversal within a life; then "before" is the whole life)."""
+(switch_tick=4000: no reversal within a life; then "before" is the whole life); an upper-case NAME=value a constant
+of stages (POISON_FOOD=-9: the food a poison berry costs)."""
 import os, sys
 import jax, jax.numpy as jnp, numpy as np
 from dataclasses import replace
@@ -41,6 +42,8 @@ if __name__ == "__main__":
     s = S.STAGES[os.environ.get("STAGE", "x.onet")]
     W = int(os.environ.get("WORLDS", 16))
     for a in sys.argv[1:]:
+        if "=" in a and a[0].isupper() and a.split("=")[0] != "WORLDS":   # a constant of stages, e.g. POISON_FOOD=-9
+            setattr(S, a.split("=")[0], float(a.split("=")[1]))
         if "=" in a and a[0].islower():
             k_, v_ = a.split("=")
             s = replace(s, world=replace(s.world, **{k_: type(getattr(s.world, k_))(float(v_))}))

@@ -1372,6 +1372,62 @@ stage(Stage("2.3h", "s2_3h_critic", "2.2", B23, replace(W23, **HARSH_REV_WORLD),
             notes="dopamine critic as a formula in the harsh world (one berry worth one, poison as costly, "
                   "low metabolic rate); the reversal at 800 from generation HARSH_CALM on; control the 2.2 brain"))
 
+# ------------------------------------------------------------------ the critic built from cells (STAGE_LOG v66)
+# The simplest dopamine circuit (user, 2026-10-20): one dopamine cell with a resting rate; its rate minus that rest is
+# the error (a burst is better than predicted, a pause worse). Taste excites it; pain excites the habenula, which
+# inhibits it. The value cells are striatal and inhibitory, learned from the pallium: `value_app` (D1-type rule,
+# strengthened by bursts) inhibits the dopamine cell, so a predicted reward cancels its burst; `value_av` (D2-type
+# rule, strengthened by pauses) inhibits the habenula, so a predicted pain cancels its pause and an omitted one gives
+# a burst. Without a delayed path the error is r - V of this tick (Rescorla-Wagner), not TD: a fast pallidal path
+# can add the change of value later (BRAIN_EVOLUTION, Dopamine). Both cells rest at 0.5 (fixed biases); the links
+# are hard-wired with strengths evolution may tune (`fixed`). The habenula rests above zero so that a predicted pain
+# can push it down: a rectified cell at rest could not signal the relief of an omitted pain.
+DA_REST, HAB_REST = 0.5, 0.5
+DA_SCALE = 2.0          # modulator = DA_SCALE * (rate - DA_REST): from -1 (silent) to +1 (saturated)
+DA_TASTE = 0.23         # us_taste -> dopamine: a good bite about +0.3, the taste weight of the formula critic
+HAB_PAIN, HAB_DA = 2.0, 1.0   # pain -> habenula, habenula -| dopamine: a full pain about -0.9
+VAL_DA, VAL_HAB = 1.0, 3.0    # value_app -| dopamine, value_av -| habenula
+
+
+def dopamine_cells(brain: BrainConfig, delay: bool = False) -> BrainConfig:
+    """`brain` (with the formula critic, `critic()`) with the error computed by cells instead of the formula. `delay`:
+    the error teaches the synapses active a tick earlier (ProjectionSpec.elig_delay, as the formula critic does);
+    without it, those active on the tick it is about (the pairing Rescorla-Wagner asks for)."""
+    at = float(np.arctanh(DA_REST)) + HAB_DA * HAB_REST   # dopamine at rest with the habenula at rest
+    gone = ("value_app_prev", "value_av_prev")
+    regions = tuple(replace(r, sign="inh") if r.name in ("value_app", "value_av") else r
+                    for r in brain.regions if r.name not in gone)
+    pal = next(r.phase for r in brain.regions if r.name == "pallium")
+    projections = tuple(replace(p, elig_delay=delay) if p.modulator in ("da", "da_neg") else p
+                        for p in brain.projections
+                        if p.src not in gone and p.dst not in gone
+                        and not (p.src in ("value_app", "value_av") and p.dst.startswith("valence")))
+    return replace(brain, regions=regions + (
+        R("habenula", 1, sign="inh", alpha=1.0, bias=float(np.arctanh(HAB_REST)), evolve_bias=False, phase=pal + 2,
+          group="epithalamus"),
+        R("dopamine", 1, sign="exc", alpha=1.0, bias=at, evolve_bias=False, phase=pal + 3, group="midbrain/dopamine")),
+        projections=projections + (
+            P("in", "habenula", src_select=("pain",), density=1.0, w_init=HAB_PAIN, evolve=False, tune=True),
+            fixed("habenula", "dopamine", HAB_DA), fixed("us_taste", "dopamine", DA_TASTE),
+            fixed("value_app", "dopamine", VAL_DA), fixed("value_av", "habenula", VAL_HAB)),
+        modulators=tuple(m for m in brain.modulators if m.name not in ("da", "da_neg")) + (
+            Mod("da", pos="dopamine", baseline=DA_REST, scale=DA_SCALE),
+            Mod("da_neg", pos="dopamine", baseline=DA_REST, scale=-DA_SCALE)))
+
+
+B24 = dopamine_cells(B23)
+B24D = dopamine_cells(B23, delay=True)
+# Draft for the probes (lab tests, generation 0): the 2.3h world as frozen (reversal at 800), from the 2.3h population
+stage(Stage("x.dacells", "x_dopamine_cells", "2.3h", B24, replace(W23, **HARSH_REV_WORLD), VISION_CH1, BODY_17,
+            lambda exp: pallium_world(exp, reverse=True, one_berry=1.0),
+            **{**_S15, "generations": 100}, evolution=EVOLUTION_2EP, control_brain=B23,
+            notes="DRAFT: the critic built from cells (one dopamine cell with a resting rate, habenula, inhibitory "
+                  "striatal value cells; Rescorla-Wagner form); control the formula critic"))
+stage(Stage("x.dacellsd", "x_dopamine_cells_delay", "2.3h", B24D, replace(W23, **HARSH_REV_WORLD), VISION_CH1, BODY_17,
+            lambda exp: pallium_world(exp, reverse=True, one_berry=1.0),
+            **{**_S15, "generations": 100}, evolution=EVOLUTION_2EP, control_brain=B23,
+            notes="DRAFT: x.dacells with the error teaching the synapses of a tick earlier (elig_delay)"))
+
 # ------------------------------------------------------------------ running
 
 EVOLUTION_OVERRIDES: dict = {}   # set from the command line (--mutation-prob), applied to every stage

@@ -14,12 +14,16 @@ from life.labtests import PROTOCOLS, conditioning
 from life.run import load_population
 
 FILE = next((a[5:] for a in sys.argv[1:] if a.startswith("FILE=")), "population.npz")
+# STAGE=key: the run's population on that stage's brain (remapped; new links at their designed strength)
+STAGE = next((a[6:] for a in sys.argv[1:] if a.startswith("STAGE=")), None)
 WORLD = dict(outcome_ticks=1, linger=0.0)
 for run in [Path(a) for a in sys.argv[1:] if "=" not in a]:
     exp = ExperimentConfig.from_json((run / "config.json").read_text())
+    if STAGE:
+        exp = S.make_exp(S.STAGES[STAGE], S.STAGES[STAGE].brain, "lab", 1, 0)
     pop = load_population(run, exp, file=FILE)
     critic = any(m.name == "da" for m in exp.brain.modulators)
-    print(f"\n{run} ({FILE}){' critic' if critic else ''}")
+    print(f"\n{run} ({FILE}){' on the brain of ' + STAGE if STAGE else ''}{' critic' if critic else ''}")
     for label, extra in (("lab trials", {}), ("world-like trials", WORLD)):
         r = conditioning(exp, pop, {**PROTOCOLS["extinction"], **extra}, S.PALLIUM_SIM)
         a = r["tests"]["A"]

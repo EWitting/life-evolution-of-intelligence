@@ -6,6 +6,7 @@ the eyes' hit / near inputs and by their bias.
     inh<k>    inherited weights of in -> valence_av from hit, near, agent, wall, held x k
     bias<d>   bias of the valence_av cells + d
     critic0   the critic's value learning off (pallium -> value_app, value_av)
+    cut:<projection>   that projection removed (e.g. cut:value_av->valence_av)
 BRAIN=control runs the stage's control brain; RUN=<run dir> another start population.
 Every condition in the same worlds as `base` (the stage's start population: its parent's newest run), paired
 differences. Per condition: fitness, lifetime, good / poison berries per creature before / after the switch, pain,
@@ -35,6 +36,9 @@ def rebalance(pop, L, spec: str):
             pop = pop._replace(w0=jnp.where(sel([AV_INH]), pop.w0 * float(part[3:]), pop.w0))
         elif part == "critic0":   # the critic's value cells learn nothing (its error is then taste - pain)
             pop = pop._replace(eta=jnp.where(sel(("pallium->value_app", "pallium->value_av")), 0.0, pop.eta))
+        elif part.startswith("cut:"):   # a projection removed (weights and mask 0), e.g. cut:value_app->valence_app
+            m = sel([part[4:]])
+            pop = pop._replace(w0=jnp.where(m, 0.0, pop.w0), mask=jnp.where(m, 0.0, pop.mask))
         elif part.startswith("bias"):
             pop = pop._replace(b=pop.b.at[:, av].add(float(part[4:])))
         else:

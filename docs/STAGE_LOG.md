@@ -3368,3 +3368,31 @@ the control a little more sharply). Lab (export, 24 creatures per seed): aversio
 to an unrelated one (control 2.6 vs 2.8); error per tick, sixth painful meal: cue -0.39, bites -0.58, after +0.27;
 first meal without pain: +0.42 at the bites. Book: critic page rewritten for 2.3h; bars draw negative values from a
 zero line; the reversal figure has the share alive on its own right axis; blocking moved to the full results.
+
+## v66 (2026-10-20): the critic from cells, simplest form (Rescorla-Wagner): TD is needed in this world
+
+User's design: one dopamine cell with a resting rate (the error = rate - rest: a burst for better, a pause for worse),
+inhibitory value cells learned from dopamine and traces, fitting the later basal ganglia. Built as
+`stages.dopamine_cells` (draft stages `x.dacells`, `x.dacellsd`): `dopamine` (rest 0.5; modulator 2 x (rate - 0.5));
+`habenula` (rest 0.5; pain excites it, it inhibits dopamine; resting above zero so that a predicted pain can push it
+down and an omitted pain gives a burst); taste excites dopamine; striatal value cells inhibitory: `value_app` (D1-type
+rule) inhibits dopamine, `value_av` (D2-type rule) inhibits the habenula. Error = taste - pain - V_app + V_av of the same
+tick. The value -> valence links are dropped (cut on frozen 2.3h at generation 0: -7 +- 16; each alone -16, -18).
+Generation 0 on frozen 2.3h seed 0, 16 worlds (`rebalance.py`), the formula critic as frozen: 1072 +- 74 (its value
+learning off, `critic0`: 1061).
+| cells | as built | value learning off (teacher taste - pain only) | aversion learning off |
+|---|---|---|---|
+| error teaches the same tick (`x.dacells`) | 622 +- 17 | 844 +- 36 | 463 +- 16 |
+| a tick earlier, as the formula (`x.dacellsd`) | 611 +- 24 | 1059 +- 72 | |
+With the delay the cells reproduce the formula's teacher (1059 vs 1061): the pain is felt a tick after the bite, and
+the lesson must land on the tick of the bite. The predictions are harmful (-450): in the lab (`lab_critic.py
+STAGE=x.dacells`, frozen 2.3h seeds 0 and 1) the error on the sixth painful meal is +0.56 when the bush appears (a
+known poison reads as relief: the predicted pain disinhibits dopamine before any pain), -0.27 to -0.39 at the bites,
+-0.54 on the tick after; without pain +0.56 on every tick in view, so the aversion is overextinguished (drive -3.2,
+P(bite) 0.65 vs 0.55 before training). In the world the bush is in view for many ticks before the bite, and this
+relief error unteaches the aversion on each of them. TD removes it (a constant view gives a fraction 1 - gamma of the
+value as error). Also found: in frozen 2.3h the critic's value learning is worth little at generation 0 (`critic0`
+-11 +- 17); most of its gain over the pain teacher is the signed teacher (good meals weaken an aversion).
+Proposed next (new cells, to agree with the user): the TD form from cells, a fast path through tonic pallidal cells
+(value -| pallidum -| dopamine; value_av -| pallidum -| habenula) and a slow path through delay cells, gamma = fast /
+slow strength, evolvable.

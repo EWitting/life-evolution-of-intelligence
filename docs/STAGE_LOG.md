@@ -3467,3 +3467,27 @@ User: the cell version replaces the formula on the critic page, with no intermed
 **2.3c**: 2.3h's design with the cell critic (B24TD), from frozen 2.2, the harsh world, fifty calm generations, the
 aversion learning rates x10 at the start, control the 2.2 brain (the pain teacher), EVOLUTION_2EP; three seeds running
 as pairs.
+
+## v70 (2026-10-21): 2.3c, the critic built from cells, frozen; replaces 2.3h on the chain and the critic page
+
+Three seeds (`runs/s2_3c_critic{,_seed1,_seed2}`, controls likewise; two runs side by side, the WSL file cache dropped
+by a monitor). The controls are bit-identical to 2.3h's (same brain, seed and start): 957, 788, 694 in their last 10
+generations. Cells, last 10: 1047, 1103, and seed 2 at 1111 (generation 75) when Claude Code stopped the queue for low
+Windows memory at generation 81 (seed 2's control was killed while recording, after saving its population: the
+end-of-run spike). Not restarted; seed 2 finished from its generation-79 checkpoint as an early stop (30 generations
+into the reversal, a clear lead), `fitness.csv` rebuilt from the run log, `stopped.txt` in its directory. Seed 0 by
+blocks: calm 30-49 1400-1468 (control 1164-1267); after the switch 50-59 780 (809), 60-69 790 (882), 70-79 908 (883),
+90-99 about 1047 (957): the cells lose more at the switch than the formula did (941-952 in 2.3h) and recover.
+Book export (`--evaluate --worlds 16`): re-evaluated main 1093 vs control 802, **+291 +- 104** (+91, +339, +443); head
+to head **+764 +- 45** (+675, +821, +797; the formula 2.3h: +264 and +359). Lesions, % of intact: no_plasticity 46 52
+59, pallium 83 92 86, us_taste 92 95 88, value_app 101 106 104 (not used), value_av 97 91 90, dopamine 46 43 39,
+habenula 48 48 54, ventral_pallidum 51 50 57, gp_habenular 50 59 59 (the tonic cells' lesions leave a standing error).
+Lab: aversion after 6 painful meals 10.2 (control 9.7), after 12 without pain 0.25 (control 9.7); blocking 4.8 vs 5.0
+(control 2.6 vs 2.8); error per tick, sixth painful meal: bush -0.38, bites -0.81 to -0.84, after +0.22; first meal
+without pain +0.38 at the bites. Reversal figure (recorded lives): bites per creature on the kinds that turned good
+0.6 -> 1.0-1.2 after the switch (control 0.7 -> 0.7-0.9); on those that turned poison 1.2 -> 0.5 (control 1.0 ->
+0.3-0.4). First bite per visit, seed 0: before the switch poison / good 0.05 / 0.18, after 0.09 / 0.16 (control 0.10 /
+0.27, then 0.10 / 0.12).
+Frozen (tag `stage-2.3c`); 2.3h moves off the chain with 2.3. Book: the critic page rewritten for the cell circuit
+(circuit, biology of the ventral basal ganglia loop, what it took: both paths, counting the cells, untuned tonic
+outputs); glossary entries and diagram positions for the new cells; the formula version mentioned under what it took.

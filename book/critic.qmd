@@ -79,11 +79,11 @@ things (`value_av`) are used; those that predict good things (`value_app`) are n
 
 <div data-life="lines" data-stage="2.3c" data-example="reversal_life"></div>
 
-**Both learn the look; after the switch the critic keeps it right.** Early in life both kinds of creature bite the
-bushes that hurt less often than the good ones. After tick 800 both soon stop eating the bushes that turned poison,
-since every bite of them hurts. What differs is the first bite at a bush: the critic's creatures go on biting the
-bushes that are good now more often than those that are poison now, in all three seeds, though less sharply than
-before the switch; the pain teacher's do so in one seed of three.
+**After the switch only the critic's creatures take up the new food.** Early in life both kinds of creature bite
+the bushes that hurt less often than the good ones. After tick 800 both soon stop eating the bushes that turned
+poison, since every bite of them hurts. But the bushes that turned good are another matter: the critic's creatures
+eat more and more of them, while the pain teacher's go on avoiding them, held back by an aversion nothing in them
+can undo.
 
 ### In the lab
 
@@ -117,9 +117,10 @@ both at the change.
 ::: {.callout-note collapse="true" title="All lesions"}
 <div data-life="lesions" data-stage="2.3c"></div>
 
-The large losses for `value_app_prev` and `value_av_prev` are not a sign of use. These cells hold a copy of the
-prediction a moment ago, and the surprise is the difference between the two. Silencing only the copy leaves an
-error that never cancels, and this error unteaches every aversion.
+The large losses for `dopamine`, `habenula`, `ventral_pallidum` and `gp_habenular` show that the circuit is
+needed, but their size is not a measure of use alone. These cells are steadily active, and the surprise is measured
+against their resting rates: silencing one of them leaves a surprise that never settles at zero, and it unteaches or
+overteaches every lesson.
 :::
 
 ::: {.callout-note collapse="true" title="The lab and the switch in numbers"}
@@ -150,9 +151,12 @@ that direction; the pain teacher none.
   reads as relief: on every step of the approach it unlearned the aversion, and the creatures did worse than with no
   predictions at all. The fast path through the pallidum turns the comparison into one between now and a moment ago,
   so a view that stays the same is no surprise.
-- **A first version of this page** computed the surprise with a formula instead of cells. The creatures with the
-  formula did a little better than these; the cells are kept because they are how the brain does it and because
-  the basal ganglia that follow are built from the same parts.
+- **A first version of this page** computed the surprise with a formula instead of cells. The creatures did about
+  as well with it as with these; the cells are kept because they are how the brain does it and because the basal
+  ganglia that follow are built from the same parts.
+- **Counting the cells.** Each value cell has its own synapse onto the next cell, so a prediction's strength has to
+  be shared out over them; at first it was not, the predictions counted three times over, and evolution damped them
+  by pushing the horizon to its end.
 - **The right moment.** The surprise of a tick is about the step that led to it, so it changes the synapses that
   were active a tick earlier (real synapses are changed by dopamine that arrives a second or two late).
 - **Steady cells keep their strength.** Evolution may tune how strongly the predictions reach the dopamine cell,

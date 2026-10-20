@@ -974,6 +974,7 @@ def _reversal_life(s, run: Path, worlds: int = 2, bin_: int = 200, until: int = 
 
 @extra("2.3")
 @extra("2.3h")
+@extra("2.3c")
 def reversal_life(s, main: list[Path], control: list[Path]):
     """The reversal over a life, main and control: bites on the berry types that turn from poison to good and from
     good to poison at the switch (a line figure), and a table of the chance of a bite at the mouth."""
@@ -1005,6 +1006,7 @@ def reversal_life(s, main: list[Path], control: list[Path]):
 
 @extra("2.3")
 @extra("2.3h")
+@extra("2.3c")
 def conditioning_lab(s, main: list[Path], control: list[Path]):
     """Textbook conditioning experiments on 24 evolved creatures of every seed (life.labtests.PROTOCOLS): extinction
     (pain, then the same bush without pain) and blocking (Kamin 1969), main and control; and the error on every

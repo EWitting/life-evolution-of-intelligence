@@ -1361,7 +1361,7 @@ def calm_first(generations: int):
     return wrap
 
 
-# The critic on the chain (frozen 2026-10-20, replacing 2.3; STAGE_LOG v65): the 2.3 design in the harsh world with the reversal, straight
+# The formula critic (frozen 2026-10-20, off the chain since 2026-10-21; STAGE_LOG v65): the 2.3 design in the harsh world with the reversal, straight
 # from the pallium stage (no intermediate harsh stage). Main the formula critic (B23), control the 2.2 brain; the
 # aversion learning rates start x10 in both (av_eta_init), a start value that gives generation 0 learners to select.
 HARSH_CALM = 50   # 2.3h: generations without the reversal first (user, 2026-10-20: one stage, no intermediate one)
@@ -1497,7 +1497,8 @@ stage(Stage("2.4", "s2_4_dopamine", "2.3h", B24TD, replace(W23, **HARSH_REV_WORL
                   "ventral striatal value cells with fast pallidal and slow striosomal paths (TD); control the "
                   "formula critic"))
 
-# The critic page's stage (user, 2026-10-21: the cell version replaces the formula on the page, without an intermediate
+# The critic on the chain (frozen 2026-10-21, replacing 2.3h; STAGE_LOG v70). The critic page's stage (user, 2026-10-21:
+# the cell version replaces the formula on the page, without an intermediate
 # stage): 2.3h's design with the critic built from cells (B24TD), straight from the pallium stage; the harsh world,
 # fifty calm generations, the aversion learning rates x10 at the start; control the 2.2 brain (the pain teacher).
 # 2.4 (from 2.3h) checked first that the cells work: re-evaluated (16 worlds) cells 1178, formula 1252, pain teacher

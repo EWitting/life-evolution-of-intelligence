@@ -3396,3 +3396,26 @@ value as error). Also found: in frozen 2.3h the critic's value learning is worth
 Proposed next (new cells, to agree with the user): the TD form from cells, a fast path through tonic pallidal cells
 (value -| pallidum -| dopamine; value_av -| pallidum -| habenula) and a slow path through delay cells, gamma = fast /
 slow strength, evolvable.
+
+## v67 (2026-10-20): the TD critic from cells; stage 2.4
+
+Agreed with the user: the fast path is the ventral basal ganglia loop (value_app -| ventral pallidum -| dopamine:
+disinhibition; value_av -| the habenula-projecting pallidum -| habenula), the slow path the striatum's direct, slower
+inhibition of the dopamine cells (striosomes; nucleus accumbens D1 cells onto the VTA). The value cells are inhibitory
+(Dale's law), so they cannot drive copy cells; instead **slow synapses** (`ProjectionSpec.lag`, new: a fixed
+projection that passes on its source's rate of the previous tick, `BrainState.wl`): `value_app -| dopamine` and
+`value_av -| habenula` lagged. `stages.dopamine_td` (B24TD): no copy cells, two tonic pallidal cells
+(`ventral_pallidum`, `gp_habenular`, rest 0.5; groups `forebrain/basal_ganglia/ventral_striatum` for the value cells,
+`.../pallidum`), the habenula and dopamine biases set for rest 0.5 with their inputs at rest. The outputs of tonically
+active cells are not tuned (`fixed(..., tune=False)`): tuning them moved the dopamine cell's rest, a standing error
+(a test scaling pallidum -> dopamine x2 cost -298, even without value learning -222). Gamma sits on the fast path's
+input strengths (value -> pallidum), tunable.
+Lab (`lab_critic.py STAGE=x.datd`, frozen 2.3h seeds 0 and 1): error per tick of the sixth painful meal: bush -0.32 /
+-0.34, bites -0.62 / -0.25, after +0.48 / +0.49 (the formula: -0.29, -0.63, +0.11); first meal without pain +0.52 /
++0.50 at the bites. Extinction 9.5 -> 0.5 and 8.3 -> -1.9 (lab trials), 7.6 -> 4.9 and 7.5 -> 5.0 (world-like). XOR
+meals: poison 0.00, good 0.17-0.18 after six rounds (formula 0.04 / 0.32).
+Generation 0 (frozen 2.3h seed 0, 16 worlds; formula 1072, Rescorla-Wagner cells 611): TD cells at gamma 0.5 978 +- 72
+(value learning off 1082, aversion learning off 463); gamma by the fast input strength x0.5 / x1.5 / x2: -88 +- 13,
+**+82 +- 18 (1060)**, -144 +- 42. Set to x1.5 (gamma about 0.75).
+**Stage 2.4** (`s2_4_dopamine`): B24TD in the 2.3h world (reversal at 800 from generation 0), from frozen 2.3h seed 0,
+control the formula critic (B23), EVOLUTION_2EP, at most 100 generations with smart early stopping. Seed 0 running.

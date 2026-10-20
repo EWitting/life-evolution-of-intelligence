@@ -63,7 +63,8 @@ if __name__ == "__main__":
     specs = [a for a in sys.argv[1:] if "=" not in a] or ["base"]
     brain = s.control_brain if os.environ.get("BRAIN") == "control" else s.brain   # BRAIN=control: the control's
     exp = S.make_exp(s, brain, "gen0", 1, 0)
-    pop0 = load_population(os.environ.get("RUN") or latest_run(S.STAGES[s.parent].name), exp, seed=0)
+    pop0 = load_population(os.environ.get("RUN") or latest_run(S.STAGES[s.parent].name), exp, seed=0,
+                           file=os.environ.get("FILE", "population.npz"))   # FILE=checkpoint.npz: a stopped run
     L = make_layout(exp)
     rs, fn = s.build(exp)
     sim = jax.jit(make_simulate(exp, record=False))

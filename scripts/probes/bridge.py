@@ -86,7 +86,8 @@ def record(name, args):
     OUT.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(OUT / f"{name}.npz", obs=rec["obs"], sig=rec["sig_in"], ate=rec["ate"], pain=rec["pain"],
                         alive=rec["alive"], action=rec["action"], front=front.astype(np.int16), w_snap=rec["w_snap"],
-                        appearance=np.asarray(rules.appearance), pain_value=pv, food_value=np.asarray(rules.food_value))
+                        appearance=np.asarray(rules.appearance), pain_value=pv, food_value=np.asarray(rules.food_value),
+                        mod=rec["mod"].astype(np.float32))
     (OUT / f"{name}.json").write_text(json.dumps(meta))
     print(f"recorded {OUT / name}.npz: alive at 800 {rec['alive'][799].mean():.0%}, painful bites per creature by 800 "
           f"{((rec['ate'][:800] > 0) & (rec['pain'][:800] > 0.5)).sum() / 64:.1f}")

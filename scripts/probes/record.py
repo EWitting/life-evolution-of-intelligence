@@ -4,7 +4,8 @@ learned.py, events.py and the dashboard can read: runs/_probe_<variant>/<stage>/
     STAGE=1.5 RUN=<population run dir> uv run python scripts/probes/record.py <variant> [agents] [field=value ...]
 variant: see variants.py. agents: size of the recorded world's population (default 64, the world shrinks to match).
 field=value: WorldConfig fields of the full-size world (e.g. patches=40 patch_radius=6); they are added to the
-directory name."""
+directory name. FILE=checkpoint.npz: a stopped run's last checkpoint; BRAIN=control: the stage's control brain;
+NAME=<dir>: the output directory under runs/ (default _probe_<variant>...)."""
 import os, sys
 from dataclasses import replace
 import jax, numpy as np
@@ -21,9 +22,11 @@ for a in FIELDS:
 f = NA / s.world.num_agents
 world = replace(s.world, num_agents=NA, height=round(s.world.height * f ** 0.5), width=round(s.world.width * f ** 0.5),
                 patches=round(s.world.patches * f))
-exp = S.make_exp(replace(s, world=world), variant(s.brain, V), "probe", 1, 0)
+brain = s.control_brain if os.environ.get("BRAIN") == "control" else s.brain
+exp = S.make_exp(replace(s, world=world), variant(brain, V), "probe", 1, 0)
 exp = replace(exp, evolution=replace(exp.evolution, siblings=1))
-pop = load_population(os.environ.get("RUN") or latest_run(S.STAGES[s.parent].name), exp, seed=0)
+pop = load_population(os.environ.get("RUN") or latest_run(S.STAGES[s.parent].name), exp, seed=0,
+                      file=os.environ.get("FILE", "population.npz"))
 if os.environ.get("DENSE"):   # every learned synapse exists (inherited ones keep their weight, new ones start at 0)
     from life.run import make_layout as _ml
     _L = _ml(exp); _pl = (np.asarray(_L.rule) > 0) & (np.asarray(_L.allowed) > 0)
@@ -33,7 +36,7 @@ rs, fn = s.build(exp)
 kr, ks = jax.random.split(jax.random.PRNGKey(31))
 rules = jax.tree_util.tree_map(lambda a: a[0], fn(0, kr))
 st, recs = make_simulate(exp, record=True)(rules, pop, ks)
-out = RUNS_DIR / (f"_probe_{V}" + ("_dense" if os.environ.get("DENSE") else "") + "".join("_" + a.replace("=", "") for a in FIELDS)) / s.key
+out = (RUNS_DIR / os.environ["NAME"]) if os.environ.get("NAME") else     RUNS_DIR / (f"_probe_{V}" + ("_dense" if os.environ.get("DENSE") else "") + "".join("_" + a.replace("=", "") for a in FIELDS)) / s.key
 out.mkdir(parents=True, exist_ok=True)
 app = rules.appearance if rules.appearance.ndim == 2 else rules.appearance[0]
 save_recording(out, exp, rs, make_layout(exp), pop, recs, 0, [], dashboard=False, appearance=app)

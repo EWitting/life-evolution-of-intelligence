@@ -1394,6 +1394,9 @@ def dopamine_cells(brain: BrainConfig, delay: bool = False) -> BrainConfig:
     the error teaches the synapses active a tick earlier (ProjectionSpec.elig_delay, as the formula critic does);
     without it, those active on the tick it is about (the pairing Rescorla-Wagner asks for)."""
     at = float(np.arctanh(DA_REST)) + HAB_DA * HAB_REST   # dopamine at rest with the habenula at rest
+    # the strengths are per unit of mean value: every value cell has its own synapse, so each gets 1 / n of it
+    # (with the full strength per synapse the value scale was 3x the formula's; STAGE_LOG v68)
+    nv = next(r.size for r in brain.regions if r.name == "value_app")
     gone = ("value_app_prev", "value_av_prev")
     regions = tuple(replace(r, sign="inh") if r.name in ("value_app", "value_av") else r
                     for r in brain.regions if r.name not in gone)
@@ -1411,7 +1414,7 @@ def dopamine_cells(brain: BrainConfig, delay: bool = False) -> BrainConfig:
             # the outputs of tonically active cells are not tuned: a stronger one would move the dopamine cell's
             # rest away from DA_REST, a standing error (STAGE_LOG v67)
             fixed("habenula", "dopamine", HAB_DA, tune=False), fixed("us_taste", "dopamine", DA_TASTE),
-            fixed("value_app", "dopamine", VAL_DA), fixed("value_av", "habenula", VAL_HAB)),
+            fixed("value_app", "dopamine", VAL_DA / nv), fixed("value_av", "habenula", VAL_HAB / nv)),
         modulators=tuple(m for m in brain.modulators if m.name not in ("da", "da_neg")) + (
             Mod("da", pos="dopamine", baseline=DA_REST, scale=DA_SCALE),
             Mod("da_neg", pos="dopamine", baseline=DA_REST, scale=-DA_SCALE)))
@@ -1429,10 +1432,11 @@ def dopamine_cells(brain: BrainConfig, delay: bool = False) -> BrainConfig:
 # rest at 0.5. Strengths from the formula's value scale 3 and gamma 0.5 at the cells' working point (tanh' = 0.75 at
 # rest 0.5): the error is about 1.5 x the dopamine cell's change of drive.
 TD_SLOW_DA, TD_SLOW_HAB = 2.0, 2.67     # value_app -| dopamine, value_av -| habenula (slow synapses)
-# the fast path's input strengths set gamma (x1.5 of the formula's 0.5, about 0.75: generation 0 on frozen 2.3h, 16
-# worlds: gamma ~0.25 -88, 0.5 base 978, 0.75 +82 (1060, the formula 1072), 1.0 -144; tunable, STAGE_LOG v67)
-TD_VAL_VP, TD_VP_DA = 2.0, 1.0          # value_app -| ventral_pallidum, ventral_pallidum -| dopamine
-TD_VAL_GPH, TD_GPH_HAB = 2.67, 1.0      # value_av -| gp_habenular, gp_habenular -| habenula
+# the fast path's input strengths set gamma: x1.8 of the formula's 0.5, about 0.9 (generation 0 on frozen 2.3h, 16
+# worlds, the value scale corrected: gamma 0.5 1041, 0.75 +34 +- 16, 0.9 +56 +- 18 (1098; the formula 1072); STAGE_LOG
+# v68; tunable)
+TD_VAL_VP, TD_VP_DA = 2.4, 1.0          # value_app -| ventral_pallidum, ventral_pallidum -| dopamine
+TD_VAL_GPH, TD_GPH_HAB = 3.2, 1.0       # value_av -| gp_habenular, gp_habenular -| habenula
 VSTR = "forebrain/basal_ganglia/ventral_striatum"
 PALLIDUM = "forebrain/basal_ganglia/pallidum"
 
@@ -1442,6 +1446,7 @@ def dopamine_td(brain: BrainConfig) -> BrainConfig:
     direct value links made slow and fast pallidal paths added."""
     b = dopamine_cells(brain, delay=True)
     rest = float(np.arctanh(0.5))
+    nv = next(r.size for r in brain.regions if r.name == "value_app")   # strengths per unit of mean value (above)
     pal = next(r.phase for r in b.regions if r.name == "pallium")
     regions = []
     for r in b.regions:
@@ -1453,14 +1458,14 @@ def dopamine_td(brain: BrainConfig) -> BrainConfig:
             r = replace(r, bias=rest + HAB_DA * HAB_REST + TD_VP_DA * 0.5, phase=pal + 4)
         regions.append(r)
     tonic = lambda n: R(n, 1, sign="inh", alpha=1.0, bias=rest, evolve_bias=False, phase=pal + 2, group=PALLIDUM)
-    slow = {("value_app", "dopamine"): TD_SLOW_DA, ("value_av", "habenula"): TD_SLOW_HAB}
+    slow = {("value_app", "dopamine"): TD_SLOW_DA / nv, ("value_av", "habenula"): TD_SLOW_HAB / nv}
     projections = tuple(replace(p, w_init=slow[(p.src, p.dst)], lag=True) if (p.src, p.dst) in slow else p
                         for p in b.projections)
     return replace(b, regions=tuple(regions) + (tonic("ventral_pallidum"), tonic("gp_habenular")),
                    projections=projections + (
-                       fixed("value_app", "ventral_pallidum", TD_VAL_VP),
+                       fixed("value_app", "ventral_pallidum", TD_VAL_VP / nv),
                        fixed("ventral_pallidum", "dopamine", TD_VP_DA, tune=False),
-                       fixed("value_av", "gp_habenular", TD_VAL_GPH),
+                       fixed("value_av", "gp_habenular", TD_VAL_GPH / nv),
                        fixed("gp_habenular", "habenula", TD_GPH_HAB, tune=False)))
 
 

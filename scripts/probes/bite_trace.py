@@ -3,7 +3,7 @@
 First tick of every visit to a poison bush (before the switch, tick 800) after at least PRIOR painful bites from that
 type: mean rates of the cells that decide the bite, split by whether the creature bit on that tick; then the inputs
 to the bite outputs (USE, EAT) by source region (rate x weight, summed per region), and to grasp and no_feed. Good
-visits are shown for comparison. Weights: the recording's snapshot nearest the tick."""
+visits are shown for comparison. Weights: the recording's last snapshot before the visit (visits from tick 100 on)."""
 import json, sys
 from pathlib import Path
 import numpy as np
@@ -56,7 +56,7 @@ def visits_with_t(run):
 V = visits_with_t(run)
 groups = {"poison, bit": [], "poison, did not bite": [], "good, bit": [], "good, did not bite": []}
 for t, c, pz, pr in V:
-    if pz and pr < PRIOR:
+    if t < 100 or (pz and pr < PRIOR):   # (t < 100: no snapshot before the visit)
         continue
     b = act[t, c] in (A.USE, A.EAT)
     groups[f"{'poison' if pz else 'good'}, {'bit' if b else 'did not bite'}"].append((t, c))
@@ -72,7 +72,9 @@ for k, v in groups.items():
 def inputs_to(cols, v):
     tot = {}
     for t, c in v:
-        w = ws[min(t // 100, len(ws) - 1), c].astype(np.float32)
+        # the last snapshot before the visit (w_snap[k] holds the weights after tick 100 (k + 1) - 1): a later one
+        # would already hold the lesson of a bite in this visit
+        w = ws[min(t // 100 - 1, len(ws) - 1), c].astype(np.float32)
         look = [i for i, nm in enumerate(L["in_names"]) if ".app" in nm]
         other = [i for i in range(L["n_in"]) if i not in look]
         for r2, ix in (("in: looks", look), ("in: other", other)):

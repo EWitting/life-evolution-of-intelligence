@@ -1647,7 +1647,8 @@ def lesion(run_dir: str, regions: list[str] | None = None, worlds: int = 8, seed
     """Lesion study: the run's final population in its own world, intact and with each region silenced (all
     outgoing synapses removed). Averages over `worlds` independent worlds. Returns {label: stats means}.
     The worlds depend only on `seed`, so two runs of the same stage are measured in the same worlds.
-    `only`: restrict to these labels (e.g. ("intact",) to re-evaluate a population)."""
+    `only`: restrict to these labels (e.g. ("intact",) to re-evaluate a population). A region named
+    "learn_off:<region>" switches off only the learning of the synapses onto that region."""
     from pathlib import Path
     from life.config import ExperimentConfig
     from life.run import make_layout, make_simulate
@@ -1667,12 +1668,15 @@ def lesion(run_dir: str, regions: list[str] | None = None, worlds: int = 8, seed
     out = {}
     labels = ["intact"] + (["no_plasticity"] if float(pop.eta.max()) > 0 else []) \
         + (["no_depression"] if layout.has_dep else []) + regions
+    labels += [l for l in (only or ()) if l.startswith("learn_off:")]
     if only:
         labels = [l for l in labels if l in only]
     for label in labels:
         g = pop
         if label == "no_plasticity":
             g = pop._replace(eta=jnp.zeros_like(pop.eta))
+        elif label.startswith("learn_off:"):   # only the learning of the synapses onto one region off
+            g = pop._replace(eta=pop.eta.at[:, :, layout.region(label[10:])].set(0.0))
         elif label not in ("intact", "no_depression"):
             rows = layout.region(label)
             # silence the region: no outgoing synapses and no activity (so broadcast modulators read 0 too)

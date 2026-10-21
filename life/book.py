@@ -16,6 +16,7 @@ runs have changed since.
 from __future__ import annotations
 import argparse
 import csv
+import hashlib
 import json
 from datetime import datetime
 from fnmatch import fnmatch
@@ -43,6 +44,8 @@ EXTRAS: dict[str, list[Callable]] = {}
 NO_HEAD_TO_HEAD = ("1.2h", "1.6h")
 # stages whose question is whether older circuits are still used: the regions to silence with `--lesions recent`
 LESION_REGIONS = {"2.1": ("flee", "fed", "settle", "rest")}
+# learning lesions added to a stage's region lesions: only the learning onto one region off
+LEARN_LESIONS = {"2.3s": ("valence_app", "valence_av")}
 
 
 def extra(key: str):
@@ -282,6 +285,7 @@ def evaluate(key: str, worlds: int = 8, jobs: int = 5, lesions: str = "recent") 
     for i, r in enumerate(main):
         names = json.loads((r / "layout.json").read_text())["names"]
         labels = ["intact", "no_plasticity", "no_depression"] + [n for n in names if n not in ("in", "out") and n not in older]
+        labels += [f"learn_off:{n}" for n in LEARN_LESIONS.get(key, ())]
         if lesions == "recent" and key in LESION_REGIONS:
             labels = ["intact", "no_plasticity"] + [n for n in LESION_REGIONS[key] if n in names]
         tasks += [("main", i, str(r), worlds, tuple(labels[k:k + 3])) for k in range(0, len(labels), 3)]
@@ -292,15 +296,27 @@ def evaluate(key: str, worlds: int = 8, jobs: int = 5, lesions: str = "recent") 
     print(f"evaluate {key}: {len(tasks) + bool(control)} tasks in {jobs} processes, {worlds} worlds each", flush=True)
     import multiprocessing
     # spawn, not fork: a forked child cannot use the GPU once the parent has touched it (fork is the Linux default)
+    # every finished task is kept on disk (runs/_evaluate/<key>/), so an export stopped part way (a kill for low
+    # memory) goes on where it stopped; a task's result depends only on its run, worlds and labels
+    cache = RUNS_DIR / "_evaluate" / key
+    cache.mkdir(parents=True, exist_ok=True)
+    cached = lambda t: cache / (hashlib.sha1(json.dumps([str(x) for x in t]).encode()).hexdigest()[:16] + ".json")
+    vkey = ("versus", key, worlds, tuple(str(r) for r in main + control))
+    have = {t: json.loads(cached(t).read_text()) for t in tasks + [vkey] if cached(t).exists()}
+    if have:
+        print(f"  {len(have)} tasks done earlier (kept in {cache})", flush=True)
     with ProcessPoolExecutor(max_workers=jobs, mp_context=multiprocessing.get_context("spawn")) as pool:
-        futures = {pool.submit(_lesion_task, t): f"{t[0]} seed {t[1]}: {', '.join(t[4])}" for t in tasks}
-        versus = pool.submit(_versus_task, key, worlds) if control else None
-        if versus:
-            futures[versus] = "head to head"
+        futures = {pool.submit(_lesion_task, t): t for t in tasks if t not in have}
+        if control and vkey not in have:
+            futures[pool.submit(_versus_task, key, worlds)] = vkey
         for n, f in enumerate(as_completed(futures), 1):   # one line per finished task: the progress of the export
-            print(f"  {n}/{len(futures)} after {(time.time() - t0) / 60:.0f} min: {futures[f]}", flush=True)
-        done = [f.result() for f in list(futures)[:len(tasks)]]
-        versus = versus.result() if versus else None
+            t = futures[f]
+            have[t] = f.result()
+            cached(t).write_text(json.dumps(have[t], default=float))
+            label = "head to head" if t is vkey else f"{t[0]} seed {t[1]}: {', '.join(t[4])}"
+            print(f"  {n}/{len(futures)} after {(time.time() - t0) / 60:.0f} min: {label}", flush=True)
+    done = [have[t] for t in tasks]
+    versus = have.get(vkey) if control else None
     les = [{} for _ in main]
     ctrl_fit = [None] * len(control)
     for (kind, i, *_), res in zip(tasks, done):
@@ -981,6 +997,7 @@ def _reversal_life(s, run: Path, worlds: int = 2, bin_: int = 200, until: int = 
 @extra("2.3")
 @extra("2.3h")
 @extra("2.3c")
+@extra("2.3s")
 def reversal_life(s, main: list[Path], control: list[Path]):
     """The reversal over a life, main and control: bites on the berry types that turn from poison to good and from
     good to poison at the switch (a line figure), and a table of the chance of a bite at the mouth."""
@@ -1013,6 +1030,7 @@ def reversal_life(s, main: list[Path], control: list[Path]):
 @extra("2.3")
 @extra("2.3h")
 @extra("2.3c")
+@extra("2.3s")
 def conditioning_lab(s, main: list[Path], control: list[Path]):
     """Textbook conditioning experiments on 24 evolved creatures of every seed (life.labtests.PROTOCOLS): extinction
     (pain, then the same bush without pain) and blocking (Kamin 1969), main and control; and the error on every

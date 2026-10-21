@@ -187,6 +187,11 @@ def brain_view(s, run: Path) -> dict:
     with np.load(run / "population.npz") as f:
         w0, mask = f["w0"].astype(np.float32), f["mask"].astype(np.float32)
     signs = dict(zip(layout["names"], layout["sign"]))
+    # when a projection's signal arrives: a target reads this tick's activity of the regions of a lower update
+    # phase, everything else (and every slow synapse, `lag`) from the previous tick; the senses are always current
+    phase = {r["name"]: r.get("phase", 0) for r in brain["regions"]}
+    phase["out"] = brain.get("out_phase", 0)
+    ordered = len(set(phase.values())) > 1
     projections = []
     for p in brain["projections"]:
         rows, cols = _indices(layout, p)
@@ -205,7 +210,8 @@ def brain_view(s, run: Path) -> dict:
             "src_range": list(p.get("src_range", ())), "dst_range": list(p.get("dst_range", ())),
             "hard": not p.get("evolve", True), "rule": p.get("rule", "fixed"), "kind": p.get("kind", "add"),
             "modulator": p.get("modulator", ""), "designed": p.get("w_init"), "new": bool(parent) and key not in old_proj,
-            "sign": int(sign), "synapses": n, "mean_abs": mean_abs,
+            "sign": int(sign), "synapses": n, "mean_abs": mean_abs, "lag": bool(p.get("lag", False)),
+            "delay": int(bool(p.get("lag")) or (p["src"] != "in" and not (ordered and phase[p["src"]] < phase[p["dst"]]))),
             "drive": float(np.abs(w).sum(axis=1).mean())})        # summed |w| arriving at one target neuron
     from . import actions as A
     # modulators: which are new, and for a lasting one how long it stays (ticks), as designed and as evolved

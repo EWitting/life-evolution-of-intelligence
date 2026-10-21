@@ -1469,9 +1469,29 @@ def dopamine_td(brain: BrainConfig) -> BrainConfig:
                        fixed("gp_habenular", "habenula", TD_GPH_HAB, tune=False)))
 
 
+def appetite_learning(brain: BrainConfig) -> BrainConfig:
+    """The appetitive side learns as the aversive one (user, 2026-10-21; STAGE_LOG v74): look and pallium ->
+    `valence_app` taught by `da` (a burst strengthens), the mirror of look and pallium -> `valence_av` taught by
+    `da_neg` (a pause strengthens). Learning from pain only was meant until dopamine came (ADR-024)."""
+    av = {p.src: p for p in brain.projections if p.dst == "valence_av" and p.modulator == "da_neg"}
+    look = replace(av["in"], dst="valence_app", modulator="da")
+    return replace(brain, projections=tuple(
+        look if (p.src, p.dst, p.src_select) == ("in", "valence_app", look.src_select) else p
+        for p in brain.projections) + (replace(av["pallium"], dst="valence_app", modulator="da"),))
+
+
+def pain_relay(brain: BrainConfig) -> BrainConfig:
+    """Pain reaches the habenula through its relay cell `us_pain`, as taste reaches the dopamine cell through
+    `us_taste` (user, 2026-10-21), instead of straight from the sense. The strength is set so that a full pain (1,
+    `us_pain` tanh(2) = 0.96) drives the habenula as the direct line did."""
+    return replace(brain, projections=tuple(p for p in brain.projections if (p.src, p.dst) != ("in", "habenula"))
+                   + (fixed("us_pain", "habenula", HAB_PAIN / float(np.tanh(2.0))),))
+
+
 B24 = dopamine_cells(B23)
 B24TD = dopamine_td(B23)
 B24D = dopamine_cells(B23, delay=True)
+B24S = pain_relay(appetite_learning(B24TD))
 # Draft for the probes (lab tests, generation 0): the 2.3h world as frozen (reversal at 800), from the 2.3h population
 stage(Stage("x.dacells", "x_dopamine_cells", "2.3h", B24, replace(W23, **HARSH_REV_WORLD), VISION_CH1, BODY_17,
             lambda exp: pallium_world(exp, reverse=True, one_berry=1.0),
@@ -1510,6 +1530,17 @@ stage(Stage("2.3c", "s2_3c_critic", "2.2", B24TD, replace(W23, **HARSH_REV_WORLD
             notes="dopamine critic built from cells (dopamine cell with a resting rate, habenula, ventral striatal value "
                   "cells, fast pallidal and slow striosomal paths: TD) in the harsh world; the reversal at 800 from "
                   "generation HARSH_CALM on; control the 2.2 brain"))
+
+# Candidate to replace 2.3c on the chain and the critic page (user, 2026-10-21: get it right in one stage rather than
+# fix it in the next): 2.3c with the appetitive synapses taught by dopamine as the aversive ones are
+# (`appetite_learning`) and pain reaching the habenula through `us_pain` (`pain_relay`); B24S. Generation 0 on the
+# 2.3c populations neutral (STAGE_LOG v74). The control (the 2.2 brain, same world, seeds and start) is 2.3c's.
+stage(Stage("2.3s", "s2_3s_critic", "2.2", B24S, replace(W23, **HARSH_REV_WORLD), VISION_CH1, BODY_17,
+            lambda exp: pallium_world(exp, reverse=True, one_berry=1.0),
+            **{**_S15, "generations": 100}, evolution=EVOLUTION_2EP, control_brain=per_slot_pallium(B22P),
+            adapt_init=av_eta_init, schedule=calm_first(HARSH_CALM),
+            notes="2.3c with appetite learning from dopamine (look and pallium -> valence_app under da, the mirror of "
+                  "the aversive side) and pain reaching the habenula through us_pain; control the 2.2 brain"))
 
 # ------------------------------------------------------------------ running
 

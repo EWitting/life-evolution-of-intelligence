@@ -65,6 +65,17 @@ So the step from "Hebbian" to "RL" is four smaller steps, and the chapters follo
    are drawn at each birth; the genome holds their statistics and rule genes.
 7. **New world mechanics come from OHOL where possible**; a mechanism of our own only when OHOL has nothing
    that fits. Each behind a config switch that defaults off (ADR-010).
+8. **Old circuits stay, keep learning, and compete with the new** (user, 2026-10-21). A new module does not
+   replace, rewire or freeze what came before: brains add on top, and the innate and Pavlovian systems
+   (hypothalamus, amygdala, brainstem) still drive approach and avoidance next to the basal ganglia that learn
+   actions. So the valence cells keep their fixed outputs onto the eating and turning programmes, and the newer
+   circuits act on the same programmes. Where the paths should differ is designed, not left to evolution: every
+   new learned projection has a biological counterpart and a reason, and evolution tunes only strengths and
+   learning rates (open all-to-all wiring lets evolution route everything through the oldest path). When a new
+   teacher arrives, it teaches both sides that a mirrored pair of cells has (good and bad), unless a difference is
+   meant and written down; the wiring review by hand (CLAUDE.md) checks this. Worlds and lab tests include cases
+   where the old path is wrong (an omission schedule: food only when *not* approaching), so lesions show which
+   path is used where. A path that ends up unused is investigated, and leaves the chain only at freezing.
 
 ---
 

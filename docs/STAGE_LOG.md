@@ -3556,3 +3556,28 @@ gain also shrinks the unpredicted dip (-0.84 -> -0.65 at x0.5); aversions are le
 variants. Candidate design for the basal ganglia stage (the striatum sees the chosen action there anyway): value
 cells that read a same-tick copy of the motor command, and a habenula pain gain below saturation; to agree with the
 user, then lab and generation 0.
+
+## v74 (2026-10-21): appetite learning from dopamine and the pain relay; candidate stage 2.3s
+
+User: the appetitive synapses not learning from `da` (while `da_neg` teaches the aversive ones) is a forgotten
+mirror, not a design; probe it and, unless it breaks things, redo the critic stage with it instead of fixing it in
+the next stage; route pain through `us_pain` to the habenula in the same brain. New helpers: `appetite_learning`
+(look and pallium -> valence_app, hebb under `da`, the specs of the aversive projections mirrored: a burst
+strengthens), `pain_relay` (`us_pain -> habenula` at HAB_PAIN / tanh(2) = 2.07, tunable, instead of `in[pain] ->
+habenula`); B24S = both on B24TD. Mirror check: both TO FIX pairs gone. Design principle 8 (BRAIN_EVOLUTION): old
+circuits stay, keep learning and compete; a new teacher teaches both sides of a mirrored pair.
+`scripts/probes/sym_probe.py` (new) on the 2.3c populations, the new synapses with their aversive mirror's learning
+genes x ETA, lab with world-like lessons (one tick, approach of 8, readout at the first tick at the mouth) and
+generation 0 in the 2.3c world (16 paired worlds), seeds 0 / 1 / 2:
+| ETA, brain | lab appetite P(bite) after 6 good meals | XOR after 6 rounds, poison / good | world vs frozen |
+|---|---|---|---|
+| frozen | 0.69 / 0.53 / 0.58 | 0.06/0.45, 0.00/0.21, 0.05/0.33 | |
+| 1.0, appetite | 0.89 / 0.75 / 0.96 | 0.06/0.57, 0.00/0.26, 0.10/0.66 | -12 +- 24, -87 +- 31, -96 +- 36 |
+| 0.3, relay only | as frozen | as frozen | -3 +- 11, +46 +- 14, +2 +- 13 |
+| 0.3, appetite | 0.89 / 0.63 / 0.86 | 0.06/0.55, 0.00/0.25, 0.10/0.53 | +32 +- 26, +3 +- 30, -49 +- 30 |
+| 0.3, both (B24S) | as appetite | as appetite | +25 +- 20, -12 +- 23, -43 +- 33 |
+The appetite is learned and barely spreads to the look-alike poison corners (the reason ADR-024 left it out in 1.5,
+before a signed teacher); pain extinction unchanged. Generation 0 neutral at the dose the stage starts with (the
+mirrored design rates 0.3 and 0.2 are about the evolved aversive rates x0.3). Stage **2.3s** (`s2_3s_critic`) =
+2.3c with B24S, from frozen 2.2, three seeds; its control is 2.3c's (same brain, world, seeds and start; configs
+compared equal), copied with `copied_from.txt`, not rerun.

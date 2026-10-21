@@ -108,12 +108,14 @@ PROTOCOLS = {
 }
 
 
-def conditioning(exp, pop, protocol: dict, sim: float, n_agents: int = 24, seed: int = 0, signal: str | None = None) -> dict:
+def conditioning(exp, pop, protocol: dict, sim: float, n_agents: int = 24, seed: int = 0, signal: str | None = None,
+                 cells: tuple = ()) -> dict:
     """Runs one protocol (PROTOCOLS) on the first n_agents genomes at once. Returns
         tests: {label: [trials + 1, agents, 4]}  readout before training and after every trial: aversive cells,
                P(bite) (use or eat), critic value (aversive minus appetitive value cells, 0 without a critic), and
                the aversive cells' input drive (does not saturate as their rate does)
         signal: [trials, agents, ticks]          the teaching signal (`signal`, default da, else us_av) per tick
+        cells:  {region: [trials, agents, ticks]} with `cells` (region names): their mean rate per tick
     A readout is taken as in xor_meals: a rested brain with only the learned weights, learning off, the cue shown
     for three ticks."""
     from .experiments import stages as S
@@ -185,14 +187,21 @@ def conditioning(exp, pop, protocol: dict, sim: float, n_agents: int = 24, seed:
     for _ in range(4):
         st = step(pop, st, blank)
     res = {k: [readout(st, *o)] for k, o in tests.items()}
-    sig = []
+    sig, rates = [], {c: [] for c in cells}
     for kind, cues, n in protocol["train"]:
         for _ in range(n):
-            tr = []
+            tr, cr = [], {c: [] for c in cells}
             for o in trial(kind, cues):
                 st = step(pop, st, o)
                 tr.append(np.asarray(st.mod[:, mi]))
+                for c in cells:
+                    cr[c].append(np.asarray(st.x[:, L.region(c)].mean(-1)))
             sig.append(np.stack(tr, -1))
+            for c in cells:
+                rates[c].append(np.stack(cr[c], -1))
             for k, o in tests.items():
                 res[k].append(readout(st, *o))
-    return dict(tests={k: np.stack(v) for k, v in res.items()}, signal=np.stack(sig))
+    out = dict(tests={k: np.stack(v) for k, v in res.items()}, signal=np.stack(sig))
+    if cells:
+        out["cells"] = {c: np.stack(v) for c, v in rates.items()}
+    return out

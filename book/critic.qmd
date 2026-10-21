@@ -93,8 +93,11 @@ it; it bites three times and feels pain each time; after a pause the next trial 
 <div data-life="lines" data-stage="2.3c" data-example="dopamine_shift"></div>
 
 **The surprise moves to the warning.** At the first painful meal the signal drops at the bites. After a few meals it
-drops as soon as the bush appears, and less at the bites. When the pain is then left out, the signal turns positive
-where the pain should have been, as in the monkey recordings.
+also drops as soon as the bush appears. When the pain is then left out, the signal turns positive where the pain
+should have been, as in the monkey recordings. Unlike in those recordings, the drop at the bites hardly shrinks: the
+critic learns *that* the bush hurts, not *when*. Nothing the creature senses changes between seeing the bush and
+biting it, so the prediction of a moment ago and the one now cancel each other at the bite, and what little is left
+is lost in a pain signal that is already at its limit. A sense of time since a warning is for a later stage.
 
 <div data-life="bars" data-stage="2.3c" data-example="conditioning_lab" data-rows="0,1" data-col0="critic" data-col1="pain teacher"></div>
 

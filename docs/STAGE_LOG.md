@@ -3506,3 +3506,21 @@ pallium 89, value_app 105, value_av 87, dopamine 38, habenula 52, ventral_pallid
 aversion after six painful meals 8.9, after twelve without pain -2.9 (an overshoot below zero; mean of the seeds 10.0
 -> -0.45); blocking 4.9 vs 5.1. Refrozen on Windows: the rules digest of `definition.json` differs when computed in
 WSL on the GPU (b316... vs ead0..., rounding at the 4th decimal), so freeze where the tests run.
+
+## v72 (2026-10-21): why the cell critic's dip at a predicted pain hardly shrinks
+
+User: in the lab the aversion is learned and unlearned well, but the error at the painful bites stays near -0.8.
+`scripts/probes/lab_cells.py` (new; `labtests.conditioning(cells=...)` records cell rates per tick), 2.3c seed 0,
+extinction protocol. Sixth painful meal, per tick bush / bites / after: value_av 0.21 / 0.20 / 0.00; gp_habenular
+0.04 / 0.04 / 0.50; habenula 0.77 / 0.95-0.96 / 0.38 (first meal 0.50 / 0.97 / 0.75); error -0.44 / -0.81 /
++0.15 (first meal 0 / -0.84 / -0.42). First meal without pain: habenula 0.32 at the bites, error +0.23, after +0.54.
+Two causes. (1) The view does not change between the bush and the bites, so at a bite the fast path (+gamma V now:
+gp_habenular silenced) and the slow path (-V a tick ago) nearly cancel: the prediction shows at the changes (the
+bush appears: dip; it goes: relief), not at the pain; the ceiling found for the formula critic (v58): TD needs a
+state that changes as the outcome nears. (2) The habenula is saturated by the pain itself (lab pain 1.0 x HAB_PAIN
+2 -> 0.97), so the small remainder does not show; without pain the same prediction pushes the habenula to 0.32.
+Also the fast path is at its floor already (gp_habenular 0.04 at value_av 0.21): a larger prediction cannot deepen
+the dip at the bush. Learning still works: the aversion is taught by the dips (no cancellation needed) and unlearned
+by the relief when the pain is left out. Book: the lab paragraph no longer says the dip at the bites shrinks.
+Book diagrams: a line's hover now says when its signal arrives (same tick, or a tick later: slow synapse or a
+source that updates after its target).

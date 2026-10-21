@@ -29,6 +29,7 @@ One life is mostly luck and an evolution run mixes many confounders, so fitness 
 - Frozen stages (`frozen/`) are not rerun; changes go by remapping, and a lineage rerun or refreeze needs the user.
 - Never switch evolution off for a gene; if evolution turns a feature down, find out why it does not pay.
 - Cheap tests first: one stage, one seed, generation 0 where possible.
-- GPU runs in WSL2 (`docs/SETUP.md`), at most two JAX processes at once (2-2.5 GB each), started minutes apart; no restart after
-  a kill without the user's go-ahead.
+- GPU runs in WSL2 (`docs/SETUP.md`), at most two JAX processes at once (2-2.5 GB each), started minutes apart. After a kill,
+  restart (from the last checkpoint where possible) only when a second try is likely to get through: the cause was
+  fixed, or the memory pressure was a one-off (fewer runs at once, laptop less busy); otherwise report it.
 - The book is about brains; simulated individuals are "creatures" there ("animal" only for real animals).

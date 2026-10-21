@@ -9,6 +9,12 @@ results: `docs/STAGE_LOG.md`.
 One life is mostly luck and an evolution run mixes many confounders, so fitness numbers alone say little
 (ADR-022, BRAIN_EVOLUTION principle 4, `scripts/probes/README.md`).
 
+0. **Wiring review, by hand.** A text agent does not see the diagram, so read the brain as the user reads it: for
+   every new or changed cell, list its inputs and outputs and compare them with its counterpart on the other side
+   (good / bad: `_app` / `_av`, taste / pain, `da` / `da_neg`, dopamine / habenula). Every difference must be meant
+   and written down; check the same for the inputs that one side takes through a relay cell and the other directly,
+   and for signals or cells that nothing reads any more. Then run `python -m life.mirror_check <key>` (its side by
+   side table and flags; `tests/test_mirror_check.py` fails on an unexplained flag) as a backstop, not a replacement.
 1. **Lab tests, brain only.** One creature in scripted situations, as in an animal lab. For learning stages, use
    textbook experiments from the literature (acquisition, extinction, blocking, second-order conditioning,
    discrimination of look-alikes, devaluation, ...): their predictions are known, so the results are easy to

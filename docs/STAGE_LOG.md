@@ -3581,3 +3581,23 @@ before a signed teacher); pain extinction unchanged. Generation 0 neutral at the
 mirrored design rates 0.3 and 0.2 are about the evolved aversive rates x0.3). Stage **2.3s** (`s2_3s_critic`) =
 2.3c with B24S, from frozen 2.2, three seeds; its control is 2.3c's (same brain, world, seeds and start; configs
 compared equal), copied with `copied_from.txt`, not rerun.
+
+## v75 (2026-10-21): 2.3s, appetite learning and the pain relay, frozen; replaces 2.3c on the chain and the page
+
+Three seeds (`runs/s2_3s_critic{,_seed1,_seed2}`; the first start was stopped by Claude Code's low-memory guard while
+compiling, restarted with the WSL cache dropped first). Last 10 generations 2.3s / 2.3c / control: seed 0 1317 /
+1047 / 957, seed 1 968 / 1103 / 788, seed 2 1017 / 1121 / 694. Book export (16 worlds; the first export, with
+`--jobs 2`, i.e. three JAX processes, was killed at task 12 of 19; the export now keeps every finished task in
+`runs/_evaluate/` and resumes, and ran with `--jobs 1`): re-evaluated main 1221 / 941 / 1098 vs control 906 / 797
+/ 702, **+285 +- 74** (2.3c +284 +- 100, the same mean 1086); **head to head +808 +- 65** (+938, +747, +738;
+2.3c +798). Lesions (the stage's motivated list, `book.LESIONS`; % of intact): no_plasticity 48 47 55, **appetite
+learning off (`learn_off:valence_app`) 97 100 92**, aversion learning off 49 53 61, pallium 91 87 84, us_taste 92
+83 88, value_av 94 92 94, value_app 110 106 99; habenula 47 48 49, dopamine 41 48 43, ventral_pallidum 50 49 49,
+gp_habenular 44 50 56. Evolved: pain -> habenula 41 / 73 / 58% of its design (the saturation of v72-v73 lowered by
+evolution); appetite learning rates look 0.18 / 0.32, pallium 0.33 / 0.57 (start 0.3 / 0.2; seeds 0, 1). Lab:
+aversion after 6 painful meals 8.7, after 12 without 0.04 (control 9.7 -> 9.7); error at the bites, first -> sixth
+painful meal, -0.78 -> -0.65 (2.3c -0.86 -> -0.82); blocking 0.85 vs 1.14 (control 2.6 vs 2.8); XOR look-alikes
+(seeds 0, 1): poison corners 0.00-0.08. Frozen (tag `stage-2.3s`); 2.3c off the chain. Page: the critic page on
+2.3s (both sides learn; pain through its relay; the appetite learning in the verdict). Mirror check: the chain has
+no TO FIX left. Also new: per-stage lesion plans with reasons (`book.LESIONS`, required for unfrozen stages),
+exports at 8 worlds by default, a line's hover in the diagrams says when its signal arrives.

@@ -32,14 +32,11 @@ KNOWN = {
     "differs: pallium -> value_av": "both value cells learn from `da`; their D1/D2 rules differ in sign (abcd)",
     "no mirror: habenula -> dopamine": "one dopamine population signals both: bad news reaches it through the habenula",
     "unread: us_av": "the pain teacher, replaced by `da_neg` in 2.3c; us_pain still drives `alarm`",
-    # learned from pain only (ADR-024, 1.5): learning what is good was to wait for dopamine. Dopamine came in 2.3c
-    # without it; to add in the basal ganglia stage (STATUS, user 2026-10-21; frozen stages are not rerun)
-    "differs: in[vis*.app*] -> valence_app": "ADR-024; TO FIX: the appetitive synapses do not learn from `da`",
-    "differs: in[vis*.app*] -> valence_av": "ADR-024; TO FIX: the appetitive synapses do not learn from `da`",
-    "no mirror: pallium -> valence_av": "ADR-024; TO FIX: the appetitive synapses do not learn from `da`",
-    # to fix in the basal ganglia stage (STATUS, user 2026-10-21)
-    "no mirror: in[pain] -> habenula": "TO FIX: pain should reach the habenula through us_pain, as taste goes through us_taste",
-    "no mirror: us_taste -> dopamine": "TO FIX: pain should reach the habenula through us_pain, as taste goes through us_taste",
+    # learned from pain only (ADR-024, 1.5): learning what is good was to wait for dopamine; from 2.3s on dopamine
+    # teaches both sides (appetite_learning)
+    "differs: in[vis*.app*] -> valence_app": "1.5-2.2 learn from pain only (ADR-024); 2.3s teaches both sides",
+    "differs: in[vis*.app*] -> valence_av": "1.5-2.2 learn from pain only (ADR-024); 2.3s teaches both sides",
+    "no mirror: pallium -> valence_av": "2.2 learns from pain only (ADR-024); 2.3s teaches both sides",
 }
 
 

@@ -3524,3 +3524,35 @@ the dip at the bush. Learning still works: the aversion is taught by the dips (n
 by the relief when the pain is left out. Book: the lab paragraph no longer says the dip at the bites shrinks.
 Book diagrams: a line's hover now says when its signal arrives (same tick, or a tick later: slow synapse or a
 source that updates after its target).
+
+## v73 (2026-10-21): what lets the cell critic cancel a predicted pain (lab only)
+
+User: test in the lab whether a state that changes as the pain nears lets the critic cancel it; why did the critic
+lose distance? History: distance for the critic was agreed in v54 ("distance first; an efference copy of the action
+later, if at all"); v55 found `near` into the pallium splits every look into unrelated codes, so the pallium read
+`no_touch` instead (`pnt`, look x at the mouth); it worked in the lab (v60) but cost 35-60 at generation 0, and in
+`x.harsh` (one seed) the plain 2.3 critic did about 300 better than `pnt`, so 2.3h and 2.3c were built on the plain
+brain. The value cells never read distance themselves.
+`scripts/probes/lab_state.py` (new; `labtests` protocol option `command`: a copy of the bite command on the tick each
+bite is commanded, one before its outcome, as input `efc_USE`, a stand-in for a same-tick copy of the motor
+command), frozen 2.3c populations, three seeds x 24, extinction protocol; variants: touch (`no_touch` into the
+pallium, the critic one phase later), near (value cells also read `vis+0.near`), command (value cells also read the
+command copy); the new synapses learn as the pallium's onto the same value cells. Error at the bites, first ->
+sixth painful meal (seeds 0 / 1 / 2):
+| variant | lab trials (3 ticks of pain) | world-like (1 tick) | relief, first meal without pain (lab) |
+|---|---|---|---|
+| base | -0.84 -> -0.82 / -0.80 / -0.88 | -0.84 -> -0.84 / -0.84 / -0.89 | +0.23 / +0.44 / +0.50 |
+| touch | -0.82 / -0.80 / -0.88 (approach -0.83 / -0.83 / -0.89) | unchanged | +0.21 / +0.42 / +0.47 |
+| near | -0.73 / -0.61 / -0.78 (approach -0.78 / -0.79 / -0.87) | -0.83 / -0.81 / -0.88 | +0.52 / +0.56 / +0.56 |
+| command | -0.61 / -0.46 / -0.70 | -0.80 / -0.78 / -0.85 | +0.55 / +0.57 / +0.57 |
+| base, pain -> habenula x0.5 | -0.65 -> -0.60 / -0.55 / -0.70 | -0.63 / -0.64 / -0.76 | |
+| command, x0.5 | -0.65 -> **-0.28 / -0.21 / -0.30** | -0.65 -> -0.56 / -0.56 / -0.68 | +0.50 / +0.54 / +0.57 |
+| command, x0.3 | -0.47 -> **-0.17 / -0.12 / -0.15** | -0.47 -> -0.37 / -0.38 / -0.48 | |
+Distance does not help at the bite (the bites share the at-the-mouth state). The command copy gives the critic the
+timing, but a full pain saturates the habenula (0.97), which hides the prediction; with both, 55-75% of a lab pain
+is predicted away after six meals, the textbook shape. World-like single-tick lessons cancel only 10-20% in six
+meals (fewer lessons for the value cells; the relief +0.21 to +0.34 shows the prediction building). A lower pain
+gain also shrinks the unpredicted dip (-0.84 -> -0.65 at x0.5); aversions are learned and extinguished in all
+variants. Candidate design for the basal ganglia stage (the striatum sees the chosen action there anyway): value
+cells that read a same-tick copy of the motor command, and a habenula pain gain below saturation; to agree with the
+user, then lab and generation 0.

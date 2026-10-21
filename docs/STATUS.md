@@ -106,7 +106,9 @@ remapping the stored populations and freezing again.
    Add it with the actor: D1-type synapses strengthened by bursts, D2-type by dips. **And:** the dip at a predicted pain hardly
    shrinks (lab -0.84 -> -0.81, v72): the view does not change before the bite, and the habenula saturates on pain;
    a state that changes as the outcome nears (time since a cue) and a habenula gain below saturation are the
-   candidates, to test in the lab first. `python -m life.mirror_check
+   candidates. Lab (v73): distance does not help; a copy of the bite
+   command to the value cells plus a pain gain below saturation predicts 55-75% of a lab pain away (world-like
+   single lessons 10-20% in six meals): the candidate for the basal ganglia stage, to agree with the user. `python -m life.mirror_check
    2.3c` lists both as TO FIX.
    Earlier (2.2 frozen, tag `stage-2.2`, `flee` and `fed` kept). Old chapter 2 definitions (`old2.x`, `x.td` in
    `stages.py`) are stale.

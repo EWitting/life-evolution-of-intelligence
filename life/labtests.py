@@ -131,8 +131,10 @@ def conditioning(exp, pop, protocol: dict, sim: float, n_agents: int = 24, seed:
              **{f"X{a}{b}": (int(f"{a}1") * q[:, 0] + int(f"{b}1") * q[:, 1]) / np.sqrt(2) for a in "+-" for b in "+-"}}
         looks.append({c: sim * base + np.sqrt(1 - sim ** 2) * (v @ comp) for c, v in u.items()})
 
-    def obs(cues=None, taste=0.0, pain=0.0, near=0.8):
+    def obs(cues=None, taste=0.0, pain=0.0, near=0.8, command=False):
         o = np.zeros((NA, L.n_in), np.float32)
+        if command:   # protocol option `command`: a copy of the bite command (needs BodyConfig.efference)
+            o[:, names.index("efc_USE")] = 1.0
         o[:, names.index("food")] = 0.5
         if "temperature" in names:
             o[:, names.index("temperature")] = 0.5
@@ -149,10 +151,13 @@ def conditioning(exp, pop, protocol: dict, sim: float, n_agents: int = 24, seed:
         out = dict(pain=dict(pain=1.0), taste=dict(taste=3.0), none={})[kind]
         # lead: ticks with the cue in view before the outcome; approach: all but the last of them seen from afar
         # (vis+0.near 0.4, two cells off; at the mouth 0.8), as a creature walking up to a bush
+        # command: the tick on which each bite is commanded (one before its outcome) carries a copy of the command
         n = protocol.get("lead", 1)
         far = n - 1 if protocol.get("approach") else 0
-        return [obs(cues, near=0.4)] * far + [obs(cues)] * (n - far) + [obs(cues, **out) for _ in range(protocol.get("outcome_ticks", 3))] + ([obs(pain=protocol.get("linger", 0.3))] if kind == "pain" else [obs()]) \
-            + [obs()] * 4
+        k, c = protocol.get("outcome_ticks", 3), bool(protocol.get("command"))
+        return [obs(cues, near=0.4)] * far + [obs(cues)] * (n - far - 1) + [obs(cues, command=c)] \
+            + [obs(cues, **out, command=c and i < k - 1) for i in range(k)] \
+            + ([obs(pain=protocol.get("linger", 0.3))] if kind == "pain" else [obs()]) + [obs()] * 4
 
     one = lambda g, st, o: B.step(exp.brain, L, g, st, o, jnp.zeros(3), jax.random.PRNGKey(0))[0]
     step = jax.jit(jax.vmap(one))

@@ -54,7 +54,8 @@ chapters. The senses and motor neurons are drawn in one of three forms, chosen i
 per sense or group of actions, a tall block without sockets, or one small box. Cells and group boxes take the colour
 of their top-level group (hues in the same file, also used by the dashboards). The file is
 made with `tools/brain_layout` (`python tools/brain_layout/serve.py`, then http://localhost:8765): it optimises the
-layout over the chain of stages with tunable weights and writes the file on Save. A stage that the file does not
+layout over the chain of stages with tunable weights and writes the file on Save. The chain is the stages the
+pages show (`data-stage="..."` in `book/*.qmd`); data files of stages taken off the chain are ignored. A stage that the file does not
 have (a new stage) gets the old layout in columns by depth until the tool is run again (the tool reads the brains
 from `data/*.json`, so a quick `export <key> --no-extras` after the first finished run is enough to lay out a new
 stage before its page is written); use its forward mode, or

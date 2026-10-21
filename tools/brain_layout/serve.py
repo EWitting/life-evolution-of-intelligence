@@ -2,11 +2,12 @@
 
     .venv/Scripts/python.exe tools/brain_layout/serve.py          # then open http://localhost:8765
 
-Reads the brain of every stage in book/data/*.json (read only), serves tool.html with that data, and writes the
+Reads the brain of every stage the book's pages show from book/data/*.json (read only), serves tool.html with that data, and writes the
 layout the page saves to tools/brain_layout/atlas.json and to book/data/brain_layout.json, which the book's brain
 diagrams read (book/js/life-book.js). Standard library only; nothing in life/ is imported.
 """
 import json
+import re
 import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -18,12 +19,21 @@ ATLAS = HERE / "atlas.json"
 BOOK_LAYOUT = DATA_DIR / "brain_layout.json"
 
 
+def book_stages() -> set[str]:
+    """The stages the book's pages show (`data-stage="..."` in book/*.qmd): the chain in use. Data files of stages
+    taken off the chain (2.3, 2.3h, ...) stay in book/data but are left out of the layout."""
+    keys = set()
+    for f in (ROOT / "book").glob("*.qmd"):
+        keys |= set(re.findall(r'data-stage="([^"]+)"', f.read_text(encoding="utf-8")))
+    return keys
+
+
 def stages() -> list[dict]:
-    """The stages with a brain, parents before children (the chain may branch)."""
-    found = {}
+    """The stages with a brain that the book shows, parents before children (the chain may branch)."""
+    found, shown = {}, book_stages()
     for f in sorted(DATA_DIR.glob("*.json")):
         d = json.loads(f.read_text(encoding="utf-8"))
-        if "brain" not in d or "stage" not in d:
+        if "brain" not in d or "stage" not in d or d["stage"]["key"] not in shown:
             continue
         b, s = d["brain"], d["stage"]
         found[s["key"]] = {"key": s["key"], "parent": s.get("parent"), "name": s.get("name", ""),
@@ -37,7 +47,8 @@ def stages() -> list[dict]:
         seen.add(k)
         visit(found[k]["parent"])
         order.append(found[k])
-    for k in sorted(found, key=lambda k: [int(x) if x.isdigit() else x for x in k.replace("h", ".h").split(".")]):
+    # "2.3c" -> [(0, 2), (0, 3), (1, "c")]: numbers and letter suffixes never compare against each other
+    for k in sorted(found, key=lambda k: [(0, int(x)) if x.isdigit() else (1, x) for x in re.findall(r"\d+|[a-z]+", k)]):
         visit(k)
     return order
 

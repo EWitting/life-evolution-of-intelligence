@@ -42,10 +42,27 @@ EXTRAS: dict[str, list[Callable]] = {}
 # Stages whose change is in how the inputs work, not in a region: in the head-to-head test both halves run on the
 # new brain, so the control animals would get adapting inputs their synapses were never tuned to. Not shown.
 NO_HEAD_TO_HEAD = ("1.2h", "1.6h")
-# stages whose question is whether older circuits are still used: the regions to silence with `--lesions recent`
-LESION_REGIONS = {"2.1": ("flee", "fed", "settle", "rest")}
-# learning lesions added to a stage's region lesions: only the learning onto one region off
-LEARN_LESIONS = {"2.3s": ("valence_app", "valence_av")}
+# The lesions of a stage, each with the question it answers (user, 2026-10-21: a motivated choice, not every new
+# cell). Labels: a region (silenced), "no_plasticity" (all learning off), "learn_off:<region>" (only the learning
+# of the synapses onto that region off), "no_depression". A stage that is not frozen and has no entry here cannot
+# be evaluated; frozen stages without one keep the old selection (every region new since the grandparent).
+LESIONS = {
+    "2.1": {"no_plasticity": "does learning still pay",
+            "flee": "the affect modules of the stage: are they used", "fed": "", "settle": "", "rest": ""},
+    "2.3s": {
+        "no_plasticity": "how much of the fitness needs learning within a life",
+        "no_depression": "",   # no short-term depression in this brain: skipped (kept so the tasks match v74's export)
+        "pallium": "the code the critic and the learned aversion read",
+        "us_taste": "the taste the dopamine cell compares with its prediction",
+        "value_app": "does the prediction of good things pay",
+        "value_av": "does the prediction of bad things pay",
+        "habenula": "tonic: needed, but its lesion leaves a standing error (not a pure measure of use)",
+        "dopamine": "tonic: needed, but its lesion leaves a standing error (not a pure measure of use)",
+        "ventral_pallidum": "tonic: the fast path of good predictions; a standing error when silenced",
+        "gp_habenular": "tonic: the fast path of bad predictions; a standing error when silenced",
+        "learn_off:valence_app": "the new appetite learning from dopamine: is it used",
+        "learn_off:valence_av": "its mirror, the aversion learning: for comparison"},
+}
 
 
 def extra(key: str):
@@ -267,13 +284,17 @@ def _versus_task(key: str, worlds: int) -> list:
 def evaluate(key: str, worlds: int = 8, jobs: int = 5, lesions: str = "recent") -> dict:
     """The three measurements that need simulation, over every seed: the final populations re-evaluated in
     `worlds` shared worlds, with each region silenced (lesions), and main against control in the same worlds.
-    lesions 'recent': only the regions that this stage or its parent added (and plasticity); 'all': every region,
-    which for a late stage is most of the cost (user, 2026-10-12: the full sweep only when it is needed)."""
+    The lesions are the stage's entry in LESIONS. For a frozen stage without one: lesions 'recent', the regions
+    that this stage or its parent added (and plasticity); 'all': every region (user, 2026-10-12: the full sweep
+    only when it is needed)."""
     from .experiments import stages as S
     s = S.STAGES[key]
     older = set()
     if lesions == "recent" and s.parent and S.STAGES[s.parent].parent:
         older = {r.name for r in S.STAGES[S.STAGES[s.parent].parent].brain.regions}
+    from .freeze import FROZEN
+    if key not in LESIONS and not (FROZEN / key / "definition.json").exists():
+        raise ValueError(f"choose the lesions of stage {key} in book.LESIONS (label: the question it answers)")
     main, control = S.seed_runs(s), S.seed_runs(s, control=True)
     out = {"worlds": worlds, "runs": [_rel(r) for r in main + control],
            "when": datetime.now().isoformat(timespec="minutes")}
@@ -285,9 +306,8 @@ def evaluate(key: str, worlds: int = 8, jobs: int = 5, lesions: str = "recent") 
     for i, r in enumerate(main):
         names = json.loads((r / "layout.json").read_text())["names"]
         labels = ["intact", "no_plasticity", "no_depression"] + [n for n in names if n not in ("in", "out") and n not in older]
-        labels += [f"learn_off:{n}" for n in LEARN_LESIONS.get(key, ())]
-        if lesions == "recent" and key in LESION_REGIONS:
-            labels = ["intact", "no_plasticity"] + [n for n in LESION_REGIONS[key] if n in names]
+        if key in LESIONS:
+            labels = ["intact"] + list(LESIONS[key])
         tasks += [("main", i, str(r), worlds, tuple(labels[k:k + 3])) for k in range(0, len(labels), 3)]
     tasks += [("control", i, str(r), worlds, ("intact",)) for i, r in enumerate(control)]
     import time
@@ -324,11 +344,14 @@ def evaluate(key: str, worlds: int = 8, jobs: int = 5, lesions: str = "recent") 
             les[i].update(res)
         else:
             ctrl_fit[i] = res["intact"]["fitness"]
-    order = [l for l in ["intact", "no_plasticity", "no_depression"] + [n for n in names if n not in ("in", "out")] if l in les[0]]
+    order = [l for l in ["intact", "no_plasticity", "no_depression"] + [n for n in names if n not in ("in", "out")]
+             + list(LESIONS.get(key, ())) if l in les[0]]
+    order = list(dict.fromkeys(order))
     les = [{l: d[l] for l in order} for d in les]
     out["reevaluated"] = {"main": _stat([l["intact"]["fitness"] for l in les])}
     out["lesions"] = {label: {"percent": _stat([100.0 * l[label]["fitness"] / l["intact"]["fitness"] for l in les]),
-                              "fitness": [l[label]["fitness"] for l in les]}
+                              "fitness": [l[label]["fitness"] for l in les],
+                              **({"why": LESIONS[key][label]} if LESIONS.get(key, {}).get(label) else {})}
                       for label in les[0] if label != "intact"}
     out["intact"] = {k: [l["intact"][k] for l in les] for k in les[0]["intact"]}
     if control:

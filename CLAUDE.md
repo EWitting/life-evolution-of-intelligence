@@ -24,7 +24,9 @@ One life is mostly luck and an evolution run mixes many confounders, so fitness 
 2. **Generation 0, paired** (`scripts/probes/gen0.py`): the parent population with the mechanism on and off in
    the same worlds. A diagnostic, not a gate; balances and scales may need adjusting at generation 0 when a
    module is added.
-3. **Evolution**: one seed first, three seeds for a claim; then look inside the finished run (lesions, learned
+3. **Evolution**: one seed first, three seeds for a claim; the book export evaluates in 8 worlds (16 only to
+   compare with a stage measured in 16) and lesions only what the stage's entry in `life/book.py` `LESIONS` names,
+   each with the question it answers (a motivated choice, not every new cell); then look inside the finished run (lesions, learned
    weights, traces) before starting the next one. Stop runs early once trends are clear and the main - control
    outcome is unlikely to change (read `checkpoint.npz`, written every 10 generations); convergence is not required.
 

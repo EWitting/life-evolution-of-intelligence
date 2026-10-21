@@ -134,7 +134,8 @@
     if (!ev || !ev.lesions) { root.innerHTML = '<div class="lb-note"><p>No lesion data exported for this stage yet.</p></div>'; return; }
     const isNew = Object.fromEntries(D.brain.regions.map(r => [r.name, r.new]));
     const LABEL = {no_plasticity: 'learning switched off', no_depression: 'depression switched off'};
-    const rows = Object.entries(ev.lesions).map(([name, v]) => ({name, p: v.percent}));
+    const label = n => LABEL[n] || (n.startsWith('learn_off:') ? `learning onto ${n.slice(10)} off` : n);
+    const rows = Object.entries(ev.lesions).map(([name, v]) => ({name, p: v.percent, why: v.why}));
     const hi = Math.max(120, ...rows.flatMap(r => r.p.seeds)) * 1.02;
     const W = 720, RH = 30, m = {l: 150, r: 150, t: 22, b: 30}, H = m.t + rows.length * RH + m.b;
     const x = v => m.l + Math.max(0, v) * (W - m.l - m.r) / hi;
@@ -145,7 +146,7 @@
     rows.forEach((r, i) => {
       const cy = m.t + i * RH + RH / 2, w = x(r.p.mean) - m.l;
       s += `<g class="lb-row" data-i="${i}"><rect class="lb-hit" x="0" y="${cy - RH / 2}" width="${W}" height="${RH}"/>`
-        + `<text class="lb-rowlabel" x="${m.l - 8}" y="${cy + 4}" text-anchor="end">${esc(LABEL[r.name] || r.name)}${isNew[r.name] ? ' <tspan class="lb-new">new</tspan>' : ''}</text>`
+        + `<text class="lb-rowlabel" x="${m.l - 8}" y="${cy + 4}" text-anchor="end">${esc(label(r.name))}${isNew[r.name] ? ' <tspan class="lb-new">new</tspan>' : ''}</text>`
         + `<path class="lb-bar lb-s1" d="M${m.l},${cy - 7} h${Math.max(0, w - 4).toFixed(1)} a4,4 0 0 1 4,4 v6 a4,4 0 0 1 -4,4 h${(-Math.max(0, w - 4)).toFixed(1)} z"/>`
         + r.p.seeds.map(v => `<circle class="lb-seed" cx="${x(v).toFixed(1)}" cy="${cy}" r="4"/>`).join('')
         + `<text class="lb-value" x="${W - m.r + 10}" y="${cy + 4}">${fmt(r.p.mean, 0)}${r.p.se !== null ? ` ± ${fmt(r.p.se, 0)}` : ''}</text></g>`;
@@ -154,7 +155,7 @@
     root.innerHTML = s + `<div class="lb-caption">Each region is silenced in turn (no activity, no outgoing synapses) and the final population lives again in ${ev.worlds} shared worlds. Bar = mean over the seeds, dots = the seeds. A region that the creatures use costs fitness when silenced; a bar at 100 means the population does as well without it.</div>`;
     root.querySelectorAll('.lb-row').forEach(g => {
       const r = rows[+g.dataset.i];
-      hover(g, e => showTip(e, `<b>${esc(r.name)}</b> silenced<div>${fmt(r.p.mean, 1)}% of intact (± ${fmt(r.p.se, 1)})</div><div class="lb-muted">per seed: ${r.p.seeds.map(v => fmt(v, 0)).join(' · ')}</div>`));
+      hover(g, e => showTip(e, `<b>${esc(label(r.name))}</b>${!LABEL[r.name] && !r.name.startsWith('learn_off:') ? ' silenced' : ''}${r.why ? `<div>${esc(r.why)}</div>` : ''}<div>${fmt(r.p.mean, 1)}% of intact (± ${fmt(r.p.se, 1)})</div><div class="lb-muted">per seed: ${r.p.seeds.map(v => fmt(v, 0)).join(' · ')}</div>`));
     });
   }
 
@@ -168,7 +169,7 @@
     // an entry is a lesion name, or "<table extra>:<label>" for a table with a "% of" row
     const used = (root.dataset.used || '').split(',').map(s => s.trim()).filter(Boolean).map(entry => {
       const [name, label] = entry.split(':');
-      if (ev.lesions && ev.lesions[name]) return {name: `without <code>${esc(LESION_LABEL[name] || name)}</code>`, p: ev.lesions[name].percent};
+      if (ev.lesions && ev.lesions[name]) return {name: `without <code>${esc(LESION_LABEL[name] || (name.startsWith('learn_off:') ? `learning onto ${name.slice(10)}` : name))}</code>`, p: ev.lesions[name].percent};
       const row = X[name] && X[name].rows.find(r => /% of/.test(r[0]));
       return row ? {name: esc(label || row[0]), p: row[1]} : null;
     }).filter(Boolean);

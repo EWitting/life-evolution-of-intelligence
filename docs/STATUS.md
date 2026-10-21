@@ -94,7 +94,12 @@ remapping the stored populations and freezing again.
    only the output signal (user). **Next: hands, then the basal ganglia with the actor** (BRAIN_EVOLUTION), reusing
    the dopamine cell, the D1/D2 rules and the pallidal relays. Open: `value_app` unused in this world; blocking only
    weakly; a sense of time since a cue; the look pathway generalises "bushes hurt" (about 80% of good bushes passed
-   by, v68); an asymmetry between burst and dip learning (a gene, for the user to agree).
+   by, v68); an asymmetry between burst and dip learning (a gene, for the user to agree). **To fix in the basal
+   ganglia stage (agreed by the user 2026-10-21; 2.3c is not rerun):** in 2.3c pain reaches the habenula straight
+   from the input (`in -> habenula`, `HAB_PAIN`), while taste goes through its relay cell (`us_taste -> dopamine`);
+   wire it `us_pain -> habenula` instead, mirroring taste, and rescale at generation 0 so that a full pain still
+   gives a pause of about -0.9 (`us_pain` saturates: pain 0.5 -> 0.76), then check it in the lab. In 2.3c `us_pain`
+   only drives `alarm` (-> `flee`); its `us_av` teaches nothing any more.
    Earlier (2.2 frozen, tag `stage-2.2`, `flee` and `fed` kept). Old chapter 2 definitions (`old2.x`, `x.td` in
    `stages.py`) are stale.
    **Noise settings for every new stage** (STAGE_LOG v52, user 2026-10-19): `Stage.evolution = EVOLUTION_NEW`

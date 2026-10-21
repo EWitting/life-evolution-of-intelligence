@@ -98,7 +98,7 @@ where the pain should have been, as in the monkey recordings.
 
 <div data-life="bars" data-stage="2.3c" data-example="conditioning_lab" data-rows="0,1" data-col0="critic" data-col1="pain teacher"></div>
 
-**Extinction:** when the pain stops, the critic's aversion fades to a fraction over twelve meals; the pain
+**Extinction:** when the pain stops, the critic's aversion fades away over twelve meals (in one seed it even falls below zero); the pain
 teacher's does not change at all, since nothing in it can weaken a lesson.
 
 ## Full results

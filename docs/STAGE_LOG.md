@@ -3491,3 +3491,18 @@ without pain +0.38 at the bites. Reversal figure (recorded lives): bites per cre
 Frozen (tag `stage-2.3c`); 2.3h moves off the chain with 2.3. Book: the critic page rewritten for the cell circuit
 (circuit, biology of the ventral basal ganglia loop, what it took: both paths, counting the cells, untuned tonic
 outputs); glossary entries and diagram positions for the new cells; the formula version mentioned under what it took.
+
+## v71 (2026-10-21): 2.3c seed 2 resumed to 100 generations; refrozen
+
+User: the no-restart rule is dropped (restart after a kill when a retry is likely to get through) and seed 2 should
+run to the end like the others. New `stages --resume <run dir>` (`run_evolution(start_generation, prior_rows)`): the
+checkpoint's population, the earlier fitness rows, the random keys of the earlier generations drawn and skipped.
+Generation 79 replayed exactly (same fitness row as the killed run); the control, resumed from its generation-89
+checkpoint to make its lost recording, came out bit-identical (population and fitness.csv). One process, about 6 s
+per generation. Seed 2 cells, last 10 generations: 70-79 1111, 90-99 about 1110 (control 694): the lead holds,
+no further gain. Book export again: re-evaluated main 1086 vs control 802, **+284 +- 100** (+91, +337, +424; was
++291); head to head **+798 +- 65** (+675, +821, +898; was +764). Seed 2 lesions, % of intact: no_plasticity 55,
+pallium 89, value_app 105, value_av 87, dopamine 38, habenula 52, ventral_pallidum 53, gp_habenular 54. Lab, seed 2:
+aversion after six painful meals 8.9, after twelve without pain -2.9 (an overshoot below zero; mean of the seeds 10.0
+-> -0.45); blocking 4.9 vs 5.1. Refrozen on Windows: the rules digest of `definition.json` differs when computed in
+WSL on the GPU (b316... vs ead0..., rounding at the 4th decimal), so freeze where the tests run.

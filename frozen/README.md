@@ -49,8 +49,9 @@ may need (user, 2026-10-19).
 | 2.3c | dopamine critic built from cells: a dopamine cell with a resting rate (its rate minus rest is the error), a tonic habenula carrying pain, inhibitory ventral striatal value cells (`value_app`, D1-type rule; `value_av`, D2-type) reaching dopamine fast through tonic pallidal cells (`ventral_pallidum`, `gp_habenular`) and slowly through slow synapses (`ProjectionSpec.lag`): TD, gamma about 0.9. The harsh world of 2.3h, fifty calm generations, aversion learning rates x10 at the start, 2 episodes per generation | 2.2 | 4000 | 3 |
 
 2.3c (frozen 2026-10-21, replacing 2.3h on the chain and on the critic page, user): seed 2's run was stopped at
-generation 81 by memory pressure and finished from its generation-79 checkpoint (`stopped.txt` in its run directory;
-the stored definition still says 100 generations). The calm start and the x10 start values are functions in
+generation 81 by memory pressure; it was resumed from its generation-79 checkpoint (`stages --resume`, which replays
+the random keys, so generation 79 came out identical) and run to 100, and the stage frozen again the same day
+(`resumed.txt` in its run directory). The calm start and the x10 start values are functions in
 `stages.py` (`calm_first`, `av_eta_init`), not part of the stored rules digest. STAGE_LOG v66-v70.
 
 2.3h (frozen 2026-10-20, off the chain since 2026-10-21: the formula critic in the same world): the calm start and the x10 start values are functions in

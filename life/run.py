@@ -276,12 +276,16 @@ def run_evolution(exp: ExperimentConfig, ruleset: Ruleset, fitness_fn: Callable[
                   rules_for_generation: Callable[[int, jax.Array], RuleArrays] | None = None,
                   init_population: brain.Genome | None = None,
                   out_dir: Path | None = None, verbose: bool = True, dashboard: bool = True,
-                  row_extra: Callable[[dict, jnp.ndarray], dict] | None = None) -> dict:
+                  row_extra: Callable[[dict, jnp.ndarray], dict] | None = None,
+                  start_generation: int = 0, prior_rows: list[dict] | None = None) -> dict:
     """Run the full experiment. `rules_for_generation(gen, key)` may return different RuleArrays per generation
     (same shapes) to randomize the environment, or RuleArrays stacked along a leading axis of size
     `evolution.episodes` to vary it per episode; default uses ruleset.to_arrays throughout.
     `init_population` (from load_population) warm-starts from an earlier run instead of random genomes.
-    `row_extra(stats, fitness)` adds experiment-specific columns (e.g. poison fraction) to fitness.csv."""
+    `row_extra(stats, fitness)` adds experiment-specific columns (e.g. poison fraction) to fitness.csv.
+    `start_generation`, `prior_rows`: resume a stopped run from its checkpoint (the population evaluated in that
+    generation) in its own `out_dir`; the random keys of the earlier generations are drawn and skipped, so the run
+    goes on as it would have."""
     ecfg = exp.evolution
     layout = make_layout(exp)
     key = jax.random.PRNGKey(ecfg.seed)
@@ -329,10 +333,12 @@ def run_evolution(exp: ExperimentConfig, ruleset: Ruleset, fitness_fn: Callable[
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "config.json").write_text(exp.to_json())
     (out_dir / "ruleset.json").write_text(json.dumps(ruleset.to_json_dict()))
-    rows = []
-    t0 = time.time()
+    rows = list(prior_rows or [])
+    t0 = time.time() - (rows[-1]["seconds"] if rows else 0.0)
     stats = None
-    for gen in range(ecfg.generations):
+    for _ in range(start_generation):
+        key = jax.random.split(key, 4)[0]
+    for gen in range(start_generation, ecfg.generations):
         key, kr, ks, ke = jax.random.split(key, 4)
         rules = per_episode(rules_fn(gen, kr))
         last = gen == ecfg.generations - 1

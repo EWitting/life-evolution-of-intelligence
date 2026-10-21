@@ -1528,7 +1528,11 @@ def make_exp(s: Stage, brain: BrainConfig, name: str, generations: int, seed: in
 
 
 def run_stage(key: str, generations: int | None = None, control: bool = False, init_from: str | None = "auto",
-              seed: int = 0, dashboard: bool = True, suffix: str = "", ticks: int | None = None, adapt: bool = True):
+              seed: int = 0, dashboard: bool = True, suffix: str = "", ticks: int | None = None, adapt: bool = True,
+              resume: str | None = None):
+    """`resume`: a run of this stage stopped early; it goes on from its checkpoint.npz in its own directory."""
+    if resume:
+        return resume_stage(key, resume, control=control, seed=seed, suffix=suffix, ticks=ticks, dashboard=dashboard)
     s = STAGES[key]
     if ticks:   # a trial with a longer or shorter life than the stage defines; use a suffix to keep it apart
         s = replace(s, ticks=ticks)
@@ -1565,6 +1569,37 @@ def run_stage(key: str, generations: int | None = None, control: bool = False, i
         if src.parent == Path(res["out_dir"]).resolve().parent:
             (Path(res["out_dir"]) / "continues.txt").write_text(src.name)
     return res
+
+
+def resume_stage(key: str, run_dir: str, control: bool = False, seed: int = 0, suffix: str = "",
+                 ticks: int | None = None, dashboard: bool = False):
+    """Continue a run stopped early (a kill) from its checkpoint: the population evaluated in the checkpoint's
+    generation, the earlier rows of its fitness.csv, the same random keys and schedule from there on."""
+    import csv
+    from pathlib import Path
+    run_dir = Path(run_dir)
+    s = STAGES[key]
+    if ticks:
+        s = replace(s, ticks=ticks)
+    brain = (s.control_brain or STAGES[s.parent].brain) if control else s.brain
+    name = s.name + ("_control" if control else "") + suffix
+    old = ExperimentConfig.from_json((run_dir / "config.json").read_text())
+    exp = make_exp(s, brain, name, old.evolution.generations, seed)
+    assert exp.to_json() == old.to_json(), "the stage's settings differ from the stopped run's config.json"
+    with np.load(run_dir / "checkpoint.npz") as f:
+        start = int(f["generation"])
+    init = load_population(run_dir, file="checkpoint.npz")
+    with open(run_dir / "fitness.csv", newline="") as f:
+        prior = [{k: (int(v) if k == "gen" else float(v)) for k, v in r.items()} for r in csv.DictReader(f)]
+    prior = [r for r in prior if r["gen"] < start]
+    assert len(prior) == start, f"fitness.csv has {len(prior)} rows before generation {start}"
+    print(f"resume {run_dir} at generation {start}")
+    rs, rules_fn = s.build(exp)
+    if s.schedule:
+        rules_fn = s.schedule(rules_fn)
+    return run_evolution(exp, rs, s.fitness or default_fitness, rules_for_generation=rules_fn, init_population=init,
+                         out_dir=run_dir, row_extra=s.row_extra(rs) if s.row_extra else None, dashboard=dashboard,
+                         start_generation=start, prior_rows=prior)
 
 
 def stage_of_run(run_dir) -> Stage:
@@ -1907,6 +1942,7 @@ def main(argv=None):
     p.add_argument("--dashboard", action="store_true",
                    help="also write the run's full dashboard.html (about 150 MB and a peak in memory at the end of the "
                         "run; the book's light dashboards are made from the recording: `python -m life.book dashboards`)")
+    p.add_argument("--resume", default=None, help="a run of this stage stopped early: go on from its checkpoint.npz")
     a = p.parse_args(argv)
     if a.stage == "list":
         for s in STAGES.values():
@@ -1919,7 +1955,7 @@ def main(argv=None):
     if a.mutation_prob is not None:
         EVOLUTION_OVERRIDES["weight_mutation_prob"] = a.mutation_prob
     return run_stage(a.stage, a.generations, a.control, a.init_from, a.seed, suffix=a.suffix, ticks=a.ticks,
-                     dashboard=a.dashboard, adapt=not a.cont)
+                     dashboard=a.dashboard, adapt=not a.cont, resume=a.resume)
 
 
 if __name__ == "__main__":

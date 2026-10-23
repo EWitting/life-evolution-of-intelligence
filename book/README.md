@@ -37,6 +37,20 @@ diagram; only the text is written by hand. Never copy a number into the text.
 
 Commit `data/*.json`. `dashboards/` and the rendered `_book/` are not committed to `main`.
 
+### The front page
+
+Two visuals on `index.qmd` show the latest stage of the chain (the brain layout's `chain`):
+
+- **The growing brain** (`growth` below) reads `data/growth.json`, which every export writes again (or
+  `python -m life.book growth`): it follows by itself. Stage names are the titles of the pages whose `status` line
+  shows the stage.
+- **The clip** (`media/front.mp4`, poster `front.jpg`) is recorded from the latest stage's published dashboard in the
+  dashboard's hero mode: `python scripts/front_clip.py` (needs `uv pip install -e .[media]`: playwright with the
+  installed Edge, and ffmpeg from imageio-ffmpeg). The scene (creature, first tick) is picked by hand in
+  `media/front_clip.json`; `--pick` lists good ones (many bites and pains while alive). A scene picked for an older
+  stage is ignored, so after a new stage run the script once, check the clip, and save a scene if it is dull.
+  Commit `media/`.
+
 The export takes the newest finished run of every seed (`stages.seed_runs`) and records the run directories. The
 page then warns by itself when the runs differ from the current stage definition, when there are fewer than three
 seeds, or when the lesions were measured on older runs than the curves. Run at most one `--evaluate` at a time
@@ -96,6 +110,7 @@ public repository.
 | `strip` | one creature over a few dozen ticks (`data-example="<name>"`), OHOL sprites, ☠ on poison kinds | a per-stage extra; `python -m life.book sprites` |
 | `verdict` | is the circuit used (`data-used="<lesion>,<table extra>:<label>"`), new against old brain (apart, sharing a world) | `--evaluate` |
 | `bars` | rows of a table extra as bars with the seeds (`data-rows`, `data-col0`, `data-scale`, `data-unit`) | a per-stage extra |
+| `growth` | front page, no `data-stage`: the brains of the chain one after the other, in the latest layout, without names | `data/growth.json` (every export) |
 
 The brain diagram has three views when the stage adds something: *new circuit* (the default: what the stage added
 and what it connects to directly; a group none of that touches is an empty outline with its name in the middle),

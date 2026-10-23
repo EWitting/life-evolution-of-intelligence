@@ -4,6 +4,7 @@
     python -m life.book export 1.1 --evaluate    # also re-evaluation, head to head and lesions (simulates: one
                                                  # JAX process, minutes per seed)
     python -m life.book dashboards 1.1           # light dashboards of the stage's lineage runs (main and control)
+    python -m life.book growth                   # book/data/growth.json, the front page's growing brain
 
 Every stage gets the same standard export: fitness curves per seed, the last-generations summary, head to head,
 lesions, the brain (regions, projections, what is hard-wired, what is new in this stage), the settings and the run
@@ -725,7 +726,33 @@ def export(key: str, do_evaluate: bool = False, worlds: int = 8, jobs: int = 5, 
             data["extras"][name] = value
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(_round(data), separators=(",", ":")), encoding="utf-8")
+    growth()
     return out_path
+
+
+def growth() -> Path:
+    """data/growth.json for the front page's growing brain: the stages of the chain (the brain layout's, written by
+    tools/brain_layout), each with the title and file of its book page (the page whose status line shows it) and its
+    brain as exported. Written again by every export, so that it always ends at the latest stage."""
+    import re
+    chain = json.loads((DATA_DIR / "brain_layout.json").read_text(encoding="utf-8"))["chain"]
+    pages = {}
+    for q in sorted(BOOK_DIR.glob("*.qmd")):
+        text = q.read_text(encoding="utf-8")
+        m, h = re.search(r'data-life="status" data-stage="([^"]+)"', text), re.search(r"^# (.+?)\s*(\{.*\})?$", text, re.M)
+        if m and h:
+            pages[m.group(1)] = {"title": h.group(1), "href": q.with_suffix(".html").name}
+    stages = []
+    for key in chain:
+        f = DATA_DIR / f"{key}.json"
+        if not f.exists():
+            continue
+        b = json.loads(f.read_text(encoding="utf-8"))["brain"]
+        stages.append({"key": key, **pages.get(key, {"title": key, "href": None}),
+                       "brain": {k: b[k] for k in ("regions", "projections", "modulators", "actions") if k in b}})
+    out = DATA_DIR / "growth.json"
+    out.write_text(json.dumps({"stages": stages}, separators=(",", ":")), encoding="utf-8")
+    return out
 
 
 SPRITE_THUMB = 64                            # px; the strip draws a cell at 30 px (60 on a sharp screen)
@@ -739,7 +766,7 @@ def strip_sprites() -> Path:
     ids, agents = set(), set(range(4))           # bodies 0-3 dress the other animals in a strip
     from .dashboard import PEOPLE                # the dashboard dresses agent i as body i % PEOPLE
     for f in sorted(DATA_DIR.glob("*.json")):
-        if f.name in ("sprites.json", "brain_layout.json", "glossary.json"):
+        if f.name in ("sprites.json", "brain_layout.json", "glossary.json", "growth.json"):
             continue
         data, changed = json.loads(f.read_text(encoding="utf-8")), False
         for x in (data.get("extras") or {}).values():
@@ -794,7 +821,12 @@ def main(argv=None):
     d = sub.add_parser("dashboards", help="write light dashboards to book/dashboards/")
     d.add_argument("keys", nargs="+")
     sub.add_parser("sprites", help="write book/data/sprites.json (the objects of every strip)")
+    sub.add_parser("growth", help="write book/data/growth.json (the front page's growing brain; export does it too)")
     a = ap.parse_args(argv)
+    if a.cmd == "growth":
+        p = growth()
+        print(f"wrote {p} ({p.stat().st_size / 1024:.0f} kB)")
+        return
     if a.cmd == "sprites":
         p = strip_sprites()
         print(f"wrote {p} ({p.stat().st_size / 1024:.0f} kB)")

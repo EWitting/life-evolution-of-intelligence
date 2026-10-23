@@ -5,6 +5,8 @@ project:
     - "data/*.json"
     - "js/*.js"
     - "dashboards/*.html"
+    - "media/*.mp4"
+    - "media/*.jpg"
 
 book:
   title: "Evolving a brain, stage by stage"

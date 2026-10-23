@@ -1,11 +1,21 @@
 # Introduction {.unnumbered}
 
+::: {.column-page}
+<figure class="lb-hero">
+<video autoplay muted loop playsinline preload="auto" poster="media/front.jpg" src="media/front.mp4" aria-label="a creature foraging in its world, beside its brain at work"></video>
+<figcaption>A creature of the latest stage foraging, beside its brain at the same moments: cells light up with their
+activity, connections with the signal they carry. Every stage page links to a dashboard to explore such a recording.</figcaption>
+</figure>
+:::
+
 This book follows one experiment: growing a brain in a simulation, one piece at a time, in roughly the order in
 which brains are thought to have evolved.
 
 Each stage adds a small circuit to the brain of the previous stage, and changes the world so that the new circuit
 has something to be good for. Evolution then gets a number of generations to put the circuit to use. Each page
 of this book is one stage: what was added and why, the biology it is modelled on, and whether it worked.
+
+<div data-life="growth"></div>
 
 The idea of explaining cognition in steps that follow evolution comes from the book *A Brief History of
 Intelligence* by Max Bennett. The stages do not match its chapters one to one, and you do not need to have read it

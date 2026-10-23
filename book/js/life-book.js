@@ -372,7 +372,8 @@
     setVB(vb); size();
     return V;
   }
-  function drawBrain(root, D, L, T) {
+  // bare: only build the drawing and return its parts (the front page's growing brain), without hover texts or views
+  function drawBrain(root, D, L, T, bare = false) {
     const say = (kind, k) => T && T[kind] && T[kind][k] ? `<div>${esc(T[kind][k])}</div>` : '';
     const REG = D.brain.regions, PROJ = D.brain.projections, MODL = D.brain.modulators || [], BW = 122, BH = 38, GAPW = 80, pos = {};   // GAPW: the space between two columns (tools/brain_layout uses the same)
     const A = L && L.stages && L.stages[D.stage.key];
@@ -422,18 +423,18 @@
     // with the layout, the lines of a projection from the senses start at a socket per sense it reads, and a projection
     // onto some of the actions ends at that group's socket; a projection onto all of out ends on the motor block
     const actions = D.brain.actions || [];
-    function ends(p) {
+    function ends(p, acts = actions) {   // acts: the actions of the brain p belongs to (another stage's, for growth)
       if (!atlas) return [[p.src, p.dst]];
       let d = p.dst;
       const [lo, hi] = p.dst_range;
-      if (p.dst === 'out' && p.dst_range.length && !(lo === 0 && hi >= actions.length)) {
-        const s = 'out:' + actions.slice(lo, hi).map(a => a.toLowerCase()).join('/');
+      if (p.dst === 'out' && p.dst_range.length && !(lo === 0 && hi >= acts.length)) {
+        const s = 'out:' + acts.slice(lo, hi).map(a => a.toLowerCase()).join('/');
         if (sock[s]) d = s;
       }
       const ss = p.src === 'in' && p.src_select.length ? p.src_select.map(s => 'in:' + (/^[a-z_]+/i.exec(s) || ['?'])[0]).map(s => sock[s] ? s : 'in') : [p.src];
       return [...new Set(ss)].map(s => [s, d]);
     }
-    const ENDS = PROJ.map(ends);
+    const ENDS = PROJ.map(p => ends(p));
     const centre = n => sock[n] || pos[n];
     // where a line attaches: a region's centre (clipped to its box later), a socket, or a block's inner edge at the
     // height of the line's other end
@@ -511,7 +512,7 @@
       const head = fromIn ? `<circle class="${cls}-fill" cx="${f1(ex)}" cy="${f1(ey)}" r="${f1(2.5 + w / 2)}"/>`
         : p.sign < 0 ? `<line class="${cls}" stroke-width="${f1(w + 1.5)}" x1="${f1(ex - uy * a)}" y1="${f1(ey + ux * a)}" x2="${f1(ex + uy * a)}" y2="${f1(ey - ux * a)}"/>`
         : `<path class="${cls}-fill" d="M${f1(ex)},${f1(ey)} L${f1(ex - ux * a * 1.5 - uy * a * 0.6)},${f1(ey - uy * a * 1.5 + ux * a * 0.6)} L${f1(ex - ux * a * 1.5 + uy * a * 0.6)},${f1(ey - uy * a * 1.5 - ux * a * 0.6)} z"/>`;
-      s += `<g class="lb-edge${p.new ? ' lb-isnew' : ''}" data-p="${i}"><path class="${cls}" fill="none" stroke-width="${f1(w)}" d="${g.d}"/>${head}<path d="${g.d}" fill="none" stroke="transparent" stroke-width="14"/></g>`;
+      s += `<g class="lb-edge${p.new ? ' lb-isnew' : ''}" data-p="${i}" data-e="${esc(from + '>' + to)}"><path class="${cls}" fill="none" stroke-width="${f1(w)}" d="${g.d}"/>${head}<path d="${g.d}" fill="none" stroke="transparent" stroke-width="14"/></g>`;
     }));
     s += modsvg + labels;
     for (const r of REG) {
@@ -531,6 +532,7 @@
         + `<text class="lb-regname" x="8" y="16">${esc(r.name)}</text><text class="lb-regsub" x="8" y="30">${r.name === 'in' ? 'senses' : r.name === 'out' ? 'motor neurons' : (r.sign > 0 ? 'excitatory' : r.sign < 0 ? 'inhibitory' : 'exc. and inh.')} · ${r.size}</text></g>`;
     }
     s += '</svg>';
+    if (bare) return {svg: s, W: SVGW, H, MODS, ends, isBlock};
     const anyNew = REG.some(r => r.new);
     root.innerHTML = `<div class="lb-brainwrap"><div class="lb-brainframe">${s}<button type="button" class="lb-expand" title="open full screen, to zoom and pan" aria-label="open full screen">⤢</button></div>` + `<div class="lb-braincap"><span class="lb-muted">Hover over a cell, a group or a line to see what it does.</span> <button type="button" class="lb-legbtn" aria-expanded="false">Legend</button><div class="lb-legend lb-brainlegend" hidden><span><i class="lb-key lb-hardkey"></i>hard-wired (designed; evolution tunes only the strength)</span><span><i class="lb-key lb-evokey"></i>evolved</span>${PROJ.some(p => p.rule !== 'fixed') ? '<span><i class="lb-key lb-learnkey"></i>learned within a life</span>' : ''}<span>▸ excites</span><span>⊣ inhibits</span><span>● senses, mixed signs</span>${MODS.length ? '<span><i class="lb-key lb-modkey"></i>modulator: released by one cell, acts on a cell or on the learning of a projection</span>' : ''}${anyNew ? '<span><i class="lb-key lb-newkey"></i>added in this stage</span>' : ''}<span class="lb-muted">line width = total synaptic strength arriving at one target neuron, mean of the final population</span></div></div></div>`;
     const svg = root.querySelector('.lb-brain'), view = brainView(root, svg, [0, 0, SVGW, H], BW);
@@ -594,6 +596,104 @@
       const gp = g.dataset.g, mem = REG.filter(r => r.group === gp || r.group.startsWith(gp + '/')).map(r => r.name);
       hover(g, e => showTip(e, `<b>${esc(gp.split('/').pop())}</b> group${gp.includes('/') ? ` in ${esc(gp.split('/').slice(0, -1).join('/'))}` : ''}${say('groups', gp)}<div class="lb-muted">cells: ${esc(mem.join(', '))}</div>`));
     });
+  }
+
+  // ------------------------------------------------------------------ growth: the brain, stage by stage
+  // <div data-life="growth"></div> on the front page, without a stage: data/growth.json (python -m life.book growth,
+  // also written by every export) has the stages of the chain with the titles of their pages. The latest brain is
+  // drawn once, in its layout and without names; each cell, line, socket and modulator line knows the first stage
+  // that has it, and the stages are shown in turn: what a stage adds lights up, and the view follows the brain as it
+  // grows. A click on a title shows that stage and stops the play; with reduced motion it starts at the latest stage.
+  const HOLD = 2400, LAST = 6000, MOVE = 900;   // ms: a stage shown, the latest stage shown, the view moving
+  function growth(root, G, L) {
+    const S = G.stages, n = S.length, fin = S[n - 1];
+    const B = drawBrain(root, {stage: {key: fin.key}, brain: fin.brain}, L, {}, true);
+    const first = {}, mark = (k, i) => { if (first[k] === undefined) first[k] = i; };
+    S.forEach((st, i) => {
+      const b = st.brain;
+      b.regions.forEach(r => {
+        mark('r:' + r.name, i);
+        (r.receptors || []).forEach(rc => mark(`m:${rc[0]}>${r.name}`, i));
+      });
+      b.projections.forEach(p => {
+        B.ends(p, b.actions || []).forEach(([a, c]) => { mark(`e:${a}>${c}`, i); mark('s:' + a, i); mark('s:' + c, i); });
+        if (p.modulator) mark(`m:${p.modulator}>${p.src}>${p.dst}`, i);
+      });
+    });
+    const titles = S.map((st, i) => `<button type="button" data-i="${i}">${esc(st.title)}</button>`).join('<span class="lb-growarrow">›</span>');
+    root.innerHTML = `<div class="lb-growth"><div class="lb-growhead"><a class="lb-growname"></a></div>`
+      + `<div class="lb-growframe">${B.svg}</div><div class="lb-growsteps"><button type="button" class="lb-growplay" aria-label="pause">❚❚</button>${titles}</div>`
+      + `<div class="lb-caption" style="text-align:center">The brain of each stage, in the layout of the latest one: what a stage adds lights up in green. Cells take the colour of their group; click a name to stop at that stage, or the name above to read its page.</div></div>`;
+    const svg = root.querySelector('svg'), full = [0, 0, B.W, B.H];
+    svg.classList.add('lb-growsvg'); svg.setAttribute('aria-label', 'the brain growing, stage by stage');
+    svg.querySelectorAll('.lb-reg').forEach(g => {   // the senses and the motor neurons say what they are; nothing else has a name
+      const t = g.querySelector('rect.lb-io ~ text.lb-regsub');
+      if (!t || !g.transform.baseVal.numberOfItems) return;
+      t.textContent = g.dataset.r === 'in' ? 'senses' : 'actions';
+      t.setAttribute('x', 61); t.setAttribute('y', 28); t.setAttribute('text-anchor', 'middle');
+    });
+    const parts = [];   // [element, first stage]
+    svg.querySelectorAll('.lb-reg').forEach(g => parts.push([g, B.isBlock(g.dataset.r) ? 0 : first['r:' + g.dataset.r] ?? 0]));
+    svg.querySelectorAll('.lb-sock').forEach(r => parts.push([r, first['s:' + r.dataset.s] ?? n]));
+    svg.querySelectorAll('.lb-edge').forEach(g => parts.push([g, first['e:' + g.dataset.e] ?? 0]));
+    svg.querySelectorAll('.lb-mod').forEach(g => {
+      const l = B.MODS[+g.dataset.m];
+      parts.push([g, first[l.proj ? `m:${l.m.name}>${l.proj.src}>${l.proj.dst}` : `m:${l.m.name}>${l.dst}`] ?? 0]);
+    });
+    // the view of a stage: what it shows (not the senses / motor blocks, which are as tall as the latest brain's),
+    // with a margin, at least half as wide as all of it
+    const bb = e => {
+      const b = e.getBBox(), t = e.transform && e.transform.baseVal.numberOfItems ? e.transform.baseVal.consolidate().matrix : {e: 0, f: 0};
+      return [b.x + t.e, b.y + t.f, b.x + b.width + t.e, b.y + b.height + t.f];
+    };
+    const viewOf = k => {
+      let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+      for (const [e, i] of parts) if (i <= k && !(e.classList.contains('lb-reg') && B.isBlock(e.dataset.r))) {
+        const b = bb(e); if (b[2] - b[0] <= 0 && b[3] - b[1] <= 0) continue;
+        x0 = Math.min(x0, b[0]); y0 = Math.min(y0, b[1]); x1 = Math.max(x1, b[2]); y1 = Math.max(y1, b[3]);
+      }
+      if (x0 > x1) return full;
+      const P = 30, w = Math.max(x1 - x0 + 2 * P, B.W / 2), h = Math.max(y1 - y0 + 2 * P, B.H / 2), cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+      return [cx - w / 2, cy - h / 2, w, h];
+    };
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const name = root.querySelector('.lb-growname'), play = root.querySelector('.lb-growplay');
+    let cur = -1, vb = full, anim = 0, timer = 0, playing = !still;
+    const setVB = b => svg.setAttribute('viewBox', b.map(v => v.toFixed(1)).join(' '));
+    function moveTo(b) {
+      if (still) { vb = b; setVB(vb); return; }
+      const from = vb.slice(), t0 = performance.now(), id = ++anim;
+      const step = now => {
+        if (id !== anim) return;
+        const f = Math.min(1, (now - t0) / MOVE), e = f < 0.5 ? 2 * f * f : 1 - 2 * (1 - f) * (1 - f);
+        vb = from.map((v, i) => v + (b[i] - v) * e); setVB(vb);
+        if (f < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    }
+    function show(k) {
+      cur = k;
+      for (const [e, i] of parts) { e.classList.toggle('lb-gh', i > k); e.classList.toggle('lb-gnew', i === k && k > 0); }
+      root.querySelectorAll('.lb-growsteps [data-i]').forEach(b => { b.classList.toggle('lb-on', +b.dataset.i === k); b.classList.toggle('lb-past', +b.dataset.i < k); });
+      name.textContent = S[k].title;
+      if (S[k].href) name.href = S[k].href; else name.removeAttribute('href');
+      moveTo(viewOf(k));
+      clearTimeout(timer);
+      if (playing) timer = setTimeout(() => show((k + 1) % n), k === n - 1 ? LAST : HOLD);
+    }
+    const setPlay = on => { playing = on; play.textContent = on ? '❚❚' : '▶'; play.setAttribute('aria-label', on ? 'pause' : 'play'); clearTimeout(timer); if (on) show(cur === n - 1 ? 0 : cur + 1); };
+    root.querySelector('.lb-growsteps').addEventListener('click', e => {
+      if (e.target === play) return setPlay(!playing);
+      if (e.target.dataset.i !== undefined) { setPlay(false); show(+e.target.dataset.i); }
+    });
+    // only play while the page shows it
+    new IntersectionObserver(es => es.forEach(en => {
+      if (!playing) return;
+      clearTimeout(timer);
+      if (en.isIntersecting) timer = setTimeout(() => show((cur + 1) % n), cur === n - 1 ? LAST : HOLD);
+    })).observe(root);
+    if (!playing) play.textContent = '▶';
+    show(still ? n - 1 : 0);
   }
 
   // ------------------------------------------------------------------ runs and settings
@@ -841,14 +941,17 @@
     root.innerHTML = h + `</tbody></table>` + (X.caption ? `<div class="lb-caption">${X.caption}</div>` : '');
   }
 
-  const COMPONENTS = {status, summary, curves, lesions, brain, runs, settings, strip, table, verdict, bars, lines};
+  const COMPONENTS = {status, summary, curves, lesions, brain, runs, settings, strip, table, verdict, bars, lines, growth};
   function init() {
     document.querySelectorAll('[data-life]').forEach(root => {
       const fn = COMPONENTS[root.dataset.life];
       if (!fn || root.dataset.done) return;
       root.dataset.done = '1'; root.classList.add('lb-root');
-      load(root.dataset.stage).then(D => fn(root, D)).catch(err => { root.innerHTML = `<div class="lb-note"><p>${esc(err.message)}</p></div>`; });
+      (fn === growth ? Promise.all([fetch('data/growth.json').then(r => r.json()), loadLayout()]).then(([G, L]) => growth(root, G, L))
+        : load(root.dataset.stage).then(D => fn(root, D))).catch(err => { root.innerHTML = `<div class="lb-note"><p>${esc(err.message)}</p></div>`; });
     });
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+  // the front page's clip plays by itself, unless the reader asked for less motion (then it shows its poster)
+  function stillVideo() { if (matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelectorAll('.lb-hero video').forEach(v => { v.removeAttribute('autoplay'); v.pause(); v.controls = true; }); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { init(); stillVideo(); }); else { init(); stillVideo(); }
 })();

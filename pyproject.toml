@@ -11,6 +11,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "pillow>=10"]
+media = ["playwright>=1.45", "imageio-ffmpeg>=0.5"]   # front-page clip: scripts/front_clip.py
 
 [build-system]
 requires = ["setuptools>=68"]

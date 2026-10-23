@@ -19,6 +19,7 @@
     --kbd:#f3f4f6; --kbd-line:#d9dde3; --switch:#cfd4dc; --on-bg:#eef3fc; --on-line:#b9cbef; --primary:#1d2330; --primary-ink:#fff;
     --tip:rgba(22,27,38,.94); --tip-ink:#fff; --pop-shadow:0 14px 36px rgba(16,24,40,.18);
     /* brain diagram, as in the book (book/life-book.css) */
+    --hero-exc:#f08c00; --hero-inh:#2f7fe0;
     --a-hard:#2e2e2e; --a-evolved:#a9a8a2; --a-learned:#4a3aa7; --a-mod:#b8327f; --a-exc:#f1f8f1; --a-inh:#fbf0ef; --a-io:#fff;
     --a-axis:#a3a9b3; --a-group:rgba(120,130,150,.07); --a-groupline:#9aa6c4; --a-grouptext:#56608a; --a-halo:#fff;
   }
@@ -31,6 +32,7 @@
     --note-bg:#2b2616; --note-line:#5a4a1a; --note-ink:#e8d9a8; --note-a:#f0c060; --dots:#2e2e2b; --canvas:#1a1a19; --pre:#1a1a19;
     --kbd:#2b2b29; --kbd-line:#4a4a46; --switch:#4a4a46; --on-bg:#1e2a3d; --on-line:#3a5a8f; --primary:#ececea; --primary-ink:#151514;
     --tip:rgba(242,242,238,.97); --tip-ink:#151514; --pop-shadow:0 14px 36px rgba(0,0,0,.5);
+    --hero-exc:#ffb02e; --hero-inh:#5aa2ff;
     --a-hard:#e8e8e4; --a-evolved:#6d6c67; --a-learned:#9085e9; --a-mod:#e377b6; --a-exc:#1f2a20; --a-inh:#2e2020; --a-io:#232322;
     --a-axis:#5a5a55; --a-group:rgba(160,170,190,.06); --a-groupline:#55607a; --a-grouptext:#9aa6c4; --a-halo:#1a1a19;
   }
@@ -206,6 +208,23 @@
   .dlg-b h4 { margin:14px 0 6px; font-size:13px; } .dlg-b h4:first-child { margin-top:0; }
   .keys { display:grid; grid-template-columns:auto 1fr; gap:6px 14px; }
   kbd { justify-self:start; font:11px var(--mono); background:var(--kbd); border:1px solid var(--kbd-line); border-bottom-width:2px; border-radius:5px; padding:1px 6px; white-space:nowrap; }
+
+  /* hero (?hero in the address): the world and the brain side by side, nothing else, for the book's front-page clip
+     (scripts/front_clip.py); the connections glow with the activity they carry */
+  body.hero header, body.hero #split, body.hero #c-agent, body.hero #c-act, body.hero #c-w, body.hero #c-fit, body.hero #c-config,
+  body.hero .card-h, body.hero .hint, body.hero .arch-side, body.hero .toast { display:none; }
+  body.hero { overflow:hidden; }
+  body.hero main { grid-template-columns:minmax(0, 1fr) minmax(0, 1.25fr); gap:14px; padding:14px; height:100vh; box-sizing:border-box; align-items:stretch; }
+  body.hero #left { position:static; } body.hero #right { display:block; }
+  body.hero .card { height:100%; box-sizing:border-box; } body.hero .card-b { height:100%; box-sizing:border-box; padding:10px; }
+  body.hero #worldWrap { height:100%; display:flex; align-items:center; }
+  body.hero .arch-wrap { height:100%; resize:none; border:none; }
+  body.hero #archSvg text.sub, body.hero #archSvg text.elab, body.hero #archSvg text.grp { display:none; }
+  #archSvg .eglow { fill:none; stroke-linecap:round; pointer-events:none; }
+  .hero-cap { position:absolute; left:18px; bottom:16px; z-index:5; font:600 15px system-ui, sans-serif; color:var(--ink); background:var(--panel);
+              opacity:.92; padding:6px 12px; border-radius:8px; box-shadow:var(--shadow); pointer-events:none; }
+  .hero-cap span { font-weight:400; color:var(--muted); }
+  #archWrap .hero-cap { top:12px; bottom:auto; }
 </style>
 </head>
 <body>
@@ -357,6 +376,8 @@ const M = DATA.meta;
 const T = M.T, N = M.N, H = M.H, W = M.W, L = M.layout;
 const NN = L.n, NIN = L.n_in;
 const $ = id => document.getElementById(id);
+const HQ = new URLSearchParams(typeof location === 'undefined' ? '' : location.search), HERO = HQ.has('hero');
+if (HERO) document.body.classList.add('hero');
 const DPR = () => window.devicePixelRatio || 1;
 function decode(d) {
   const bin = atob(d.data); const buf = new ArrayBuffer(bin.length); const u8 = new Uint8Array(buf);
@@ -1078,7 +1099,7 @@ function renderArch() {
     const head = p.src === 'in' && p.evolve !== false ? `<circle class="${cls}-f" cx="${f1(ex)}" cy="${f1(ey)}" r="${f1(2.5 + w / 2)}"/>`
       : st.sign < 0 ? `<line class="${cls}" stroke-width="${f1(w + 1.5)}" x1="${f1(ex - uy * a)}" y1="${f1(ey + ux * a)}" x2="${f1(ex + uy * a)}" y2="${f1(ey - ux * a)}"/>`
       : `<path class="${cls}-f" d="M${f1(ex)},${f1(ey)} L${f1(ex - ux * a * 1.5 - uy * a * 0.6)},${f1(ey - uy * a * 1.5 + ux * a * 0.6)} L${f1(ex - ux * a * 1.5 + uy * a * 0.6)},${f1(ey - uy * a * 1.5 - ux * a * 0.6)} z"/>`;
-    h += `<g class="edge" data-p="${i}">` + (sel ? `<path d="${g.d}" fill="none" style="stroke:var(--accent)" stroke-opacity=".35" stroke-width="${f1(w + 7)}"/>` : '')
+    h += `<g class="edge" data-p="${i}">` + (HERO ? `<path class="eglow" data-p="${i}" d="${g.d}" stroke-width="${f1(w + 7)}" style="stroke:${st.sign < 0 ? 'var(--hero-inh)' : 'var(--hero-exc)'}" opacity="0"/>` : '') + (sel ? `<path d="${g.d}" fill="none" style="stroke:var(--accent)" stroke-opacity=".35" stroke-width="${f1(w + 7)}"/>` : '')
       + `<path class="eline ${cls}" fill="none" stroke-width="${f1(w)}"${isGain ? ' stroke-dasharray="1 4" stroke-linecap="round"' : ''} d="${g.d}"/>${head}`
       + `<path d="${g.d}" fill="none" stroke="transparent" stroke-width="14"/>`
       + (lab ? `<text x="${f1(g.lx)}" y="${f1(g.ly - 4)}" text-anchor="middle" class="sub elab">${lab}</text>` : '') + '</g>';
@@ -1103,7 +1124,8 @@ function renderArch() {
     if (r.name === 'out') h += `<text x="6" y="47" class="sub" style="font-size:8px">${M.actions.map(a => a[0]).join(' ')}</text>`;
     h += '</g>';
   }
-  svg.innerHTML = h; AR.cells = [...svg.querySelectorAll('.cell')]; AR.modvals = [...svg.querySelectorAll('.modval')]; updateArchActivity();
+  svg.innerHTML = h; AR.cells = [...svg.querySelectorAll('.cell')]; AR.modvals = [...svg.querySelectorAll('.modval')];
+  AR.glows = [...svg.querySelectorAll('.eglow')]; AR.modlines = [...svg.querySelectorAll('.mod')]; updateArchActivity();
 }
 function updateArchActivity() {
   for (const el of AR.cells) {
@@ -1113,6 +1135,26 @@ function updateArchActivity() {
   }
   // the modulators' current values, behind their names on the lines
   for (const el of AR.modvals) { const k = +el.dataset.k; el.textContent = k >= 0 ? `(${mod.a[(t * N + focus) * NMOD + k].toFixed(2)})` : ''; }
+  // hero: a connection glows with the mean activity of its source (the senses it reads, for the senses), between the
+  // low and the high level of that source in this agent's life; a modulator line with the modulator's level
+  for (const el of AR.glows) {
+    const i = +el.dataset.p, [lo, hi] = glowRange(i), v = srcLevel(t, i);
+    el.setAttribute('opacity', (hi - lo < 0.05 ? 0.15 : 0.9 * Math.max(0, Math.min(1, (v - lo) / (hi - lo)))).toFixed(2));
+  }
+  for (const el of AR.modlines) {
+    const k = MODN.indexOf(AR.mods[+el.dataset.m].m.name), v = k >= 0 ? Math.abs(mod.a[(t * N + focus) * NMOD + k]) : 0;
+    el.style.opacity = HERO ? (0.25 + 0.75 * Math.min(1, v)).toFixed(2) : '';
+  }
+}
+function srcLevel(tt, i) { const rows = PROJ[i].rows; let s = 0; for (const j of rows) s += Math.abs(xval(tt, focus, j)); return s / Math.max(1, rows.length); }
+const glowRanges = {};
+function glowRange(i) {   // the 5th and 95th percentile of a source's level over the focused agent's life (every 5th tick)
+  const k = focus + ':' + i;
+  if (!glowRanges[k]) {
+    const v = []; for (let tt = 0; tt < T; tt += 5) if (alive.a[tt * N + focus]) v.push(srcLevel(tt, i));
+    v.sort((a, b) => a - b); glowRanges[k] = v.length ? [v[Math.floor(0.05 * (v.length - 1))], v[Math.floor(0.95 * (v.length - 1))]] : [0, 0];
+  }
+  return glowRanges[k];
 }
 function projLine(i, link = true) {
   const p = PROJ[i], s = AR.stats[i], name = p.label;
@@ -1283,7 +1325,7 @@ function relayout() {
   const hdr = $('top').offsetHeight; document.documentElement.style.setProperty('--hdr', hdr + 'px');
   // world: square cells, as large as the column allows while the whole card stays on screen
   const ww = $('worldWrap'), stacked = innerWidth <= 1050, maxed = inMax(ww);
-  const availH = maxed ? ww.clientHeight : stacked ? innerHeight * 0.75 : innerHeight - hdr - 120 - $('legend').offsetHeight;
+  const availH = HERO ? ww.clientHeight : maxed ? ww.clientHeight : stacked ? innerHeight * 0.75 : innerHeight - hdr - 120 - $('legend').offsetHeight;
   const s = Math.max(240 / Math.max(W, H), Math.min(ww.clientWidth / W, Math.max(200, availH) / H));
   sizeCanvas(wc, W * s, H * s); wc.style.margin = '0 auto';
   zw.clamp();
@@ -1314,7 +1356,7 @@ function fmtTime(sec) { const m = Math.floor(sec / 60), s = Math.floor(sec % 60)
 // follow = keep the focused agent (world) and the current tick (activations) inside zoomed views; used by playback and stepping
 function setTick(v, follow = false) {
   t = Math.max(0, Math.min(T - 1, Math.round(v)));
-  if (follow && followOn) zw.follow(pos.a[(t * N + focus) * 2 + 1] + 0.5, pos.a[(t * N + focus) * 2] + 0.5);
+  if (follow && followOn) zw.follow(pos.a[(t * N + focus) * 2 + 1] + 0.5, pos.a[(t * N + focus) * 2] + 0.5, HERO ? 0.4 : 0.2);
   if (follow) zact.follow(t + 0.5, zact.oy + NN / zact.sy / 2);
   $('tick').value = t; $('tickProgress').style.width = (100 * t / Math.max(1, T - 1)) + '%';
   $('tickLabel').textContent = `tick ${t.toLocaleString()} / ${(T - 1).toLocaleString()} · ${fmtTime(t / TPS)}`;
@@ -1380,6 +1422,23 @@ relayout(); setTick(0); invalidate('fit');
 const imgs = Object.values(sprites).concat(ground ? [ground] : [], people);
 let pending = imgs.filter(im => !loaded(im)).length;
 imgs.forEach(im => { if (!loaded(im)) im.onload = () => { if (--pending <= 0) { cacheMode = null; invalidate('world'); } }; });
+if (HERO) {
+  // ?hero&agent=<i>&t=<tick>&zoom=<f>&theme=light|dark&cap=<title>|<line>&cap2=...: the agent ringed and followed in a
+  // zoomed world, its brain beside it; window.HERO lets scripts/front_clip.py step through ticks and pick a scene
+  if (HQ.get('theme')) setTheme(HQ.get('theme') === 'dark', false);
+  if (HQ.has('agent')) focus = +HQ.get('agent');
+  $('markPoison').checked = HQ.get('skulls') === '1';
+  followOn = true; relayout(); zw.zoomBy(+HQ.get('zoom') || 4); archFit();
+  for (const [id, key] of [['worldWrap', 'cap'], ['archWrap', 'cap2']]) if (HQ.get(key)) {
+    const [head, ...rest] = HQ.get(key).split('|'), d = document.createElement('div'), sp = document.createElement('span');
+    d.className = 'hero-cap'; d.textContent = head; sp.textContent = rest.length ? ' · ' + rest.join('|') : ''; d.appendChild(sp); $(id).appendChild(d);
+  }
+  setTick(+HQ.get('t') || 0, true);
+  const series = (arr, i) => Array.from({length: T}, (_, tt) => arr.a[tt * N + i]);
+  window.HERO = {T, N, actions: M.actions, brainAgents: BA || Array.from({length: N}, (_, i) => i),
+    setTick: v => setTick(v, true), drawn: () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))),
+    series: i => ({food: series(food, i), pain: series(pain, i), action: series(action, i), alive: series(alive, i)})};
+}
 $('loader').classList.add('done'); setTimeout(() => $('loader').remove(), 400);
 }
 </script>

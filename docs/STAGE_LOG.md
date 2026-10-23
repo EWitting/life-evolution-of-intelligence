@@ -3601,3 +3601,61 @@ painful meal, -0.78 -> -0.65 (2.3c -0.86 -> -0.82); blocking 0.85 vs 1.14 (contr
 2.3s (both sides learn; pain through its relay; the appetite learning in the verdict). Mirror check: the chain has
 no TO FIX left. Also new: per-stage lesion plans with reasons (`book.LESIONS`, required for unfrozen stages),
 exports at 8 worlds by default, a line's hover in the diagrams says when its signal arrives.
+
+## v76 (2026-10-23): stage 2.5, hands and the basal-ganglia actor (design and probes)
+
+One stage for hands and the actor (ADR-028). Main B25 = `actor(hands(B24S))`, control B25H = `hands(B24S)`, both
+from frozen 2.3s in W25 (the 2.3 reversal world with `eat_on_pick=False`: USE picks with an empty hand and puts
+down with a full one; EAT eats what is held). Actor: per channel (USE, EAT) a D1 cell (Go, -> gpi) and a D2 cell
+(NoGo, -> gpe -> gpi); tonic gpi holds back `act`, which drives the motor neuron; pallium -> D1 learns under `da`,
+pallium -> D2 under `da_neg` (three-factor hebb with eligibility); an efference copy of the action reaches D1 / D2
+over slow synapses, so the trace marks the state in which an action was taken. The pallium also reads the held
+item (`slot_scale` 2 x sqrt 2, new ProjectionSpec field).
+Probes, in order:
+- `pallium_held.py` (numpy): the held item at x2 in the same 128 cells keeps good berries at 0.10 of a poison's
+  aversion and transfers a lesson from "held at its bush" to "held in front of nothing" at 0.50 (x1: 0.23).
+- Operant lab (`labtests.operant`, `lab_actor.py`; box per creature, a berry in hand or a bush ahead):
+  first nobody ate or put down (the 2.3s ganglion drives FORWARD at +4: programmes onto motor neurons at 8);
+  aversion to a held berry not learned (valence read the pallium a tick late; eating is on the first tick
+  in hand: phases reordered); put down never sampled (start strength held -> D1(USE) 0.2, fixed, tuned by
+  evolution; 1.0 and 0.4 put everything down); plastic context inputs to the striatum learned the average action
+  value and were removed. Then, hold box: main puts held poison down 0.31 -> 0.60 and eats it 0.33 -> 0.02, actor
+  learning off flat at 0.22; control eats 0.30 of poison.
+- Generation 0 (`gen0_actor.py`, 16 paired worlds) first collapsed (357 vs 1218 for 2.3s, 4 berries a life):
+  drifted held-input synapses and inherited EAT suppression; `no_feed` (every aversive cell) blocked eating.
+  Fixes: `hands_init` (held inputs silent, EAT bias and synapses neutral at the start), `no_eat` split from
+  `no_feed` (aversion to what is held stops eating; aversion to what is ahead stops picking), `ingest` swallows
+  at 2.5. Then main 853, actor off 863, control 880, 2.3s 1218 (in its own world). At this swallow drive the box
+  eats nearly everything on the first tick (no hand decision left); left to evolution, which reaches EAT through
+  the motor bias and `hungry -> ingest` (the programme's own bias is hard-wired), rather than swept.
+Evolution seed 0 (`runs/s2_5_actor`, control `s2_5_actor_control`): stopped at generation 40-47, see v77.
+
+## v77 (2026-10-23): 2.5 first run: hands collapse to eating on the bite; berries told apart only in hand
+
+Seed 0, main and control from frozen 2.3s, stopped at generation 40 (main) and 47 (control): both climb from
+about 700 to about 1900 (generations 30-40: main 1875, control 1830; poison share 0.29-0.31 in both), above 2.3s's
+1200 in its own world. Recorded lives at generation 30 (`hands_life.py`, `RUN=` a checkpoint): a berry is held for
+1 tick (90th percentile 1) and eaten; holding 2% of living ticks; nothing put down, in main and control. Evolution
+raised the eating drive (`ingest -> EAT` 8 -> 9.8, `no_hold -> ingest` 6 -> 9.2); the actor's motor output fell
+(`act -> out` 4 -> 3.2) and its start strength for USE when holding (0.2 -> 0.13), while the striatum's learning
+rates rose (0.10 -> 0.15 / 0.13). Why: a type's colour was shared by its bush, berry and empty bush, so a berry in
+hand said nothing the bush had not; the hand decision duplicated the pick decision, which the critic brain already
+makes by look. In animals the step between grasping and swallowing pays because information arrives there (a
+closer look, smell, taste).
+Tried, then dropped (2026-10-23/24):
+- `plain_bushes` world (novel bushes all alike, only berries coloured): generation 0 main 459, actor off 464,
+  control 433; hold box put down 0 everywhere: the cells about what is seen (the pallium reads the held item, so
+  they learned the held poison too) drove `no_feed`, which held USE at 0 while the actor released it
+  (`hold_trace.py`: act 0.89, USE 0.00).
+- a gate shutting `grasp` and `no_feed` with a full hand: main put held poison down 0.79, good berries untouched;
+  not adopted.
+Adopted instead (user): appetite and aversion mean "eat it" / "do not eat it", so `grasp` and `no_feed` act on EAT,
+as `ingest` and `no_eat` do; USE (pick up, put down) has no valence programme left: its meaning depends on the
+situation, which is the actor's to learn. Original world (bushes show their type). `ingest`'s bias evolves (start
+SWALLOW 2.5; the other programmes keep a fixed bias of 0). Mirror check clean.
+Lab (24 creatures, 48 trials; main / actor off / control): hold box, held poison eaten in the last 12 trials 0.02 /
+0.47 / 0.42, put down 0.69 / 0.02 / 0; good eaten 0.65 / 0.70 / 0.66 (main puts 0.17 of the good ones down; the
+others refuse them by generalised aversion). Pick box: bushes picked by look in no arm (poison / good 0.60 / 0.67):
+the innate `in -> USE` reflex (about +5.6 with something ahead) picks every bush and NoGo can only take the actor's
+own drive away; of the picked poison, main eats 0.21 and puts down 0.53 (others eat about 0.60). Generation 0 (16
+paired worlds): main 764, actor off 729 (-35 +- 11), control 664 (-100 +- 13), 2.3s 1159 in its own world.

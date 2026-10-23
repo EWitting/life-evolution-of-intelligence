@@ -234,7 +234,7 @@ def operant(exp, pop, rs, rules_fn, protocol: dict, n_agents: int = 24, seed: in
     """Runs an OPERANT protocol on the first n_agents genomes of `pop` (on exp's layout). `rules_fn`: the stage's world
     (its looks and poisons, one life per agent), `rs` its ruleset. Returns per trial and agent: the berry type (0-3), poison (0/1), the
     first event (0 none, 1 ate, 2 put down) and its tick, and whether it was picked at all (pick). `cells`: region names
-    whose mean rate on the trial's first tick is returned as well ({name: [trials, agents]}), and the dopamine signal
+    (or single cells, 'name[i]') whose mean rate on the trial's first tick is returned as well ({name: [trials, agents]}), and the dopamine signal
     on every tick (`da`: [trials, agents, ticks]) when the brain has one."""
     from .experiments import stages as S
     L = make_layout(exp); names = list(L.in_names); K = exp.vision.appearance_dim
@@ -297,8 +297,10 @@ def operant(exp, pop, rs, rules_fn, protocol: dict, n_agents: int = 24, seed: in
             st, act = step(pop, st, obs(held, ahead, kind, taste, pain, last), jax.random.split(k, NA))
             act = np.asarray(act)
             if t == 0:
-                for c in cells:
-                    rec[c].append(np.asarray(st.x[:, L.region(c)].mean(-1)))
+                for c in cells:   # a region's mean rate, or one cell as 'name[i]'
+                    r, i = (c[:-1].split("[") if c.endswith("]") else (c, None))
+                    sl = L.region(r) if i is None else L.region(r).start + int(i)
+                    rec[c].append(np.asarray(st.x[:, sl].mean(-1) if i is None else st.x[:, sl]))
             if mi is not None:
                 da.append(np.asarray(st.mod[:, mi]))
             taste, pain = np.zeros(NA, np.float32), np.zeros(NA, np.float32)

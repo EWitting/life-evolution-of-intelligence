@@ -3,7 +3,7 @@ or control brain in one world, recorded for TICKS ticks. Per creature alive: pic
 ticks holding something, how long a berry is held before it is eaten, and the actions taken while holding (by what
 is ahead: nothing, a bush or other object).
 
-    TICKS=1500 python scripts/probes/hands_life.py [main|control]"""
+    TICKS=1500 [RUN=runs/<stage run>/<time>] python scripts/probes/hands_life.py [main|control]"""
 import os
 import sys
 from dataclasses import replace
@@ -29,8 +29,11 @@ if _os.environ.get("SWALLOW") or _os.environ.get("EXPLORE"):
     print("SWALLOW", _sw, "EXPLORE", _os.environ.get("EXPLORE", _AE), flush=True)
 exp = S.make_exp(s, s.brain if which == "main" else s.control_brain, "life", 1, 0)
 L = make_layout(exp)
-pop = freeze.load_frozen("2.3s", 0, exp)
-pop = s.adapt_init(pop, L)
+if os.environ.get("RUN"):     # a run's checkpoint instead of the stage's start
+    from life.run import load_population
+    pop = load_population(os.environ["RUN"], exp, file="checkpoint.npz")
+else:
+    pop = s.adapt_init(freeze.load_frozen("2.3s", 0, exp), L)
 if which == "main":
     pop = pop._replace(mask=jnp.where(((np.asarray(L.rule) > 0) & (np.asarray(L.allowed) > 0))[None], 1.0, pop.mask))
 rs, fn = s.build(exp)

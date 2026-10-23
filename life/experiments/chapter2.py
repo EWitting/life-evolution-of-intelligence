@@ -398,21 +398,26 @@ def hands(brain: BrainConfig, swallow: float | None = None) -> BrainConfig:
     hand, an `ingest` programme onto EAT, aversion blocking EAT) with three changes for the critic brain:
       - taste and pain reach the cells about what is seen only (with_hands sent pain to the held cell as well, taste
         not: an asymmetry no stage needed);
-      - `ingest` swallows by default (SWALLOW): in 2.3s eating followed the bite at once, and the held cells learn
-        per life, so without it nothing would be eaten at generation 0 (x.hands lost all its food at first);
+      - `ingest` swallows by default (SWALLOW, a bias that evolves from there, unlike the other programmes' 0): in
+        2.3s eating followed the bite at once, and the held cells learn per life, so without it nothing would be
+        eaten at generation 0 (x.hands lost all its food at first);
       - the pallium reads the item in hand as well as the eye ahead (held at HELD_SCALE, per slot like the eye), so
         the critic and the actor know what is held; with an empty hand the code is the 2.3s one;
       - `hungry` reaches `ingest` and `no_eat` as it reaches `grasp` and `no_feed` (evolvable, from 0): eating is
         decided at ingest now;
       - ingest drives EAT at PROG_MOTOR_W;
-      - aversion is split as appetite is: aversion to what is seen stops picking (`no_feed` -> grasp and USE, as in
-        2.3s), aversion to what is held stops swallowing (`no_eat` -> ingest and EAT). with_hands let every aversive
-        cell stop eating, so anything disliked in view kept a held berry from being swallowed (generation 0: `no_feed`
-        at 0.5 while holding, 4 berries eaten per life);
+      - aversion has a cell per thing as appetite has: aversion to what is seen (`no_feed` -> grasp and EAT), to what
+        is held (`no_eat` -> ingest and EAT). with_hands sent every aversive cell into one gate (at generation 0
+        `no_feed` was at 0.5 while holding, from the drifted held synapses that `hands_init` now silences);
       - the valence cells read the pallium of the same tick (phase after the pallium, then no_feed, then the
         programmes): in 2.3s they shared its phase and read it a tick late, which did not matter at a bush seen from
         afar, but a held berry is swallowed on its first tick in hand, before a learned aversion arrived (lab,
-        2026-10-23: the drive onto the aversive cells was +1 on that tick, their rate 0)."""
+        2026-10-23: the drive onto the aversive cells was +1 on that tick, their rate 0);
+      - appetite and aversion mean "eat it" and "do not eat it": `grasp` and `no_feed` act on EAT, as `ingest` and
+        `no_eat` do (in 2.3s grasping was eating). USE (pick up, put down) is left to the actor and the senses: its
+        meaning depends on the situation, which is the actor's to learn (user, 2026-10-23). On USE, `no_feed` (the
+        pallium reads the held item, so it learned to dislike a held poison too) held USE at 0 while the actor
+        released it (hold box: act 0.89, USE 0.00)."""
     b = with_hands(brain)
     eye = next(p for p in b.projections if p.src == "in" and p.dst == "pallium")
     sq2 = float(np.sqrt(2.0))   # the fan-in doubles: the eye's weights keep their 2.3s size (ProjectionSpec.slot_scale)
@@ -424,8 +429,8 @@ def hands(brain: BrainConfig, swallow: float | None = None) -> BrainConfig:
             p = replace(p, slot_scale=sq2)
         elif (p.src, p.dst) == ("valence_av", "no_feed"):
             p = replace(p, src_range=SEEN)
-        elif (p.src, p.dst) == ("no_feed", "out"):
-            p = replace(p, dst_range=USE_)
+        elif p.src in ("grasp", "no_feed") and p.dst == "out":
+            p = replace(p, dst_range=EAT_)
         elif (p.src, p.dst) == ("no_feed", "ingest"):
             continue
         proj.append(p)
@@ -440,7 +445,8 @@ def hands(brain: BrainConfig, swallow: float | None = None) -> BrainConfig:
     no_feed = next(r for r in b.regions if r.name == "no_feed")
     b = replace(b, regions=b.regions + (replace(no_feed, name="no_eat", size=1),))
     sw = SWALLOW if swallow is None else swallow
-    regions = tuple(replace(r, phase=phase.get(r.name, r.phase), **({"bias": sw} if r.name == "ingest" else {}))
+    regions = tuple(replace(r, phase=phase.get(r.name, r.phase),
+                            **({"bias": sw, "evolve_bias": True} if r.name == "ingest" else {}))
                     for r in b.regions)
     return replace(b, projections=tuple(proj), regions=regions, out_phase=max(b.out_phase, pal + 4))
 
@@ -503,7 +509,7 @@ def actor(brain: BrainConfig, explore: float = ACT_EXPLORE) -> BrainConfig:
                                P("striatum_d2", "gpe", w_init=W_D2, tune=True, **o2o),
                                P("gpe", "gpi", w_init=W_EG, **o2o),
                                P("gpi", "act", w_init=W_GA, **o2o),
-                               fixed("gpi", "grasp", W_GP, src_range=(0, 1), tune=False),
+                               fixed("gpi", "grasp", W_GP, src_range=(1, 2), tune=False),
                                fixed("gpi", "ingest", W_GP, src_range=(1, 2), tune=False),
                                P("act", "out", w_init=PROG_MOTOR_W, tune=True, dst_range=HAND_ACTS, **o2o)))
 

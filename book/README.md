@@ -43,7 +43,10 @@ Two visuals on `index.qmd` show the latest stage of the chain (the brain layout'
 
 - **The growing brain** (`growth` below) reads `data/growth.json`, which every export writes again (or
   `python -m life.book growth`): it follows by itself. Stage names are the titles of the pages whose `status` line
-  shows the stage.
+  shows the stage. It draws every part of every stage in the brain layout's `union` (all stages' regions and
+  sockets together); what a stage removes or rewires turns red and fades away. Save the layout tool once after a
+  stage that adds or removes regions, else the animation falls back to the latest stage's layout and leaves out
+  regions that only earlier stages have.
 - **The clip** (`media/front-light.mp4` and `front-dark.mp4`, posters `front-*.jpg`; the page plays the one of its
   theme) is recorded from the latest stage's published light dashboard in the dashboard's hero mode (`?hero`: world
   and brain only, on the book's background, connections glowing with their activity). It does **not** follow by
@@ -117,7 +120,7 @@ public repository.
 | `strip` | one creature over a few dozen ticks (`data-example="<name>"`), OHOL sprites, ☠ on poison kinds | a per-stage extra; `python -m life.book sprites` |
 | `verdict` | is the circuit used (`data-used="<lesion>,<table extra>:<label>"`), new against old brain (apart, sharing a world) | `--evaluate` |
 | `bars` | rows of a table extra as bars with the seeds (`data-rows`, `data-col0`, `data-scale`, `data-unit`) | a per-stage extra |
-| `growth` | front page, no `data-stage`: the brains of the chain one after the other, in the latest layout, without names | `data/growth.json` (every export) |
+| `growth` | front page, no `data-stage`: the brains of the chain one after the other, in the layout of all stages together (`union`), without names; what a stage removes fades away | `data/growth.json` (every export) |
 
 The brain diagram has three views when the stage adds something: *new circuit* (the default: what the stage added
 and what it connects to directly; a group none of that touches is an empty outline with its name in the middle),

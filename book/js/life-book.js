@@ -600,30 +600,52 @@
 
   // ------------------------------------------------------------------ growth: the brain, stage by stage
   // <div data-life="growth"></div> on the front page, without a stage: data/growth.json (python -m life.book growth,
-  // also written by every export) has the stages of the chain with the titles of their pages. The latest brain is
-  // drawn once, in its layout and without names; each cell, line, socket and modulator line knows the first stage
-  // that has it, and the stages are shown in turn: what a stage adds lights up, and the view follows the brain as it
-  // grows. An animation, not a viewer: the stage names along the bottom only show where it is. With reduced motion it
-  // shows the latest stage.
+  // also written by every export) has the stages of the chain with the titles of their pages. Every cell, line,
+  // socket and modulator line of every stage is drawn once, without names, in the layout of all stages together (the
+  // layout file's union; without it the latest stage's, and only what that one has a place for); each part knows the
+  // stages that have it, and the stages are shown in turn: what a stage adds lights up, what it removes (a cell taken
+  // out, a line rewired) turns red and fades away, and the view follows the brain as it changes. An animation, not a
+  // viewer: the stage names along the bottom only show where it is. With reduced motion it shows the latest stage.
   const HOLD = 2400, LAST = 6000, MOVE = 900;   // ms: a stage shown, the latest stage shown, the view moving
   function growth(root, G, L) {
     const S = G.stages, n = S.length, fin = S[n - 1];
-    const B = drawBrain(root, {stage: {key: fin.key}, brain: fin.brain}, L, {}, true);
-    const first = {}, mark = (k, i) => { if (first[k] === undefined) first[k] = i; };
+    const key = L && L.union ? '#union' : fin.key, LG = L && L.union ? {...L, stages: {[key]: L.union}} : L;
+    const A = LG && LG.stages && LG.stages[key], placed = r => !A || A.pos[r.name];
+    // the union of all stages: each region (with every receptor it ever had), projection and modulator in its latest
+    // version; projections are the same when they draw the same lines with the same modulator, modulators when the
+    // same cell releases them
+    const regs = new Map(), mods = new Map();
+    S.forEach(st => {
+      st.brain.regions.filter(placed).forEach(r => {
+        const rc = [...(r.receptors || [])];
+        for (const o of (regs.get(r.name) || {}).receptors || []) if (!rc.some(x => x[0] === o[0])) rc.push(o);
+        regs.set(r.name, {...r, receptors: rc});
+      });
+      (st.brain.modulators || []).forEach(m => mods.set(m.name + '@' + m.pos, m));
+    });
+    const brain = {regions: [...regs.values()], projections: [], modulators: [...mods.values()], actions: fin.brain.actions || []};
+    const lines = drawBrain(root, {stage: {key}, brain}, LG, {}, true).ends;   // where a projection's lines go (the layout's sockets)
+    const projs = new Map();
+    S.forEach(st => st.brain.projections.filter(p => regs.has(p.src) && regs.has(p.dst)).forEach(p =>
+      projs.set(lines(p, st.brain.actions || []).map(e => e.join('>')).sort().join(' ') + '|' + p.modulator, p)));
+    brain.projections = [...projs.values()];
+    const B = drawBrain(root, {stage: {key}, brain}, LG, {}, true);
+    const on = {}, mark = (k, i) => (on[k] = on[k] || new Set()).add(i);   // the stages that have each part
     S.forEach((st, i) => {
       const b = st.brain;
       b.regions.forEach(r => {
         mark('r:' + r.name, i);
-        (r.receptors || []).forEach(rc => mark(`m:${rc[0]}>${r.name}`, i));
+        (r.receptors || []).forEach(rc => (b.modulators || []).forEach(m => { if (m.name === rc[0]) mark(`m:${m.name}@${m.pos}>${r.name}`, i); }));
       });
       b.projections.forEach(p => {
         B.ends(p, b.actions || []).forEach(([a, c]) => { mark(`e:${a}>${c}`, i); mark('s:' + a, i); mark('s:' + c, i); });
-        if (p.modulator) mark(`m:${p.modulator}>${p.src}>${p.dst}`, i);
+        (b.modulators || []).forEach(m => { if (m.name === p.modulator) mark(`m:${m.name}@${m.pos}>${p.src}>${p.dst}`, i); });
       });
     });
+    const always = new Set(S.map((_, i) => i)), never = new Set();
     const titles = S.map((st, i) => `<span data-i="${i}">${esc(st.title)}</span>`).join('<span class="lb-growarrow">·</span>');
     root.innerHTML = `<div class="lb-growth"><div class="lb-growframe">${B.svg}<div class="lb-growsteps" aria-hidden="true">${titles}</div></div>`
-      + `<div class="lb-caption">The brain growing through the stages of this book: what each stage adds lights up in green.</div></div>`;
+      + `<div class="lb-caption">The brain growing through the stages of this book: what each stage adds lights up in green, what it removes fades away in red.</div></div>`;
     const svg = root.querySelector('svg'), full = [0, 0, B.W, B.H];
     svg.classList.add('lb-growsvg'); svg.setAttribute('aria-label', 'the brain growing, stage by stage');
     svg.style.aspectRatio = '16 / 9';   // landscape: most stages are wider than tall; the latest brain is centred in it
@@ -633,23 +655,24 @@
       t.textContent = g.dataset.r === 'in' ? 'senses' : 'actions';
       t.setAttribute('x', 61); t.setAttribute('y', 28); t.setAttribute('text-anchor', 'middle');
     });
-    const parts = [];   // [element, first stage]
-    svg.querySelectorAll('.lb-reg').forEach(g => parts.push([g, B.isBlock(g.dataset.r) ? 0 : first['r:' + g.dataset.r] ?? 0]));
-    svg.querySelectorAll('.lb-sock').forEach(r => parts.push([r, first['s:' + r.dataset.s] ?? n]));
-    svg.querySelectorAll('.lb-edge').forEach(g => parts.push([g, first['e:' + g.dataset.e] ?? 0]));
+    const parts = [];   // [element, the stages that have it]
+    svg.querySelectorAll('.lb-reg').forEach(g => parts.push([g, B.isBlock(g.dataset.r) ? always : on['r:' + g.dataset.r] || always]));
+    svg.querySelectorAll('.lb-sock').forEach(r => parts.push([r, on['s:' + r.dataset.s] || never]));
+    svg.querySelectorAll('.lb-edge').forEach(g => parts.push([g, on['e:' + g.dataset.e] || always]));
     svg.querySelectorAll('.lb-mod').forEach(g => {
-      const l = B.MODS[+g.dataset.m];
-      parts.push([g, first[l.proj ? `m:${l.m.name}>${l.proj.src}>${l.proj.dst}` : `m:${l.m.name}>${l.dst}`] ?? 0]);
+      const l = B.MODS[+g.dataset.m], m = `m:${l.m.name}@${l.m.pos}>`;
+      parts.push([g, on[m + (l.proj ? `${l.proj.src}>${l.proj.dst}` : l.dst)] || always]);
     });
-    // the view of a stage: what it shows (not the senses / motor blocks, which are as tall as the latest brain's),
-    // with a margin, at least half as wide and a third as tall as all of it
+    const gone = (s, k) => k > 0 && !s.has(k) && s.has(k - 1);   // removed by stage k: fades away while it is shown
+    // the view of a stage: what it shows, what fades away included (not the senses / motor blocks, which are as tall
+    // as all stages'), with a margin, at least half as wide and a third as tall as all of it
     const bb = e => {
       const b = e.getBBox(), t = e.transform && e.transform.baseVal.numberOfItems ? e.transform.baseVal.consolidate().matrix : {e: 0, f: 0};
       return [b.x + t.e, b.y + t.f, b.x + b.width + t.e, b.y + b.height + t.f];
     };
     const viewOf = k => {
       let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
-      for (const [e, i] of parts) if (i <= k && !(e.classList.contains('lb-reg') && B.isBlock(e.dataset.r))) {
+      for (const [e, s] of parts) if ((s.has(k) || gone(s, k)) && !(e.classList.contains('lb-reg') && B.isBlock(e.dataset.r))) {
         const b = bb(e); if (b[2] - b[0] <= 0 && b[3] - b[1] <= 0) continue;
         x0 = Math.min(x0, b[0]); y0 = Math.min(y0, b[1]); x1 = Math.max(x1, b[2]); y1 = Math.max(y1, b[3]);
       }
@@ -674,7 +697,11 @@
     }
     function show(k) {
       cur = k;
-      for (const [e, i] of parts) { e.classList.toggle('lb-gh', i > k); e.classList.toggle('lb-gnew', i === k && k > 0); }
+      for (const [e, s] of parts) {
+        const out = gone(s, k);
+        e.classList.toggle('lb-gh', !s.has(k) && !out); e.classList.toggle('lb-ggone', out);
+        e.classList.toggle('lb-gnew', k > 0 && s.has(k) && !s.has(k - 1));
+      }
       root.querySelectorAll('.lb-growsteps [data-i]').forEach(b => { b.classList.toggle('lb-on', +b.dataset.i === k); b.classList.toggle('lb-past', +b.dataset.i < k); });
       moveTo(viewOf(k));
       clearTimeout(timer);

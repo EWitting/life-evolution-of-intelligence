@@ -577,19 +577,18 @@ $('refine').addEventListener('click', () => run(false));
 $('unpin').addEventListener('click', () => { pinned.clear(); render(); });
 function atlas() {
   const stages = {};
-  for (const st of G.stages) {
-    const pl = place(st);
-    stages[st.key] = {cols: pl.ncols, rows: pl.nrows, blocks: pl.blk,
-      pos: Object.fromEntries(st.names.map(n => [n, [pl.X[n], +pl.Y[n].toFixed(3)]]))};
-  }
+  const one = st => { const pl = place(st); return {cols: pl.ncols, rows: pl.nrows, blocks: pl.blk,
+    pos: Object.fromEntries(st.names.map(n => [n, [pl.X[n], +pl.Y[n].toFixed(3)]]))}; };
+  for (const st of G.stages) stages[st.key] = one(st);
   return {about: 'brain diagram layout. cells: grid cell [col, row] of every module in the layout grid. sockets: ' +
     'top-to-bottom order of the sockets on the senses block (in:<sense>) and motor block (out:<actions>), shared by ' +
     'all stages. stages: per stage the position [col, row] a diagram uses: empty rows and columns removed, the ' +
     'blocks in the first and last column with their row extent, sockets at fractional rows. modes: how the senses ' +
     '(in) and motor neurons (out) are drawn: split (a block with sockets), block (a tall block, lines at the height ' +
-    'of their other end), point (one small box). hues: the colour of each top-level group. Written by tools/brain_layout.',
+    'of their other end), point (one small box). hues: the colour of each top-level group. union: as a stage, for ' +
+    'every module and socket of every stage (the front page\'s growing brain, where parts also go away). Written by tools/brain_layout.',
     saved: new Date().toISOString(), chain: G.stages.map(s => s.key), weights: W, options: opt,
-    modes: {in: opt.inMode, out: opt.outMode}, hues: G.hues, cells: P, pinned: [...pinned], sockets: order, stages};
+    modes: {in: opt.inMode, out: opt.outMode}, hues: G.hues, cells: P, pinned: [...pinned], sockets: order, stages, union: one(G.all)};
 }
 $('save').addEventListener('click', async () => {
   const r = await fetch('/save', {method: 'POST', body: JSON.stringify(atlas())});

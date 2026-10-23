@@ -223,10 +223,8 @@
 /* the front page's growing brain (js/life-book.js, growth): no names, cells in their group's colour, what a stage adds
    fades in and lights up */
 .lb-growth { margin: 0 auto; }
-.lb-growhead { text-align: center; margin-bottom: 0.3rem; min-height: 2.1rem; }
-.lb-growname { font-size: 1.45rem; font-weight: 600; color: var(--lb-ink); text-decoration: none; }
-.lb-growname[href]:hover { text-decoration: underline; }
-.lb-growframe .lb-growsvg { aspect-ratio: 16 / 10; }
+.lb-growframe { position: relative; }
+.lb-growframe .lb-growsvg { border: none; background: transparent; padding-bottom: 1.6rem; box-sizing: content-box; }
 .lb-growsvg text, .lb-growsvg .lb-group, .lb-growsvg .lb-grouplabel, .lb-growsvg .lb-gcentre { display: none; }
 /* only the senses and the motor neurons say what they are */
 .lb-growsvg rect.lb-io ~ text.lb-regsub { display: inline; font-size: 26px; fill: var(--lb-ink2); }
@@ -240,14 +238,14 @@
 .lb-growsvg .lb-edge.lb-gnew [class$="-fill"] { fill: var(--lb-new); }
 .lb-growsvg .lb-edge.lb-gnew line { stroke: var(--lb-new); }
 .lb-growsvg .lb-gh.lb-edge, .lb-growsvg .lb-gh.lb-mod { opacity: 0; }
-.lb-growsteps { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 2px; margin-top: 0.5rem; font-size: 0.85rem; }
-.lb-growsteps button { font: inherit; padding: 1px 9px; border: 1px solid transparent; border-radius: 999px; background: transparent; color: var(--lb-muted); cursor: pointer; }
-.lb-growsteps button.lb-past { color: var(--lb-ink2); }
-.lb-growsteps button.lb-on { background: var(--lb-ink2); color: var(--lb-surface); }
-.lb-growsteps button:hover { border-color: var(--lb-axis); }
-.lb-growsteps .lb-growplay { margin-right: 8px; border-color: var(--lb-axis); color: var(--lb-ink2); min-width: 2.2rem; }
-.lb-growarrow { color: var(--lb-muted); }
+/* where the animation is: the stage names along the bottom, the current one in ink (not controls) */
+.lb-growsteps { position: absolute; left: 0; right: 0; bottom: 4px; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 6px;
+                font-size: 0.78rem; color: var(--lb-muted); opacity: 0.8; pointer-events: none; }
+.lb-growsteps span { transition: color 0.4s ease; }
+.lb-growsteps .lb-past { color: var(--lb-ink2); }
+.lb-growsteps .lb-on { color: var(--lb-new); font-weight: 600; }
+.lb-growarrow { color: var(--lb-axis); }
 /* the front page's clip (scripts/front_clip.py) */
 .lb-hero { margin: 0.4rem 0 1.4rem; }
-.lb-hero video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border-radius: 10px; border: 1px solid var(--lb-border); background: var(--lb-surface); }
+.lb-hero video { display: block; width: 100%; height: auto; aspect-ratio: 1024 / 470; }
 .lb-hero figcaption { font-size: 0.85rem; color: var(--lb-ink2); margin-top: 0.4rem; line-height: 1.45; }

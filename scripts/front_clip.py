@@ -7,8 +7,9 @@
 
 The recording is that of the stage's published dashboard (book/dashboards/, `python -m life.book dashboards <key>`),
 shown by the current life/dashboard.html in its hero mode (?hero: the world and the brain only, connections glowing
-with the activity they carry). Headless Edge (playwright) takes one screenshot per tick and ffmpeg (imageio-ffmpeg)
-joins them into book/media/front.mp4, with front.jpg (the first frame) as the poster. Needs the media extra:
+with the activity they carry), on the book's background. Headless Edge (playwright) takes one screenshot per tick
+and ffmpeg (imageio-ffmpeg) joins them into book/media/front-<theme>.mp4, with front-<theme>.jpg (the first frame)
+as the poster, for the light and the dark theme (the page shows the one of its theme). Needs the media extra:
 uv pip install -e .[media].
 
 A scene picked by hand goes in book/media/front_clip.json ({"stage": "2.3s", "agent": 3, "t0": 1200, ...}); it is
@@ -27,8 +28,8 @@ ROOT = Path(__file__).resolve().parent.parent
 BOOK = ROOT / "book"
 MEDIA = BOOK / "media"
 TEMPLATE = ROOT / "life" / "dashboard.html"
-DEFAULTS = {"ticks": 200, "fps": 10, "width": 1280, "height": 720, "scale": 1.25, "zoom": 7.0, "theme": "light",
-            "cap2": "its brain, live"}
+DEFAULTS = {"ticks": 200, "fps": 10, "width": 1024, "height": 470, "scale": 1.5, "zoom": 12.0}
+BG = {"light": "#ffffff", "dark": "#222222"}   # the book's page background (bootstrap cosmo, darkly)
 
 
 def latest_stage() -> dict:
@@ -83,9 +84,9 @@ def main(argv=None):
     ap.add_argument("--t0", type=int)
     ap.add_argument("--ticks", type=int)
     ap.add_argument("--fps", type=int)
-    ap.add_argument("--theme", choices=("light", "dark"))
+    ap.add_argument("--theme", choices=("light", "dark"), help="only this theme (default: both)")
     ap.add_argument("--pick", action="store_true", help="list good scenes and stop")
-    ap.add_argument("--out", default=str(MEDIA / "front"), help="path without extension (.mp4 and .jpg are written)")
+    ap.add_argument("--out", default=str(MEDIA / "front"), help="path without theme and extension")
     a = ap.parse_args(argv)
     from playwright.sync_api import sync_playwright
     import imageio_ffmpeg
@@ -95,15 +96,14 @@ def main(argv=None):
     spec = json.loads(spec_file.read_text(encoding="utf-8")) if spec_file.exists() else {}
     if spec.get("stage") != st["stage"]:
         spec = {}                                    # picked for an older stage
-    c = {**DEFAULTS, "cap": f"{st['title']}|a creature foraging", **spec,
-         **{k: v for k, v in vars(a).items() if v is not None and k in ("agent", "t0", "ticks", "fps", "theme")}}
+    c = {**DEFAULTS, **spec, **{k: v for k, v in vars(a).items() if v is not None and k in ("agent", "t0", "ticks", "fps")}}
     with tempfile.TemporaryDirectory() as tmp, sync_playwright() as p:
         page_file = hero_page(st["dashboard"], Path(tmp) / "hero.html")
         b = p.chromium.launch(channel="msedge")
         pg = b.new_page(viewport={"width": c["width"], "height": c["height"]}, device_scale_factor=c["scale"])
 
-        def load(agent=None, t0=0):
-            q = {"hero": "", "zoom": c["zoom"], "theme": c["theme"], "cap": c["cap"], "cap2": c["cap2"], "t": t0}
+        def load(agent=None, t0=0, theme="light"):
+            q = {"hero": "", "zoom": c["zoom"], "theme": theme, "bg": BG[theme], "t": t0}
             if agent is not None:
                 q["agent"] = agent
             pg.goto(page_file.as_uri() + "?" + urlencode(q))
@@ -120,31 +120,32 @@ def main(argv=None):
             if a.pick or not best:
                 return
             c["agent"], c["t0"] = best[0][1], best[0][2]
-        print(f"recording agent {c['agent']}, ticks {c['t0']}..{c['t0'] + c['ticks'] - 1}")
-        load(c["agent"], c["t0"])
-        pg.wait_for_timeout(800)                     # sprites decode
-        out = Path(a.out)
-        out.parent.mkdir(parents=True, exist_ok=True)
+        ff_exe = imageio_ffmpeg.get_ffmpeg_exe()
         w, h = round(c["width"] * c["scale"]) // 2 * 2, round(c["height"] * c["scale"]) // 2 * 2
-        ff = subprocess.Popen([imageio_ffmpeg.get_ffmpeg_exe(), "-y", "-loglevel", "error", "-f", "image2pipe",
-                               "-framerate", str(c["fps"]), "-i", "-", "-vf", f"scale={w}:{h}", "-c:v", "libx264",
-                               "-pix_fmt", "yuv420p", "-crf", "28", "-preset", "slow", "-movflags", "+faststart",
-                               str(out.with_suffix(".mp4"))], stdin=subprocess.PIPE)
-        for k in range(c["ticks"]):
-            pg.evaluate("t => { HERO.setTick(t); return HERO.drawn(); }", c["t0"] + k)
-            png = pg.screenshot(type="png")
-            if k == 0:                               # the poster, shown until the video plays
-                subprocess.run([imageio_ffmpeg.get_ffmpeg_exe(), "-y", "-loglevel", "error", "-f", "image2pipe", "-i", "-",
-                                "-vf", f"scale={w}:{h}", "-q:v", "4", str(out.with_suffix(".jpg"))], input=png, check=True)
-            ff.stdin.write(png)
-            if k % 20 == 0:
-                print(f"  frame {k}/{c['ticks']}", flush=True)
-        ff.stdin.close()
-        ff.wait()
+        for theme in [a.theme] if a.theme else ["light", "dark"]:
+            print(f"recording agent {c['agent']}, ticks {c['t0']}..{c['t0'] + c['ticks'] - 1}, {theme}")
+            load(c["agent"], c["t0"], theme)
+            pg.wait_for_timeout(800)                 # sprites decode
+            out = Path(f"{a.out}-{theme}")
+            out.parent.mkdir(parents=True, exist_ok=True)
+            ff = subprocess.Popen([ff_exe, "-y", "-loglevel", "error", "-f", "image2pipe", "-framerate", str(c["fps"]),
+                                   "-i", "-", "-vf", f"scale={w}:{h}", "-c:v", "libx264", "-pix_fmt", "yuv420p",
+                                   "-crf", "28", "-preset", "slow", "-movflags", "+faststart",
+                                   str(out.with_suffix(".mp4"))], stdin=subprocess.PIPE)
+            for k in range(c["ticks"]):
+                pg.evaluate("t => { HERO.setTick(t); return HERO.drawn(); }", c["t0"] + k)
+                png = pg.screenshot(type="png")
+                if k == 0:                           # the poster, shown until the video plays
+                    subprocess.run([ff_exe, "-y", "-loglevel", "error", "-f", "image2pipe", "-i", "-", "-vf",
+                                    f"scale={w}:{h}", "-q:v", "4", str(out.with_suffix(".jpg"))], input=png, check=True)
+                ff.stdin.write(png)
+                if k % 50 == 0:
+                    print(f"  frame {k}/{c['ticks']}", flush=True)
+            ff.stdin.close()
+            ff.wait()
+            mp4 = out.with_suffix(".mp4")
+            print(f"wrote {mp4} ({mp4.stat().st_size / 1e6:.1f} MB) and {out.with_suffix('.jpg')}")
         b.close()
-    mp4 = out.with_suffix(".mp4")
-    print(f"wrote {mp4} ({mp4.stat().st_size / 1e6:.1f} MB) and {out.with_suffix('.jpg')}")
-
 
 if __name__ == "__main__":
     main()

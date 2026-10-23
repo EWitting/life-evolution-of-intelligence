@@ -603,7 +603,8 @@
   // also written by every export) has the stages of the chain with the titles of their pages. The latest brain is
   // drawn once, in its layout and without names; each cell, line, socket and modulator line knows the first stage
   // that has it, and the stages are shown in turn: what a stage adds lights up, and the view follows the brain as it
-  // grows. A click on a title shows that stage and stops the play; with reduced motion it starts at the latest stage.
+  // grows. An animation, not a viewer: the stage names along the bottom only show where it is. With reduced motion it
+  // shows the latest stage.
   const HOLD = 2400, LAST = 6000, MOVE = 900;   // ms: a stage shown, the latest stage shown, the view moving
   function growth(root, G, L) {
     const S = G.stages, n = S.length, fin = S[n - 1];
@@ -620,12 +621,12 @@
         if (p.modulator) mark(`m:${p.modulator}>${p.src}>${p.dst}`, i);
       });
     });
-    const titles = S.map((st, i) => `<button type="button" data-i="${i}">${esc(st.title)}</button>`).join('<span class="lb-growarrow">›</span>');
-    root.innerHTML = `<div class="lb-growth"><div class="lb-growhead"><a class="lb-growname"></a></div>`
-      + `<div class="lb-growframe">${B.svg}</div><div class="lb-growsteps"><button type="button" class="lb-growplay" aria-label="pause">❚❚</button>${titles}</div>`
-      + `<div class="lb-caption" style="text-align:center">The brain of each stage, in the layout of the latest one: what a stage adds lights up in green. Cells take the colour of their group; click a name to stop at that stage, or the name above to read its page.</div></div>`;
+    const titles = S.map((st, i) => `<span data-i="${i}">${esc(st.title)}</span>`).join('<span class="lb-growarrow">·</span>');
+    root.innerHTML = `<div class="lb-growth"><div class="lb-growframe">${B.svg}<div class="lb-growsteps" aria-hidden="true">${titles}</div></div>`
+      + `<div class="lb-caption">The brain growing through the stages of this book: what each stage adds lights up in green.</div></div>`;
     const svg = root.querySelector('svg'), full = [0, 0, B.W, B.H];
     svg.classList.add('lb-growsvg'); svg.setAttribute('aria-label', 'the brain growing, stage by stage');
+    svg.style.aspectRatio = '16 / 9';   // landscape: most stages are wider than tall; the latest brain is centred in it
     svg.querySelectorAll('.lb-reg').forEach(g => {   // the senses and the motor neurons say what they are; nothing else has a name
       const t = g.querySelector('rect.lb-io ~ text.lb-regsub');
       if (!t || !g.transform.baseVal.numberOfItems) return;
@@ -641,7 +642,7 @@
       parts.push([g, first[l.proj ? `m:${l.m.name}>${l.proj.src}>${l.proj.dst}` : `m:${l.m.name}>${l.dst}`] ?? 0]);
     });
     // the view of a stage: what it shows (not the senses / motor blocks, which are as tall as the latest brain's),
-    // with a margin, at least half as wide as all of it
+    // with a margin, at least half as wide and a third as tall as all of it
     const bb = e => {
       const b = e.getBBox(), t = e.transform && e.transform.baseVal.numberOfItems ? e.transform.baseVal.consolidate().matrix : {e: 0, f: 0};
       return [b.x + t.e, b.y + t.f, b.x + b.width + t.e, b.y + b.height + t.f];
@@ -653,12 +654,12 @@
         x0 = Math.min(x0, b[0]); y0 = Math.min(y0, b[1]); x1 = Math.max(x1, b[2]); y1 = Math.max(y1, b[3]);
       }
       if (x0 > x1) return full;
-      const P = 30, w = Math.max(x1 - x0 + 2 * P, B.W / 2), h = Math.max(y1 - y0 + 2 * P, B.H / 2), cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+      const P = 30, w = Math.max(x1 - x0 + 2 * P, B.W / 2), h = Math.max(y1 - y0 + 2 * P, B.H / 3), cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
       return [cx - w / 2, cy - h / 2, w, h];
     };
     const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const name = root.querySelector('.lb-growname'), play = root.querySelector('.lb-growplay');
-    let cur = -1, vb = full, anim = 0, timer = 0, playing = !still;
+    let cur = -1, vb = full, anim = 0, timer = 0;
+    const playing = !still;
     const setVB = b => svg.setAttribute('viewBox', b.map(v => v.toFixed(1)).join(' '));
     function moveTo(b) {
       if (still) { vb = b; setVB(vb); return; }
@@ -675,24 +676,16 @@
       cur = k;
       for (const [e, i] of parts) { e.classList.toggle('lb-gh', i > k); e.classList.toggle('lb-gnew', i === k && k > 0); }
       root.querySelectorAll('.lb-growsteps [data-i]').forEach(b => { b.classList.toggle('lb-on', +b.dataset.i === k); b.classList.toggle('lb-past', +b.dataset.i < k); });
-      name.textContent = S[k].title;
-      if (S[k].href) name.href = S[k].href; else name.removeAttribute('href');
       moveTo(viewOf(k));
       clearTimeout(timer);
       if (playing) timer = setTimeout(() => show((k + 1) % n), k === n - 1 ? LAST : HOLD);
     }
-    const setPlay = on => { playing = on; play.textContent = on ? '❚❚' : '▶'; play.setAttribute('aria-label', on ? 'pause' : 'play'); clearTimeout(timer); if (on) show(cur === n - 1 ? 0 : cur + 1); };
-    root.querySelector('.lb-growsteps').addEventListener('click', e => {
-      if (e.target === play) return setPlay(!playing);
-      if (e.target.dataset.i !== undefined) { setPlay(false); show(+e.target.dataset.i); }
-    });
     // only play while the page shows it
     new IntersectionObserver(es => es.forEach(en => {
       if (!playing) return;
       clearTimeout(timer);
       if (en.isIntersecting) timer = setTimeout(() => show((cur + 1) % n), cur === n - 1 ? LAST : HOLD);
     })).observe(root);
-    if (!playing) play.textContent = '▶';
     show(still ? n - 1 : 0);
   }
 
@@ -951,7 +944,17 @@
         : load(root.dataset.stage).then(D => fn(root, D))).catch(err => { root.innerHTML = `<div class="lb-note"><p>${esc(err.message)}</p></div>`; });
     });
   }
-  // the front page's clip plays by itself, unless the reader asked for less motion (then it shows its poster)
-  function stillVideo() { if (matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelectorAll('.lb-hero video').forEach(v => { v.removeAttribute('autoplay'); v.pause(); v.controls = true; }); }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { init(); stillVideo(); }); else { init(); stillVideo(); }
+  // the front page's clip: the recording of the page's theme (data-clip + -light / -dark, .mp4 and the .jpg poster),
+  // again when the reader switches; it plays by itself unless the reader asked for less motion (then the poster)
+  function clips() {
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const set = () => document.querySelectorAll('video[data-clip]').forEach(v => {
+      const src = `${v.dataset.clip}-${document.body.classList.contains('quarto-dark') ? 'dark' : 'light'}`;
+      if (v.dataset.now === src) return;
+      v.dataset.now = src; v.poster = src + '.jpg'; v.src = src + '.mp4';
+      if (still) { v.removeAttribute('autoplay'); v.controls = true; } else v.play().catch(() => {});
+    });
+    set(); new MutationObserver(set).observe(document.body, {attributes: true, attributeFilter: ['class']});
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { init(); clips(); }); else { init(); clips(); }
 })();

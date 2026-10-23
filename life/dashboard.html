@@ -213,18 +213,17 @@
      (scripts/front_clip.py); the connections glow with the activity they carry */
   body.hero header, body.hero #split, body.hero #c-agent, body.hero #c-act, body.hero #c-w, body.hero #c-fit, body.hero #c-config,
   body.hero .card-h, body.hero .hint, body.hero .arch-side, body.hero .toast { display:none; }
-  body.hero { overflow:hidden; }
-  body.hero main { grid-template-columns:minmax(0, 1fr) minmax(0, 1.25fr); gap:14px; padding:14px; height:100vh; box-sizing:border-box; align-items:stretch; }
+  /* seamless: no cards, outlines or dotted grid, on the page's own background (?bg=<css colour>) */
+  body.hero { overflow:hidden; background:var(--hero-bg, var(--bg)); }
+  body.hero main { grid-template-columns:minmax(0, 1fr) minmax(0, 1.25fr); gap:24px; padding:0; height:100vh; box-sizing:border-box; align-items:stretch; }
   body.hero #left { position:static; } body.hero #right { display:block; }
-  body.hero .card { height:100%; box-sizing:border-box; } body.hero .card-b { height:100%; box-sizing:border-box; padding:10px; }
+  body.hero .card { height:100%; box-sizing:border-box; background:transparent; border:none; box-shadow:none; border-radius:0; }
+  body.hero .card-b { height:100%; box-sizing:border-box; padding:0; }
   body.hero #worldWrap { height:100%; display:flex; align-items:center; }
-  body.hero .arch-wrap { height:100%; resize:none; border:none; }
+  body.hero .arch-wrap { height:100%; resize:none; border:none; border-radius:0; background:transparent; }
+  body.hero #c-arch .card-b, body.hero .arch-main { display:flex; align-items:center; height:100%; } body.hero .arch-main { width:100%; }
   body.hero #archSvg text.sub, body.hero #archSvg text.elab, body.hero #archSvg text.grp { display:none; }
   #archSvg .eglow { fill:none; stroke-linecap:round; pointer-events:none; }
-  .hero-cap { position:absolute; left:18px; bottom:16px; z-index:5; font:600 15px system-ui, sans-serif; color:var(--ink); background:var(--panel);
-              opacity:.92; padding:6px 12px; border-radius:8px; box-shadow:var(--shadow); pointer-events:none; }
-  .hero-cap span { font-weight:400; color:var(--muted); }
-  #archWrap .hero-cap { top:12px; bottom:auto; }
 </style>
 </head>
 <body>
@@ -1423,16 +1422,14 @@ const imgs = Object.values(sprites).concat(ground ? [ground] : [], people);
 let pending = imgs.filter(im => !loaded(im)).length;
 imgs.forEach(im => { if (!loaded(im)) im.onload = () => { if (--pending <= 0) { cacheMode = null; invalidate('world'); } }; });
 if (HERO) {
-  // ?hero&agent=<i>&t=<tick>&zoom=<f>&theme=light|dark&cap=<title>|<line>&cap2=...: the agent ringed and followed in a
-  // zoomed world, its brain beside it; window.HERO lets scripts/front_clip.py step through ticks and pick a scene
+  // ?hero&agent=<i>&t=<tick>&zoom=<f>&theme=light|dark&bg=<colour>: the agent ringed and followed in a zoomed world,
+  // its brain beside it; window.HERO lets scripts/front_clip.py step through ticks and pick a scene
   if (HQ.get('theme')) setTheme(HQ.get('theme') === 'dark', false);
+  if (HQ.get('bg')) document.body.style.setProperty('--hero-bg', HQ.get('bg'));
   if (HQ.has('agent')) focus = +HQ.get('agent');
   $('markPoison').checked = HQ.get('skulls') === '1';
-  followOn = true; relayout(); zw.zoomBy(+HQ.get('zoom') || 4); archFit();
-  for (const [id, key] of [['worldWrap', 'cap'], ['archWrap', 'cap2']]) if (HQ.get(key)) {
-    const [head, ...rest] = HQ.get(key).split('|'), d = document.createElement('div'), sp = document.createElement('span');
-    d.className = 'hero-cap'; d.textContent = head; sp.textContent = rest.length ? ' · ' + rest.join('|') : ''; d.appendChild(sp); $(id).appendChild(d);
-  }
+  followOn = true; relayout(); zw.zoomBy(+HQ.get('zoom') || 4);
+  $('archWrap').style.height = wc.clientHeight + 'px'; archFit();   // the brain as tall as the map, centred on it
   setTick(+HQ.get('t') || 0, true);
   const series = (arr, i) => Array.from({length: T}, (_, tt) => arr.a[tt * N + i]);
   window.HERO = {T, N, actions: M.actions, brainAgents: BA || Array.from({length: N}, (_, i) => i),

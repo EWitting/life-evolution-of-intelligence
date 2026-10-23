@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 # name tokens (split at "_") and whole input features that mirror each other: the good side and the bad side
-MIRROR = {"app": "av", "taste": "pain", "us_app": "us_av", "da": "da_neg", "dopamine": "habenula",
+MIRROR = {"app": "av", "taste": "pain", "us_app": "us_av", "da": "da_neg", "dopamine": "habenula", "d1": "d2",
           "ventral_pallidum": "gp_habenular"}
 MIRROR.update({v: k for k, v in list(MIRROR.items())})
 WHOLE = ("da", "da_neg", "dopamine", "habenula", "ventral_pallidum", "gp_habenular", "us_app", "us_av")
@@ -37,6 +37,12 @@ KNOWN = {
     "differs: in[vis*.app*] -> valence_app": "1.5-2.2 learn from pain only (ADR-024); 2.3s teaches both sides",
     "differs: in[vis*.app*] -> valence_av": "1.5-2.2 learn from pain only (ADR-024); 2.3s teaches both sides",
     "no mirror: pallium -> valence_av": "2.2 learns from pain only (ADR-024); 2.3s teaches both sides",
+    # hands and the actor (2.5)
+    "no mirror: valence_app -> ingest": "appetite for the held item drives ingest; the bad side stops it through no_eat (as grasp, no_feed)",
+    "no mirror: valence_av -> no_eat": "appetite for the held item drives ingest; the bad side stops it through no_eat (as grasp, no_feed)",
+    "no mirror: striatum_d1 -> gpi": "Go inhibits gpi directly; NoGo reaches it through gpe (Dale's law: striatal cells inhibit)",
+    "no mirror: striatum_d2 -> gpe": "Go inhibits gpi directly; NoGo reaches it through gpe (Dale's law: striatal cells inhibit)",
+    "no mirror: in[held] -> striatum_d1": "a start strength: a full hand releases USE now and then, so putting down can be learned (2.5)",
 }
 
 
@@ -129,9 +135,12 @@ def report(key: str) -> str:
     return "\n".join(lines)
 
 
+BUILDING = ("2.5",)   # stages being designed, not yet in the book: checked as the chain is
+
+
 def chain() -> list[str]:
-    """The stages the book's pages show (as tools/brain_layout)."""
-    keys = set()
+    """The stages the book's pages show (as tools/brain_layout), and those being built."""
+    keys = set(BUILDING)
     for f in (Path(__file__).resolve().parents[1] / "book").glob("*.qmd"):
         keys |= set(re.findall(r'data-stage="([^"]+)"', f.read_text(encoding="utf-8")))
     return sorted(keys)

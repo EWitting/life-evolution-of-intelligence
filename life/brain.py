@@ -113,6 +113,8 @@ class Layout(NamedTuple):
     has_per_slot: bool = False
     lag: jnp.ndarray | None = None          # [N, N] 1 for slow synapses (ProjectionSpec.lag)
     has_lag: bool = False
+    slot_scale: jnp.ndarray | None = None   # [N, N] ProjectionSpec.slot_scale of the per-slot synapses (1 elsewhere)
+    has_slot_scale: bool = False
 
     def region(self, name: str) -> slice:
         i = self.names.index(name)
@@ -155,6 +157,7 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
     proj_id, rule, mod_idx = z(np.int32, -1), z(np.int32), z(np.int32, -1)
     elig, dep_U, dep_rec, eta_init, decay = z(), z(), z(), z(), z()
     centred, delay, per_slot, lag = z(), z(), z(), z()
+    slot_scale = z(v=1.0)
     w_init = z(v=np.nan)
     abcd = np.zeros((4, n, n), np.float32)
     teacher = -np.ones(n, np.int32)
@@ -217,6 +220,8 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
         delay[s, d] = float(p.elig_delay)
         assert not p.per_slot or (not p.evolve and p.w_init is None), f"projection {key}: per_slot needs evolve=False, no w_init"
         per_slot[s, d] = float(p.per_slot)
+        assert p.per_slot or p.slot_scale == 1.0, f"projection {key}: slot_scale needs per_slot"
+        slot_scale[s, d] = p.slot_scale
         assert not p.lag or p.rule == "fixed", f"projection {key}: a slow synapse (lag) cannot be plastic"
         lag[s, d] = float(p.lag)
         gain[s, d] = float(p.kind == "gain")
@@ -286,7 +291,8 @@ def build_layout(cfg: BrainConfig, n_in: int, n_out: int, in_names: tuple | None
                   mod_accum=tuple(float(m.accumulate) for m in mods) if any(m.accumulate for m in mods) else (),
                   elig_delay=j(delay), has_delay=bool(delay.any()),
                   per_slot=j(per_slot * allowed), has_per_slot=bool((per_slot * allowed).any()),
-                  lag=j(lag * allowed), has_lag=bool((lag * allowed).any()))
+                  lag=j(lag * allowed), has_lag=bool((lag * allowed).any()), slot_scale=j(slot_scale),
+                  has_slot_scale=bool((slot_scale != 1.0).any()))
 
 
 def constrain(layout: Layout, w: jnp.ndarray, w_max: float) -> jnp.ndarray:
@@ -339,6 +345,8 @@ def init_state(genome: Genome, layout: Layout, w_max: float = 4.0, key: jax.Arra
                          genome.mask)
         fan_in = jnp.maximum(mask.sum(axis=0, keepdims=True), 1.0)
         w_rand = jax.random.normal(k2, (n, n)) / jnp.sqrt(fan_in)
+        if layout.has_slot_scale:
+            w_rand = w_rand * layout.slot_scale
         w_rand = jnp.where((layout.sign != 0)[:, None], jnp.abs(w_rand), w_rand)
         w = jnp.where(pl, w_rand * mask, w)
     ws, wg, wl = _fixed_weights(layout, w)

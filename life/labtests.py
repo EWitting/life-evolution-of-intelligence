@@ -210,3 +210,127 @@ def conditioning(exp, pop, protocol: dict, sim: float, n_agents: int = 24, seed:
     if cells:
         out["cells"] = {c: np.stack(v) for c, v in rates.items()}
     return out
+
+
+# ---------------------------------------------------------------- operant tests (hands and the actor, ADR-028)
+# A box in which the creature's own actions decide what happens, as in a lever-pressing rat: per trial it starts
+# holding a berry with nothing ahead (`hold`) or with an empty hand at a full bush (`pick`). The four berry types are
+# the creature's novel XOR types (looks drawn per life by the stage's world, poison ++ and --). Per tick the brain
+# chooses an action (sampled as in the world); the box applies it:
+#   USE   empty hand at a full bush: the berry is in hand, the bush ahead is empty; empty hand at a berry on the
+#         ground: picked up; holding something with nothing ahead: put down (the berry lies ahead)
+#   EAT   holding a berry: eaten; taste 3 or pain 1 on the next tick (one berry, as in the world)
+#   step or turn: nothing is ahead any more (it walked or turned away from the bush or the berry)
+# A trial lasts `ticks`, then the box is cleared (`iti` blank ticks). Escape learning (Mowrer 1947): a creature that has
+# learned that a held berry hurts can learn to put it down from the relief alone; nothing innate does it.
+OPERANT = {
+    "hold": dict(start="hold", trials=48, ticks=12, iti=6),
+    "pick": dict(start="pick", trials=48, ticks=16, iti=6),
+}
+NONE, BUSH, EMPTY, BERRY = 0, 1, 2, 3
+
+
+def operant(exp, pop, rs, rules_fn, protocol: dict, n_agents: int = 24, seed: int = 0, cells: tuple = ()) -> dict:
+    """Runs an OPERANT protocol on the first n_agents genomes of `pop` (on exp's layout). `rules_fn`: the stage's world
+    (its looks and poisons, one life per agent), `rs` its ruleset. Returns per trial and agent: the berry type (0-3), poison (0/1), the
+    first event (0 none, 1 ate, 2 put down) and its tick, and whether it was picked at all (pick). `cells`: region names
+    whose mean rate on the trial's first tick is returned as well ({name: [trials, agents]}), and the dopamine signal
+    on every tick (`da`: [trials, agents, ticks]) when the brain has one."""
+    from .experiments import stages as S
+    L = make_layout(exp); names = list(L.in_names); K = exp.vision.appearance_dim
+    NA = min(n_agents, pop.b.shape[0])
+    pop = jax.tree_util.tree_map(lambda x: x[:NA], pop)
+    ids = [[rs.local(S.variant(v)[o]) for o in (S.BUSH, S.BERRY, S.EMPTY_BUSH)] for v in S.NOVEL]
+    looks, poison = np.zeros((NA, 4, 3, K), np.float32), np.zeros((NA, 4), bool)
+    for a in range(NA):
+        r = jax.tree_util.tree_map(lambda x: x[0, 0] if x.ndim > 2 else x[0], rules_fn(0, jax.random.PRNGKey(7919 * seed + a)))
+        app, fv = np.asarray(r.appearance), np.asarray(r.food_value)
+        for i in range(4):
+            looks[a, i] = app[ids[i]]
+            poison[a, i] = fv[ids[i][1]] < 0
+    ix = {n: names.index(n) for n in names}
+    vis = [ix[f"vis+0.app{k}"] for k in range(K)]
+    hand = [ix[f"held_app{k}"] for k in range(K)]
+    efc = [ix[f"efc_{n}"] for n in ("NOOP", "FORWARD", "TURN_LEFT", "TURN_RIGHT", "USE", "EAT", "VOCALIZE")]
+
+    def obs(held, ahead, kind, taste, pain, last):
+        o = np.zeros((NA, L.n_in), np.float32)
+        o[:, ix["food"]] = 0.5
+        o[:, ix["skin"]] = 0.6           # warm: no cold, no warmth seeking (the box is not a cold world)
+        o[:, ix["temperature"]] = 0.6
+        for a in range(NA):
+            if held[a] >= 0:
+                o[a, ix["held"]] = 1.0
+                o[a, hand] = looks[a, held[a], 1]
+            if ahead[a] != NONE:
+                o[a, ix["vis+0.hit"]], o[a, ix["vis+0.near"]] = 1.0, 0.8
+                o[a, vis] = looks[a, kind[a], {BUSH: 0, BERRY: 1, EMPTY: 2}[ahead[a]]]
+            if last[a] >= 0:
+                o[a, efc[last[a]]] = 1.0
+        o[:, ix["taste"]], o[:, ix["pain"]] = taste, pain
+        return jnp.asarray(o)
+
+    one = lambda g, st, o, k: B.step(exp.brain, L, g, st, o, jnp.zeros(3), k)
+    step = jax.jit(jax.vmap(one))
+    keys = jax.random.split(jax.random.PRNGKey(seed), NA)
+    st = jax.vmap(lambda g, k: B.init_state(g, L, key=k))(pop, keys)
+    rng = np.random.default_rng(seed)
+    key = jax.random.PRNGKey(seed + 1)
+    last = -np.ones(NA, int)
+    out = {k: [] for k in ("type", "poison", "event", "tick", "picked")}
+    rec = {c: [] for c in cells}
+    mi = list(L.mod_names).index("da") if "da" in L.mod_names else None
+    das = []
+    taste, pain = np.zeros(NA, np.float32), np.zeros(NA, np.float32)
+    for trial in range(protocol["trials"]):
+        kind = rng.permutation(np.tile(np.arange(4), NA // 4 + 1))[:NA] if trial % 4 == 0 else (kind + 1) % 4
+        if protocol["start"] == "hold":
+            held, ahead = kind.copy(), np.full(NA, NONE)
+        else:
+            held, ahead = -np.ones(NA, int), np.full(NA, BUSH)
+        event, when, picked = np.zeros(NA, int), np.full(NA, -1), np.zeros(NA, bool)
+        da = []
+        for t in range(protocol["ticks"] + protocol["iti"]):
+            if t == protocol["ticks"]:     # the box is cleared
+                held, ahead = -np.ones(NA, int), np.full(NA, NONE)
+            key, k = jax.random.split(key)
+            st, act = step(pop, st, obs(held, ahead, kind, taste, pain, last), jax.random.split(k, NA))
+            act = np.asarray(act)
+            if t == 0:
+                for c in cells:
+                    rec[c].append(np.asarray(st.x[:, L.region(c)].mean(-1)))
+            if mi is not None:
+                da.append(np.asarray(st.mod[:, mi]))
+            taste, pain = np.zeros(NA, np.float32), np.zeros(NA, np.float32)
+            if t >= protocol["ticks"]:
+                last = act
+                continue
+            for a in range(NA):
+                e = 0
+                if act[a] == 4:
+                    if held[a] < 0 and ahead[a] == BUSH:
+                        held[a], ahead[a], e = kind[a], EMPTY, 3
+                    elif held[a] < 0 and ahead[a] == BERRY:
+                        held[a], ahead[a], e = kind[a], NONE, 3
+                    elif held[a] >= 0 and ahead[a] == NONE:
+                        held[a], ahead[a], e = -1, BERRY, 2
+                elif act[a] == 5 and held[a] >= 0:
+                    pain[a], taste[a] = (1.0, 0.0) if poison[a, held[a]] else (0.0, 3.0)
+                    held[a], e = -1, 1
+                elif act[a] in (1, 2, 3):
+                    ahead[a] = NONE
+                if e == 3:
+                    picked[a] = True
+                elif e and event[a] == 0:
+                    event[a], when[a] = e, t
+            last = act
+        out["type"].append(kind.copy()); out["poison"].append(poison[np.arange(NA), kind])
+        out["event"].append(event); out["tick"].append(when); out["picked"].append(picked)
+        if mi is not None:
+            das.append(np.stack(da, -1))
+    res = {k: np.stack(v) for k, v in out.items()}
+    if cells:
+        res["cells"] = {c: np.stack(v) for c, v in rec.items()}
+    if das:
+        res["da"] = np.stack(das)
+    return res

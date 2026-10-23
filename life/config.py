@@ -171,6 +171,9 @@ class ProjectionSpec:
                                      # inherit or select a lucky wiring, and evolution cannot shape it. The random
                                      # wiring of the mushroom body differs between individuals (Caron et al. 2013).
                                      # As cheap as inherited wiring. Needs evolve=False and no w_init
+    slot_scale: float = 1.0          # per_slot only: the drawn weights times this (the fan-in counts every synapse
+                                     # of the target cell, so a second per-slot projection onto the same cells
+                                     # shrinks the first one's weights unless scaled back)
     src_select: tuple = ()           # src 'in' only: input-feature name patterns (fnmatch, e.g. 'vis*', 'pain')
                                      # restricting which input neurons project; several projections from 'in'
                                      # to the same region may use disjoint selections

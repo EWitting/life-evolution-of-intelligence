@@ -10,6 +10,7 @@ import numpy as np
 from life.config import (ExperimentConfig, WorldConfig, VisionConfig, BodyConfig, BrainConfig, EvolutionConfig,
                          RegionSpec as R, ProjectionSpec as P, ModulatorSpec as Mod)
 
+from life import actions as A
 from life.experiments.base import *  # noqa: F401,F403
 from life.experiments.worlds import *  # noqa: F401,F403
 from life.experiments.chapter1 import *  # noqa: F401,F403
@@ -375,3 +376,168 @@ def with_hands(brain: BrainConfig) -> BrainConfig:
                                fixed("valence_app", "ingest", 3.0, src_range=HELD), fixed("no_hold", "ingest", GATE_W),
                                fixed("no_feed", "ingest", VALENCE_MOTOR_W),
                                fixed("ingest", "out", VALENCE_MOTOR_W, dst_range=EAT_)))
+
+
+# ------------------------------------------------------------------ hands and the actor (ADR-028)
+# One stage (user, 2026-10-23): the critic brain picks, holds and eats (`hands`), and main adds the basal ganglia's
+# actor (`actor`); the control is the critic brain with hands. Both meet the hands world at once, from 2.3s.
+# Why hands give the actor a job: USE picks with an empty hand at a bush and puts down what is held at an empty cell;
+# held poison blocks the next pick (a full hand cannot pick), so putting it down pays, and nothing innate does it.
+SWALLOW = 2.5         # ingest's resting drive: something in the mouth is swallowed unless aversion blocks it
+PROG_MOTOR_W = 8.0    # a programme the brain releases (ingest; the actor's act) onto its motor neuron. The 2.3s ganglion
+                      # drives FORWARD about 4 units above every other action when nothing is close ahead and holds EAT
+                      # down (EAT did nothing useful in 2.3s); at 3 (grasp's strength) a released programme lost to
+                      # walking on (lab, 2026-10-23): a selected action has to take the motor neurons over
+HELD_SCALE = 2.0      # the held item's weight on the pallium relative to the eye's (scripts/probes/pallium_held.py: a
+                      # lesson on a poison held at its bush reaches it held in front of nothing at 0.23 with x1, 0.50
+                      # with x2, as much as a region of its own; good berries stay at 0.10 of a poison's aversion)
+
+
+def hands(brain: BrainConfig, swallow: float | None = None) -> BrainConfig:
+    """The critic brain (2.3s) for a creature that carries things: `with_hands` (a value cell per sign for the thing in
+    hand, an `ingest` programme onto EAT, aversion blocking EAT) with three changes for the critic brain:
+      - taste and pain reach the cells about what is seen only (with_hands sent pain to the held cell as well, taste
+        not: an asymmetry no stage needed);
+      - `ingest` swallows by default (SWALLOW): in 2.3s eating followed the bite at once, and the held cells learn
+        per life, so without it nothing would be eaten at generation 0 (x.hands lost all its food at first);
+      - the pallium reads the item in hand as well as the eye ahead (held at HELD_SCALE, per slot like the eye), so
+        the critic and the actor know what is held; with an empty hand the code is the 2.3s one;
+      - `hungry` reaches `ingest` and `no_eat` as it reaches `grasp` and `no_feed` (evolvable, from 0): eating is
+        decided at ingest now;
+      - ingest drives EAT at PROG_MOTOR_W;
+      - aversion is split as appetite is: aversion to what is seen stops picking (`no_feed` -> grasp and USE, as in
+        2.3s), aversion to what is held stops swallowing (`no_eat` -> ingest and EAT). with_hands let every aversive
+        cell stop eating, so anything disliked in view kept a held berry from being swallowed (generation 0: `no_feed`
+        at 0.5 while holding, 4 berries eaten per life);
+      - the valence cells read the pallium of the same tick (phase after the pallium, then no_feed, then the
+        programmes): in 2.3s they shared its phase and read it a tick late, which did not matter at a bush seen from
+        afar, but a held berry is swallowed on its first tick in hand, before a learned aversion arrived (lab,
+        2026-10-23: the drive onto the aversive cells was +1 on that tick, their rate 0)."""
+    b = with_hands(brain)
+    eye = next(p for p in b.projections if p.src == "in" and p.dst == "pallium")
+    sq2 = float(np.sqrt(2.0))   # the fan-in doubles: the eye's weights keep their 2.3s size (ProjectionSpec.slot_scale)
+    proj = []
+    for p in b.projections:
+        if p.src == "in" and p.dst == "valence_av" and p.src_select == ("pain",):
+            p = replace(p, dst_range=SEEN)
+        elif p is eye:
+            p = replace(p, slot_scale=sq2)
+        elif (p.src, p.dst) == ("valence_av", "no_feed"):
+            p = replace(p, src_range=SEEN)
+        elif (p.src, p.dst) == ("no_feed", "out"):
+            p = replace(p, dst_range=USE_)
+        elif (p.src, p.dst) == ("no_feed", "ingest"):
+            continue
+        proj.append(p)
+    proj += [fixed("valence_av", "no_eat", VALENCE_MOTOR_W, src_range=HELD), fixed("no_eat", "ingest", VALENCE_MOTOR_W),
+             fixed("no_eat", "out", VALENCE_MOTOR_W, dst_range=EAT_)]
+    proj.append(replace(eye, src_select=("held_app*",), slot_scale=HELD_SCALE * sq2))
+    proj = [replace(p, w_init=PROG_MOTOR_W) if (p.src, p.dst) == ("ingest", "out") else p for p in proj]
+    proj += [P("hungry", "ingest", density=1.0, w_init=0.0), P("hungry", "no_eat", density=1.0, w_init=0.0)]
+    pal = next(r.phase for r in b.regions if r.name == "pallium")
+    phase = {"valence_app": pal + 1, "valence_av": pal + 1, "no_feed": pal + 2, "no_eat": pal + 2, "grasp": pal + 3,
+             "ingest": pal + 3}
+    no_feed = next(r for r in b.regions if r.name == "no_feed")
+    b = replace(b, regions=b.regions + (replace(no_feed, name="no_eat", size=1),))
+    sw = SWALLOW if swallow is None else swallow
+    regions = tuple(replace(r, phase=phase.get(r.name, r.phase), **({"bias": sw} if r.name == "ingest" else {}))
+                    for r in b.regions)
+    return replace(b, projections=tuple(proj), regions=regions, out_phase=max(b.out_phase, pal + 4))
+
+
+# The actor (BRAIN_EVOLUTION, "Basal ganglia with the actor"; Redgrave, Prescott & Gurney 1999; Frank 2005). One channel
+# per hand action, USE and EAT (cell 0 and 1 of every region below); the meaning of an action (pick or put down) comes
+# from the state the striatum reads, not from a programme per situation (user, 2026-10-23):
+#   striatum_d1 (Go) -| gpi -| act -> out          a burst strengthens state -> D1: the action is released
+#   striatum_d2 (NoGo) -| gpe -| gpi               a pause strengthens state -> D2: the action is held back
+# gpi and gpe rest at 0.5 (tonic). `act` is the action's brainstem programme as the basal ganglia drive it, shut while
+# gpi rests; gpi also holds back the old programmes of the same action (grasp, ingest) a little, compensated in their
+# rest, so that the old paths and the actor act on one programme each (principle 8) and NoGo can stop them.
+# The striatum reads the pallium (what is ahead and in hand) through synapses learned within a life (from 0), and a
+# full hand drives Go for USE a little (ACT_EXPLORE). Credit: an efference copy of the action taken excites both
+# cells of its channel through slow synapses (the copy of tick t-1 arrives with the error about it), so the pre x post
+# trace marks the state in which that action was taken, also when an old path chose it (Fee 2014). Both cells get it
+# equally and their paths are balanced (W_D1 = 0.75 W_EG W_D2 at rest), so the copy itself does not repeat the action.
+ACT_ETA, ACT_ELIG = 0.1, 0.5   # as the critic's value cells
+W_EFC = 0.5                    # efference copy -> D1, D2 (about 0.46 of the cell's rate)
+W_D1, W_D2, W_EG = 1.5, 1.0, 2.0
+W_GA, B_ACT = 4.0, 1.5         # gpi -| act; act's rest: shut at gpi 0.5, 0.9 at gpi 0
+W_GP = 1.0                     # gpi -| grasp, ingest (offset in their bias at rest)
+ACT_EXPLORE = 0.2              # held -> Go (USE), hard-wired, tuned by evolution: with something in hand USE is now and
+                               # then released, so putting down happens and can be learned (user, 2026-10-23: a start
+                               # strength is fine to leave a dead end at the start of a stage). Without it the action
+                               # was never taken in the lab (the 2.3s ganglion walks on; sampling is sharp); at 0.4 and
+                               # more everything held was put down at once. Learned from `held` (and `vis+0.near`)
+                               # instead, it took the average value of an action over every berry (Go-USE and NoGo-EAT
+                               # for good berries too, lab 2026-10-23): what is held is the pallium's to say
+DSTR = "forebrain/basal_ganglia/dorsal_striatum"
+HAND_ACTS = (4, 6)             # USE, EAT on the motor neurons (actions.py)
+
+
+def actor(brain: BrainConfig, explore: float = ACT_EXPLORE) -> BrainConfig:
+    """`brain` (with hands) with the basal ganglia's actor for USE and EAT. Phases: striatum after the pallium, then
+    gpe, gpi, the programmes (act, grasp and ingest move after gpi) and the motor neurons last."""
+    rest = float(np.arctanh(0.5))
+    pal = next(r.phase for r in brain.regions if r.name == "pallium")
+    ph = dict(d=pal + 1, gpe=pal + 2, gpi=pal + 3, prog=pal + 4)
+    regions = tuple(replace(r, phase=ph["prog"], bias=r.bias + W_GP * 0.5) if r.name in ("grasp", "ingest") else r
+                    for r in brain.regions)
+    spn = lambda n: R(n, 2, sign="inh", alpha=1.0, bias=0.0, evolve_bias=False, phase=ph["d"], group=DSTR)
+    tonic = lambda n, b, p: R(n, 2, sign="inh", alpha=1.0, bias=b, evolve_bias=False, phase=p, group=PALLIDUM)
+    learn = lambda src, dst, mod, **kw: P(src, dst, rule="hebb", modulator=mod, eta_init=ACT_ETA, elig_tau=ACT_ELIG,
+                                          abcd=(1.0, 0.0, 0.0, 0.0), density=1.0, evolve=False, elig_delay=True,
+                                          **{"w_init": 0.0, **kw})
+    o2o = dict(topology="one_to_one", density=1.0, evolve=False)
+    b = replace(brain, regions=regions, out_phase=ph["prog"] + 1)
+    return extend(b,
+                  regions=(spn("striatum_d1"), spn("striatum_d2"),
+                           tonic("gpe", rest, ph["gpe"]), tonic("gpi", rest + W_EG * 0.5, ph["gpi"]),
+                           R("act", 2, sign="exc", alpha=1.0, bias=B_ACT, evolve_bias=False, phase=ph["prog"],
+                             group="valence/programmes")),
+                  projections=(learn("pallium", "striatum_d1", "da"), learn("pallium", "striatum_d2", "da_neg"),
+                               P("in", "striatum_d1", src_select=("held",), dst_range=(0, 1), density=1.0, w_init=explore,
+                                 evolve=False, tune=True),
+                               P("in", "striatum_d1", src_select=("efc_USE", "efc_EAT"), w_init=W_EFC, lag=True, **o2o),
+                               P("in", "striatum_d2", src_select=("efc_USE", "efc_EAT"), w_init=W_EFC, lag=True, **o2o),
+                               P("striatum_d1", "gpi", w_init=W_D1, tune=True, **o2o),
+                               P("striatum_d2", "gpe", w_init=W_D2, tune=True, **o2o),
+                               P("gpe", "gpi", w_init=W_EG, **o2o),
+                               P("gpi", "act", w_init=W_GA, **o2o),
+                               fixed("gpi", "grasp", W_GP, src_range=(0, 1), tune=False),
+                               fixed("gpi", "ingest", W_GP, src_range=(1, 2), tune=False),
+                               P("act", "out", w_init=PROG_MOTOR_W, tune=True, dst_range=HAND_ACTS, **o2o)))
+
+
+def hands_init(pop, layout):
+    """Start of the hands stage (main and control): the evolved synapses from what is held (`held`, `held_app*`) start
+    silent. In 2.3s the hand was always empty (eating on the bite), so these inputs were 0 and their synapses drifted
+    unselected; with a full hand they fired into the aversive cells and the ganglion (generation 0: the eating gate
+    `no_feed` at 0.4-0.6 while holding, no berry swallowed). A new sense starts silent, as remap_genomes does for new
+    synapses. Designed synapses (the `no_hold` gate, the pallium's per-slot input) keep their weights.
+    Likewise the EAT motor neuron starts neutral (its evolved inputs and bias at 0): in 2.3s EAT did nothing (eating
+    came with the bite), so evolution held it down by about 5 units (bias -1.5, ganglion -2.2, sensor reflexes -1.1;
+    generation 0: a held berry was hardly ever eaten, the ganglion walking on at +5.4). With hands the action gets
+    its meaning; what evolution makes of it starts from neutral, as a new sense does."""
+    names = list(layout.in_names)
+    rows = [i for i, n in enumerate(names) if n == "held" or n.startswith("held_app")]
+    off = layout.offsets[layout.names.index("in")]
+    free = np.asarray(layout.evolve_w) > 0
+    sel = np.zeros(free.shape, bool)
+    sel[[off + r for r in rows]] = True
+    eat = layout.offsets[layout.names.index("out")] + A.EAT
+    sel[:, eat] = True
+    sel &= free
+    b = pop.b.at[:, eat].set(0.0) if bool(np.asarray(layout.evolve_b)[eat]) else pop.b
+    return pop._replace(w0=jnp.where(jnp.asarray(sel)[None], 0.0, pop.w0), b=b)
+
+
+B25H = hands(B24S)
+B25 = actor(B25H)
+BODY_25 = replace(BODY_17, efference=True)
+W25 = replace(W23, **HARSH_REV_WORLD, eat_on_pick=False)
+stage(Stage("2.5", "s2_5_actor", "2.3s", B25, W25, VISION_CH1, BODY_25,
+            lambda exp: pallium_world(exp, reverse=True, one_berry=1.0),
+            **{**_S15, "generations": 100}, evolution=EVOLUTION_2EP, control_brain=B25H, adapt_init=hands_init,
+            notes="hands (pick, hold, eat; the pallium reads the item in hand) and the basal ganglia's actor: Go and "
+                  "NoGo channels for USE and EAT learned from dopamine, credit by an efference copy; control the "
+                  "critic brain with hands"))

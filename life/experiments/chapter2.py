@@ -556,7 +556,8 @@ BODY_25 = replace(BODY_17, efference=True)
 W25 = replace(W22, **HARSH_WORLD, eat_on_pick=False)
 stage(Stage("2.5", "s2_5_actor", "2.3s", B25, W25, VISION_CH1, BODY_25,
             lambda exp: pallium_world(exp, one_berry=1.0),
-            **{**_S15, "generations": 100}, evolution=EVOLUTION_2EP, control_brain=B25H, adapt_init=hands_init,
+            # 50 generations: main - control was clear by 20-30 and a generation takes 11-15 min by then (2026-10-24)
+            **{**_S15, "generations": 50}, evolution=EVOLUTION_2EP, control_brain=B25H, adapt_init=hands_init,
             notes="hands (pick, hold, eat; the pallium reads the item in hand) and the basal ganglia's actor: Go and "
                   "NoGo channels for USE and EAT learned from dopamine, credit by an efference copy; control the "
                   "critic brain with hands"))

@@ -374,6 +374,10 @@ def run_evolution(exp: ExperimentConfig, ruleset: Ruleset, fitness_fn: Callable[
                 np.savez_compressed(out_dir / "checkpoint.tmp.npz", generation=gen,
                                     **{k: np.asarray(v) for k, v in pop._asdict().items()})
                 os.replace(out_dir / "checkpoint.tmp.npz", out_dir / "checkpoint.npz")
+                with open(out_dir / "fitness.csv", "w", newline="") as f:   # the rows so far (a resume reads them)
+                    w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+                    w.writeheader()
+                    w.writerows(rows)
             pop = next_generation(ke, pop, fit, ecfg, layout)
     with open(out_dir / "fitness.csv", "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))

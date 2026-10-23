@@ -32,7 +32,8 @@ def run_stage(key: str, generations: int | None = None, control: bool = False, i
               resume: str | None = None):
     """`resume`: a run of this stage stopped early; it goes on from its checkpoint.npz in its own directory."""
     if resume:
-        return resume_stage(key, resume, control=control, seed=seed, suffix=suffix, ticks=ticks, dashboard=dashboard)
+        return resume_stage(key, resume, control=control, seed=seed, suffix=suffix, ticks=ticks, dashboard=dashboard,
+                            until=generations)
     s = STAGES[key]
     if ticks:   # a trial with a longer or shorter life than the stage defines; use a suffix to keep it apart
         s = replace(s, ticks=ticks)
@@ -72,9 +73,12 @@ def run_stage(key: str, generations: int | None = None, control: bool = False, i
 
 
 def resume_stage(key: str, run_dir: str, control: bool = False, seed: int = 0, suffix: str = "",
-                 ticks: int | None = None, dashboard: bool = False):
+                 ticks: int | None = None, dashboard: bool = False, until: int | None = None):
     """Continue a run stopped early (a kill) from its checkpoint: the population evaluated in the checkpoint's
-    generation, the earlier rows of its fitness.csv, the same random keys and schedule from there on."""
+    generation, the earlier rows of its fitness.csv, the same random keys and schedule from there on. `until`: end
+    the run at that many generations instead of its own (smart early stopping: `--resume RUN --generations 41` on a
+    checkpoint of generation 40 evaluates that population once more and finishes the run, with population.npz and
+    the recording; config.json then gives the shortened length)."""
     import csv
     from pathlib import Path
     run_dir = Path(run_dir)
@@ -88,6 +92,9 @@ def resume_stage(key: str, run_dir: str, control: bool = False, seed: int = 0, s
     assert exp.to_json() == old.to_json(), "the stage's settings differ from the stopped run's config.json"
     with np.load(run_dir / "checkpoint.npz") as f:
         start = int(f["generation"])
+    if until:
+        assert until > start, f"the checkpoint is of generation {start}: --generations must be above it"
+        exp = replace(exp, evolution=replace(exp.evolution, generations=until))
     init = load_population(run_dir, file="checkpoint.npz")
     with open(run_dir / "fitness.csv", newline="") as f:
         prior = [{k: (int(v) if k == "gen" else float(v)) for k, v in r.items()} for r in csv.DictReader(f)]

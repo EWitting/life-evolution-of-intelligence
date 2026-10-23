@@ -58,7 +58,8 @@ for label, (stage, exp, pop) in conds.items():
     for k in jax.random.split(jax.random.PRNGKey(31), WORLDS):
         kr, ks = jax.random.split(k)
         rules = jax.tree_util.tree_map(lambda a: a[0], fn(0, kr))
-        pv = np.asarray(rules.pain_value)                       # [2 phases, M]
+        pv = np.asarray(rules.pain_value)                       # [2 phases, M], or [M] without a reversal
+        pv = pv if pv.ndim == 2 else np.stack([pv, pv])
         st, _ = sim(rules, pop, ks)
         e = np.asarray(st["eats"]); n = e.shape[0]
         per = lambda h, bad: sum(e[:, h, b].sum() for b in berry if (pv[h, b] > 0) == bad) / n

@@ -383,6 +383,11 @@ def with_hands(brain: BrainConfig) -> BrainConfig:
 # actor (`actor`); the control is the critic brain with hands. Both meet the hands world at once, from 2.3s.
 # Why hands give the actor a job: USE picks with an empty hand at a bush and puts down what is held at an empty cell;
 # held poison blocks the next pick (a full hand cannot pick), so putting it down pays, and nothing innate does it.
+# The old programmes about what is seen (grasp, no_feed and their inputs) act on eating the held item now; where they
+# get in the way, evolution may take them away entirely (per synapse, down to 0), not only scale them by 1/3-3 as a
+# hard-wired projection (`fixed`, tune) would allow (user, 2026-10-24: connections behind conflicting behaviour must be
+# evolvable to zero)
+FREED = {("grasp", "out"), ("no_feed", "out"), ("valence_app", "grasp"), ("valence_av", "no_feed"), ("no_feed", "grasp")}
 SWALLOW = 2.5         # ingest's resting drive: something in the mouth is swallowed unless aversion blocks it
 PROG_MOTOR_W = 8.0    # a programme the brain releases (ingest; the actor's act) onto its motor neuron. The 2.3s ganglion
                       # drives FORWARD about 4 units above every other action when nothing is close ahead and holds EAT
@@ -433,6 +438,8 @@ def hands(brain: BrainConfig, swallow: float | None = None) -> BrainConfig:
             p = replace(p, dst_range=EAT_)
         elif (p.src, p.dst) == ("no_feed", "ingest"):
             continue
+        if (p.src, p.dst) in FREED:   # evolvable down to 0 (user, 2026-10-24)
+            p = replace(p, evolve=True, tune=False)
         proj.append(p)
     proj += [fixed("valence_av", "no_eat", VALENCE_MOTOR_W, src_range=HELD), fixed("no_eat", "ingest", VALENCE_MOTOR_W),
              fixed("no_eat", "out", VALENCE_MOTOR_W, dst_range=EAT_)]
@@ -469,7 +476,7 @@ W_EFC = 0.5                    # efference copy -> D1, D2 (about 0.46 of the cel
 W_D1, W_D2, W_EG = 1.5, 1.0, 2.0
 W_GA, B_ACT = 4.0, 1.5         # gpi -| act; act's rest: shut at gpi 0.5, 0.9 at gpi 0
 W_GP = 1.0                     # gpi -| grasp, ingest (offset in their bias at rest)
-ACT_EXPLORE = 0.2              # held -> Go (USE), hard-wired, tuned by evolution: with something in hand USE is now and
+ACT_EXPLORE = 0.2              # held -> Go (USE), a start strength that evolves (to 0 if it costs): with something in hand USE is now and
                                # then released, so putting down happens and can be learned (user, 2026-10-23: a start
                                # strength is fine to leave a dead end at the start of a stage). Without it the action
                                # was never taken in the lab (the 2.3s ganglion walks on; sampling is sharp); at 0.4 and
@@ -501,8 +508,7 @@ def actor(brain: BrainConfig, explore: float = ACT_EXPLORE) -> BrainConfig:
                            R("act", 2, sign="exc", alpha=1.0, bias=B_ACT, evolve_bias=False, phase=ph["prog"],
                              group="valence/programmes")),
                   projections=(learn("pallium", "striatum_d1", "da"), learn("pallium", "striatum_d2", "da_neg"),
-                               P("in", "striatum_d1", src_select=("held",), dst_range=(0, 1), density=1.0, w_init=explore,
-                                 evolve=False, tune=True),
+                               P("in", "striatum_d1", src_select=("held",), dst_range=(0, 1), density=1.0, w_init=explore),
                                P("in", "striatum_d1", src_select=("efc_USE", "efc_EAT"), w_init=W_EFC, lag=True, **o2o),
                                P("in", "striatum_d2", src_select=("efc_USE", "efc_EAT"), w_init=W_EFC, lag=True, **o2o),
                                P("striatum_d1", "gpi", w_init=W_D1, tune=True, **o2o),
@@ -523,7 +529,8 @@ def hands_init(pop, layout):
     Likewise the EAT motor neuron starts neutral (its evolved inputs and bias at 0): in 2.3s EAT did nothing (eating
     came with the bite), so evolution held it down by about 5 units (bias -1.5, ganglion -2.2, sensor reflexes -1.1;
     generation 0: a held berry was hardly ever eaten, the ganglion walking on at +5.4). With hands the action gets
-    its meaning; what evolution makes of it starts from neutral, as a new sense does."""
+    its meaning; what evolution makes of it starts from neutral, as a new sense does. Designed projections that evolve
+    (FREED, held -> Go) keep their designed start."""
     names = list(layout.in_names)
     rows = [i for i, n in enumerate(names) if n == "held" or n.startswith("held_app")]
     off = layout.offsets[layout.names.index("in")]
@@ -533,6 +540,10 @@ def hands_init(pop, layout):
     eat = layout.offsets[layout.names.index("out")] + A.EAT
     sel[:, eat] = True
     sel &= free
+    # designed projections that evolve (FREED, the actor's start strength) keep their designed start
+    keep = [i for i, n in enumerate(layout.proj_names)
+            if (n.split("->")[0], n.split("->")[1].split("<")[0].split("[")[0]) in FREED | {("in", "striatum_d1")}]
+    sel &= ~np.isin(np.asarray(layout.proj_id), keep)
     b = pop.b.at[:, eat].set(0.0) if bool(np.asarray(layout.evolve_b)[eat]) else pop.b
     return pop._replace(w0=jnp.where(jnp.asarray(sel)[None], 0.0, pop.w0), b=b)
 
@@ -540,9 +551,11 @@ def hands_init(pop, layout):
 B25H = hands(B24S)
 B25 = actor(B25H)
 BODY_25 = replace(BODY_17, efference=True)
-W25 = replace(W23, **HARSH_REV_WORLD, eat_on_pick=False)
+# No reversal: it was there to show the critic at work (2.3); a world whose foods swap meaning at once is not one
+# that later stages should keep (user, 2026-10-24)
+W25 = replace(W22, **HARSH_WORLD, eat_on_pick=False)
 stage(Stage("2.5", "s2_5_actor", "2.3s", B25, W25, VISION_CH1, BODY_25,
-            lambda exp: pallium_world(exp, reverse=True, one_berry=1.0),
+            lambda exp: pallium_world(exp, one_berry=1.0),
             **{**_S15, "generations": 100}, evolution=EVOLUTION_2EP, control_brain=B25H, adapt_init=hands_init,
             notes="hands (pick, hold, eat; the pallium reads the item in hand) and the basal ganglia's actor: Go and "
                   "NoGo channels for USE and EAT learned from dopamine, credit by an efference copy; control the "

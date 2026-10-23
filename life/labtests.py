@@ -242,8 +242,9 @@ def operant(exp, pop, rs, rules_fn, protocol: dict, n_agents: int = 24, seed: in
     pop = jax.tree_util.tree_map(lambda x: x[:NA], pop)
     ids = [[rs.local(S.variant(v)[o]) for o in (S.BUSH, S.BERRY, S.EMPTY_BUSH)] for v in S.NOVEL]
     looks, poison = np.zeros((NA, 4, 3, K), np.float32), np.zeros((NA, 4), bool)
+    phased = exp.world.switch_tick > 0   # rules [episodes, 2 phases, ...]: the box uses the first phase
     for a in range(NA):
-        r = jax.tree_util.tree_map(lambda x: x[0, 0] if x.ndim > 2 else x[0], rules_fn(0, jax.random.PRNGKey(7919 * seed + a)))
+        r = jax.tree_util.tree_map(lambda x: x[0, 0] if phased else x[0], rules_fn(0, jax.random.PRNGKey(7919 * seed + a)))
         app, fv = np.asarray(r.appearance), np.asarray(r.food_value)
         for i in range(4):
             looks[a, i] = app[ids[i]]

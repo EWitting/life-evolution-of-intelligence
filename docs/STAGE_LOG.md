@@ -3670,3 +3670,17 @@ to 21 / 30 ticks (90th percentile); while holding, `no_feed` at 0.63-0.91 (main 
 and with nothing ahead stay at 0.6-0.75) keep the held berry from being eaten. Evolution did not take `no_feed ->
 EAT` down in 30 generations (3.0 -> 3.6 main, 2.5 control). With hands, eating concerns the held item; aversion to
 what is seen deciding it costs good berries (as `with_hands` had at generation 0 before the `no_eat` split).
+
+## v79 (2026-10-24): 2.5 without the reversal; conflicting connections evolvable to zero
+
+The reversal (types swap at tick 800) was only to show the critic at work (2.3); 2.5 runs without it (user): W25 =
+W22 with the harsh settings, `pallium_world(one_berry=1.0)`. Under the reversal the run of v78 could not be read:
+refused berries are never tasted again, so the aversion learned before the swap never extinguished
+(`held_aversion.py`, generation 20, after the swap: held good berries 0.63-0.69 aversion, before 0.06-0.21).
+Connections behind the conflicts of v77-v78 evolve per synapse (down to 0, prunable) instead of being tuned within
+1/3-3x (user): `grasp -> EAT`, `no_feed -> EAT`, `valence_app -> grasp`, `valence_av -> no_feed`, `no_feed -> grasp`
+(FREED, main and control) and the actor's start `held -> Go(USE)` (0.2). `hands_init` leaves designed starts alone.
+Lab, no reversal (main / actor off / control, last 12 trials): hold box poison eaten 0.05 / 0.43 / 0.41, put down
+0.68 / 0.03 / 0; good eaten 0.49 / 0.57 / 0.61, good put down 0.26 / 0 / 0. Pick box: picked by look in no arm
+(0.61 / 0.65); of picked poison main eats 0.16, puts down 0.50 (others eat 0.55). Generation 0 (16 paired worlds):
+main 912, actor off 884 (-29 +- 14), control 742 (-170 +- 35); 2.3s 1218 in its own world.

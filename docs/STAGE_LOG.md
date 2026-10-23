@@ -3659,3 +3659,14 @@ others refuse them by generalised aversion). Pick box: bushes picked by look in 
 the innate `in -> USE` reflex (about +5.6 with something ahead) picks every bush and NoGo can only take the actor's
 own drive away; of the picked poison, main eats 0.21 and puts down 0.53 (others eat about 0.60). Generation 0 (16
 paired worlds): main 764, actor off 729 (-35 +- 11), control 664 (-100 +- 13), 2.3s 1159 in its own world.
+
+## v78 (2026-10-24): 2.5 with valence on EAT: eating of what is held blocked by aversion to what is seen
+
+Seed 0 (logs `s2_5_actor{,_control}_v2.log`), stopped at generation 30: main 728 -> 765 -> 736 -> 690, control 628
+-> 732 -> 797 -> 655; poison share about 0.45-0.5 throughout (no discrimination), 5-6 survivors of 256 at 30.
+Recorded lives at generation 20 (`hands_life.py`): holding 27% (main) and 30% (control) of living ticks, holds up
+to 21 / 30 ticks (90th percentile); while holding, `no_feed` at 0.63-0.91 (main / control) holds EAT back by -4.1 /
+-4.6 against `ingest` +3.9 / +6.4: the cells about what is seen (which also read the held item through the pallium,
+and with nothing ahead stay at 0.6-0.75) keep the held berry from being eaten. Evolution did not take `no_feed ->
+EAT` down in 30 generations (3.0 -> 3.6 main, 2.5 control). With hands, eating concerns the held item; aversion to
+what is seen deciding it costs good berries (as `with_hands` had at generation 0 before the `no_eat` split).

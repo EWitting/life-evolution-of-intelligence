@@ -1,5 +1,5 @@
 {
- "about": "brain diagram layout. cells: grid cell [col, row] of every module in the layout grid. sockets: top-to-bottom order of the sockets on the senses block (in:<sense>) and motor block (out:<actions>), shared by all stages. stages: per stage the position [col, row] a diagram uses: empty rows and columns removed, the blocks in the first and last column with their row extent, sockets at fractional rows. modes: how the senses (in) and motor neurons (out) are drawn: split (a block with sockets), block (a tall block, lines at the height of their other end), point (one small box). hues: the colour of each top-level group. Written by tools/brain_layout.",
+ "about": "brain diagram layout. cells: grid cell [col, row] of every module in the layout grid. sockets: top-to-bottom order of the sockets on the senses block (in:<sense>) and motor block (out:<actions>), shared by all stages. stages: per stage the position [col, row] a diagram uses: empty rows and columns removed, the blocks in the first and last column with their row extent, sockets at fractional rows. modes: how the senses (in) and motor neurons (out) are drawn: split (a block with sockets), block (a tall block, lines at the height of their other end), point (one small box). hues: the colour of each top-level group. union: as a stage, for every module and socket of every stage (the front page's growing brain, where parts also go away). Written by tools/brain_layout.",
  "saved": "2026-10-21T08:04:13.935Z",
  "chain": [
   "1.0",
@@ -702,6 +702,122 @@
      3
     ]
    }
+  }
+ },
+ "union": {
+  "cols": 6,
+  "rows": 12,
+  "blocks": {
+   "in": [
+    6.286458333333333,
+    6.880208333333333
+   ],
+   "out": [
+    7.953125,
+    8.546875
+   ]
+  },
+  "pos": {
+   "in": [
+    0,
+    6.583
+   ],
+   "out": [
+    5,
+    8.25
+   ],
+   "ganglion_e": [
+    4,
+    8
+   ],
+   "ganglion_i": [
+    4,
+    7
+   ],
+   "valence_app": [
+    3,
+    9
+   ],
+   "valence_av": [
+    4,
+    9
+   ],
+   "no_feed": [
+    4,
+    10
+   ],
+   "no_touch": [
+    3,
+    11
+   ],
+   "grasp": [
+    4,
+    11
+   ],
+   "us_pain": [
+    1,
+    1
+   ],
+   "cold": [
+    3,
+    5
+   ],
+   "warm_seek": [
+    4,
+    4
+   ],
+   "rest": [
+    3,
+    6
+   ],
+   "hungry": [
+    3,
+    8
+   ],
+   "flee": [
+    1,
+    11
+   ],
+   "fed": [
+    1,
+    10
+   ],
+   "settle": [
+    1,
+    9
+   ],
+   "pallium": [
+    1,
+    5
+   ],
+   "us_taste": [
+    1,
+    0
+   ],
+   "value_app": [
+    2,
+    4
+   ],
+   "value_av": [
+    1,
+    4
+   ],
+   "habenula": [
+    1,
+    2
+   ],
+   "dopamine": [
+    3,
+    4
+   ],
+   "ventral_pallidum": [
+    2,
+    3
+   ],
+   "gp_habenular": [
+    1,
+    3
+   ]
   }
  }
 }

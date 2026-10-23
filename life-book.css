@@ -238,6 +238,13 @@
 .lb-growsvg .lb-edge.lb-gnew [class$="-fill"] { fill: var(--lb-new); }
 .lb-growsvg .lb-edge.lb-gnew line { stroke: var(--lb-new); }
 .lb-growsvg .lb-gh.lb-edge, .lb-growsvg .lb-gh.lb-mod { opacity: 0; }
+/* what a stage removes: red for a moment, then it fades away */
+.lb-growsvg .lb-ggone.lb-reg, .lb-growsvg .lb-ggone.lb-sock, .lb-growsvg .lb-ggone.lb-edge, .lb-growsvg .lb-ggone.lb-mod {
+  opacity: 0; pointer-events: none; transition: opacity 1.4s ease 0.6s; }
+.lb-growsvg .lb-reg.lb-ggone rect.lb-cell, .lb-growsvg .lb-sock.lb-ggone { stroke: var(--lb-bad); stroke-width: 4; }
+.lb-growsvg .lb-edge.lb-ggone path:first-child, .lb-growsvg .lb-mod.lb-ggone .lb-modline { stroke: var(--lb-bad); }
+.lb-growsvg .lb-edge.lb-ggone [class$="-fill"], .lb-growsvg .lb-mod.lb-ggone .lb-modend { fill: var(--lb-bad); }
+.lb-growsvg .lb-edge.lb-ggone line { stroke: var(--lb-bad); }
 /* where the animation is: the stage names along the bottom, the current one in ink (not controls) */
 .lb-growsteps { position: absolute; left: 0; right: 0; bottom: 4px; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 6px;
                 font-size: 0.78rem; color: var(--lb-muted); opacity: 0.8; pointer-events: none; }

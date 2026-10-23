@@ -27,10 +27,10 @@ class Genome(NamedTuple):
     mask: jnp.ndarray  # [N, N] float 0/1 synapse presence
     b: jnp.ndarray     # [N] bias
     eta: jnp.ndarray   # [N, N] learning rate, constant within a projection (0 = fixed)
-    A: jnp.ndarray     # [N, N] rule coefficient A (constant within a projection)
-    B: jnp.ndarray
-    C: jnp.ndarray
-    D: jnp.ndarray
+    A: jnp.ndarray     # [N, N] rule coefficients A-D (constant within a projection; ProjectionSpec.abcd at birth of
+    B: jnp.ndarray     # a lineage, then inherited and mutated). What they weigh depends on the rule, see
+    C: jnp.ndarray     # plasticity_rule; for 'hebb': A pre*post + B pre + C post + D, so (0, 1, 0, 0) is
+    D: jnp.ndarray     # "dW ~ pre", the three-factor rule of every modulated projection (dW = eta * mod * trace(pre))
     clear: jnp.ndarray  # [M] per modulator: the fraction of it left after a tick (ModulatorSpec.decay; evolvable when > 0)
     adapt: jnp.ndarray  # [1] adaptation strength of the adapting inputs (BrainConfig.in_adapt_strength; evolvable with
                         # BrainConfig.in_adapt_evolve)
@@ -390,7 +390,14 @@ def _block_in_phases(layout: Layout) -> tuple:
 def plasticity_rule(rule, A, B, C, D, w, x_pre, x_post, tr_pre, tr_post, target, centred=None):
     """Rule value per synapse of a block [pre, post] (before learning rate and modulator), selected by `rule`
     (a constant array). Only the rules that occur in the block are computed. `target`: teacher activity per
-    post neuron (rule 'delta'). `centred`: where 1, 'hebb' uses the pre activity minus its slow average tr_pre."""
+    post neuron (rule 'delta'). `centred`: where 1, 'hebb' uses the pre activity minus its slow average tr_pre.
+
+        hebb   A pre post + B pre + C post + D     (general Hebbian polynomial; B alone = presynaptic trace)
+        oja    A post (pre - post w)               (Hebb with Oja's normalisation)
+        trace  A tr_pre post - C pre tr_post       (timing: pre before post strengthens, post before pre weakens)
+        delta  A pre (target - post)               (error-correcting, teacher activity per post neuron)
+
+    The weight change is then eta * mod * this (or * its eligibility trace), see step()."""
     pre, post = x_pre[:, None], x_post[None, :]
     present = set(np.unique(rule).tolist())
     out = jnp.zeros_like(w)
@@ -521,7 +528,12 @@ def step(cfg: BrainConfig, layout: Layout, genome: Genome, state: BrainState, ob
                 f = _kwta(layout, jnp.maximum(jnp.tanh(h), 0.0), pi)
                 xc = xc.at[cols].set((1.0 - layout.alpha[cols]) * x[cols] + layout.alpha[cols] * f[cols])
             x_new = xc.at[:n_in].set(obs)
-        if plastic:
+        if plastic:   # learning, on the plastic block only:
+            # base = the rule's value for this step (plasticity_rule); with an eligibility trace e = elig * e + base and
+            # base = e (the synapse remembers recent pairings for about 1 / (1 - elig) steps); then
+            # dW = eta * mod * base * mask, mod = the projection's modulator of the previous step (1 if none: plain
+            # Hebb); then relaxation toward w0 (decay), clipping (Dale's law: magnitudes stay >= 0) and short-term
+            # depression of the resource u
             wb = w[ix]
             target = jnp.where(b_teacher >= 0, x_new[np.maximum(b_teacher, 0)], x_new[C])
             cen = np.asarray(layout.centred)[ix] if np.asarray(layout.centred)[ix].any() else None
@@ -562,7 +574,10 @@ def remap_genomes(pop: Genome, old: Layout, new: Layout, key: jax.Array) -> Geno
     """Carry a population to a new layout (ADR-012 'build on top'). Neurons are matched by region name (and
     input features by name); new neurons and new projections come from a fresh init, but every *new* evolvable
     synapse starts at w0 = 0 so inherited behaviour is unchanged until evolution uses it ('start silent').
-    Plasticity genes are copied for projections that exist in both layouts with the same rule."""
+    Plasticity genes are copied for projections that exist in both layouts with the same rule.
+    Mind: that includes A-D. A projection whose `abcd` is changed in a new stage but keeps its rule inherits the old
+    coefficients and the new design is silently ignored (a sign flip of the td critic was lost this way, STAGE_LOG
+    v54). Change the modulator instead (as `critic()` does with `da_neg`) or give the projection a new rule."""
     idx_old, idx_new = [], []
     for name, off, size in zip(new.names, new.offsets, new.sizes):
         if name == "in":

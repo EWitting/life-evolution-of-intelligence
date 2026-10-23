@@ -11,8 +11,11 @@ Read docs/DECISIONS.md before changing anything. Module map:
 - evolution.py  selection and mutation over batched genomes (ADR-008)
 - run.py        generation loop, logging and recording (ADR-009, ADR-014)
 - dashboard.py  self-contained interactive dashboard.html for a run (ADR-014); page is dashboard.html
-- lab.py        step a world by hand, inspect agents, export to the dashboard (ADR-014)
+- sandbox.py    step a world by hand, inspect agents, export to the dashboard (ADR-014)
+- labtests.py   lab experiments on single creatures in scripted situations (learning stages)
+- book.py       data, lesions and dashboards for the interactive book (book/)
 - sprites.py    composite OHOL sprites for the dashboard (viewer only)
 - viewer.py     simple matplotlib replay / gif export
-- experiments/  one file per experiment: ruleset slice + config + fitness (ADR-010)
+- experiments/  the stages (experiments/README.md): base, worlds, chapter1, chapter2, side_paths,
+                evaluate; stages.py is the command line and re-exports all of them
 """

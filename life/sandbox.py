@@ -1,16 +1,17 @@
-"""Lab: step a world by hand and look inside agents (ADR-014). For Python scripts or Jupyter.
+"""Sandbox: step a world by hand and look inside agents (ADR-014). For Python scripts or Jupyter. (Not the lab
+experiments of the learning stages: those are in labtests.py.)
 
-    from life.lab import Lab
+    from life.sandbox import Sandbox
     from life.experiments import exp01_evolved_forager as e
     exp = e.make_config(); rs = e.build_ruleset(exp.world)
-    lab = Lab(exp, rs)                      # random genomes, or Lab(exp, rs, population=load_population(run))
-    lab.step(50)                            # advance 50 ticks
-    lab.step(5, override={3: A.FORWARD})    # force agent 3's action for 5 ticks
-    lab.obs(3)                              # its observation, split into vision [W, F], body, sound
-    lab.brain(3)                            # activations per region, weights, learning rates
-    lab.world_summary()                     # what is on the grid, who is alive
-    lab.render()                            # matplotlib figure of the current tick
-    lab.export("runs/lab_session")          # write recording + dashboard.html of everything stepped so far
+    box = Sandbox(exp, rs)                  # random genomes, or Sandbox(exp, rs, population=load_population(run))
+    box.step(50)                            # advance 50 ticks
+    box.step(5, override={3: A.FORWARD})    # force agent 3's action for 5 ticks
+    box.obs(3)                              # its observation, split into vision [W, F], body, sound
+    box.brain(3)                            # activations per region, weights, learning rates
+    box.world_summary()                     # what is on the grid, who is alive
+    box.render()                            # matplotlib figure of the current tick
+    box.export("runs/sandbox")          # write recording + dashboard.html of everything stepped so far
 """
 from __future__ import annotations
 from pathlib import Path
@@ -28,7 +29,7 @@ from .sensors import VISION_FIXED, body_names
 from .world import init_world
 
 
-class Lab:
+class Sandbox:
     def __init__(self, exp: ExperimentConfig, ruleset: Ruleset, population: brain.Genome | None = None,
                  rules: RuleArrays | None = None, seed: int = 0):
         self.exp, self.ruleset = exp, ruleset

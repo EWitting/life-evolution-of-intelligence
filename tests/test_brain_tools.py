@@ -9,7 +9,7 @@ from life import brain
 from life.config import (WorldConfig, VisionConfig, BrainConfig, EvolutionConfig, ExperimentConfig,
                          RegionSpec, ProjectionSpec)
 from life.evolution import next_generation
-from life.lab import Lab
+from life.sandbox import Sandbox
 from test_core import toy_ruleset
 
 
@@ -65,7 +65,7 @@ def test_lab_step_inspect_export(tmp_path):
     exp = ExperimentConfig(world=WorldConfig(height=10, width=10, num_agents=4), vision=VisionConfig(columns=3, range=3),
                            brain=BrainConfig(regions=(RegionSpec("hidden", 4),)),
                            evolution=EvolutionConfig(record_weights_every=5))
-    lab = Lab(exp, rs)
+    lab = Sandbox(exp, rs)
     lab.step(7, override={0: A.TURN_LEFT})
     assert lab.tick == 7 and len(lab.history) == 7 and len(lab.w_snaps) == 1
     o = lab.obs(0)

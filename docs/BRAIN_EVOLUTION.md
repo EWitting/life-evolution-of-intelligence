@@ -3,7 +3,7 @@
 The plan for growing the brain one module at a time, in roughly the order brains evolved. Chapter 1 is described
 as built (it ends with the pallium, ADR-027); later chapters are the current plan. Where the project stands: `docs/STATUS.md`; numbers, runs and the
 variants that were tried: `docs/STAGE_LOG.md`; the reasons behind design rules: `docs/DECISIONS.md`. Exact wiring:
-`life/experiments/stages.py`. Framework terms (regions, projections, `rule`, `modulated`, warm start) are those of
+`life/experiments/` (`chapter1.py`, `chapter2.py`; map in its README). Framework terms (regions, projections, `rule`, `modulated`, warm start) are those of
 ADR-007, ADR-012 and ADR-013. Last brought up to date 2026-10-20.
 
 The spine is Max Bennett's *A Brief History of Intelligence* (2023): **steering -> reinforcing -> simulating ->
@@ -11,7 +11,7 @@ mentalizing -> speaking**. Around it are finer steps taken from comparative neur
 not settle many of these points, so every stage says how confident the claim is. "Mya" means million years
 ago; all dates are approximate.
 
-Stages are named, not numbered, in the book. A stage gets a key in `stages.py` when it is defined; keys are
+Stages are named, not numbered, in the book. A stage gets a key (`life/experiments/`) when it is defined; keys are
 historical names, not positions (STATUS has the chain).
 
 ---

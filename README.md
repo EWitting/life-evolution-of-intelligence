@@ -44,16 +44,16 @@ weights. Then the world, the focused agent's senses, activations over time, the 
 ## Poking at things by hand (Python or Jupyter)
 
 ```python
-from life.lab import Lab
+from life.sandbox import Sandbox
 from life.experiments import stages as S
 from life.run import load_population, latest_run
 s = S.STAGES["1.1"]; exp = S.make_exp(s, s.brain, "lab", 1, 0)
 rs, rules_fn = s.build(exp)
-lab = Lab(exp, rs, population=load_population(latest_run("s1_1_valence"), exp), rules=rules_fn(0, None))
+lab = Sandbox(exp, rs, population=load_population(latest_run("s1_1_valence"), exp), rules=rules_fn(0, None))
 lab.step(100)                      # advance
 lab.agent(3), lab.obs(3), lab.brain(3), lab.world_summary()
 lab.step(10, override={3: 4})      # force agent 3 to USE for 10 ticks
-lab.export("runs/lab_session")     # dashboard.html of everything stepped so far
+lab.export("runs/sandbox")     # dashboard.html of everything stepped so far
 ```
 
 ## How the pieces fit
@@ -96,8 +96,8 @@ Modulators: named broadcast signals from region activity (`pos`, `neg`, weighted
 
 ## Adding things (for a future maintainer)
 
-- **A new stage:** add it to `life/experiments/stages.py` (world, brain via `extend(parent_brain, ...)`, fitness,
-  metrics), run main and control, write findings in `docs/STAGE_LOG.md` and the summary row in `docs/STATUS.md`.
+- **A new stage:** add it to the chapter's file in `life/experiments/` (see `life/experiments/README.md`: world,
+  brain via `extend(parent_brain, ...)`, fitness, metrics), run main and control, write findings in `docs/STAGE_LOG.md` and the summary row in `docs/STATUS.md`.
 - **A bigger world:** use `ohol.slice_ruleset(data, ids, expand_hops=n, clone_sets=...)`.
 - **A new mechanic:** add a config field with a default that keeps old behaviour, implement in `world.py` or
   `sensors.py`, add a test in `tests/`.

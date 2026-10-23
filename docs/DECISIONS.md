@@ -101,7 +101,7 @@ override them freely; when one does, add or amend an entry so the record stays c
 
 - **Fixed.** A recording holds, per tick, the grid, every agent's position, facing, alive flag, held object, food, pain, action, modulator and full activation vector, plus weight snapshots of all agents every `record_weights_every` ticks and the genome's `w0`, `eta`, `mask`. Activations of input neurons *are* the observation, so the retina and body inputs can be reconstructed from the recording.
 - `life/dashboard.py` writes a self-contained `dashboard.html` (plain HTML + JS, data embedded as base64 typed arrays, OHOL sprites embedded as PNG) into the run directory. It shows the world with sprites, the focused agent's retina, body inputs, activations over time by region, and its weight matrix (w at snapshot, w - w0, w0, eta) with region boundaries and hover details, plus the fitness curve. No server, no build step; open the file in a browser.
-- `life/lab.py` (`Lab`) steps a world by hand from Python or Jupyter, overrides actions, exposes observations and brain state per agent, and exports the stepped history to the same dashboard.
+- `life/lab.py` (`Lab`; since 2026-10-23 `life/sandbox.py`, `Sandbox`) steps a world by hand from Python or Jupyter, overrides actions, exposes observations and brain state per agent, and exports the stepped history to the same dashboard.
 - The dashboard's first panel is an **architecture view**: one block per region (cells = the focused agent's activations at the current tick), one arrow per projection (colour = rule, dashed = modulated, width = summed |w| per target neuron at the current snapshot, loops = recurrent). Clicking a block shows that region's activations over time and its in/out projections with stats; clicking an arrow shows its weight block (w, w - w0, w0, eta). Blocks can be dragged; positions are remembered per experiment in browser localStorage. Runs without `brain.projections` in `config.json` get projections inferred from nonzero weight blocks.
 - OHOL sprites are composited approximately (`life/sprites.py`) for the viewer only; the brain never sees them (ADR-006).
 - The world background is the OHOL grassland ground texture (`data/ohol/ground/ground_0.tga`), tiled one texture per 4x4 cells as in the game. Single biome only for now; viewer only. Falls back to a flat colour when `ground/` is not checked out.
@@ -370,3 +370,30 @@ override them freely; when one does, add or amend an entry so the record stays c
   counterpart (lateral pallium in teleosts) is needed for place but not cue learning (Rodríguez et al. 2002). Its
   inputs (self-motion, heading, landmarks) are new mechanisms, to be agreed when the stage is designed; first check
   at generation 0 whether a perfect memory of places pays in the world at all.
+
+## ADR-028 Hands and the actor are one stage (2026-10-23)
+
+- Decided with the user after 2.3s was frozen. Amends ADR-025 ("hands return as a short adaptation step before the
+  actor"). Not built yet; the wiring is designed and checked (mirror review, lab tests) before generation 0.
+- **One stage.** Main: the critic brain (2.3s) with hands and the actor (basal ganglia). Control: the critic brain
+  with hands, without the actor. Both start from the 2.3s population and meet the hands world at the same time; the
+  control run is the hands adaptation step, measured next to main in the same worlds.
+- **Why hands give the actor a job.** With hands, USE means different things by context: with an empty hand at a
+  bush it picks, holding something at an empty cell it drops. Holding poison blocks the next pick, so putting it
+  down pays; most other hand decisions follow the sign of the value (pick and eat the good, not the bad), which the
+  old valence paths already do (principle 8). If the actor ends up unused, changing the world to give it a job is
+  allowed (more objects in the world are wanted anyway).
+- **The pallium also reads the held item** (identity of what is in focus or in the mouth; the oldest pallium is
+  olfactory). Probe first whether 128 cells with k-WTA 2 still separate the larger set of identities.
+- **The actor's credit comes from an efference copy** of the action taken (if realistic: a copy of the motor
+  command reaching the striatum, Fee 2014; Redgrave & Gurney 2006), since the old paths often choose the action and
+  the striatal cell for it may have been silent.
+- **The D2 (NoGo) path runs through a GPe relay** (Dale's law: striatal cells are inhibitory, so NoGo excites GPi
+  only by disinhibition).
+- **Motor programmes:** a release programme (USE when holding and facing an empty cell, no innate value input) was
+  accepted tentatively; the user is concerned about hand-writing a programme for every action the actor might use.
+  Open, to settle with the design.
+- **A gene for an asymmetry between burst and dip learning: later**, only if the probes show a reason (it adds
+  noise to selection).
+- **The code was reorganised first** (2026-10-23): `life/experiments/` split by chapter (README there),
+  `life/lab.py` renamed `life/sandbox.py`.

@@ -1,7 +1,7 @@
 # Status
 
 One screen on where the project is. Plan: `docs/BRAIN_EVOLUTION.md`. **Frozen stages: `frozen/README.md`.** Details, numbers and run directories:
-`docs/STAGE_LOG.md`. Newest decisions: `docs/DECISIONS.md` (ADR-017 to ADR-027). Last updated 2026-10-20 (the pallium closes chapter 1 and chapter 2 starts with the critic; the hippocampus, map only, closes chapter 2: ADR-027). Before that 2026-10-18 night (pallium stage 2.2 rerun after a remap fix, passes in mixed patches, three seeds, not yet frozen; runs on the GPU in WSL2, about 10x faster; before that 2026-10-17: affect redefined in the world of chapter 2 and frozen; 2.0 and 2.1 off the chain; learning rates mutate multiplicatively; 100 generations per stage).
+`docs/STAGE_LOG.md`. Newest decisions: `docs/DECISIONS.md` (ADR-017 to ADR-027). Last updated 2026-10-23 (code split by chapter; hands and the actor are one stage, ADR-028). Before that 2026-10-20 (the pallium closes chapter 1 and chapter 2 starts with the critic; the hippocampus, map only, closes chapter 2: ADR-027). Before that 2026-10-18 night (pallium stage 2.2 rerun after a remap fix, passes in mixed patches, three seeds, not yet frozen; runs on the GPU in WSL2, about 10x faster; before that 2026-10-17: affect redefined in the world of chapter 2 and frozen; 2.0 and 2.1 off the chain; learning rates mutate multiplicatively; 100 generations per stage).
 
 ## How a stage is judged
 
@@ -72,7 +72,7 @@ remapping the stored populations and freezing again.
 | 2.3h critic | the 2.3 brain (formula critic) in a harsh world: one berry per bush worth one berry, a poison berry as costly as a good one is good, a quarter of the metabolic rate, born 0.75 full; the poison and good kinds swap at tick 800 from generation 50 on (`calm_first(50)`); aversion learning rates start x10; 2 episodes per generation | frozen 2026-10-20, **off the chain since 2026-10-21** (replaced by 2.3c) | Re-evaluated (16 worlds) main 1065 vs control 802, **+264 +-87** (+238, +128, +426); **head to head +359 +-76**. Lesions: no_plasticity 40 54 52, pallium 87 99 85, us_taste 87 93 90, **value_av 94 87 91 (used)**, value_app 105 101 109 (not used). After the switch the critic's first bite still favours the kinds good now in all three seeds (poison / good 0.06 / 0.14, 0.06 / 0.09, 0.08 / 0.11), the control's in one of three. Lab: aversion after 6 painful meals 12.0 (control 9.7), after 12 without pain 2.1 (control 9.7); a small blocking effect (second cue 4.8 vs 5.5; control 2.6 vs 2.8). STAGE_LOG v58-v65. |
 | 2.3c critic | the critic built from cells: a dopamine cell with a resting rate (rate minus rest = the error), a tonic habenula carrying pain, inhibitory ventral striatal value cells (`value_app` D1-type rule, `value_av` D2-type) reaching dopamine fast through tonic pallidal cells (`ventral_pallidum`, `gp_habenular`) and slowly through slow synapses (`ProjectionSpec.lag`): TD, gamma about 0.9; 2.3h's harsh world and calm start | frozen 2026-10-21, **off the chain since 2026-10-21** (replaced by 2.3s) | Re-evaluated (16 worlds) main 1086 vs control (pain teacher) 802, **+284 +-100** (+91, +337, +424); **head to head +798 +-65**. Lesions: no_plasticity 46 52 55, pallium 83 92 89, value_av 97 91 87 (used), value_app 101 106 105 (not used); dopamine 46 43 38, habenula 48 48 52, ventral_pallidum 51 50 53, gp_habenular 50 59 54 (tonic cells: a standing error, not a pure measure of use). Lab: extinction 10.0 -> -0.45 (control 9.7 -> 9.7; seed 2 overshoots to -2.9); error on the sixth painful meal: bush -0.38, bites -0.82. After the switch the critic's creatures take up the kinds that turned good (bites per creature 0.6 -> 1.0-1.2), the control's barely. Seed 2 resumed from its generation-79 checkpoint after a memory kill and run to 100. STAGE_LOG v66-v71. |
 | 2.3s critic | 2.3c with both sides taught by dopamine (look and pallium -> `valence_app` under `da`, the mirror of the aversive side) and pain reaching the habenula through `us_pain` (B24S); control 2.3c's | **frozen** 2026-10-21, passes; on the critic page | Re-evaluated (16 worlds) main 1086 vs control 802, **+285 +-74** (+315, +143, +396); **head to head +808 +-65** (+938, +747, +738); as 2.3c (+284, +798). Lesions: no_plasticity 48 47 55, appetite learning off 97 100 92 (a little, one seed), aversion learning off 49 53 61, pallium 91 87 84, us_taste 92 83 88, value_av 94 92 94, value_app 110 106 99 (not used); tonic cells 41-56. Evolved pain -> habenula 41-73% of the design (desaturated). Lab: extinction 8.7 -> 0.04 (control 9.7 -> 9.7); error at the bites, first -> sixth painful meal, -0.78 -> -0.65. STAGE_LOG v74-v75. |
-| chapter 2, next | dopamine critic (from cells) -> hands -> basal ganglia with actor -> curiosity -> hippocampus (map of places only) | planned (ADR-025, ADR-027) | The definitions `old2.1`-`old2.5` and `x.td` in `stages.py` are the first design on the reversal brain; each stage is defined again when its turn comes. |
+| chapter 2, next | hands and basal ganglia with the actor, one stage (ADR-028) -> curiosity -> hippocampus (map of places only) | planned (ADR-025, ADR-027, ADR-028) | The definitions `old2.1`-`old2.5` and `x.td` in `stages.py` are the first design on the reversal brain; each stage is defined again when its turn comes. |
 | later, 3.x-5.x | pallium clustering, cerebellum, uncertainty modulators (parked in chapter 2); sequences and replay on the place map, simulating, mentalizing, speaking | planned | |
 
 ## Next steps
@@ -142,20 +142,16 @@ remapping the stored populations and freezing again.
 
 ## Known issues and open points
 
-- **To do: reorganise and document the code (user, 2026-10-19).** Bugs have been getting more frequent, and the code
-  is hard to follow for the user and for agents.
-  - `life/experiments/stages.py` is about 1600 lines with every stage in one file: split it per stage or chapter
-    (world builders, brain definitions, stage registry).
-  - Ambiguous names: `life/lab.py` (stepping a world by hand) vs `life/labtests.py` (scripted lab experiments).
-  - `life/brain.py` has long blocks of JAX math without comments; for example the plasticity coefficients
-    `Genome.A`-`D` are defined without saying what they are (for the hebb rule: dw = eta * mod * (A pre post + B pre +
-    C post + D); the other rules use A and C differently, see `plasticity_rule`).
-  - (Done 2026-10-20) Recordings store the life's food and pain values (`save_recording(rules=...)`), and the
-    dashboard and the book's strips mark poison per phase of a life (`dashboard.poison_phases`; older recordings:
-    inferred per phase from the bites).
-  - An example of a bug this caused: an `abcd` set on a projection is silently replaced by the inherited genes
-    (`remap_genomes` carries A-D over for a projection that keeps its rule), which flipped the sign of the `td`
-    critic variant (STAGE_LOG v54).
+- **Done (2026-10-23): the code reorganised and documented** (user, 2026-10-19: bugs were getting more frequent, the
+  code hard to follow). `life/experiments/stages.py` (2000 lines) is split into `base.py`, `worlds.py`,
+  `chapter1.py`, `chapter2.py`, `side_paths.py` and `evaluate.py` (map: `life/experiments/README.md`); `stages.py`
+  keeps the command line and re-exports every name, so scripts and probes are unchanged. Checked: every stage's
+  definition, world-rules digest and control brain identical before and after; the only change is the listing order
+  (chain first). Names the side paths shared with the chain now carry a suffix (`W12_PARKED`, `W22_OLD`, `B23_OLD`,
+  `B24_OLD`). `life/lab.py` (stepping a world by hand) is `life/sandbox.py` (`Sandbox`), apart from the lab
+  experiments in `life/labtests.py`. `life/brain.py`: the plasticity coefficients A-D, the rules and the learning
+  step are commented. Still a trap, now documented in `brain.remap_genomes`: A-D are inherited for a projection that
+  keeps its rule, so a changed `abcd` there is ignored (STAGE_LOG v54).
 
 - The pain-blind control of 1.1 does not evolve avoidance by look within 150 generations, though it could.
 - Learned appetite for the staple spreads to the innately avoided poison type, which looks 80% like it (assay).

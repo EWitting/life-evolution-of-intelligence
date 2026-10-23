@@ -1,6 +1,6 @@
 # Frozen stages
 
-A frozen stage is finished: its definition in `life/experiments/stages.py` does not change and its lineage is not
+A frozen stage is finished: its definition in `life/experiments/` (`chapter1.py`, `chapter2.py`) does not change and its lineage is not
 rerun. Each directory holds the stage's definition as data and the final population of every seed. Tooling and
 file layout: `life/freeze.py`. Guard: `tests/test_frozen.py` fails when a frozen stage's definition changes or a
 stored population no longer loads.
@@ -87,7 +87,7 @@ direct route was the additive mutation of learning rates, which traps an idle ra
 new eye columns interpolated (`stages.interpolate_eyes`); 2.1 starts each seed from the same seed of 2.0, with
 `stages.sum_affect_init`.
 
-## Side paths (defined in `stages.py`, not part of the lineage)
+## Side paths (defined in `life/experiments/side_paths.py`, not part of the lineage)
 
 The runs of the side paths were deleted on 2026-10-12 (disk space; findings are in `docs/STAGE_LOG.md`). A stage
 that starts from one needs that parent rerun first.

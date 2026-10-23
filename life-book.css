@@ -220,3 +220,32 @@
 .lb-fig-bad { fill: var(--lb-bad); }
 .lb-fig-good { fill: var(--lb-good); }
 .lb-fig-skull { font-size: 24px; fill: #fff; }
+/* the front page's growing brain (js/life-book.js, growth): no names, cells in their group's colour, what a stage adds
+   fades in and lights up */
+.lb-growth { margin: 0 auto; }
+.lb-growframe { position: relative; }
+.lb-growframe .lb-growsvg { border: none; background: transparent; padding-bottom: 1.6rem; box-sizing: content-box; }
+.lb-growsvg text, .lb-growsvg .lb-group, .lb-growsvg .lb-grouplabel, .lb-growsvg .lb-gcentre { display: none; }
+/* only the senses and the motor neurons say what they are */
+.lb-growsvg rect.lb-io ~ text.lb-regsub { display: inline; font-size: 26px; fill: var(--lb-ink2); }
+.lb-growsvg .lb-reg, .lb-growsvg .lb-sock, .lb-growsvg .lb-edge, .lb-growsvg .lb-mod { transition: opacity 0.7s ease; }
+.lb-growsvg .lb-gh { opacity: 0; pointer-events: none; }
+.lb-growsvg .lb-cell { fill: hsl(var(--h) 62% 66%); stroke: hsl(var(--h) 45% 45%); }
+.quarto-dark .lb-growsvg .lb-cell { fill: hsl(var(--h) 45% 42%); stroke: hsl(var(--h) 45% 60%); }
+.lb-growsvg .lb-reg.lb-gnew rect.lb-cell { stroke: var(--lb-new); stroke-width: 4; }
+.lb-growsvg .lb-edge:not(.lb-gnew), .lb-growsvg .lb-mod:not(.lb-gnew) { opacity: 0.55; }
+.lb-growsvg .lb-edge.lb-gnew path:first-child { stroke: var(--lb-new); }
+.lb-growsvg .lb-edge.lb-gnew [class$="-fill"] { fill: var(--lb-new); }
+.lb-growsvg .lb-edge.lb-gnew line { stroke: var(--lb-new); }
+.lb-growsvg .lb-gh.lb-edge, .lb-growsvg .lb-gh.lb-mod { opacity: 0; }
+/* where the animation is: the stage names along the bottom, the current one in ink (not controls) */
+.lb-growsteps { position: absolute; left: 0; right: 0; bottom: 4px; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 6px;
+                font-size: 0.78rem; color: var(--lb-muted); opacity: 0.8; pointer-events: none; }
+.lb-growsteps span { transition: color 0.4s ease; }
+.lb-growsteps .lb-past { color: var(--lb-ink2); }
+.lb-growsteps .lb-on { color: var(--lb-new); font-weight: 600; }
+.lb-growarrow { color: var(--lb-axis); }
+/* the front page's clip (scripts/front_clip.py) */
+.lb-hero { margin: 0.4rem 0 1.4rem; }
+.lb-hero video { display: block; width: 100%; height: auto; aspect-ratio: 1024 / 470; }
+.lb-hero figcaption { font-size: 0.85rem; color: var(--lb-ink2); margin-top: 0.4rem; line-height: 1.45; }

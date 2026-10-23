@@ -374,7 +374,7 @@ override them freely; when one does, add or amend an entry so the record stays c
 ## ADR-028 Hands and the actor are one stage (2026-10-23)
 
 - Decided with the user after 2.3s was frozen. Amends ADR-025 ("hands return as a short adaptation step before the
-  actor"). Not built yet; the wiring is designed and checked (mirror review, lab tests) before generation 0.
+  actor"). Built as stage 2.5 (`life/experiments/chapter2.py`, STAGE_LOG v76-v79).
 - **One stage.** Main: the critic brain (2.3s) with hands and the actor (basal ganglia). Control: the critic brain
   with hands, without the actor. Both start from the 2.3s population and meet the hands world at the same time; the
   control run is the hands adaptation step, measured next to main in the same worlds.
@@ -390,9 +390,19 @@ override them freely; when one does, add or amend an entry so the record stays c
   the striatal cell for it may have been silent.
 - **The D2 (NoGo) path runs through a GPe relay** (Dale's law: striatal cells are inhibitory, so NoGo excites GPi
   only by disinhibition).
-- **Motor programmes:** a release programme (USE when holding and facing an empty cell, no innate value input) was
-  accepted tentatively; the user is concerned about hand-writing a programme for every action the actor might use.
-  Open, to settle with the design.
+- **Motor programmes (settled 2026-10-23/24):** no release programme. The actor has one channel per hand action
+  (USE, EAT: D1, D2, gpi, `act` each); what an action means comes from the state the striatum reads (pallium), not
+  from a programme per situation. Appetite and aversion mean "eat it / do not eat it": `grasp`, `no_feed` (about
+  what is seen) and `ingest`, `no_eat` (about what is held) act on EAT; USE has no valence programme, only the
+  actor and the innate sensor reflexes (STAGE_LOG v77). The connections of the old programmes that conflicted with
+  hands (`grasp`/`no_feed` and their inputs) evolve per synapse down to 0 (STAGE_LOG v79).
+- **Start of the stage (`hands_init`):** the drifted synapses from the held senses and onto EAT start silent
+  (in 2.3s the hand was always empty and EAT meant nothing); designed projections keep their start. A full hand
+  drives Go(USE) at 0.2 (ACT_EXPLORE, evolvable), so putting down is sampled and can be learned. `ingest`
+  swallows by default (bias SWALLOW 2.5, evolvable).
+- **World:** the 2.2 world with the harsh settings, eating with EAT only (`eat_on_pick=False`), **no reversal**
+  (it was for the critic stage only; user, 2026-10-24). A world where only berries show their type (plain bushes)
+  was tried and dropped (STAGE_LOG v77).
 - **A gene for an asymmetry between burst and dip learning: later**, only if the probes show a reason (it adds
   noise to selection).
 - **The code was reorganised first** (2026-10-23): `life/experiments/` split by chapter (README there),

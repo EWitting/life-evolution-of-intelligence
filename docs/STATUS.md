@@ -40,6 +40,13 @@ than control (user, 2026-10-01). One life is mostly luck, so a design is checked
    minutes for 1.1), so `stages summary/versus/lesions` need not be run separately for the book. Tables, graphs
    and diagrams on the page follow the data file; the text of a page is written by hand when the stage is frozen.
 
+   **Front page**, once the stage is on the chain (`chain` in `book/data/brain_layout.json`, set with
+   `tools/brain_layout`): the growing brain follows by itself (every export rewrites `book/data/growth.json`; it
+   ends at the last stage of the chain). The clip does not: after `dashboards <key>`, run
+   `python scripts/front_clip.py --pick`, pick a scene, save it in `book/media/front_clip.json` (`stage`, `agent`,
+   `t0`), run `python scripts/front_clip.py` (light and dark recordings, ~1 min each), look at
+   `book/media/front-*.jpg`, and commit `book/media/` (details in `book/README.md`, "The front page").
+
 **Fitness = well-fed lifetime from the first meal** (ADR-024; v19-v22 used energy acquired). Cells that lesions
 show unused in every seed are removed.
 

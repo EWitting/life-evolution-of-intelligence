@@ -44,12 +44,19 @@ Two visuals on `index.qmd` show the latest stage of the chain (the brain layout'
 - **The growing brain** (`growth` below) reads `data/growth.json`, which every export writes again (or
   `python -m life.book growth`): it follows by itself. Stage names are the titles of the pages whose `status` line
   shows the stage.
-- **The clip** (`media/front.mp4`, poster `front.jpg`) is recorded from the latest stage's published dashboard in the
-  dashboard's hero mode: `python scripts/front_clip.py` (needs `uv pip install -e .[media]`: playwright with the
-  installed Edge, and ffmpeg from imageio-ffmpeg). The scene (creature, first tick) is picked by hand in
-  `media/front_clip.json`; `--pick` lists good ones (many bites and pains while alive). A scene picked for an older
-  stage is ignored, so after a new stage run the script once, check the clip, and save a scene if it is dull.
-  Commit `media/`.
+- **The clip** (`media/front-light.mp4` and `front-dark.mp4`, posters `front-*.jpg`; the page plays the one of its
+  theme) is recorded from the latest stage's published light dashboard in the dashboard's hero mode (`?hero`: world
+  and brain only, on the book's background, connections glowing with their activity). It does **not** follow by
+  itself. After a new stage joins the chain and its dashboards are published (`python -m life.book dashboards <key>`):
+
+      python scripts/front_clip.py --pick      # good scenes of the new stage: creature and first tick (bites, pains)
+      # write the one you like to media/front_clip.json: {"stage": "<key>", "agent": <i>, "t0": <tick>, "ticks": 200}
+      python scripts/front_clip.py             # records light and dark (about a minute each)
+
+  Look at `media/front-light.jpg` and `front-dark.jpg` (or the page), then commit `media/`. A scene saved for an
+  older stage is ignored (the script then takes the best `--pick` itself), so the clip never shows an old brain by
+  accident, but a scene picked by eye is usually better. Needs `uv pip install -e .[media]` (playwright, which uses the
+  installed Edge, and ffmpeg from imageio-ffmpeg). Options: `--agent`, `--t0`, `--ticks`, `--theme`.
 
 The export takes the newest finished run of every seed (`stages.seed_runs`) and records the run directories. The
 page then warns by itself when the runs differ from the current stage definition, when there are fewer than three

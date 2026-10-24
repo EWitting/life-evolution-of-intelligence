@@ -3684,3 +3684,25 @@ Lab, no reversal (main / actor off / control, last 12 trials): hold box poison e
 0.68 / 0.03 / 0; good eaten 0.49 / 0.57 / 0.61, good put down 0.26 / 0 / 0. Pick box: picked by look in no arm
 (0.61 / 0.65); of picked poison main eats 0.16, puts down 0.50 (others eat 0.55). Generation 0 (16 paired worlds):
 main 912, actor off 884 (-29 +- 14), control 742 (-170 +- 35); 2.3s 1218 in its own world.
+
+## v80 (2026-10-24): 2.5 three seeds, frozen; the actor's circuit is used, its learning barely
+
+Seeds 0-2, 50 generations each (seed 0 stopped at 39 / 49 and finished with `--resume RUN --generations 50`, a new
+option; its fitness.csv rebuilt from the log; checkpoints now write fitness.csv). Last 50 generations main 1519 vs
+control 918 (+602 +- 41). Book export (8 worlds): re-evaluated main 1961 (1733, 2216, 1933) vs control 1161 (1021,
+1116, 1346), **+800 +- 154**; **head to head +1274 +- 117** (+1069, +1474, +1280). Poison share 0.17-0.23 vs 0.42-0.44.
+Lesions (% of intact): act 44 / 48 / 53, no_eat 49 / 64 / 71, no_plasticity 37 / 49 / 51, pallium 80 / 80 / 94,
+learn_off:striatum_d1 98 / 88 / 98, learn_off:striatum_d2 100 / 96 / 100, grasp 100, no_feed 97-99.
+Evolved (seed 0): `held -> Go(USE)` 0.20 -> 0.31, `act -> out` 4 -> 7.9, D2 -> gpe 0.5 -> 0.8, striatal learning
+rates unchanged (0.10); `grasp -> EAT` 3 -> 0.74, `no_feed -> EAT` 3 -> 1.85; `ingest -> EAT` 8 -> 11.9, `no_eat ->
+EAT` 3 -> 4.2. Lives (seed 0, generation 20): 37.8 picks, 13.7 eaten, 23.6 put down per creature (control 11.6, 9.7,
+1.2); holding 38% of living ticks, mostly a poison berry facing a bush.
+Lab (`book` extra `hand_lab`, 24 creatures per seed): held poison eaten in the last 12 trials 0.04 (main) / 0.03
+(actor learning off) / 0.41 (control), put down 0.94 / 0.96 / 0; held good berries put down 0.46 / 0.48 / 0
+(seed 2: 0.82); bushes picked by kind in no arm (poison / good 0.60 / 0.63).
+Why the learning is not used: in the pick box the critic's value cells stay at about 0 at a bush, and the dopamine
+after picking a poison berry that is then put down is about 0 or positive (+0.02): no pain follows, so no NoGo lesson.
+The cost of a wrong pick is time, which the critic does not count. `gpi_gate_lab.py` (gpi also inhibiting the USE and
+EAT motor neurons, offset at rest, lab only): picking by kind unchanged. Candidates for the user: an opportunity cost
+(tonic dopamine as average reward, Niv et al. 2007), or a world where a wrong action hurts.
+Frozen 2026-10-24 (user: worst case unfreeze for improvements). Page: book/actor.qmd.

@@ -135,7 +135,7 @@ def report(key: str) -> str:
     return "\n".join(lines)
 
 
-BUILDING = ("2.5",)   # stages being designed, not yet in the book: checked as the chain is
+BUILDING = ()   # stages being designed, not yet in the book: checked as the chain is
 
 
 def chain() -> list[str]:

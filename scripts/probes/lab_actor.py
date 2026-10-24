@@ -8,7 +8,7 @@
 Per block of trials, for poison and good berries: the share eaten, put down, or neither (still held when the box is
 cleared), and for `pick` also the share picked. Escape learning shows as 'put down' rising for poison in main only.
 
-    .venv/Scripts/python.exe scripts/probes/lab_actor.py [hold|pick ...] [--agents 24] [--seed 0]"""
+    .venv/Scripts/python.exe scripts/probes/lab_actor.py [hold|pick ...] [--agents 24] [--seed 0] [--runs MAIN,CONTROL]"""
 import argparse
 
 import jax.numpy as jnp
@@ -26,6 +26,7 @@ ap.add_argument("--seed", type=int, default=0)
 ap.add_argument("--block", type=int, default=12)
 ap.add_argument("--explore", type=float, default=None, help="start of held -> Go (USE), instead of ACT_EXPLORE")
 ap.add_argument("--only", default="", help="comma-separated conditions to run (main, actor off, control)")
+ap.add_argument("--runs", default="", help="'<main run>,<control run>': evolved populations instead of the stage's start")
 a = ap.parse_args()
 
 s = S.STAGES["2.5"]
@@ -46,8 +47,12 @@ if a.explore is not None:
 def population(brain, learn_off=()):
     exp = S.make_exp(s, brain, "lab", 1, 0)
     L = make_layout(exp)
-    pop = freeze.load_frozen("2.3s", a.seed, exp)
-    pop = s.adapt_init(pop, L) if s.adapt_init else pop
+    if a.runs:
+        from life.run import load_population
+        pop = load_population(a.runs.split(",")[0 if brain is s.brain else 1], exp)
+    else:
+        pop = freeze.load_frozen("2.3s", a.seed, exp)
+        pop = s.adapt_init(pop, L) if s.adapt_init else pop
     # as run_stage does for main (dense_plastic): every synapse of a learned projection exists
     pop = pop._replace(mask=jnp.where(((np.asarray(L.rule) > 0) & (np.asarray(L.allowed) > 0))[None], 1.0, pop.mask))
     if learn_off:

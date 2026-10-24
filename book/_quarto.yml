@@ -27,6 +27,7 @@ book:
     - part: "Chapter 2: reinforcing"
       chapters:
         - critic.qmd
+        - actor.qmd
 
 format:
   html:

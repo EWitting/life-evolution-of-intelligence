@@ -63,6 +63,15 @@ LESIONS = {
         "gp_habenular": "tonic: the fast path of bad predictions; a standing error when silenced",
         "learn_off:valence_app": "the new appetite learning from dopamine: is it used",
         "learn_off:valence_av": "its mirror, the aversion learning: for comparison"},
+    "2.5": {
+        "no_plasticity": "how much of the fitness needs learning within a life",
+        "learn_off:striatum_d1": "the actor's Go learning (release what paid off): is it used",
+        "learn_off:striatum_d2": "the actor's NoGo learning (hold back what hurt): is it used",
+        "act": "the actor's drive onto USE and EAT: does the creature lean on it",
+        "no_eat": "aversion to the held berry stopping it from being eaten",
+        "grasp": "the old appetite for what is seen, now on EAT: help or hindrance",
+        "no_feed": "the old aversion to what is seen, now on EAT: help or hindrance",
+        "pallium": "the code that the critic and the actor read"},
 }
 
 
@@ -1129,6 +1138,57 @@ def conditioning_lab(s, main: list[Path], control: list[Path]):
                                     {"name": "first meal without the pain", "y": sig("sig7"), "cls": "good", "dash": True}]}],
                                 "caption": "The critic's error on every tick of a trial, mean of 24 creatures of the last "
                                            "generation of every seed. Negative: worse than expected."})]
+
+
+@extra("2.5")
+def hand_lab(s, main: list[Path], control: list[Path]):
+    """Operant boxes (life.labtests.OPERANT) on 24 evolved creatures of every seed: `hold` (a berry in hand, nothing
+    ahead: eat it, put it down, or neither) and `pick` (a bush ahead: pick, then eat or put down), 48 trials each.
+    Main, main with the actor's learning off (`striatum_d1`, `striatum_d2`), and control; share of first and last 12
+    trials ending in each outcome, by berry kind."""
+    from .experiments import stages as S
+    import jax.numpy as jnp
+    from .labtests import OPERANT, operant
+    from .run import load_population, make_layout
+
+    def one(run, learn_off=False):
+        exp = S.make_exp(s, _brain_of(s, run), "book", 1, 0)
+        pop = load_population(run, exp)
+        if learn_off:
+            L = make_layout(exp)
+            off = np.isin(np.asarray(L.proj_id), [i for i, n in enumerate(L.proj_names)
+                                                   if n.split("->")[1].startswith("striatum")])
+            pop = pop._replace(eta=jnp.where(jnp.asarray(off)[None], 0.0, pop.eta))
+        rs, rules_fn = s.build(exp)
+        out = {}
+        for proto in ("hold", "pick"):
+            r = operant(exp, pop, rs, rules_fn, OPERANT[proto], n_agents=24, seed=0)
+            for part, sl in (("first", slice(0, 12)), ("last", slice(-12, None))):
+                ev, po, pk = r["event"][sl], r["poison"][sl], r["picked"][sl]
+                for kind, m in (("poison", po), ("good", ~po)):
+                    if proto == "pick":
+                        out[f"pick {part} {kind} picked"] = float(pk[m].mean())
+                        m = m & pk
+                    for e, name in ((1, "eaten"), (2, "put down")):
+                        out[f"{proto} {part} {kind} {name}"] = float((ev[m] == e).sum() / max(m.sum(), 1))
+        return out
+
+    arms = {"main": [one(r) for r in main], "actor learning off": [one(r, True) for r in main],
+            "control": [one(r) for r in control]}
+    row = lambda label, k: [label] + [_stat([d[k] for d in arms[a]]) for a in arms]
+    rows = [row("Held poison eaten, first 12 trials", "hold first poison eaten"),
+            row("... last 12 trials", "hold last poison eaten"),
+            row("Held poison put down, last 12 trials", "hold last poison put down"),
+            row("Held good berry eaten, last 12 trials", "hold last good eaten"),
+            row("Held good berry put down, last 12 trials", "hold last good put down"),
+            row("Bush picked, poison / good kind, last 12 trials: poison", "pick last poison picked"),
+            row("... good", "pick last good picked"),
+            row("Picked poison eaten, last 12 trials", "pick last poison eaten"),
+            row("Picked poison put down, last 12 trials", "pick last poison put down")]
+    return [("hand_lab", {"columns": ["Share of trials", *arms], "rows": rows,
+                          "caption": "Lab boxes on 24 creatures of the last generation of every seed, 48 trials each, "
+                                     "learning on. Hold: a berry in hand and nothing ahead. Pick: a bush ahead. "
+                                     "Actor learning off: main with the striatum's learning switched off."})]
 
 
 if __name__ == "__main__":

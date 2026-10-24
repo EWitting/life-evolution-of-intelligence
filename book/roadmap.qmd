@@ -37,10 +37,11 @@ what was expected. This chapter adds the parts in the following order.
 - **Dopamine** (@sec-critic). A cell that fires when things turn out better than expected, and falls silent
   when they turn out worse. With it the creature learns what predicts food, and what predicts the thing that
   predicts food. It also learns to like, and to unlearn, which chapter 1 could not do.
-- **Hands.** Until here the creature eats what it grasps. Now it can pick something up, hold it and eat it later,
-  so that there is something to choose between.
-- **The basal ganglia.** The same dopamine signal teaches which *action* to take. This is learning by trial and
-  error, as in a rat that learns to press a lever.
+- **Hands and the basal ganglia** (@sec-actor). Until here the creature eats what it grasps. Now it can pick
+  something up, hold it, and eat it or put it down, so that the same action means different things. The basal
+  ganglia's actor, taught by the same dopamine signal, chooses between them. In this world evolution made most of
+  the actor's choice innate; learning which *action* pays, as a rat learns to press a lever, needs a world where a
+  wrong action costs something the critic can see, or a sense of time lost.
 - **Curiosity.** New things become a little rewarding in themselves, so that the creature tries what it does not
   know yet.
 - **The hippocampus.** A map of places, made from the creature's sense of its own movement and from landmarks, so

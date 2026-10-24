@@ -3774,3 +3774,22 @@ picked 0.34 / 0.28 / 0.02, good bushes 0.90 / 0.73 / 0.59; dopamine right after 
 critic does not learn to expect the prick). So the drop in poison picks over trials (0.56 -> 0.34) happens with the
 striatum's learning off as well (valence network); what the actor's learning adds is picking the good kinds (+0.17).
 Next: seeds 1 and 2 (`runs/jobs_thorns_s12.txt`, one job at a time).
+
+## v84 (2026-10-24): x.thorns three seeds, the actor's learning used in all
+
+Seeds 1 and 2, 50 generations, one job at a time with `wsl --shutdown` after each (`runs/run_jobs_fresh_wsl.sh`; the
+WSL machine kept ~3.8 GB between back-to-back jobs and Claude Code stopped the queue once for low memory). Evolved
+populations, 8 paired thorn worlds each (`gen0_actor.py`, `RUNS`), seeds 0 / 1 / 2:
+
+| | seed 0 | seed 1 | seed 2 |
+|---|---|---|---|
+| main | 1616 | 1390 | 1190 |
+| actor learning off | -458 +- 115 (72%) | -725 +- 80 (48%) | -134 +- 29 (89%) |
+| control | -604 +- 128 | -496 +- 137 | -532 +- 122 |
+
+(2.5 without thorns: `learn_off:striatum_d1` 98 / 88 / 98%.) Lab (`thorn_lab.py --runs`, last 24 trials, main /
+learning off / control): good bushes picked 0.90 / 0.73 / 0.59, 0.97 / 0.80 / 0.56, 0.72 / 0.58 / 0.56; poison
+bushes 0.34 / 0.28 / 0.02, 0.65 / 0.58 / 0.05, 0.17 / 0.17 / 0.09. In every seed the actor's learning adds picks of
+the good kinds (+0.14 to +0.17), while fewer poison picks over the trials come with or without it (valence network);
+the control picks few bushes of either kind. Dopamine right after a poison pick stays at -0.4 to -0.8 (the prick is
+never predicted). Open: whether x.thorns replaces the 2.5 world (refreeze of 2.5, the user's decision).

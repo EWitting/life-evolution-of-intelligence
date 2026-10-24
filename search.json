@@ -124,7 +124,7 @@
     "href": "roadmap.html#chapter-2-reinforcing",
     "title": "Roadmap",
     "section": "Chapter 2: reinforcing",
-    "text": "Chapter 2: reinforcing\nThe brain of an early fish. The first vertebrates hunted in open water, and nearly all the parts of the vertebrate brain were already there. What they add is learning from surprise: the difference between what happened and what was expected. This chapter adds the parts in the following order.\n\nDopamine (Critic). A cell that fires when things turn out better than expected, and falls silent when they turn out worse. With it the creature learns what predicts food, and what predicts the thing that predicts food. It also learns to like, and to unlearn, which chapter 1 could not do.\nHands. Until here the creature eats what it grasps. Now it can pick something up, hold it and eat it later, so that there is something to choose between.\nThe basal ganglia. The same dopamine signal teaches which action to take. This is learning by trial and error, as in a rat that learns to press a lever.\nCuriosity. New things become a little rewarding in themselves, so that the creature tries what it does not know yet.\nThe hippocampus. A map of places, made from the creature’s sense of its own movement and from landmarks, so that it can learn where food is, not only what it looks like, and go back there when it is out of sight. It comes after the basal ganglia: a map is of use only to a creature that can learn which way to turn at a place. Goldfish without this part of the pallium can still learn to swim to a marker, but no longer to a place.\n\nParked until these work: precise timing (the cerebellum), and modulators that set how fast the creature learns when its world is steady or changing.\nTwo things change in how the stages are done. The circuits are designed and tested before any evolution, and evolution then tunes them, in fewer generations than in chapter 1. And the learning stages get lab experiments: one creature in a scripted situation, as in an animal lab, to see whether it learns the way real animals do.",
+    "text": "Chapter 2: reinforcing\nThe brain of an early fish. The first vertebrates hunted in open water, and nearly all the parts of the vertebrate brain were already there. What they add is learning from surprise: the difference between what happened and what was expected. This chapter adds the parts in the following order.\n\nDopamine (Critic). A cell that fires when things turn out better than expected, and falls silent when they turn out worse. With it the creature learns what predicts food, and what predicts the thing that predicts food. It also learns to like, and to unlearn, which chapter 1 could not do.\nHands and the basal ganglia (Actor). Until here the creature eats what it grasps. Now it can pick something up, hold it, and eat it or put it down, so that the same action means different things. The basal ganglia’s actor, taught by the same dopamine signal, chooses between them. In this world evolution made most of the actor’s choice innate; learning which action pays, as a rat learns to press a lever, needs a world where a wrong action costs something the critic can see, or a sense of time lost.\nCuriosity. New things become a little rewarding in themselves, so that the creature tries what it does not know yet.\nThe hippocampus. A map of places, made from the creature’s sense of its own movement and from landmarks, so that it can learn where food is, not only what it looks like, and go back there when it is out of sight. It comes after the basal ganglia: a map is of use only to a creature that can learn which way to turn at a place. Goldfish without this part of the pallium can still learn to swim to a marker, but no longer to a place.\n\nParked until these work: precise timing (the cerebellum), and modulators that set how fast the creature learns when its world is steady or changing.\nTwo things change in how the stages are done. The circuits are designed and tested before any evolution, and evolution then tunes them, in fewer generations than in chapter 1. And the learning stages get lab experiments: one creature in a scripted situation, as in an animal lab, to see whether it learns the way real animals do.",
     "crumbs": [
       "Roadmap"
     ]
@@ -849,6 +849,83 @@
     "crumbs": [
       "Chapter 2: reinforcing",
       "<span class='chapter-number'>8</span>  <span class='chapter-title'>Critic</span>"
+    ]
+  },
+  {
+    "objectID": "actor.html",
+    "href": "actor.html",
+    "title": "Actor",
+    "section": "",
+    "text": "The circuit\nHands, and a circuit that chooses what they do\nUntil now biting a bush was eating it. In this stage the two come apart: the action USE picks a berry with an empty hand and puts it down with a full one, and EAT eats what is held. The same action now means different things in different situations, and the right one depends on what is in hand. That is the job of an actor: a circuit that learns, from the critic’s surprise, which action pays where.",
+    "crumbs": [
+      "Chapter 2: reinforcing",
+      "<span class='chapter-number'>9</span>  <span class='chapter-title'>Actor</span>"
+    ]
+  },
+  {
+    "objectID": "actor.html#the-circuit",
+    "href": "actor.html#the-circuit",
+    "title": "Actor",
+    "section": "",
+    "text": "Hands. The pallium reads what is in hand as well as what is ahead, so the critic and the actor know what is held. Appetite and aversion now mean eat it and do not eat it: cells about the held berry drive and stop swallowing (ingest, no_eat), and a berry in hand is swallowed by default unless aversion stops it. The old programmes about what is seen act on eating as well; evolution may take them away entirely.\nThe actor has one channel per hand action, USE and EAT. In each, a Go cell (striatum_d1) and a NoGo cell (striatum_d2) read the pallium. Go inhibits the steadily active output cell (gpi), which releases the action’s programme (act); NoGo inhibits a relay (gpe) that otherwise holds gpi down, so NoGo strengthens the brake.\nLearning. A dopamine burst strengthens the synapses onto Go cells that were active a moment before, a pause those onto NoGo cells. Which cells were active is marked by a copy of the action just taken, sent back to the striatum (an efference copy), so an action is credited also when an older circuit chose it.\nA start. A full hand releases USE now and then, so that putting down is tried at all and can be learned. Evolution sets how often.",
+    "crumbs": [
+      "Chapter 2: reinforcing",
+      "<span class='chapter-number'>9</span>  <span class='chapter-title'>Actor</span>"
+    ]
+  },
+  {
+    "objectID": "actor.html#biology",
+    "href": "actor.html#biology",
+    "title": "Actor",
+    "section": "Biology",
+    "text": "Biology\nThe dorsal striatum is the input of the basal ganglia. Its cells come in two kinds with two dopamine receptors. D1 cells form the direct pathway: they inhibit the output nuclei (GPi, SNr), whose steady inhibition holds the brainstem’s motor programmes shut, and so release an action. D2 cells form the indirect pathway through the external pallidum and hold it back. Dopamine bursts strengthen the active synapses onto D1 cells and pauses those onto D2 cells, so actions that turned out better than expected are released more readily and worse ones held back. With the critic of the last page this is the actor-critic of reinforcement learning, and the basal ganglia are its best-known biological counterpart.\nThe two pathways are old: lampreys, the oldest living vertebrate line, have them, with the same transmitters and dopamine receptors. That the striatum gets a copy of the motor command is clearest in songbirds, where a basal ganglia loop learns which variant of a song syllable was sung when the song turned out well.",
+    "crumbs": [
+      "Chapter 2: reinforcing",
+      "<span class='chapter-number'>9</span>  <span class='chapter-title'>Actor</span>"
+    ]
+  },
+  {
+    "objectID": "actor.html#the-world",
+    "href": "actor.html#the-world",
+    "title": "Actor",
+    "section": "The world",
+    "text": "The world\nThe critic’s harsh world, without the switch: one berry to a bush, a poison berry costing as much food as a good one gives, small meals and a slow metabolism. Eating now takes a hand: a berry must be picked, then eaten. A held berry blocks the next pick until it is eaten or put down, and it can only be put down on an empty cell.",
+    "crumbs": [
+      "Chapter 2: reinforcing",
+      "<span class='chapter-number'>9</span>  <span class='chapter-title'>Actor</span>"
+    ]
+  },
+  {
+    "objectID": "actor.html#did-it-work",
+    "href": "actor.html#did-it-work",
+    "title": "Actor",
+    "section": "Did it work?",
+    "text": "Did it work?\n\n\n\nThe actor pays, and by a wide margin. Creatures with it live far longer well fed, alone and when the two kinds share a world, and much less of what they eat is poison. Silencing the actor’s output (act) halves their fitness: they lean on it.\nBut they do not lean on its learning. Switching off the striatum’s learning costs a few percent at most. What the creatures learn within their lives is the aversion to the berry in hand (no_eat): which berry not to swallow. That a berry which is not swallowed gets put down they do not learn; evolution built it into the actor’s circuit, as a hand that is full releases USE.\n\n\n\nIn the lab a creature gets a berry in hand with nothing ahead, or stands in front of a bush, 48 times. Creatures with the actor soon eat none of the poison and put it down instead, whether their striatum learns or not; they also put down a share of the good berries. Creatures without the actor cannot put anything down: they hold the berry, and often swallow it in the end. Neither kind picks the poison bushes less often than the good ones.\nWhy the learning is not used. Picking a poison bush costs nothing the critic can see. The creature looks at the berry, finds it bad, and puts it down; no pain follows, so no pause of dopamine says “do not pick this”. The real cost is time, a few ticks lost to every wrong pick, and the critic does not count time. Animals have a signal for it: the steady level of dopamine follows the rate of reward, which makes a wasted moment a cost. That is for a later stage.",
+    "crumbs": [
+      "Chapter 2: reinforcing",
+      "<span class='chapter-number'>9</span>  <span class='chapter-title'>Actor</span>"
+    ]
+  },
+  {
+    "objectID": "actor.html#full-results",
+    "href": "actor.html#full-results",
+    "title": "Actor",
+    "section": "Full results",
+    "text": "Full results\n\n\n\n\n\n\nNoteFitness over the generations\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nNoteAll fitness measures\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nNoteAll lesions\n\n\n\n\n\n\n\n\nThe old programmes about what is seen (grasp, no_feed) are not needed any more: evolution turned their hold on eating down to a quarter and a half of their design.\n\n\n\n\n\n\n\n\n\nNoteWhat it took\n\n\n\n\n\n\nThe berry has to tell something new. In a first version every kind’s bush, berry and empty bush shared one colour, and creatures picked and ate at once, as if eating were still biting: the berry in hand said nothing the bush had not. A world where only the berries were coloured was tried and dropped.\nValence means eating. First the cells about what is seen still worked on USE, as they had when picking was eating. A creature that had learned to dislike a poison berry in hand then could not put it down: the dislike stopped the hand. On EAT, where appetite and aversion belong, USE is the actor’s.\nNo switch. The critic’s world swapped poison and good kinds halfway through every life. Here a berry that is refused is never tasted again, so a dislike learned before the swap never faded, and both kinds ended up disliked. The switch was there to show the critic at work and is gone from this stage on.\nA fresh start for the hands. In the critic stage the hand was always empty and EAT did nothing, so the synapses from the held senses and onto EAT had drifted unselected; they start silent. Swallowing what is held is the default, with a strength that evolves.\nThe right moment. The cells of appetite and aversion read the pallium of the same tick, not of the tick before: a berry is swallowed on its first tick in hand, before a lesson a tick late could stop it.\nRoom to remove. The connections of the old programmes that got in the way can be evolved down to nothing, not only weakened.\nFifty generations, not a hundred: the difference between the two kinds was clear by generation 20 to 30.",
+    "crumbs": [
+      "Chapter 2: reinforcing",
+      "<span class='chapter-number'>9</span>  <span class='chapter-title'>Actor</span>"
+    ]
+  },
+  {
+    "objectID": "actor.html#runs",
+    "href": "actor.html#runs",
+    "title": "Actor",
+    "section": "Runs",
+    "text": "Runs",
+    "crumbs": [
+      "Chapter 2: reinforcing",
+      "<span class='chapter-number'>9</span>  <span class='chapter-title'>Actor</span>"
     ]
   }
 ]

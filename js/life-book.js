@@ -926,15 +926,16 @@
     const COL = {s1: 'var(--lb-s1)', s2: 'var(--lb-s2)', good: 'var(--lb-good)', bad: 'var(--lb-bad)', muted: 'var(--lb-muted)'};
     const ticks = (a, b, k) => { const st = Math.pow(10, Math.floor(Math.log10((b - a) / k || 1))), s = [1, 2, 5, 10].map(f => f * st).find(f => (b - a) / f <= k);
                                  const out = []; for (let v = Math.ceil(a / s) * s; v <= b + 1e-9; v += s) out.push(+v.toFixed(6)); return out; };
+    const tk = v => String(+v.toFixed(6));   // axis ticks as plain numbers: 20, 0.5 (not 20.0, 0.500)
     let s = `<svg viewBox="0 0 ${W} ${H}" class="lb-svg" role="img" aria-label="${esc(X.ylabel)} over ${esc(X.xlabel)}">`;
     P.forEach((p, i) => {
       const ox = m.l + i * (pw + gap), x = v => ox + (v - x0) / (x1 - x0 || 1) * pw, y = v => m.t + (hi - v) / (hi - lo) * ph;
       const y2 = v => m.t + (hi2 - v) / hi2 * ph;
-      for (const v of ticks(lo, hi, 4)) s += `<line class="lb-grid" x1="${ox}" x2="${ox + pw}" y1="${y(v)}" y2="${y(v)}"/>` + (i ? '' : `<text class="lb-tick" x="${ox - 6}" y="${y(v) + 4}" text-anchor="end">${fmt(v)}</text>`);
-      if (has2 && i === n - 1) for (const v of ticks(0, hi2, 4)) s += `<text class="lb-tick lb-muted" x="${ox + pw + 6}" y="${y2(v) + 4}">${fmt(v)}</text>`;
+      for (const v of ticks(lo, hi, 4)) s += `<line class="lb-grid" x1="${ox}" x2="${ox + pw}" y1="${y(v)}" y2="${y(v)}"/>` + (i ? '' : `<text class="lb-tick" x="${ox - 6}" y="${y(v) + 4}" text-anchor="end">${tk(v)}</text>`);
+      if (has2 && i === n - 1) for (const v of ticks(0, hi2, 4)) s += `<text class="lb-tick lb-muted" x="${ox + pw + 6}" y="${y2(v) + 4}">${tk(v)}</text>`;
       if (X.zero && lo < 0) s += `<line class="lb-axis" x1="${ox}" x2="${ox + pw}" y1="${y(0)}" y2="${y(0)}"/>`;
       if (X.xticks) X.x.forEach((v, j) => { s += `<text class="lb-tick" x="${x(v)}" y="${H - m.b + 15}" text-anchor="middle">${esc(X.xticks[j])}</text>`; });
-      else for (const v of ticks(x0, x1, 4)) s += `<text class="lb-tick" x="${x(v)}" y="${H - m.b + 15}" text-anchor="middle">${fmt(v)}</text>`;
+      else for (const v of ticks(x0, x1, 4)) s += `<text class="lb-tick" x="${x(v)}" y="${H - m.b + 15}" text-anchor="middle">${tk(v)}</text>`;
       if (X.vline != null) s += `<line class="lb-axis" stroke-dasharray="3 3" x1="${x(X.vline)}" x2="${x(X.vline)}" y1="${m.t}" y2="${m.t + ph}"/>`
                               + (X.vlabel ? `<text class="lb-tick" x="${x(X.vline) + 4}" y="${m.t + 10}">${esc(X.vlabel)}</text>` : '');
       if (p.title) s += `<text class="lb-label" x="${ox}" y="${m.t - 9}">${esc(p.title)}</text>`;

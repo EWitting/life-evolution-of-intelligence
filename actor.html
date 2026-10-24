@@ -380,7 +380,10 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#the-circuit" id="toc-the-circuit" class="nav-link active" data-scroll-target="#the-circuit">The circuit</a></li>
   <li><a href="#biology" id="toc-biology" class="nav-link" data-scroll-target="#biology">Biology</a></li>
   <li><a href="#the-world" id="toc-the-world" class="nav-link" data-scroll-target="#the-world">The world</a></li>
-  <li><a href="#did-it-work" id="toc-did-it-work" class="nav-link" data-scroll-target="#did-it-work">Did it work?</a></li>
+  <li><a href="#did-it-work" id="toc-did-it-work" class="nav-link" data-scroll-target="#did-it-work">Did it work?</a>
+  <ul class="collapse">
+  <li><a href="#in-the-lab" id="toc-in-the-lab" class="nav-link" data-scroll-target="#in-the-lab">In the lab</a></li>
+  </ul></li>
   <li><a href="#full-results" id="toc-full-results" class="nav-link" data-scroll-target="#full-results">Full results</a></li>
   <li><a href="#runs" id="toc-runs" class="nav-link" data-scroll-target="#runs">Runs</a></li>
   </ul>
@@ -415,7 +418,7 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <div class="lb-takeaway">
 <p><strong>New:</strong> hands. A creature picks a berry from a bush, holds it, and then eats it or puts it down. And the basal ganglia’s <em>actor</em>: for each hand action a pair of striatal cells, one that releases the action and one that holds it back, taught by the critic’s dopamine.</p>
-<p><strong>Result:</strong> creatures with the actor live better than creatures without it, and they use what the actor learns. In a world where the poison bushes have thorns, they learn within their lives which bushes are worth picking: the good kinds more often, the thorny ones less. Without its learning the actor still works, but costs them a fifth of their fitness, in one line up to two fifths.</p>
+<p><strong>Result:</strong> creatures with the actor live better than creatures without it, and they use what the actor learns. In a world where the poison bushes have thorns, they learn within their lives to leave the thorny bushes, and the actor’s learning keeps them picking the good ones. Without its learning the actor still works, but costs them a fifth of their fitness, in one line up to two fifths.</p>
 </div>
 <p>Until now biting a bush was eating it. In this stage the two come apart: the action USE picks a berry with an empty hand and puts it down with a full one, and EAT eats what is held. <strong>The same action now means different things in different situations</strong>, and the right one depends on what is in hand. That is the job of an actor: a circuit that learns, from the critic’s surprise, which action pays where.</p>
 <div data-life="brain" data-stage="2.5">
@@ -452,11 +455,19 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <p><strong>The actor pays.</strong> Creatures with it live longer well fed than creatures without it, alone and when the two kinds share a world, and less of what they eat is poison. The lead is smaller in one of the three lines, where the creatures without the actor had learned to leave the thorny bushes alone almost completely.</p>
 <p><strong>And they lean on its learning.</strong> Switching off the learning of the actor’s Go cells costs about a fifth of the fitness (a tenth to two fifths per line), that of the NoGo cells about a tenth. Silencing the actor’s output (<code>act</code>) costs a third.</p>
-<div data-life="table" data-stage="2.5" data-example="hand_lab">
+<section id="in-the-lab" class="level3">
+<h3 class="anchored" data-anchor-id="in-the-lab">In the lab</h3>
+<p>One creature at a time is put in a box, 48 times: in front of a bush with an empty hand, or with a berry in hand and nothing ahead. Which two of the four kinds are poison, and thorny, is new for every creature, so whatever it does with them after the first trials it has learned.</p>
+<div data-life="lines" data-stage="2.5" data-example="pick_curve">
 
 </div>
-<p><strong>In the lab</strong> a creature stands in front of a bush, or gets a berry in hand with nothing ahead, 48 times. Creatures with the actor pick the good kinds more and more often, and the thorny ones less: in the last trials they pick nearly every good bush and fewer than half of the thorny ones. With the striatum’s learning off they still learn to leave thorny bushes, through the cells of appetite and aversion, but pick fewer good ones: what the actor learns is which bushes pay. Creatures without the actor learn to avoid the thorny bushes too, and more strictly, but they also pick fewer good ones and cannot put a poison berry down once it is in hand.</p>
+<p><strong>The actor keeps the good bushes picked.</strong> Creatures with the actor learn to leave the thorny bushes (from about seven in ten picked to four) and go on picking more than eight in ten of the good ones. With the striatum’s learning switched off they leave the thorny bushes just as well, through the cells of appetite and aversion, but the good ones come along: fewer and fewer of them are picked. The prick spreads to everything that looks like a bush, and what the actor learns, from the good berries that follow a pick, holds that back. Creatures without the actor leave the thorny bushes almost completely, but also four in ten of the good ones from the start.</p>
+<div data-life="lines" data-stage="2.5" data-example="hold_curve">
+
+</div>
+<p><strong>A poison berry in hand is put down.</strong> At first a creature with the actor swallows a poison berry it holds; within a dozen trials it puts most of them down instead, with or without the striatum’s learning: that what is not swallowed gets put down is built in. Creatures without the actor cannot put anything down: they hold the berry, and often swallow it in the end.</p>
 <p><strong>Why thorns.</strong> Without them a wrong pick cost nothing the critic could see: the creature found the berry bad and put it down, a few ticks lost. The actor’s circuit was used then, but its learning was not (a few percent at most). A prick is a cost of the action itself, which the cells about eating cannot prevent: only picking less can. Thorns on every bush were tried first. They failed: a creature that cannot yet tell the kinds apart loses food on every pick, and a prick after every pick taught aversion to every colour.</p>
+</section>
 </section>
 <section id="full-results" class="level2">
 <h2 class="anchored" data-anchor-id="full-results">Full results</h2>
@@ -515,8 +526,26 @@ ul.task-list li input[type="checkbox"] {
 </div>
 </div>
 </div>
-<div class="callout callout-style-default callout-note callout-titled" title="What it took">
+<div class="callout callout-style-default callout-note callout-titled" title="The lab in numbers">
 <div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>The lab in numbers
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<div data-life="table" data-stage="2.5" data-example="hand_lab">
+
+</div>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="What it took">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
@@ -525,7 +554,7 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
 </div>
-<div id="callout-4" class="callout-4-contents callout-collapse collapse">
+<div id="callout-5" class="callout-5-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
 <ul>
 <li><strong>The berry has to tell something new.</strong> In a first version every kind’s bush, berry and empty bush shared one colour, and creatures picked and ate at once, as if eating were still biting: the berry in hand said nothing the bush had not. A world where only the berries were coloured was tried and dropped.</li>

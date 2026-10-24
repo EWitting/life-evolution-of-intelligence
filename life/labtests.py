@@ -217,8 +217,8 @@ def conditioning(exp, pop, protocol: dict, sim: float, n_agents: int = 24, seed:
 # holding a berry with nothing ahead (`hold`) or with an empty hand at a full bush (`pick`). The four berry types are
 # the creature's novel XOR types (looks drawn per life by the stage's world, poison ++ and --). Per tick the brain
 # chooses an action (sampled as in the world); the box applies it:
-#   USE   empty hand at a full bush: the berry is in hand, the bush ahead is empty (with thorns,
-#         WorldConfig.thorn_pain, the pick pricks: pain on the next tick); empty hand at a berry on the ground: picked up; holding something with nothing ahead: put down (the berry lies ahead)
+#   USE   empty hand at a full bush: the berry is in hand, the bush ahead is empty (from a thorny
+#         bush, WorldConfig.thorn_pain, the pick pricks: pain on the next tick); empty hand at a berry on the ground: picked up; holding something with nothing ahead: put down (the berry lies ahead)
 #   EAT   holding a berry: eaten; taste 3 or pain 1 on the next tick (one berry, as in the world)
 #   step or turn: nothing is ahead any more (it walked or turned away from the bush or the berry)
 # A trial lasts `ticks`, then the box is cleared (`iti` blank ticks). Escape learning (Mowrer 1947): a creature that has
@@ -242,6 +242,7 @@ def operant(exp, pop, rs, rules_fn, protocol: dict, n_agents: int = 24, seed: in
     pop = jax.tree_util.tree_map(lambda x: x[:NA], pop)
     ids = [[rs.local(S.variant(v)[o]) for o in (S.BUSH, S.BERRY, S.EMPTY_BUSH)] for v in S.NOVEL]
     looks, poison = np.zeros((NA, 4, 3, K), np.float32), np.zeros((NA, 4), bool)
+    thorny = np.zeros((NA, 4), bool)
     phased = exp.world.switch_tick > 0   # rules [episodes, 2 phases, ...]: the box uses the first phase
     for a in range(NA):
         r = jax.tree_util.tree_map(lambda x: x[0, 0] if phased else x[0], rules_fn(0, jax.random.PRNGKey(7919 * seed + a)))
@@ -249,6 +250,7 @@ def operant(exp, pop, rs, rules_fn, protocol: dict, n_agents: int = 24, seed: in
         for i in range(4):
             looks[a, i] = app[ids[i]]
             poison[a, i] = fv[ids[i][1]] < 0
+            thorny[a, i] = bool(np.asarray(r.thorny)[ids[i][0]])
     ix = {n: names.index(n) for n in names}
     vis = [ix[f"vis+0.app{k}"] for k in range(K)]
     hand = [ix[f"held_app{k}"] for k in range(K)]
@@ -313,7 +315,7 @@ def operant(exp, pop, rs, rules_fn, protocol: dict, n_agents: int = 24, seed: in
                 if act[a] == 4:
                     if held[a] < 0 and ahead[a] == BUSH:
                         held[a], ahead[a], e = kind[a], EMPTY, 3
-                        pain[a] = exp.world.thorn_pain
+                        pain[a] = exp.world.thorn_pain * thorny[a, kind[a]]
                     elif held[a] < 0 and ahead[a] == BERRY:
                         held[a], ahead[a], e = kind[a], NONE, 3
                     elif held[a] >= 0 and ahead[a] == NONE:

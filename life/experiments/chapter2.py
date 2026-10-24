@@ -563,14 +563,16 @@ stage(Stage("2.5", "s2_5_actor", "2.3s", B25, W25, VISION_CH1, BODY_25,
                   "critic brain with hands"))
 
 # Thorns (user, 2026-10-24): in 2.5 a wrong pick cost only time, so the actor's learning had no job (STAGE_LOG v80).
-# Every bush now pricks at the pick, a cost of the action itself that the eating cells cannot stop. A prick costs half
-# a good berry's food (6 units): with half the bushes poison and poison put down in hand, picking at random nets
-# zero, as eating at random did in chapter 1, so only telling the bushes apart by look pays. The pain is a poison
-# berry's (1), so the critic sees each wrong pick.
-THORN_FOOD = 3.0
-THORN_PAIN = 1.0
+# A pick from a thorny bush pricks: a cost of the action itself, which the eating cells cannot stop. Thorns on every
+# bush (the user's first choice) starved the stage's start at every setting tried (generation 0, STAGE_LOG v82): eating
+# at random already nets zero here, so any cost per pick makes the start lose food, and a pain that says nothing about
+# the kind taught aversion to every colour. Fallback (user): only the poison bushes of each life are thorny, so the
+# prick tells the same as the poison and a pick by look saves it. Food 1 and pain 0.3 per prick: the start lives
+# (main 669 against 850 without thorns, control -192 +- 60); 3 and 1 halved that.
+THORN_FOOD = 1.0
+THORN_PAIN = 0.3
 W25T = replace(W25, thorn_food=THORN_FOOD, thorn_pain=THORN_PAIN)
 stage(Stage("x.thorns", "x_thorns", "2.3s", B25, W25T, VISION_CH1, BODY_25,
-            lambda exp: pallium_world(exp, one_berry=1.0, thorns=True),
+            lambda exp: pallium_world(exp, one_berry=1.0, thorns="poison"),
             **{**_S15, "generations": 50}, evolution=EVOLUTION_2EP, control_brain=B25H, adapt_init=hands_init,
-            notes="2.5 with thorny bushes: a pick costs half a good berry and pricks"))
+            notes="2.5 with thorny poison bushes: a pick from one costs food and pricks"))

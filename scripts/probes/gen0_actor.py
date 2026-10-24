@@ -11,6 +11,7 @@ reversal, and the paired difference from main with its standard error over world
 
     WORLDS=16 [STAGE=x.thorns] [RUNS=<main run>,<control run>] python scripts/probes/gen0_actor.py
 
+THORN=food,pain: the prick's settings (x.thorns); THORNY=poison: only poison bushes are thorny. CONDS: comma-separated conditions to run (default all).
 STAGE: another stage with the 2.5 brains (x.thorns: thorny bushes; then also picks per creature). RUNS: evolved
 populations (e.g. the 2.5 runs) for main and control instead of the stage's start."""
 import os
@@ -26,6 +27,16 @@ from life.run import make_layout, make_simulate
 WORLDS = int(os.environ.get("WORLDS", 16))
 s = S.STAGES[os.environ.get("STAGE", "2.5")]
 RUNS = os.environ.get("RUNS", "").split(",") if os.environ.get("RUNS") else None
+if os.environ.get("THORN"):   # 'food,pain' of a prick (world sweep of x.thorns)
+    from dataclasses import replace as _r
+    _f, _p = (float(v) for v in os.environ["THORN"].split(","))
+    s = _r(s, world=_r(s.world, thorn_food=_f, thorn_pain=_p))
+    print("THORN food", _f, "pain", _p, flush=True)
+if os.environ.get("THORNY") == "poison":   # only the poison bushes are thorny (fallback)
+    from dataclasses import replace as _r
+    from life.experiments.chapter1 import pallium_world as _pw
+    s = _r(s, build=lambda exp: _pw(exp, one_berry=1.0, thorns="poison"))
+    print("THORNY poison only", flush=True)
 import os as _os
 from dataclasses import replace as _replace
 from life.experiments.chapter2 import hands as _hands, actor as _actor, B24S as _B24S, ACT_EXPLORE as _AE
@@ -55,8 +66,9 @@ def setup(stage, brain, dense, learn_off=()):
 
 
 parent = S.STAGES["2.3s"]
-conds = {"main": setup(s, s.brain, True), "actor off": setup(s, s.brain, True, ("striatum",)),
-         "control": setup(s, s.control_brain, False), "2.3s": setup(parent, parent.brain, False)}
+conds = {"main": lambda: setup(s, s.brain, True), "actor off": lambda: setup(s, s.brain, True, ("striatum",)),
+         "control": lambda: setup(s, s.control_brain, False), "2.3s": lambda: setup(parent, parent.brain, False)}
+conds = {k: f() for k, f in conds.items() if k in os.environ.get("CONDS", ",".join(conds)).split(",")}
 res = {}
 for label, (stage, exp, pop) in conds.items():
     rs, fn = stage.build(exp)

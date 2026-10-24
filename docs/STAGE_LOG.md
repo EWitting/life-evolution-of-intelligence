@@ -3727,3 +3727,30 @@ creature starves by about tick 400 after 4 picks (12 food) and under 2 berries e
 reckoning assumed every good berry picked is eaten; at the start fewer than half are, and even the evolved 2.5 lives
 (37.8 picks, 13.7 eaten) would lose about 113 food to thorns for 82 gained. The evolved-population block was stopped
 (the laptop ran low on memory). Nothing evolved yet.
+
+## v82 (2026-10-24): thorn settings; thorns on every bush fail, poison bushes only
+
+User: tune first, thorns on poison bushes only as the fallback, one stage (from 2.3s, not a follow-on of 2.5).
+Generation 0 of x.thorns from the 2.3s start, 8 paired worlds (`gen0_actor.py`, new `STAGE`, `THORN=food,pain`,
+`THORNY=poison`, `CONDS`, `RUNS`), fitness main / actor off / control:
+
+| thorns | food, pain | main | actor off | control | good / poison eaten (main, 1st half) |
+|---|---|---|---|---|---|
+| none (2.5) | - | 850 | -25 +- 10 | -158 +- 41 | 9.9 / 8.1 |
+| every bush | 1, 0.3 | 154 | -5 +- 2 | +13 +- 10 | 2.0 / 1.9 |
+| every bush | 0.5, 0.3 | 263 | -3 +- 6 | +31 +- 28 | 2.6 / 2.4 |
+| every bush | 1, 0 | 159 | -7 +- 6 | -17 +- 8 | 4.8 / 3.8 |
+| every bush | 0, 0.3 | 469 | +11 +- 14 | +96 +- 77 | 3.2 / 3.2 |
+| poison only | 3, 1 | 308 | -7 +- 5 | -60 +- 23 | 4.4 / 1.7 |
+| poison only | 1, 0.3 | 669 | -33 +- 15 | -192 +- 60 | 7.2 / 3.4 |
+
+(The rest of the first grid, food 1.5 and pain 1, was stopped: it could only be worse.) Thorns on every bush fail on
+both counts, at sizes too small to make always picking a loss: the food cost, because eating at random already nets
+zero here, so the start (hardly telling the kinds apart yet) loses food on every pick and dies before it learns; the
+pain, because a prick after every pick is learned by the aversion cells as aversion to every colour (good berries
+eaten 3.2 instead of 9.9, good = poison). **Chosen: thorns on the poison bushes only, food 1, pain 0.3** (x.thorns):
+the prick then tells what the poison tells, and only a pick by look avoids it.
+Lab (`thorn_lab.py`, the pick box now pricks only thorny kinds, stage start): dopamine right after a pick -0.47
+(poison) vs +0.05 (good), the dip shrinking to -0.23 over 96 trials; poison bushes picked 0.63 -> 0.52, good 0.64 ->
+0.63, alike in all three arms (the actor's learning not yet involved); of picked poison main eats 0.14, actor off 0.30.
+Evolution x.thorns seed 0 (main, control) started.

@@ -263,7 +263,7 @@ ANC_POISON_WEIGHT = 0.0   # spawn weight of the ancestral poison type (0: none)
 
 def learning_world(exp, reverse: bool = False, springs: float = 0.0, berries: int | None = None,
                    shared_colour: bool = False, novel_sim: float | None = None, novel_xor: bool = False,
-                   one_berry: float = 0.0, thorns: bool = False):
+                   one_berry: float = 0.0, thorns: bool | str = False):
     """Four novel berry types (two of them poison, drawn per life, with a look drawn per life), one ancestral good
     and one ancestral poison type, no onions. NOVEL_WEIGHT sets how much of the supply is novel: familiar food
     should keep a non-learner alive, novel food should be worth trying."""
@@ -427,7 +427,7 @@ B22P = extend(B18S, regions=(R("pallium", PALLIUM_N, sign="exc", alpha=1.0, bias
 
 
 def pallium_world(exp, novel_sim: float | None = None, xor: bool = True, reverse: bool = False, one_berry: float = 0.0,
-                  thorns: bool = False):
+                  thorns: bool | str = False):
     return learning_world(exp, springs=SPRINGS_17, berries=LEARN_BERRIES, novel_xor=xor, reverse=reverse, one_berry=one_berry,
                           thorns=thorns,
                           novel_sim=PALLIUM_SIM if novel_sim is None else novel_sim)

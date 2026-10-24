@@ -415,7 +415,7 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <div class="lb-takeaway">
 <p><strong>New:</strong> hands. A creature picks a berry from a bush, holds it, and then eats it or puts it down. And the basal ganglia’s <em>actor</em>: for each hand action a pair of striatal cells, one that releases the action and one that holds it back, taught by the critic’s dopamine.</p>
-<p><strong>Result:</strong> creatures with the actor live much better than creatures without it. They pick nearly every bush, judge the berry in hand, and put the poison down. They use the actor’s circuit heavily, but as an evolved route, not by learning: what they learn is which berry not to swallow; that whatever is not swallowed gets put down is innate.</p>
+<p><strong>Result:</strong> creatures with the actor live better than creatures without it, and they use what the actor learns. In a world where the poison bushes have thorns, they learn within their lives which bushes are worth picking: the good kinds more often, the thorny ones less. Without its learning the actor still works, but costs them a fifth of their fitness, in one line up to two fifths.</p>
 </div>
 <p>Until now biting a bush was eating it. In this stage the two come apart: the action USE picks a berry with an empty hand and puts it down with a full one, and EAT eats what is held. <strong>The same action now means different things in different situations</strong>, and the right one depends on what is in hand. That is the job of an actor: a circuit that learns, from the critic’s surprise, which action pays where.</p>
 <div data-life="brain" data-stage="2.5">
@@ -428,32 +428,35 @@ ul.task-list li input[type="checkbox"] {
 <li><strong>The actor</strong> has one channel per hand action, USE and EAT. In each, a <em>Go</em> cell (<code>striatum_d1</code>) and a <em>NoGo</em> cell (<code>striatum_d2</code>) read the pallium. Go inhibits the steadily active output cell (<code>gpi</code>), which releases the action’s programme (<code>act</code>); NoGo inhibits a relay (<code>gpe</code>) that otherwise holds <code>gpi</code> down, so NoGo strengthens the brake.</li>
 <li><strong>Learning.</strong> A dopamine burst strengthens the synapses onto Go cells that were active a moment before, a pause those onto NoGo cells. Which cells were active is marked by a copy of the action just taken, sent back to the striatum (an <em>efference copy</em>), so an action is credited also when an older circuit chose it.</li>
 <li><strong>A start.</strong> A full hand releases USE now and then, so that putting down is tried at all and can be learned. Evolution sets how often.</li>
+<li><strong>Nothing new for the thorns.</strong> A prick is a pain like a snake bite, felt by the pain cells the critic already reads; the brain is the same as without thorns.</li>
 </ul>
 </section>
 <section id="biology" class="level2">
 <h2 class="anchored" data-anchor-id="biology">Biology</h2>
 <p>The dorsal striatum is the input of the basal ganglia. Its cells come in two kinds with two dopamine receptors. D1 cells form the <em>direct</em> pathway: they inhibit the output nuclei (GPi, SNr), whose steady inhibition holds the brainstem’s motor programmes shut, and so release an action. D2 cells form the <em>indirect</em> pathway through the external pallidum and hold it back. Dopamine bursts strengthen the active synapses onto D1 cells and pauses those onto D2 cells, so actions that turned out better than expected are released more readily and worse ones held back. With the critic of the last page this is the <em>actor-critic</em> of reinforcement learning, and the basal ganglia are its best-known biological counterpart.</p>
 <p>The two pathways are old: lampreys, the oldest living vertebrate line, have them, with the same transmitters and dopamine receptors. That the striatum gets a copy of the motor command is clearest in songbirds, where a basal ganglia loop learns which variant of a song syllable was sung when the song turned out well.</p>
+<p>Learning to leave defended prey alone is old too. Pike that snap at three-spined sticklebacks get their mouths pricked by the spines and soon stop attacking them, while still taking minnows; toads stung by a bee stop snapping at bees, and at the flies that look like them.</p>
 </section>
 <section id="the-world" class="level2">
 <h2 class="anchored" data-anchor-id="the-world">The world</h2>
 <p>The critic’s harsh world, without the switch: one berry to a bush, a poison berry costing as much food as a good one gives, small meals and a slow metabolism. Eating now takes a hand: a berry must be picked, then eaten. A held berry blocks the next pick until it is eaten or put down, and it can only be put down on an empty cell.</p>
+<p><strong>The poison bushes have thorns</strong> (not in OHOL, though real gooseberry bushes are spiny). Picking from one pricks: a small pain and a little food lost, at the pick itself, before anything is eaten. Which kinds are poison, and so thorny, is drawn anew for every life, so it has to be learned each time.</p>
 <div data-life="settings" data-stage="2.5">
 
 </div>
 </section>
 <section id="did-it-work" class="level2">
 <h2 class="anchored" data-anchor-id="did-it-work">Did it work?</h2>
-<div data-life="verdict" data-stage="2.5" data-used="act,no_eat,no_plasticity,learn_off:striatum_d1">
+<div data-life="verdict" data-stage="2.5" data-used="act,no_plasticity,learn_off:striatum_d1">
 
 </div>
-<p><strong>The actor pays, and by a wide margin.</strong> Creatures with it live far longer well fed, alone and when the two kinds share a world, and much less of what they eat is poison. Silencing the actor’s output (<code>act</code>) halves their fitness: they lean on it.</p>
-<p><strong>But they do not lean on its learning.</strong> Switching off the striatum’s learning costs a few percent at most. What the creatures learn within their lives is the aversion to the berry in hand (<code>no_eat</code>): which berry not to swallow. That a berry which is not swallowed gets put down they do not learn; evolution built it into the actor’s circuit, as a hand that is full releases USE.</p>
+<p><strong>The actor pays.</strong> Creatures with it live longer well fed than creatures without it, alone and when the two kinds share a world, and less of what they eat is poison. The lead is smaller in one of the three lines, where the creatures without the actor had learned to leave the thorny bushes alone almost completely.</p>
+<p><strong>And they lean on its learning.</strong> Switching off the learning of the actor’s Go cells costs about a fifth of the fitness (a tenth to two fifths per line), that of the NoGo cells about a tenth. Silencing the actor’s output (<code>act</code>) costs a third.</p>
 <div data-life="table" data-stage="2.5" data-example="hand_lab">
 
 </div>
-<p><strong>In the lab</strong> a creature gets a berry in hand with nothing ahead, or stands in front of a bush, 48 times. Creatures with the actor soon eat none of the poison and put it down instead, whether their striatum learns or not; they also put down a share of the good berries. Creatures without the actor cannot put anything down: they hold the berry, and often swallow it in the end. Neither kind picks the poison bushes less often than the good ones.</p>
-<p><strong>Why the learning is not used.</strong> Picking a poison bush costs nothing the critic can see. The creature looks at the berry, finds it bad, and puts it down; no pain follows, so no pause of dopamine says “do not pick this”. The real cost is time, a few ticks lost to every wrong pick, and the critic does not count time. Animals have a signal for it: the steady level of dopamine follows the rate of reward, which makes a wasted moment a cost. That is for a later stage.</p>
+<p><strong>In the lab</strong> a creature stands in front of a bush, or gets a berry in hand with nothing ahead, 48 times. Creatures with the actor pick the good kinds more and more often, and the thorny ones less: in the last trials they pick nearly every good bush and fewer than half of the thorny ones. With the striatum’s learning off they still learn to leave thorny bushes, through the cells of appetite and aversion, but pick fewer good ones: what the actor learns is which bushes pay. Creatures without the actor learn to avoid the thorny bushes too, and more strictly, but they also pick fewer good ones and cannot put a poison berry down once it is in hand.</p>
+<p><strong>Why thorns.</strong> Without them a wrong pick cost nothing the critic could see: the creature found the berry bad and put it down, a few ticks lost. The actor’s circuit was used then, but its learning was not (a few percent at most). A prick is a cost of the action itself, which the cells about eating cannot prevent: only picking less can. Thorns on every bush were tried first. They failed: a creature that cannot yet tell the kinds apart loses food on every pick, and a prick after every pick taught aversion to every colour.</p>
 </section>
 <section id="full-results" class="level2">
 <h2 class="anchored" data-anchor-id="full-results">Full results</h2>
@@ -508,7 +511,7 @@ ul.task-list li input[type="checkbox"] {
 <div data-life="lesions" data-stage="2.5">
 
 </div>
-<p>The old programmes about what is seen (<code>grasp</code>, <code>no_feed</code>) are not needed any more: evolution turned their hold on eating down to a quarter and a half of their design.</p>
+<p>The old programmes about what is seen (<code>grasp</code>, <code>no_feed</code>) are not needed any more. Neither is the aversion to the berry in hand (<code>no_eat</code>): with the poison bushes picked less, a poison berry is seldom held.</p>
 </div>
 </div>
 </div>
@@ -531,6 +534,7 @@ ul.task-list li input[type="checkbox"] {
 <li><strong>A fresh start for the hands.</strong> In the critic stage the hand was always empty and EAT did nothing, so the synapses from the held senses and onto EAT had drifted unselected; they start silent. Swallowing what is held is the default, with a strength that evolves.</li>
 <li><strong>The right moment.</strong> The cells of appetite and aversion read the pallium of the same tick, not of the tick before: a berry is swallowed on its first tick in hand, before a lesson a tick late could stop it.</li>
 <li><strong>Room to remove.</strong> The connections of the old programmes that got in the way can be evolved down to nothing, not only weakened.</li>
+<li><strong>A cost for a wrong pick.</strong> Without one the actor’s learning was not used (the stage was first frozen so). Thorns on every bush starved the creatures at the start, at every setting tried; thorns on the poison bushes only, a small pain and a little food, let the start live and made picking by look pay.</li>
 <li><strong>Fifty generations</strong>, not a hundred: the difference between the two kinds was clear by generation 20 to 30.</li>
 </ul>
 </div>

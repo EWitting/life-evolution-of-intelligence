@@ -3754,3 +3754,23 @@ Lab (`thorn_lab.py`, the pick box now pricks only thorny kinds, stage start): do
 (poison) vs +0.05 (good), the dip shrinking to -0.23 over 96 trials; poison bushes picked 0.63 -> 0.52, good 0.64 ->
 0.63, alike in all three arms (the actor's learning not yet involved); of picked poison main eats 0.14, actor off 0.30.
 Evolution x.thorns seed 0 (main, control) started.
+
+## v83 (2026-10-24): x.thorns seed 0, the actor's learning now pays
+
+Seed 0, 50 generations, main then control one at a time (the first try, both at once, was stopped by Claude Code for
+low memory before generation 1; WSL had no large cache). Last generation fitness mean main 1633, control 1444 (2.5
+seed 0: 2464 / 1009). Evolved populations in 8 paired thorn worlds (`gen0_actor.py`, `RUNS`):
+
+| condition | fitness | good / poison eaten (1st half) | picks of thorny bushes |
+|---|---|---|---|
+| main | 1616 | 18.2 / 5.0 | 8.9 |
+| actor learning off | 1158 (**-458 +- 115**) | 13.2 / 4.4 | 7.9 |
+| control | 1012 (-604 +- 128) | 9.6 / 4.1 | 5.2 |
+| 2.3s (start) | 1233 (-383 +- 104) | 8.1 / 5.1 | - |
+
+Without thorns, learning off cost 2-12% at 2.5 (book lesions `learn_off:striatum_d1` 98 / 88 / 98); here 28%.
+Lab (`thorn_lab.py --runs`, 24 creatures, 96 trials, main / learning off / control, last 24 trials): poison bushes
+picked 0.34 / 0.28 / 0.02, good bushes 0.90 / 0.73 / 0.59; dopamine right after a poison pick stays near -0.7 (the
+critic does not learn to expect the prick). So the drop in poison picks over trials (0.56 -> 0.34) happens with the
+striatum's learning off as well (valence network); what the actor's learning adds is picking the good kinds (+0.17).
+Next: seeds 1 and 2 (`runs/jobs_thorns_s12.txt`, one job at a time).

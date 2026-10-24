@@ -9,10 +9,11 @@ in the stage's world, the same worlds for every condition (paired). A diagnostic
 Per condition: well-fed lifetime (fitness), lifetime, good and poison berries eaten per creature in each phase of the
 reversal, and the paired difference from main with its standard error over worlds.
 
-    WORLDS=16 [STAGE=x.thorns] [RUNS=<main run>,<control run>] python scripts/probes/gen0_actor.py
+    WORLDS=16 [STAGE=2.5] [RUNS=<main run>,<control run>] python scripts/probes/gen0_actor.py
 
-THORN=food,pain: the prick's settings (x.thorns); THORNY=poison: only poison bushes are thorny. CONDS: comma-separated conditions to run (default all).
-STAGE: another stage with the 2.5 brains (x.thorns: thorny bushes; then also picks per creature). RUNS: evolved
+THORN=food,pain: the prick's settings; THORNY=poison: only poison bushes are thorny (2.5 has both since v85; the side
+stage x.thorns of v81-v84). CONDS: comma-separated conditions to run (default all).
+STAGE: another stage with the 2.5 brains (with thorns also picks per creature). RUNS: evolved
 populations (e.g. the 2.5 runs) for main and control instead of the stage's start."""
 import os
 
@@ -27,7 +28,7 @@ from life.run import make_layout, make_simulate
 WORLDS = int(os.environ.get("WORLDS", 16))
 s = S.STAGES[os.environ.get("STAGE", "2.5")]
 RUNS = os.environ.get("RUNS", "").split(",") if os.environ.get("RUNS") else None
-if os.environ.get("THORN"):   # 'food,pain' of a prick (world sweep of x.thorns)
+if os.environ.get("THORN"):   # 'food,pain' of a prick (world sweep, v82)
     from dataclasses import replace as _r
     _f, _p = (float(v) for v in os.environ["THORN"].split(","))
     s = _r(s, world=_r(s.world, thorn_food=_f, thorn_pain=_p))

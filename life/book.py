@@ -35,7 +35,9 @@ WINDOW = 50                                  # generations averaged for the summ
 CURVE_COLUMNS = ("fit_mean", "fit_max", "alive_ticks", "eaten", "pain", "survivors", "temp_mean", "poison_frac")
 WORLD_KEYS = ("height", "width", "num_agents", "spawn_density", "max_food", "start_food", "hunger_per_tick",
               "food_scale", "move_cost", "turn_cost", "eat_on_pick", "pain_decay", "temperature", "ambient_temp",
-              "patches", "switch_tick", "sickness_delay")
+              "patches", "switch_tick", "sickness_delay", "thorn_food", "thorn_pain")
+# value of a world key in runs from before it existed
+WORLD_DEFAULTS = {"start_food": 1.0, "thorn_food": 0.0, "thorn_pain": 0.0}
 EVOLUTION_KEYS = ("generations", "ticks_per_generation", "siblings", "crossover", "weight_mutation_prob",
                   "mutation_std", "elite_frac", "tournament", "plastic")
 
@@ -263,7 +265,7 @@ def settings(s, run: Path) -> dict:
     cfg = _config(run)
     rs = json.loads((run / "ruleset.json").read_text())
     fit = s.fitness.__name__ if s.fitness else "default_fitness"
-    return {"world": {k: cfg["world"].get(k, 1.0 if k == "start_food" else None) for k in WORLD_KEYS},
+    return {"world": {k: cfg["world"].get(k, WORLD_DEFAULTS.get(k)) for k in WORLD_KEYS},
             "vision": cfg["vision"], "body": cfg["body"],
             "evolution": {k: cfg["evolution"].get(k) for k in EVOLUTION_KEYS},
             "fitness": fit, "objects": [n for n in rs["names"][1:]]}
@@ -274,7 +276,7 @@ def provisional(s, runs: list[Path]) -> list[str]:
     from dataclasses import asdict
     now, out = asdict(s.world), []
     for k in WORLD_KEYS:
-        was = {_config(r)["world"].get(k, 1.0 if k == "start_food" else None) for r in runs}
+        was = {_config(r)["world"].get(k, WORLD_DEFAULTS.get(k)) for r in runs}
         if was != {now.get(k)}:
             out.append(f"{k}: runs {sorted(was, key=str)}, stage definition {now.get(k)}")
     return out

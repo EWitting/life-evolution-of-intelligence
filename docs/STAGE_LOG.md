@@ -3793,3 +3793,22 @@ bushes 0.34 / 0.28 / 0.02, 0.65 / 0.58 / 0.05, 0.17 / 0.17 / 0.09. In every seed
 the good kinds (+0.14 to +0.17), while fewer poison picks over the trials come with or without it (valence network);
 the control picks few bushes of either kind. Dopamine right after a poison pick stays at -0.4 to -0.8 (the prick is
 never predicted). Open: whether x.thorns replaces the 2.5 world (refreeze of 2.5, the user's decision).
+
+## v85 (2026-10-24): 2.5 refrozen with thorns on the poison bushes
+
+User: "refreeze, update book page". Stage 2.5 is now the thorn world (`W25` has `thorn_food` 1, `thorn_pain` 0.3,
+built with `pallium_world(..., thorns="poison")`); the side stage x.thorns is gone, its runs moved into
+`runs/s2_5_actor*` (newest there, so `seed_runs` and the freeze take them; the first freeze's runs stay, older). Seed 1
+main had no layout.json (the low-memory stop came right after its recording); copied from seed 2 (seed 0 and seed 2
+identical). `python -m life.freeze 2.5` (rules digest 2848ce30908dcfa0), all 78 tests pass. The book's settings box
+shows `thorn_food` and `thorn_pain` (`WORLD_DEFAULTS`: 0 for runs from before them).
+Book export (8 worlds): last 50 generations main 1104 vs control 796, +308 +- 67 (first freeze +602); re-evaluated
+main 1578 vs control 1115, **+463 +- 191** (+739, +96, +554); head to head **+647 +- 321** (+768, +41, +1132). Poison
+share 0.18 vs 0.33. Lesions (% of intact): learn_off:striatum_d1 **79 / 61 / 91** (first freeze 98 / 88 / 98),
+learn_off:striatum_d2 80 / 86 / 102, act 72 / 56 / 81, no_plasticity 30 / 53 / 47, pallium 48 / 61 / 74, no_eat
+97 / 97 / 104 (first freeze 49-71: a poison berry is now seldom held), grasp and no_feed about 100.
+Lab (`hand_lab`, last 12 trials, main / learning off / control): pick box good picked 0.85 / 0.72 / 0.59, poison
+(thorny) 0.43 / 0.40 / 0.09, picked poison put down 0.45 / 0.55 / 0; hold box held poison eaten 0.20 / 0.27 / 0.63.
+Seed 1 is the close one: its control learned to leave thorny bushes almost completely (re-evaluated 1544).
+Actor page rewritten: thorns in the world section (with pike and sticklebacks, toads and bees in the biology),
+the learning now used, why thorns, thorns on every bush failed. Dashboards rebuilt. Front clip not re-recorded.

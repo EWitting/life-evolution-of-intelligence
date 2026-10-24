@@ -3,7 +3,7 @@
  "parent": "2.3s",
  "plastic": true,
  "dense_plastic": true,
- "rules": "aa765b93a81eb91d",
+ "rules": "2848ce30908dcfa0",
  "config": {
   "world": {
    "height": 256,
@@ -38,6 +38,8 @@
    "snake_pain": 1.0,
    "rattle_radius": 0,
    "wind_rate": 0.0,
+   "thorn_food": 1.0,
+   "thorn_pain": 0.3,
    "temperature": true,
    "ambient_temp": 0.25,
    "heat_scale": 0.15,
@@ -3482,19 +3484,19 @@
  "runs": [
   {
    "seed": 0,
-   "dir": "runs/s2_5_actor/20261024-004241",
+   "dir": "runs/s2_5_actor/20261024-153245",
    "ticks": 4000,
    "generations": 50
   },
   {
    "seed": 1,
-   "dir": "runs/s2_5_actor_seed1/20261024-010352",
+   "dir": "runs/s2_5_actor_seed1/20261024-155600",
    "ticks": 4000,
    "generations": 50
   },
   {
    "seed": 2,
-   "dir": "runs/s2_5_actor_seed2/20261024-012142",
+   "dir": "runs/s2_5_actor_seed2/20261024-162016",
    "ticks": 4000,
    "generations": 50
   }

@@ -46,11 +46,11 @@ may need (user, 2026-10-19).
 
 | stage | what it is | parent | life | seeds |
 |---|---|---|---|---|
-| 2.5 | hands and the basal ganglia's actor (one Go / NoGo channel per hand action, USE and EAT; efference copy; appetite and aversion on EAT, USE the actor's); the 2.3s harsh world without the reversal, eating by EAT only; 50 generations; control the 2.3s brain with hands (`hands`) | 2.3s | 4000 | 3 |
+| 2.5 | hands and the basal ganglia's actor (one Go / NoGo channel per hand action, USE and EAT; efference copy; appetite and aversion on EAT, USE the actor's); the 2.3s harsh world without the reversal, eating by EAT only, the poison bushes thorny (food 1, pain 0.3 per pick); 50 generations; control the 2.3s brain with hands (`hands`) | 2.3s | 4000 | 3 |
 | 2.3s | the 2.3c critic with both sides taught by dopamine (look and pallium -> `valence_app` under `da`, the mirror of the aversive side; `appetite_learning`) and pain reaching the habenula through `us_pain` (`pain_relay`); B24S | 2.2 | 4000 | 3 |
 | 2.3c | dopamine critic built from cells: a dopamine cell with a resting rate (its rate minus rest is the error), a tonic habenula carrying pain, inhibitory ventral striatal value cells (`value_app`, D1-type rule; `value_av`, D2-type) reaching dopamine fast through tonic pallidal cells (`ventral_pallidum`, `gp_habenular`) and slowly through slow synapses (`ProjectionSpec.lag`): TD, gamma about 0.9. The harsh world of 2.3h, fifty calm generations, aversion learning rates x10 at the start, 2 episodes per generation | 2.2 | 4000 | 3 |
 
-2.5 (frozen 2026-10-24, user: "worst case we'll unfreeze the stage to make improvements"): runs stopped by smart early stopping and finished with `--resume RUN --generations 50` (seed 0; seeds 1 and 2 ran 50 generations); seed 0's fitness.csv rebuilt from its log (3 significant digits). STAGE_LOG v76-v80.
+2.5 (frozen 2026-10-24, user: "worst case we'll unfreeze the stage to make improvements"; **refrozen** the same day with thorns on the poison bushes, user: "refreeze, update book page"): the runs of the side stage x.thorns (three seeds, 50 generations, from 2.3s like the first 2.5) moved into the `s2_5_actor*` directories; seed 1 main's layout.json, lost to a low-memory stop after its recording, copied from seed 2 (identical layouts). The first freeze's runs stay in the same directories (older). STAGE_LOG v76-v85.
 
 2.3s (frozen 2026-10-21, replacing 2.3c on the chain and on the critic page, user: the appetite not learning from dopamine was a forgotten mirror, better fixed in the stage than in the next): three seeds from frozen 2.2; its control is 2.3c's (the same brain, world, seeds and start; configs compared equal), the run directories copied with `copied_from.txt`. STAGE_LOG v74-v75.
 

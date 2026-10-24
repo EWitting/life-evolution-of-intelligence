@@ -1,5 +1,5 @@
 {
-  "name": "s2_5_actor",
+  "name": "x_thorns",
   "world": {
     "height": 256,
     "width": 256,
@@ -33,6 +33,8 @@
     "snake_pain": 1.0,
     "rattle_radius": 0,
     "wind_rate": 0.0,
+    "thorn_food": 1.0,
+    "thorn_pain": 0.3,
     "temperature": true,
     "ambient_temp": 0.25,
     "heat_scale": 0.15,

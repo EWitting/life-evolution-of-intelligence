@@ -553,26 +553,22 @@ B25 = actor(B25H)
 BODY_25 = replace(BODY_17, efference=True)
 # No reversal: it was there to show the critic at work (2.3); a world whose foods swap meaning at once is not one
 # that later stages should keep (user, 2026-10-24)
-W25 = replace(W22, **HARSH_WORLD, eat_on_pick=False)
+W25_PLAIN = replace(W22, **HARSH_WORLD, eat_on_pick=False)
+# Thorns (user, 2026-10-24): without them a wrong pick cost only time, so the actor's learning had no job (2.5 as first
+# frozen, STAGE_LOG v80). A pick from a thorny bush pricks: a cost of the action itself, which the eating cells cannot
+# stop. Thorns on every bush (the user's first choice) starved the stage's start at every setting tried (generation 0,
+# STAGE_LOG v82): eating at random already nets zero here, so any cost per pick makes the start lose food, and a pain
+# that says nothing about the kind taught aversion to every colour. Fallback (user): only the poison bushes of each
+# life are thorny, so the prick tells the same as the poison and a pick by look saves it. Food 1 and pain 0.3 per
+# prick: the start lives (main 669 against 850 without thorns, control -192 +- 60); 3 and 1 halved that. Tried as the
+# side stage x.thorns (three seeds, v84), then made 2.5 itself and refrozen (user, v85).
+THORN_FOOD = 1.0
+THORN_PAIN = 0.3
+W25 = replace(W25_PLAIN, thorn_food=THORN_FOOD, thorn_pain=THORN_PAIN)
 stage(Stage("2.5", "s2_5_actor", "2.3s", B25, W25, VISION_CH1, BODY_25,
-            lambda exp: pallium_world(exp, one_berry=1.0),
+            lambda exp: pallium_world(exp, one_berry=1.0, thorns="poison"),
             # 50 generations: main - control was clear by 20-30 and a generation takes 11-15 min by then (2026-10-24)
             **{**_S15, "generations": 50}, evolution=EVOLUTION_2EP, control_brain=B25H, adapt_init=hands_init,
             notes="hands (pick, hold, eat; the pallium reads the item in hand) and the basal ganglia's actor: Go and "
-                  "NoGo channels for USE and EAT learned from dopamine, credit by an efference copy; control the "
-                  "critic brain with hands"))
-
-# Thorns (user, 2026-10-24): in 2.5 a wrong pick cost only time, so the actor's learning had no job (STAGE_LOG v80).
-# A pick from a thorny bush pricks: a cost of the action itself, which the eating cells cannot stop. Thorns on every
-# bush (the user's first choice) starved the stage's start at every setting tried (generation 0, STAGE_LOG v82): eating
-# at random already nets zero here, so any cost per pick makes the start lose food, and a pain that says nothing about
-# the kind taught aversion to every colour. Fallback (user): only the poison bushes of each life are thorny, so the
-# prick tells the same as the poison and a pick by look saves it. Food 1 and pain 0.3 per prick: the start lives
-# (main 669 against 850 without thorns, control -192 +- 60); 3 and 1 halved that.
-THORN_FOOD = 1.0
-THORN_PAIN = 0.3
-W25T = replace(W25, thorn_food=THORN_FOOD, thorn_pain=THORN_PAIN)
-stage(Stage("x.thorns", "x_thorns", "2.3s", B25, W25T, VISION_CH1, BODY_25,
-            lambda exp: pallium_world(exp, one_berry=1.0, thorns="poison"),
-            **{**_S15, "generations": 50}, evolution=EVOLUTION_2EP, control_brain=B25H, adapt_init=hands_init,
-            notes="2.5 with thorny poison bushes: a pick from one costs food and pricks"))
+                  "NoGo channels for USE and EAT learned from dopamine, credit by an efference copy; the poison bushes "
+                  "have thorns (a pick from one costs food and pricks); control the critic brain with hands"))

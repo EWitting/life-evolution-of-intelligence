@@ -1,4 +1,4 @@
-"""Dopamine at the pick in the thorny pick box (x.thorns, life/labtests.py OPERANT 'pick'): per block of trials and
+"""Dopamine at the pick in the thorny pick box (2.5 since v85, first the side stage x.thorns; life/labtests.py OPERANT 'pick'): per block of trials and
 berry kind, the share picked, the dopamine on the tick before the pick (the bush ahead) and the two ticks after it
 (the prick, the berry in hand), and the share of picked berries eaten. A NoGo lesson for poison bushes needs the
 dip after a poison pick to be deeper than after a good one.
@@ -16,7 +16,7 @@ from life.experiments import stages as S
 from life.run import make_layout
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--stage", default="x.thorns")
+ap.add_argument("--stage", default="2.5")
 ap.add_argument("--runs", default="")
 ap.add_argument("--trials", type=int, default=96)
 ap.add_argument("--agents", type=int, default=24)

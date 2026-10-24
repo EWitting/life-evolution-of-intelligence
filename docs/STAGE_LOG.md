@@ -3816,3 +3816,8 @@ Afterwards: the user saved the brain layout for 2.5; growth animation and 2.5 da
 dashboards carry the layout from when they are built), front clip re-recorded (2.5, agent 37, t0 880: 6 bites, 6
 pains). User: USE is not split into pick and put down; it is meant to be a hard contextual action whose effect
 depends on objects and situation, which more OHOL rules will widen.
+Actor page (user: nicer lab, like the critic's; full table to Full results): `hand_lab` also exports learning curves
+(`pick_curve`, `hold_curve`: share per block of 6 trials, mean over seeds, one panel per arm), shown as line charts in
+"In the lab"; the table moved into a "The lab in numbers" box under Full results. The curves corrected the text: with
+the actor the good bushes stay picked (0.82 -> 0.84) while thorny ones fall (0.72 -> 0.41); with the striatum's
+learning off good picks fall along (0.79 -> 0.68). Line charts' axis ticks are plain numbers (20, 0.5).

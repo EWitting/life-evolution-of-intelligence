@@ -10,8 +10,8 @@ basal ganglia's *actor*: for each hand action a pair of striatal cells, one that
 holds it back, taught by the critic's dopamine.
 
 **Result:** creatures with the actor live better than creatures without it, and they use what the actor learns.
-In a world where the poison bushes have thorns, they learn within their lives which bushes are worth picking: the
-good kinds more often, the thorny ones less. Without its learning the actor still works, but costs them a fifth of
+In a world where the poison bushes have thorns, they learn within their lives to leave the thorny bushes, and the
+actor's learning keeps them picking the good ones. Without its learning the actor still works, but costs them a fifth of
 their fitness, in one line up to two fifths.
 :::
 
@@ -81,14 +81,27 @@ creatures without the actor had learned to leave the thorny bushes alone almost 
 fitness (a tenth to two fifths per line), that of the NoGo cells about a tenth. Silencing the actor's output (`act`)
 costs a third.
 
-<div data-life="table" data-stage="2.5" data-example="hand_lab"></div>
+### In the lab
 
-**In the lab** a creature stands in front of a bush, or gets a berry in hand with nothing ahead, 48 times. Creatures
-with the actor pick the good kinds more and more often, and the thorny ones less: in the last trials they pick
-nearly every good bush and fewer than half of the thorny ones. With the striatum's learning off they still learn to
-leave thorny bushes, through the cells of appetite and aversion, but pick fewer good ones: what the actor learns is
-which bushes pay. Creatures without the actor learn to avoid the thorny bushes too, and more strictly, but they
-also pick fewer good ones and cannot put a poison berry down once it is in hand.
+One creature at a time is put in a box, 48 times: in front of a bush with an empty hand, or with a berry in hand
+and nothing ahead. Which two of the four kinds are poison, and thorny, is new for every creature, so whatever it
+does with them after the first trials it has learned.
+
+<div data-life="lines" data-stage="2.5" data-example="pick_curve"></div>
+
+**The actor keeps the good bushes picked.** Creatures with the actor learn to leave the thorny bushes (from about
+seven in ten picked to four) and go on picking more than eight in ten of the good ones. With the striatum's learning
+switched off they leave the thorny bushes just as well, through the cells of appetite and aversion, but the good
+ones come along: fewer and fewer of them are picked. The prick spreads to everything that looks like a bush, and
+what the actor learns, from the good berries that follow a pick, holds that back. Creatures without the actor leave
+the thorny bushes almost completely, but also four in ten of the good ones from the start.
+
+<div data-life="lines" data-stage="2.5" data-example="hold_curve"></div>
+
+**A poison berry in hand is put down.** At first a creature with the actor swallows a poison berry it holds; within
+a dozen trials it puts most of them down instead, with or without the striatum's learning: that what is not
+swallowed gets put down is built in. Creatures without the actor cannot put anything down: they hold the berry, and often
+swallow it in the end.
 
 **Why thorns.** Without them a wrong pick cost nothing the critic could see: the creature found the berry bad and put
 it down, a few ticks lost. The actor's circuit was used then, but its learning was not (a few percent at most). A
@@ -111,6 +124,10 @@ every pick, and a prick after every pick taught aversion to every colour.
 
 The old programmes about what is seen (`grasp`, `no_feed`) are not needed any more. Neither is the aversion to the
 berry in hand (`no_eat`): with the poison bushes picked less, a poison berry is seldom held.
+:::
+
+::: {.callout-note collapse="true" title="The lab in numbers"}
+<div data-life="table" data-stage="2.5" data-example="hand_lab"></div>
 :::
 
 ::: {.callout-note collapse="true" title="What it took"}

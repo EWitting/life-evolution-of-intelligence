@@ -1142,6 +1142,9 @@ def conditioning_lab(s, main: list[Path], control: list[Path]):
                                            "generation of every seed. Negative: worse than expected."})]
 
 
+BLOCK = 6   # trials per point of the hand lab's learning curves
+
+
 @extra("2.5")
 def hand_lab(s, main: list[Path], control: list[Path]):
     """Operant boxes (life.labtests.OPERANT) on 24 evolved creatures of every seed: `hold` (a berry in hand, nothing
@@ -1165,6 +1168,17 @@ def hand_lab(s, main: list[Path], control: list[Path]):
         out = {}
         for proto in ("hold", "pick"):
             r = operant(exp, pop, rs, rules_fn, OPERANT[proto], n_agents=24, seed=0)
+            # learning curves: share per block of BLOCK trials, by berry kind (pick: bushes picked; hold: held
+            # berries eaten and put down)
+            ev, po, pk = (np.asarray(r[k]) for k in ("event", "poison", "picked"))
+            for kind, m in (("poison", po.astype(bool)), ("good", ~po.astype(bool))):
+                blocks = range(0, len(ev), BLOCK)
+                if proto == "pick":
+                    out[f"curve pick {kind} picked"] = [float(pk[b:b + BLOCK][m[b:b + BLOCK]].mean()) for b in blocks]
+                else:
+                    for e, name in ((1, "eaten"), (2, "put down")):
+                        out[f"curve hold {kind} {name}"] = [float((ev[b:b + BLOCK][m[b:b + BLOCK]] == e).mean())
+                                                            for b in blocks]
             for part, sl in (("first", slice(0, 12)), ("last", slice(-12, None))):
                 ev, po, pk = r["event"][sl], r["poison"][sl], r["picked"][sl]
                 for kind, m in (("poison", po), ("good", ~po)):
@@ -1187,7 +1201,27 @@ def hand_lab(s, main: list[Path], control: list[Path]):
             row("... good", "pick last good picked"),
             row("Picked poison eaten, last 12 trials", "pick last poison eaten"),
             row("Picked poison put down, last 12 trials", "pick last poison put down")]
-    return [("hand_lab", {"columns": ["Share of trials", *arms], "rows": rows,
+    curve = lambda a, k: list(np.mean([d[k] for d in arms[a]], axis=0))
+    nb = len(arms["main"][0]["curve pick good picked"])
+    x = [(i + 1) * BLOCK for i in range(nb)]   # a point per block, at its last trial
+    titles = {"main": "with the actor", "actor learning off": "actor's learning off", "control": "without the actor"}
+    pick_curve = {"x": x, "xlabel": "trial", "ylabel": "share of bushes picked",
+                  "panels": [{"title": titles[a], "series": [
+                      {"name": "good kind", "y": curve(a, "curve pick good picked"), "cls": "good"},
+                      {"name": "poison kind (thorny)", "y": curve(a, "curve pick poison picked"), "cls": "bad"}]}
+                      for a in arms],
+                  "caption": "Pick box: a bush ahead and an empty hand, 48 trials, mean of 24 creatures of the last "
+                             "generation of every seed. Which two of the four kinds are poison (and thorny) is drawn "
+                             "anew for every creature."}
+    hold_curve = {"x": x, "xlabel": "trial", "ylabel": "share of held poison berries",
+                  "panels": [{"title": titles[a], "series": [
+                      {"name": "eaten", "y": curve(a, "curve hold poison eaten"), "cls": "bad"},
+                      {"name": "put down", "y": curve(a, "curve hold poison put down"), "cls": "s1"}]}
+                      for a in arms],
+                  "caption": "Hold box: a poison berry in hand and nothing ahead (trials with a good berry left out), "
+                             "48 trials, mean of 24 creatures of the last generation of every seed."}
+    return [("pick_curve", pick_curve), ("hold_curve", hold_curve),
+            ("hand_lab", {"columns": ["Share of trials", *arms], "rows": rows,
                           "caption": "Lab boxes on 24 creatures of the last generation of every seed, 48 trials each, "
                                      "learning on. Hold: a berry in hand and nothing ahead. Pick: a bush ahead. "
                                      "Actor learning off: main with the striatum's learning switched off."})]

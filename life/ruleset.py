@@ -44,6 +44,7 @@ class RuleArrays(NamedTuple):
     decay_ticks: jnp.ndarray     # [M] int32 ticks until decay (>= 1), or -1
     appearance: jnp.ndarray      # [M, K] float
     agent_appearance: jnp.ndarray  # [K] float
+    thorny: jnp.ndarray          # [M] bool; picking from it pricks (WorldConfig.thorn_food, thorn_pain)
 
 
 @dataclass
@@ -80,7 +81,7 @@ class Ruleset:
 
     def to_arrays(self, appearance_dim: int, spawn_weight: np.ndarray | None = None,
                   food_value: np.ndarray | None = None, pain_value: np.ndarray | None = None,
-                  appearance: dict | None = None) -> RuleArrays:
+                  appearance: dict | None = None, thorny: np.ndarray | None = None) -> RuleArrays:
         """Convert to device arrays. Optional overrides let experiments change edibility or spawning
         without touching the ruleset (used for the per-generation poison swap in exp02)."""
         fv = self.food_value if food_value is None else np.asarray(food_value, np.float32)
@@ -108,6 +109,7 @@ class Ruleset:
             decay_ticks=jnp.asarray(self.decay_ticks, jnp.int32),
             appearance=jnp.asarray(app, jnp.float32),
             agent_appearance=jnp.asarray(appearance_for(AGENT_APPEARANCE_SEED, appearance_dim)),
+            thorny=jnp.asarray(np.zeros(self.size, bool) if thorny is None else thorny, bool),
         )
 
     def describe(self) -> str:

@@ -3706,3 +3706,24 @@ The cost of a wrong pick is time, which the critic does not count. `gpi_gate_lab
 EAT motor neurons, offset at rest, lab only): picking by kind unchanged. Candidates for the user: an opportunity cost
 (tonic dopamine as average reward, Niv et al. 2007), or a world where a wrong action hurts.
 Frozen 2026-10-24 (user: worst case unfreeze for improvements). Page: book/actor.qmd.
+
+## v81 (2026-10-24): thorns (side stage x.thorns), first lab and generation 0
+
+User: the time a wrong pick costs is too small to count (an opportunity cost would not help much), so a USE needs
+an outcome of its own. OHOL's wild objects offer none to a bare hand (every hand pick is worth what the item gives
+to eat; hazards hurt by nearness, not by use; costly "hungry work" needs tools), so a mechanic of our own: **thorns on
+every bush** (user). New world options `WorldConfig.thorn_food`, `thorn_pain` and `RuleArrays.thorny` (`berry_world(
+thorns=True)`): a pick from a thorny object pricks in that tick, like a snake bite (`pricks` counted). The frozen
+digests skip `thorny` while it is all zero. Settings chosen (user: always picking must not pay, telling bushes apart
+must): `THORN_FOOD` 3 = half a good berry, so with half the bushes poison and poison put down, picking at random nets
+zero (as eating at random did in chapter 1); `THORN_PAIN` 1 = a poison berry's.
+Lab (`thorn_lab.py`, pick box with thorns, stage start, 96 trials): the pick comes on the first tick (the innate
+reflex); the dopamine dip after it is the same for poison and good bushes (-0.67 falling to -0.41, all three arms),
+and the prick teaches aversion to the bush's colour, which its berry shares: of picked good berries 0.24 eaten at
+first, 0.13-0.16 later (main). Pick box on the evolved 2.5 seed 0: in main the NoGo learned at the pick spreads to
+putting down (poison put down 0.72 -> 0.27; with actor learning off 0.94), as USE is one channel for both.
+Generation 0 (8 paired worlds, stage start): main 44, actor off 44, control 46 (2.3s 1233 in its world): every
+creature starves by about tick 400 after 4 picks (12 food) and under 2 berries eaten; no gradient. The net-zero
+reckoning assumed every good berry picked is eaten; at the start fewer than half are, and even the evolved 2.5 lives
+(37.8 picks, 13.7 eaten) would lose about 113 food to thorns for 82 gained. The evolved-population block was stopped
+(the laptop ran low on memory). Nothing evolved yet.

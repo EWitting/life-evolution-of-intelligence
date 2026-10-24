@@ -53,6 +53,11 @@ class WorldConfig:
     rattle_radius: int = 0           # cells (Chebyshev): the rattle sounds once on coming within it, never within
                                      # biting range (a snake that lands next to an animal bites unannounced)
     wind_rate: float = 0.0           # chance per agent and tick of hearing a gust
+    # --- thorns (not OHOL; real gooseberry bushes are spiny): picking from a thorny object (RuleArrays.thorny)
+    # with an empty hand pricks, in the tick of the pick, like a snake bite. A cost of the action itself, before
+    # anything is eaten (user, 2026-10-24: hands needed a USE whose outcome is not the eat value of the thing)
+    thorn_food: float = 0.0          # food units a prick costs
+    thorn_pain: float = 0.0          # pain of a prick
     # --- temperature (OHOL-style): body temp drifts toward the local temperature = ambient_temp + heat of
     # objects nearby (heatValue * heat_scale, falling off linearly to 0 beyond heat_radius cells).
     # Deviation from 0.5 multiplies hunger: hunger * (1 + temp_hunger * 2|T - 0.5|), as in OHOL.

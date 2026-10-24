@@ -263,7 +263,7 @@ ANC_POISON_WEIGHT = 0.0   # spawn weight of the ancestral poison type (0: none)
 
 def learning_world(exp, reverse: bool = False, springs: float = 0.0, berries: int | None = None,
                    shared_colour: bool = False, novel_sim: float | None = None, novel_xor: bool = False,
-                   one_berry: float = 0.0):
+                   one_berry: float = 0.0, thorns: bool = False):
     """Four novel berry types (two of them poison, drawn per life, with a look drawn per life), one ancestral good
     and one ancestral poison type, no onions. NOVEL_WEIGHT sets how much of the supply is novel: familiar food
     should keep a non-learner alive, novel food should be worth trying."""
@@ -271,7 +271,8 @@ def learning_world(exp, reverse: bool = False, springs: float = 0.0, berries: in
                        novel_looks=NOVEL, novel_sim=NOVEL_SIM if novel_sim is None else novel_sim, poison_food=POISON_FOOD, onions=False,
                        poison_pain=POISON_PAIN,
                        weights={0: STAPLE_WEIGHT, 4: ANC_POISON_WEIGHT, **{v: NOVEL_WEIGHT for v in NOVEL}},
-                       berries=berries, shared_colour=shared_colour, novel_xor=novel_xor, one_berry=one_berry)
+                       berries=berries, shared_colour=shared_colour, novel_xor=novel_xor, one_berry=one_berry,
+                       thorns=thorns)
 
 
 _S15 = dict(row_extra=poison_metrics, plastic=True, generations=40, ticks=LIFE_15, eta_max=1.0, dense_plastic=True)
@@ -425,8 +426,10 @@ B22P = extend(B18S, regions=(R("pallium", PALLIUM_N, sign="exc", alpha=1.0, bias
                              elig_tau=CS_ELIG["valence_av"], abcd=(0.0, 1.0, 0.0, 0.0), density=1.0)), **_GENE)
 
 
-def pallium_world(exp, novel_sim: float | None = None, xor: bool = True, reverse: bool = False, one_berry: float = 0.0):
+def pallium_world(exp, novel_sim: float | None = None, xor: bool = True, reverse: bool = False, one_berry: float = 0.0,
+                  thorns: bool = False):
     return learning_world(exp, springs=SPRINGS_17, berries=LEARN_BERRIES, novel_xor=xor, reverse=reverse, one_berry=one_berry,
+                          thorns=thorns,
                           novel_sim=PALLIUM_SIM if novel_sim is None else novel_sim)
 
 

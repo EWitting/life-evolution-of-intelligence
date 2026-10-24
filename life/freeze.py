@@ -24,6 +24,9 @@ FROZEN = Path(__file__).resolve().parents[1] / "frozen"
 RUN_ONLY = ("name", "seed", "generations")
 
 
+NEW_RULE_FIELDS = ("thorny",)   # RuleArrays fields added after stages were frozen (all zero = as before)
+
+
 def rules_digest(s, exp) -> str:
     """A short digest of the world's rules (what yields what, food and pain values, spawn weights, appearances) for
     generation 0 under a fixed key: `Stage.build` is a function, so this is how a change to it is noticed."""
@@ -32,6 +35,8 @@ def rules_digest(s, exp) -> str:
     rules = rules_fn(0, jax.random.PRNGKey(0))
     h = hashlib.sha256()
     for name, a in sorted(rules._asdict().items()):
+        if name in NEW_RULE_FIELDS and not np.asarray(a).any():   # added later, at its no-effect default
+            continue
         h.update(name.encode())
         h.update(np.round(np.asarray(a, np.float64), 4).tobytes())
     return h.hexdigest()[:16]

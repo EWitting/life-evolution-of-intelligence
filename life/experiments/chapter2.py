@@ -561,3 +561,16 @@ stage(Stage("2.5", "s2_5_actor", "2.3s", B25, W25, VISION_CH1, BODY_25,
             notes="hands (pick, hold, eat; the pallium reads the item in hand) and the basal ganglia's actor: Go and "
                   "NoGo channels for USE and EAT learned from dopamine, credit by an efference copy; control the "
                   "critic brain with hands"))
+
+# Thorns (user, 2026-10-24): in 2.5 a wrong pick cost only time, so the actor's learning had no job (STAGE_LOG v80).
+# Every bush now pricks at the pick, a cost of the action itself that the eating cells cannot stop. A prick costs half
+# a good berry's food (6 units): with half the bushes poison and poison put down in hand, picking at random nets
+# zero, as eating at random did in chapter 1, so only telling the bushes apart by look pays. The pain is a poison
+# berry's (1), so the critic sees each wrong pick.
+THORN_FOOD = 3.0
+THORN_PAIN = 1.0
+W25T = replace(W25, thorn_food=THORN_FOOD, thorn_pain=THORN_PAIN)
+stage(Stage("x.thorns", "x_thorns", "2.3s", B25, W25T, VISION_CH1, BODY_25,
+            lambda exp: pallium_world(exp, one_berry=1.0, thorns=True),
+            **{**_S15, "generations": 50}, evolution=EVOLUTION_2EP, control_brain=B25H, adapt_init=hands_init,
+            notes="2.5 with thorny bushes: a pick costs half a good berry and pricks"))

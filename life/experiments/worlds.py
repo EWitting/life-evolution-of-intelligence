@@ -52,7 +52,7 @@ def berry_world(exp: ExperimentConfig, n_types: int = 4, poison: tuple = (), per
                 poison_pain: float = 1.0, reverse: bool = False, per_life_sets: tuple = (),
                 appearance_mode: str = "lookalike", novel_looks: tuple = (), novel_sim: float | None = None,
                 weights: dict | None = None, duds: tuple = (), berries: int | None = None,
-                shared_colour: bool = False, novel_xor: bool = False, one_berry: float = 0.0):
+                shared_colour: bool = False, novel_xor: bool = False, one_berry: float = 0.0, thorns: bool = False):
     """Several berry-bush types (the OHOL gooseberry and colour look-alikes; all behave like the gooseberry:
     6 berries, then empty, regrowing after regrow_ticks(exp)), optional wild onions and hot springs.
     poison: types whose berries always drain food and hurt (an inheritable fact). per_life_pool/per_life_k:
@@ -74,7 +74,8 @@ def berry_world(exp: ExperimentConfig, n_types: int = 4, poison: tuple = (), per
     coefficients in three different bases, so a bush and its own empty bush are no more alike than chance.
     one_berry (> 0): every bush carries one berry worth `one_berry` berries of food (a poison berry stays one bite
     and poison_food), regrowing in the time that many berries take: a bite is a whole visit, so stopping a visit at
-    the first painful berry no longer helps and only judging the look does (STAGE_LOG v58, v59)."""
+    the first painful berry no longer helps and only judging the look does (STAGE_LOG v58, v59).
+    thorns: every bush that carries berries is thorny: a pick pricks (WorldConfig.thorn_food, thorn_pain)."""
     berries = int(BUSH_BERRIES if berries is None else berries)
     if one_berry:
         berries = 1
@@ -108,13 +109,16 @@ def berry_world(exp: ExperimentConfig, n_types: int = 4, poison: tuple = (), per
     berry = [rs.local(variant(v)[BERRY]) for v in range(n_types)]
 
     app = lookalike_appearance(rs, n_types, exp.vision.appearance_dim, mode=appearance_mode)
+    thorny = np.zeros(rs.size, bool)
+    if thorns:
+        thorny[[rs.local(variant(v)[BUSH]) for v in range(n_types)]] = True
 
     def arrays(bad: tuple):
         fv, pv = rs.food_value.copy(), np.zeros(rs.size, np.float32)
         for v in bad:
             fv[berry[v]], pv[berry[v]] = poison_food, poison_pain
         return rs.to_arrays(exp.vision.appearance_dim, spawn_weight=spawn, food_value=fv, pain_value=pv,
-                            appearance=app)
+                            appearance=app, thorny=thorny)
 
     if not per_life_pool and not per_life_sets and not novel_looks:
         rules = arrays(tuple(poison))

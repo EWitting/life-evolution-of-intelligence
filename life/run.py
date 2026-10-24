@@ -137,6 +137,8 @@ def make_simulate(exp: ExperimentConfig, record: bool, compact: bool = True, rec
                        food=jnp.maximum(world.food, 0.0), eats=eats, fed=fed, fed_meal=fed_meal, tsum=tsum)
             if exp.world.snakes:
                 out.update(bites=world.bites, rattles=world.rattles)
+            if exp.world.thorn_food or exp.world.thorn_pain:
+                out.update(pricks=world.pricks)
             return out
 
         def chunk(carry, keys):

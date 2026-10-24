@@ -8,7 +8,8 @@
 Per block of trials, for poison and good berries: the share eaten, put down, or neither (still held when the box is
 cleared), and for `pick` also the share picked. Escape learning shows as 'put down' rising for poison in main only.
 
-    .venv/Scripts/python.exe scripts/probes/lab_actor.py [hold|pick ...] [--agents 24] [--seed 0] [--runs MAIN,CONTROL]"""
+    .venv/Scripts/python.exe scripts/probes/lab_actor.py [hold|pick ...] [--agents 24] [--seed 0] [--runs MAIN,CONTROL]
+        [--stage x.thorns]   (thorny bushes; with --runs of 2.5: its evolved creatures in the thorn box)"""
 import argparse
 
 import jax.numpy as jnp
@@ -26,10 +27,11 @@ ap.add_argument("--seed", type=int, default=0)
 ap.add_argument("--block", type=int, default=12)
 ap.add_argument("--explore", type=float, default=None, help="start of held -> Go (USE), instead of ACT_EXPLORE")
 ap.add_argument("--only", default="", help="comma-separated conditions to run (main, actor off, control)")
+ap.add_argument("--stage", default="2.5", help="the stage whose brains and world are used (e.g. x.thorns)")
 ap.add_argument("--runs", default="", help="'<main run>,<control run>': evolved populations instead of the stage's start")
 a = ap.parse_args()
 
-s = S.STAGES["2.5"]
+s = S.STAGES[a.stage]
 import os as _os
 from dataclasses import replace as _replace
 from life.experiments.chapter2 import hands as _hands, actor as _actor, B24S as _B24S, ACT_EXPLORE as _AE

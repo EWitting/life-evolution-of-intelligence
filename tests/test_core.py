@@ -234,6 +234,27 @@ def test_hidden_snake_rattles_ahead_and_bites_silently():
     assert obs["vision"][0, :, 0].sum() == 0   # the snake is not seen
 
 
+def test_thorns_prick_at_the_pick_only():
+    """A pick from a thorny bush pricks (food and pain) in that tick; putting the berry down and eating do not."""
+    rs = toy_ruleset()
+    thorny = np.zeros(rs.size, bool)
+    thorny[rs.local(10)] = True
+    rules = rs.to_arrays(K, thorny=thorny)
+    cfg = WorldConfig(height=8, width=8, num_agents=1, hunger_per_tick=0.0, thorn_food=0.5, thorn_pain=1.0,
+                      pain_decay=0.0)
+    st = place(empty_world(cfg, rules), 3, 4, rs.local(10), rules)
+    st = st._replace(pos=jnp.array([[3, 3]]), dir=jnp.array([1]), food=jnp.array([10.0]))
+    key = jax.random.PRNGKey(1)
+    pains, foods = [], []
+    for act in (A.USE, A.EAT, A.USE, A.TURN_LEFT, A.USE):   # pick, eat, pick, turn to empty ground, put down
+        st, ev = step_world(cfg, rules, st, jnp.array([act]), key)
+        pains.append(float(ev["pain"][0])); foods.append(float(st.food[0]))
+    assert pains == [1.0, 0.0, 1.0, 0.0, 0.0]
+    gain = float(rules.food_value[rs.local(11)]) * cfg.food_scale
+    assert foods == pytest.approx([9.5, 9.5 + gain, 9.0 + gain, 9.0 + gain, 9.0 + gain])
+    assert float(st.pricks[0]) == 2 and int(st.held[0]) == 0
+
+
 def test_per_slot_synapses_come_from_the_slot_key():
     from life.config import ProjectionSpec
     exp = ExperimentConfig(brain=BrainConfig(regions=(RegionSpec("code", 16),), projections=(

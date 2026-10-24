@@ -217,8 +217,8 @@ def conditioning(exp, pop, protocol: dict, sim: float, n_agents: int = 24, seed:
 # holding a berry with nothing ahead (`hold`) or with an empty hand at a full bush (`pick`). The four berry types are
 # the creature's novel XOR types (looks drawn per life by the stage's world, poison ++ and --). Per tick the brain
 # chooses an action (sampled as in the world); the box applies it:
-#   USE   empty hand at a full bush: the berry is in hand, the bush ahead is empty; empty hand at a berry on the
-#         ground: picked up; holding something with nothing ahead: put down (the berry lies ahead)
+#   USE   empty hand at a full bush: the berry is in hand, the bush ahead is empty (with thorns,
+#         WorldConfig.thorn_pain, the pick pricks: pain on the next tick); empty hand at a berry on the ground: picked up; holding something with nothing ahead: put down (the berry lies ahead)
 #   EAT   holding a berry: eaten; taste 3 or pain 1 on the next tick (one berry, as in the world)
 #   step or turn: nothing is ahead any more (it walked or turned away from the bush or the berry)
 # A trial lasts `ticks`, then the box is cleared (`iti` blank ticks). Escape learning (Mowrer 1947): a creature that has
@@ -233,7 +233,7 @@ NONE, BUSH, EMPTY, BERRY = 0, 1, 2, 3
 def operant(exp, pop, rs, rules_fn, protocol: dict, n_agents: int = 24, seed: int = 0, cells: tuple = ()) -> dict:
     """Runs an OPERANT protocol on the first n_agents genomes of `pop` (on exp's layout). `rules_fn`: the stage's world
     (its looks and poisons, one life per agent), `rs` its ruleset. Returns per trial and agent: the berry type (0-3), poison (0/1), the
-    first event (0 none, 1 ate, 2 put down) and its tick, and whether it was picked at all (pick). `cells`: region names
+    first event (0 none, 1 ate, 2 put down) and its tick, and whether it was picked at all (pick) and when first. `cells`: region names
     (or single cells, 'name[i]') whose mean rate on the trial's first tick is returned as well ({name: [trials, agents]}), and the dopamine signal
     on every tick (`da`: [trials, agents, ticks]) when the brain has one."""
     from .experiments import stages as S
@@ -278,7 +278,7 @@ def operant(exp, pop, rs, rules_fn, protocol: dict, n_agents: int = 24, seed: in
     rng = np.random.default_rng(seed)
     key = jax.random.PRNGKey(seed + 1)
     last = -np.ones(NA, int)
-    out = {k: [] for k in ("type", "poison", "event", "tick", "picked")}
+    out = {k: [] for k in ("type", "poison", "event", "tick", "picked", "pick_tick")}
     rec = {c: [] for c in cells}
     mi = list(L.mod_names).index("da") if "da" in L.mod_names else None
     das = []
@@ -289,7 +289,7 @@ def operant(exp, pop, rs, rules_fn, protocol: dict, n_agents: int = 24, seed: in
             held, ahead = kind.copy(), np.full(NA, NONE)
         else:
             held, ahead = -np.ones(NA, int), np.full(NA, BUSH)
-        event, when, picked = np.zeros(NA, int), np.full(NA, -1), np.zeros(NA, bool)
+        event, when, picked, pick_t = np.zeros(NA, int), np.full(NA, -1), np.zeros(NA, bool), np.full(NA, -1)
         da = []
         for t in range(protocol["ticks"] + protocol["iti"]):
             if t == protocol["ticks"]:     # the box is cleared
@@ -313,6 +313,7 @@ def operant(exp, pop, rs, rules_fn, protocol: dict, n_agents: int = 24, seed: in
                 if act[a] == 4:
                     if held[a] < 0 and ahead[a] == BUSH:
                         held[a], ahead[a], e = kind[a], EMPTY, 3
+                        pain[a] = exp.world.thorn_pain
                     elif held[a] < 0 and ahead[a] == BERRY:
                         held[a], ahead[a], e = kind[a], NONE, 3
                     elif held[a] >= 0 and ahead[a] == NONE:
@@ -323,12 +324,13 @@ def operant(exp, pop, rs, rules_fn, protocol: dict, n_agents: int = 24, seed: in
                 elif act[a] in (1, 2, 3):
                     ahead[a] = NONE
                 if e == 3:
+                    pick_t[a] = t if not picked[a] else pick_t[a]
                     picked[a] = True
                 elif e and event[a] == 0:
                     event[a], when[a] = e, t
             last = act
         out["type"].append(kind.copy()); out["poison"].append(poison[np.arange(NA), kind])
-        out["event"].append(event); out["tick"].append(when); out["picked"].append(picked)
+        out["event"].append(event); out["tick"].append(when); out["picked"].append(picked); out["pick_tick"].append(pick_t)
         if mi is not None:
             das.append(np.stack(da, -1))
     res = {k: np.stack(v) for k, v in out.items()}

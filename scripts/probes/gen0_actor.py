@@ -9,7 +9,10 @@ in the stage's world, the same worlds for every condition (paired). A diagnostic
 Per condition: well-fed lifetime (fitness), lifetime, good and poison berries eaten per creature in each phase of the
 reversal, and the paired difference from main with its standard error over worlds.
 
-    WORLDS=16 python scripts/probes/gen0_actor.py"""
+    WORLDS=16 [STAGE=x.thorns] [RUNS=<main run>,<control run>] python scripts/probes/gen0_actor.py
+
+STAGE: another stage with the 2.5 brains (x.thorns: thorny bushes; then also picks per creature). RUNS: evolved
+populations (e.g. the 2.5 runs) for main and control instead of the stage's start."""
 import os
 
 import jax
@@ -21,7 +24,8 @@ from life.experiments import stages as S
 from life.run import make_layout, make_simulate
 
 WORLDS = int(os.environ.get("WORLDS", 16))
-s = S.STAGES["2.5"]
+s = S.STAGES[os.environ.get("STAGE", "2.5")]
+RUNS = os.environ.get("RUNS", "").split(",") if os.environ.get("RUNS") else None
 import os as _os
 from dataclasses import replace as _replace
 from life.experiments.chapter2 import hands as _hands, actor as _actor, B24S as _B24S, ACT_EXPLORE as _AE
@@ -35,8 +39,12 @@ if _os.environ.get("SWALLOW") or _os.environ.get("EXPLORE"):
 def setup(stage, brain, dense, learn_off=()):
     exp = S.make_exp(stage, brain, "gen0", 1, 0)
     L = make_layout(exp)
-    pop = freeze.load_frozen("2.3s", 0, exp)
-    if stage is s and stage.adapt_init:   # the 2.5 start (not 2.3s's own, which its frozen population has had)
+    if RUNS and stage is s:
+        from life.run import load_population
+        pop = load_population(RUNS[0 if brain is s.brain else 1], exp)
+    else:
+        pop = freeze.load_frozen("2.3s", 0, exp)
+    if stage is s and stage.adapt_init and not RUNS:   # the 2.5 start (not 2.3s's own, which its frozen population has had)
         pop = stage.adapt_init(pop, L)
     if dense:
         pop = pop._replace(mask=jnp.where(((np.asarray(L.rule) > 0) & (np.asarray(L.allowed) > 0))[None], 1.0, pop.mask))
@@ -64,11 +72,12 @@ for label, (stage, exp, pop) in conds.items():
         e = np.asarray(st["eats"]); n = e.shape[0]
         per = lambda h, bad: sum(e[:, h, b].sum() for b in berry if (pv[h, b] > 0) == bad) / n
         rows.append([float(S.default_fitness(st).mean()), float(st["alive_ticks"].mean()),
-                     per(0, False), per(0, True), per(1, False), per(1, True)])
+                     per(0, False), per(0, True), per(1, False), per(1, True),
+                     float(np.asarray(st["pricks"]).mean()) if "pricks" in st else 0.0])
         print(f"  {label}: world {len(rows)}/{WORLDS} fitness {rows[-1][0]:.0f}", flush=True)
     res[label] = np.array(rows)
 
-cols = ["fitness", "alive", "good 1st", "poison 1st", "good 2nd", "poison 2nd"]
+cols = ["fitness", "alive", "good 1st", "poison 1st", "good 2nd", "poison 2nd", "picks"]
 print("\ncondition    " + "".join(f"{c:>12s}" for c in cols) + "   fitness - main (paired, s.e.)")
 for label, r in res.items():
     d = r[:, 0] - res["main"][:, 0]

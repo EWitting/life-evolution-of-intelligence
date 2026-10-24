@@ -48,6 +48,7 @@ class WorldState(NamedTuple):
     snake_pos: jnp.ndarray    # [S, 2] int32 hidden snakes (WorldConfig.snakes); not per agent
     snake_phase: jnp.ndarray  # [S] int32 tick offset of each snake's moves
     rattle_sign: jnp.ndarray  # [] float32 +-1, drawn per world
+    pricks: jnp.ndarray       # [N] float32 picks from thorny objects (WorldConfig.thorn_food, thorn_pain)
 
 
 def init_world(cfg: WorldConfig, rules: RuleArrays, key: jax.Array) -> WorldState:
@@ -140,6 +141,7 @@ def init_world(cfg: WorldConfig, rules: RuleArrays, key: jax.Array) -> WorldStat
         snake_pos=snake_pos,
         snake_phase=jax.random.randint(ks2, (S,), 0, max(1, cfg.snake_move_ticks)).astype(jnp.int32),
         rattle_sign=jnp.where(jax.random.bernoulli(ks3), 1.0, -1.0).astype(jnp.float32),
+        pricks=jnp.zeros(N, jnp.float32),
     )
 
 
@@ -219,7 +221,7 @@ def step_world(cfg: WorldConfig, rules: RuleArrays, state: WorldState, actions: 
     def use_round(carry, r):
         """Every agent of rank r (the r-th agent, by index, that uses a cell) acts at once; there is at most one per
         cell, so the order within a cell is the sequential one and cells do not interact."""
-        cobj, cuses, ctimer, held = carry
+        cobj, cuses, ctimer, held, pricked = carry
         s = slot
         do = use & (rank == r)
         h, t, u = held, cobj[s], cuses[s]
@@ -240,17 +242,18 @@ def step_world(cfg: WorldConfig, rules: RuleArrays, state: WorldState, actions: 
         changed = nt != t
         new_uses = jnp.where(changed, rules.num_uses[nt], u_after)
         new_timer = jnp.where(changed, rules.decay_ticks[nt], ctimer[s])
+        pricked = pricked | (do & has & (h == EMPTY) & (na != EMPTY) & rules.thorny[t])   # a pick from a thorny object
         na = jnp.where(do, na, h)
         dst = jnp.where(do, s, N)           # agents not acting this round write to a slot past the end (dropped)
         return (cobj.at[dst].set(nt, mode="drop"), cuses.at[dst].set(new_uses, mode="drop"),
-                ctimer.at[dst].set(new_timer, mode="drop"), na)
+                ctimer.at[dst].set(new_timer, mode="drop"), na, pricked)
 
     use = (actions == A.USE) & inb
     # rank of an acting agent among the acting agents that face the same cell and come before it
     same = (cell[None, :] == cell[:, None]) & use[None, :] & use[:, None]
     rank = jnp.sum(jnp.tril(same, k=-1), axis=1)
-    carry = (grid0[fy, fx], uses0[fy, fx], timer[fy, fx], state.held)
-    _, (cobj, cuses, ctimer, held) = lax.while_loop(
+    carry = (grid0[fy, fx], uses0[fy, fx], timer[fy, fx], state.held, jnp.zeros(N, bool))
+    _, (cobj, cuses, ctimer, held, pricked) = lax.while_loop(
         lambda c: c[0] <= jnp.max(jnp.where(use, rank, -1)),
         lambda c: (c[0] + 1, use_round(c[1], c[0])), (jnp.int32(0), carry))
     # every agent writes its cell's final state back (agents sharing a cell write the same values)
@@ -300,6 +303,9 @@ def step_world(cfg: WorldConfig, rules: RuleArrays, state: WorldState, actions: 
         pain_in = pain_in + cfg.snake_pain * bitten
         food = food - cfg.snake_food * bitten
         bites, rattles = bites + bitten, rattles + rattle
+    if cfg.thorn_food > 0 or cfg.thorn_pain > 0:   # thorns prick at the pick, not at the eating
+        pain_in = pain_in + cfg.thorn_pain * pricked
+        food = food - cfg.thorn_food * pricked
     pain = state.pain * cfg.pain_decay + pain_in
 
     # --- temperature and metabolism ---
@@ -337,5 +343,6 @@ def step_world(cfg: WorldConfig, rules: RuleArrays, state: WorldState, actions: 
         skin_delta=skin - state.skin,
         recent=recent,
         hear=hear, near_snake=near, bites=bites, rattles=rattles, snake_pos=snake_pos,
+        pricks=state.pricks + pricked,
     )
-    return new_state, {"gained": gained, "pain": pain_in, "ate": ate}
+    return new_state, {"gained": gained, "pain": pain_in, "ate": ate, "pricked": pricked}

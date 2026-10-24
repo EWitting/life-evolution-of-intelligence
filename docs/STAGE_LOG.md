@@ -3812,3 +3812,7 @@ Lab (`hand_lab`, last 12 trials, main / learning off / control): pick box good p
 Seed 1 is the close one: its control learned to leave thorny bushes almost completely (re-evaluated 1544).
 Actor page rewritten: thorns in the world section (with pike and sticklebacks, toads and bees in the biology),
 the learning now used, why thorns, thorns on every bush failed. Dashboards rebuilt. Front clip not re-recorded.
+Afterwards: the user saved the brain layout for 2.5; growth animation and 2.5 dashboards rebuilt with it (the
+dashboards carry the layout from when they are built), front clip re-recorded (2.5, agent 37, t0 880: 6 bites, 6
+pains). User: USE is not split into pick and put down; it is meant to be a hard contextual action whose effect
+depends on objects and situation, which more OHOL rules will widen.

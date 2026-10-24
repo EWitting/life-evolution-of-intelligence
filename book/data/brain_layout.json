@@ -1,6 +1,6 @@
 {
  "about": "brain diagram layout. cells: grid cell [col, row] of every module in the layout grid. sockets: top-to-bottom order of the sockets on the senses block (in:<sense>) and motor block (out:<actions>), shared by all stages. stages: per stage the position [col, row] a diagram uses: empty rows and columns removed, the blocks in the first and last column with their row extent, sockets at fractional rows. modes: how the senses (in) and motor neurons (out) are drawn: split (a block with sockets), block (a tall block, lines at the height of their other end), point (one small box). hues: the colour of each top-level group. union: as a stage, for every module and socket of every stage (the front page's growing brain, where parts also go away). Written by tools/brain_layout.",
- "saved": "2026-10-21T08:04:13.935Z",
+ "saved": "2026-10-24T17:55:43.342Z",
  "chain": [
   "1.0",
   "1.1",
@@ -9,7 +9,8 @@
   "1.7",
   "1.8",
   "2.2",
-  "2.3s"
+  "2.3s",
+  "2.5"
  ],
  "weights": {
   "proj": 0.5,
@@ -19,7 +20,7 @@
   "modproj": 1,
   "flow": 2,
   "group": 3,
-  "foreign": 6,
+  "foreign": 11.05,
   "sub": 0.5,
   "through": 1.5,
   "bend": 0.3,
@@ -52,32 +53,28 @@
   "midbrain": 170
  },
  "cells": {
-  "hungry": [
-   4,
-   8
-  ],
   "ganglion_e": [
    6,
-   8
+   6
   ],
   "ganglion_i": [
    6,
    7
   ],
   "valence_app": [
-   4,
+   1,
    9
   ],
   "valence_av": [
    6,
-   9
+   10
   ],
   "no_feed": [
-   6,
+   1,
    10
   ],
   "no_touch": [
-   4,
+   1,
    13
   ],
   "grasp": [
@@ -89,60 +86,96 @@
    1
   ],
   "cold": [
-   4,
+   1,
    5
   ],
   "warm_seek": [
    6,
-   4
+   3
   ],
   "rest": [
-   4,
+   1,
    6
   ],
-  "flee": [
+  "hungry": [
    1,
-   13
+   7
+  ],
+  "flee": [
+   6,
+   0
   ],
   "fed": [
-   1,
-   10
+   6,
+   1
   ],
   "settle": [
-   1,
-   9
+   6,
+   2
   ],
   "pallium": [
-   1,
-   5
+   8,
+   9
   ],
   "us_taste": [
    1,
-   0
-  ],
-  "value_app": [
-   3,
-   4
-  ],
-  "value_av": [
-   1,
-   4
-  ],
-  "habenula": [
-   1,
    2
   ],
+  "value_app": [
+   8,
+   6
+  ],
+  "value_av": [
+   9,
+   7
+  ],
+  "habenula": [
+   9,
+   0
+  ],
   "dopamine": [
-   4,
+   6,
    4
   ],
   "ventral_pallidum": [
-   3,
-   3
+   8,
+   5
   ],
   "gp_habenular": [
+   9,
+   5
+  ],
+  "no_hold": [
    1,
-   3
+   12
+  ],
+  "ingest": [
+   6,
+   12
+  ],
+  "no_eat": [
+   4,
+   9
+  ],
+  "striatum_d1": [
+   8,
+   1
+  ],
+  "striatum_d2": [
+   9,
+   1
+  ],
+  "gpe": [
+   9,
+   4
+  ],
+  "gpi": [
+   8,
+   4
+  ],
+  "act": [
+   6,
+   11
   ]
  },
  "pinned": [],
@@ -175,11 +208,11 @@
     ],
     "ganglion_e": [
      1,
-     1
+     0
     ],
     "ganglion_i": [
      1,
-     0
+     1
     ]
    }
   },
@@ -188,30 +221,30 @@
    "rows": 5,
    "blocks": {
     "in": [
-     1.503125,
-     2.096875
-    ],
-    "out": [
      1.703125,
      2.296875
+    ],
+    "out": [
+     1.9031250000000002,
+     2.496875
     ]
    },
    "pos": {
     "in": [
      0,
-     1.8
+     2
     ],
     "out": [
      3,
-     2
+     2.2
     ],
     "ganglion_e": [
      2,
-     1
+     0
     ],
     "ganglion_i": [
      2,
-     0
+     1
     ],
     "valence_app": [
      1,
@@ -219,10 +252,10 @@
     ],
     "valence_av": [
      2,
-     2
+     3
     ],
     "no_feed": [
-     2,
+     1,
      3
     ],
     "no_touch": [
@@ -240,30 +273,30 @@
    "rows": 5,
    "blocks": {
     "in": [
-     1.503125,
-     2.096875
-    ],
-    "out": [
      1.703125,
      2.296875
+    ],
+    "out": [
+     1.9031250000000002,
+     2.496875
     ]
    },
    "pos": {
     "in": [
      0,
-     1.8
+     2
     ],
     "out": [
      3,
-     2
+     2.2
     ],
     "ganglion_e": [
      2,
-     1
+     0
     ],
     "ganglion_i": [
      2,
-     0
+     1
     ],
     "valence_app": [
      1,
@@ -271,10 +304,10 @@
     ],
     "valence_av": [
      2,
-     2
+     3
     ],
     "no_feed": [
-     2,
+     1,
      3
     ],
     "no_touch": [
@@ -288,53 +321,53 @@
    }
   },
   "1.5": {
-   "cols": 5,
+   "cols": 4,
    "rows": 6,
    "blocks": {
     "in": [
-     2.0364583333333335,
-     2.6302083333333335
+     2.203125,
+     2.796875
     ],
     "out": [
-     2.703125,
-     3.296875
+     2.903125,
+     3.496875
     ]
    },
    "pos": {
     "in": [
      0,
-     2.333
+     2.5
     ],
     "out": [
-     4,
-     3
+     3,
+     3.2
     ],
     "ganglion_e": [
-     3,
-     2
-    ],
-    "ganglion_i": [
-     3,
+     2,
      1
     ],
-    "valence_app": [
+    "ganglion_i": [
      2,
+     2
+    ],
+    "valence_app": [
+     1,
      3
     ],
     "valence_av": [
-     3,
-     3
+     2,
+     4
     ],
     "no_feed": [
-     3,
+     1,
      4
     ],
     "no_touch": [
-     2,
+     1,
      5
     ],
     "grasp": [
-     3,
+     2,
      5
     ],
     "us_pain": [
@@ -344,479 +377,659 @@
    }
   },
   "1.7": {
-   "cols": 5,
-   "rows": 9,
+   "cols": 4,
+   "rows": 8,
    "blocks": {
     "in": [
-     4.036458333333333,
-     4.630208333333333
+     3.4809027777777777,
+     4.074652777777778
     ],
     "out": [
-     4.560267857142857,
-     5.154017857142857
+     3.9888392857142856,
+     4.582589285714286
     ]
    },
    "pos": {
     "in": [
      0,
-     4.333
+     3.778
     ],
     "out": [
-     4,
-     4.857
+     3,
+     4.286
     ],
     "ganglion_e": [
-     3,
-     5
+     2,
+     3
     ],
     "ganglion_i": [
-     3,
+     2,
      4
     ],
     "valence_app": [
-     2,
-     6
+     1,
+     5
     ],
     "valence_av": [
-     3,
+     2,
      6
     ],
     "no_feed": [
-     3,
-     7
+     1,
+     6
     ],
     "no_touch": [
-     2,
-     8
+     1,
+     7
     ],
     "grasp": [
-     3,
-     8
+     2,
+     7
     ],
     "us_pain": [
      1,
      0
     ],
     "cold": [
-     2,
+     1,
      2
     ],
     "warm_seek": [
-     3,
+     2,
      1
     ],
     "rest": [
-     2,
+     1,
      3
     ],
     "hungry": [
-     2,
-     5
+     1,
+     4
     ]
    }
   },
   "1.8": {
-   "cols": 5,
-   "rows": 9,
+   "cols": 4,
+   "rows": 10,
    "blocks": {
     "in": [
-     4.303125,
-     4.896875
+     4.903125,
+     5.496875
     ],
     "out": [
-     4.953125,
-     5.546875
+     5.203125,
+     5.796875
     ]
    },
    "pos": {
     "in": [
      0,
-     4.6
+     5.2
     ],
     "out": [
-     4,
-     5.25
+     3,
+     5.5
     ],
     "ganglion_e": [
-     3,
+     2,
      5
     ],
     "ganglion_i": [
-     3,
-     4
+     2,
+     6
     ],
     "valence_app": [
-     2,
-     6
-    ],
-    "valence_av": [
-     3,
-     6
-    ],
-    "no_feed": [
-     3,
+     1,
      7
     ],
-    "no_touch": [
+    "valence_av": [
      2,
      8
     ],
-    "grasp": [
-     3,
+    "no_feed": [
+     1,
      8
+    ],
+    "no_touch": [
+     1,
+     9
+    ],
+    "grasp": [
+     2,
+     9
     ],
     "us_pain": [
      1,
-     0
-    ],
-    "cold": [
-     2,
-     2
-    ],
-    "warm_seek": [
-     3,
      1
     ],
-    "rest": [
+    "cold": [
+     1,
+     4
+    ],
+    "warm_seek": [
      2,
      3
     ],
-    "hungry": [
-     2,
+    "rest": [
+     1,
      5
     ],
-    "flee": [
-     1,
-     8
-    ],
-    "fed": [
-     1,
-     7
-    ],
-    "settle": [
+    "hungry": [
      1,
      6
+    ],
+    "flee": [
+     2,
+     0
+    ],
+    "fed": [
+     2,
+     1
+    ],
+    "settle": [
+     2,
+     2
     ]
    }
   },
   "2.2": {
    "cols": 5,
-   "rows": 9,
+   "rows": 10,
    "blocks": {
     "in": [
-     4.066761363636363,
-     4.660511363636363
+     5.066761363636363,
+     5.660511363636363
     ],
     "out": [
-     4.953125,
-     5.546875
+     5.203125,
+     5.796875
     ]
    },
    "pos": {
     "in": [
      0,
-     4.364
+     5.364
     ],
     "out": [
      4,
-     5.25
+     5.5
     ],
     "ganglion_e": [
-     3,
+     2,
      5
     ],
     "ganglion_i": [
-     3,
-     4
+     2,
+     6
     ],
     "valence_app": [
-     2,
-     6
-    ],
-    "valence_av": [
-     3,
-     6
-    ],
-    "no_feed": [
-     3,
+     1,
      7
     ],
-    "no_touch": [
+    "valence_av": [
      2,
      8
     ],
-    "grasp": [
-     3,
+    "no_feed": [
+     1,
      8
+    ],
+    "no_touch": [
+     1,
+     9
+    ],
+    "grasp": [
+     2,
+     9
     ],
     "us_pain": [
      1,
-     0
-    ],
-    "cold": [
-     2,
-     2
-    ],
-    "warm_seek": [
-     3,
      1
     ],
-    "rest": [
+    "cold": [
+     1,
+     4
+    ],
+    "warm_seek": [
      2,
      3
     ],
-    "hungry": [
-     2,
+    "rest": [
+     1,
      5
     ],
-    "flee": [
-     1,
-     8
-    ],
-    "fed": [
-     1,
-     7
-    ],
-    "settle": [
+    "hungry": [
      1,
      6
     ],
-    "pallium": [
-     1,
+    "flee": [
+     2,
+     0
+    ],
+    "fed": [
+     2,
+     1
+    ],
+    "settle": [
+     2,
      2
+    ],
+    "pallium": [
+     3,
+     7
     ]
    }
   },
   "2.3s": {
    "cols": 6,
-   "rows": 12,
+   "rows": 11,
    "blocks": {
     "in": [
-     5.933894230769231,
-     6.527644230769231
+     5.536458333333333,
+     6.130208333333333
     ],
     "out": [
-     7.953125,
-     8.546875
+     5.953125,
+     6.546875
     ]
    },
    "pos": {
     "in": [
      0,
-     6.231
+     5.833
     ],
     "out": [
      5,
-     8.25
+     6.25
     ],
     "ganglion_e": [
-     4,
-     8
+     2,
+     6
     ],
     "ganglion_i": [
-     4,
+     2,
      7
     ],
     "valence_app": [
-     3,
-     9
+     1,
+     8
     ],
     "valence_av": [
-     4,
+     2,
      9
     ],
     "no_feed": [
-     4,
-     10
+     1,
+     9
     ],
     "no_touch": [
-     3,
-     11
+     1,
+     10
     ],
     "grasp": [
-     4,
-     11
+     2,
+     10
     ],
     "us_pain": [
      1,
      1
     ],
     "cold": [
-     3,
+     1,
      5
     ],
     "warm_seek": [
-     4,
-     4
+     2,
+     3
     ],
     "rest": [
-     3,
+     1,
      6
     ],
     "hungry": [
+     1,
+     7
+    ],
+    "flee": [
+     2,
+     0
+    ],
+    "fed": [
+     2,
+     1
+    ],
+    "settle": [
+     2,
+     2
+    ],
+    "pallium": [
      3,
      8
     ],
-    "flee": [
-     1,
-     11
-    ],
-    "fed": [
-     1,
-     10
-    ],
-    "settle": [
-     1,
-     9
-    ],
-    "pallium": [
-     1,
-     5
-    ],
     "us_taste": [
      1,
-     0
+     2
     ],
     "value_app": [
+     3,
+     6
+    ],
+    "value_av": [
+     4,
+     7
+    ],
+    "habenula": [
+     4,
+     0
+    ],
+    "dopamine": [
      2,
      4
     ],
-    "value_av": [
-     1,
-     4
+    "ventral_pallidum": [
+     3,
+     5
     ],
-    "habenula": [
+    "gp_habenular": [
+     4,
+     5
+    ]
+   }
+  },
+  "2.5": {
+   "cols": 7,
+   "rows": 13,
+   "blocks": {
+    "in": [
+     5.369791666666667,
+     5.963541666666667
+    ],
+    "out": [
+     7.066761363636363,
+     7.660511363636363
+    ]
+   },
+   "pos": {
+    "in": [
+     0,
+     5.667
+    ],
+    "out": [
+     6,
+     7.364
+    ],
+    "ganglion_e": [
+     3,
+     6
+    ],
+    "ganglion_i": [
+     3,
+     7
+    ],
+    "valence_app": [
+     1,
+     8
+    ],
+    "valence_av": [
+     3,
+     9
+    ],
+    "no_feed": [
+     1,
+     9
+    ],
+    "no_touch": [
+     1,
+     12
+    ],
+    "grasp": [
+     3,
+     12
+    ],
+    "us_pain": [
+     1,
+     1
+    ],
+    "cold": [
+     1,
+     5
+    ],
+    "warm_seek": [
+     3,
+     3
+    ],
+    "rest": [
+     1,
+     6
+    ],
+    "hungry": [
+     1,
+     7
+    ],
+    "flee": [
+     3,
+     0
+    ],
+    "fed": [
+     3,
+     1
+    ],
+    "settle": [
+     3,
+     2
+    ],
+    "pallium": [
+     4,
+     8
+    ],
+    "us_taste": [
      1,
      2
+    ],
+    "value_app": [
+     4,
+     6
+    ],
+    "value_av": [
+     5,
+     7
+    ],
+    "habenula": [
+     5,
+     0
     ],
     "dopamine": [
      3,
      4
     ],
     "ventral_pallidum": [
-     2,
-     3
+     4,
+     5
     ],
     "gp_habenular": [
+     5,
+     5
+    ],
+    "no_hold": [
      1,
-     3
+     11
+    ],
+    "ingest": [
+     3,
+     11
+    ],
+    "no_eat": [
+     2,
+     8
+    ],
+    "striatum_d1": [
+     4,
+     1
+    ],
+    "striatum_d2": [
+     5,
+     1
+    ],
+    "gpe": [
+     5,
+     4
+    ],
+    "gpi": [
+     4,
+     4
+    ],
+    "act": [
+     3,
+     10
     ]
    }
   }
  },
  "union": {
-  "cols": 6,
-  "rows": 12,
+  "cols": 7,
+  "rows": 13,
   "blocks": {
    "in": [
-    6.286458333333333,
-    6.880208333333333
+    5.369791666666667,
+    5.963541666666667
    ],
    "out": [
-    7.953125,
-    8.546875
+    7.066761363636363,
+    7.660511363636363
    ]
   },
   "pos": {
    "in": [
     0,
-    6.583
+    5.667
    ],
    "out": [
-    5,
-    8.25
+    6,
+    7.364
    ],
    "ganglion_e": [
-    4,
-    8
+    3,
+    6
    ],
    "ganglion_i": [
-    4,
+    3,
     7
    ],
    "valence_app": [
-    3,
-    9
+    1,
+    8
    ],
    "valence_av": [
-    4,
+    3,
     9
    ],
    "no_feed": [
-    4,
-    10
+    1,
+    9
    ],
    "no_touch": [
-    3,
-    11
+    1,
+    12
    ],
    "grasp": [
-    4,
-    11
+    3,
+    12
    ],
    "us_pain": [
     1,
     1
    ],
    "cold": [
-    3,
+    1,
     5
    ],
    "warm_seek": [
-    4,
-    4
+    3,
+    3
    ],
    "rest": [
-    3,
+    1,
     6
    ],
    "hungry": [
-    3,
-    8
+    1,
+    7
    ],
    "flee": [
-    1,
-    11
+    3,
+    0
    ],
    "fed": [
-    1,
-    10
+    3,
+    1
    ],
    "settle": [
-    1,
-    9
+    3,
+    2
    ],
    "pallium": [
-    1,
-    5
+    4,
+    8
    ],
    "us_taste": [
     1,
-    0
+    2
    ],
    "value_app": [
-    2,
-    4
+    4,
+    6
    ],
    "value_av": [
-    1,
-    4
+    5,
+    7
    ],
    "habenula": [
-    1,
-    2
+    5,
+    0
    ],
    "dopamine": [
     3,
     4
    ],
    "ventral_pallidum": [
-    2,
-    3
+    4,
+    5
    ],
    "gp_habenular": [
+    5,
+    5
+   ],
+   "no_hold": [
     1,
-    3
+    11
+   ],
+   "ingest": [
+    3,
+    11
+   ],
+   "no_eat": [
+    2,
+    8
+   ],
+   "striatum_d1": [
+    4,
+    1
+   ],
+   "striatum_d2": [
+    5,
+    1
+   ],
+   "gpe": [
+    5,
+    4
+   ],
+   "gpi": [
+    4,
+    4
+   ],
+   "act": [
+    3,
+    10
    ]
   }
  }
